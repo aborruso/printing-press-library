@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -46,8 +47,12 @@ func TestCopyUpstreamSkill_Present(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reading destination: %v", err)
 	}
-	if string(got) != string(upstream) {
-		t.Errorf("destination content does not match upstream byte-for-byte\nwant: %q\ngot:  %q", upstream, got)
+	want := injectGeneratedHeader(upstream)
+	if string(got) != string(want) {
+		t.Errorf("destination should be upstream with generated-header injected\nwant: %q\ngot:  %q", want, got)
+	}
+	if !bytes.Contains(got, []byte("GENERATED FILE")) {
+		t.Errorf("destination missing generated-header warning, got:\n%s", got)
 	}
 }
 
@@ -110,8 +115,9 @@ func TestCopyUpstreamSkill_OverwritesExisting(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(got) != string(upstream) {
-		t.Errorf("upstream should overwrite stale content\nwant: %q\ngot:  %q", upstream, got)
+	want := injectGeneratedHeader(upstream)
+	if string(got) != string(want) {
+		t.Errorf("upstream (with header injected) should overwrite stale content\nwant: %q\ngot:  %q", want, got)
 	}
 }
 
@@ -220,8 +226,9 @@ func TestIntegration_CopiesUpstreamVerbatim(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reading copied skill: %v", err)
 	}
-	if string(got) != upstreamContent {
-		t.Errorf("upstream skill not copied byte-for-byte\nwant: %q\ngot:  %q", upstreamContent, got)
+	want := string(injectGeneratedHeader([]byte(upstreamContent)))
+	if string(got) != want {
+		t.Errorf("mirrored skill should be upstream with generated-header injected\nwant: %q\ngot:  %q", want, got)
 	}
 	if !strings.Contains(string(out), "Mirrored 1 skill") {
 		t.Errorf("expected mirror summary in output, got:\n%s", out)
@@ -252,8 +259,9 @@ func TestIntegration_DiscoversNewCLIWithoutRegistry(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reading copied skill: %v", err)
 	}
-	if string(got) != upstreamContent {
-		t.Errorf("new CLI skill not copied byte-for-byte\nwant: %q\ngot:  %q", upstreamContent, got)
+	want := string(injectGeneratedHeader([]byte(upstreamContent)))
+	if string(got) != want {
+		t.Errorf("new CLI mirror should be upstream with generated-header injected\nwant: %q\ngot:  %q", want, got)
 	}
 }
 
@@ -316,8 +324,9 @@ func TestIntegration_UpstreamOverwritesStaleMirror(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(got) != upstreamContent {
-		t.Errorf("upstream should overwrite stale mirror\nwant: %q\ngot:  %q", upstreamContent, got)
+	want := string(injectGeneratedHeader([]byte(upstreamContent)))
+	if string(got) != want {
+		t.Errorf("upstream (with header injected) should overwrite stale mirror\nwant: %q\ngot:  %q", want, got)
 	}
 }
 
@@ -355,6 +364,90 @@ func TestPruneOrphanSkills(t *testing.T) {
 		if _, err := os.Stat(filepath.Join(tmp, keep)); err != nil {
 			t.Errorf("%s should still exist: %v", keep, err)
 		}
+	}
+}
+
+func TestInjectGeneratedHeader_WithFrontmatter(t *testing.T) {
+	src := []byte("---\nname: pp-thing\ndescription: \"hi\"\n---\n\n# Body\n\nNarrative.\n")
+	got := injectGeneratedHeader(src)
+	gotStr := string(got)
+
+	frontmatter := "---\nname: pp-thing\ndescription: \"hi\"\n---\n"
+	if !strings.HasPrefix(gotStr, frontmatter) {
+		t.Errorf("frontmatter must be the first bytes of the file for skill parsers; got prefix: %q", gotStr[:len(frontmatter)])
+	}
+	headerStart := strings.Index(gotStr, "<!-- GENERATED FILE")
+	if headerStart != len(frontmatter) {
+		t.Errorf("header should be injected immediately after frontmatter close, got headerStart=%d, want %d", headerStart, len(frontmatter))
+	}
+	if !strings.Contains(gotStr, "# Body\n\nNarrative.\n") {
+		t.Errorf("body content lost, got:\n%s", gotStr)
+	}
+}
+
+func TestInjectGeneratedHeader_NoFrontmatter(t *testing.T) {
+	src := []byte("# Plain skill\n\nNo frontmatter at all.\n")
+	got := injectGeneratedHeader(src)
+	gotStr := string(got)
+
+	if !strings.HasPrefix(gotStr, "<!-- GENERATED FILE") {
+		t.Errorf("with no frontmatter, header should prepend the file, got prefix: %q", gotStr[:50])
+	}
+	if !strings.HasSuffix(gotStr, string(src)) {
+		t.Errorf("original body should be preserved after the header, got:\n%s", gotStr)
+	}
+}
+
+func TestInjectGeneratedHeader_Idempotent(t *testing.T) {
+	src := []byte("---\nname: pp-thing\n---\n\n# Body\n")
+	once := injectGeneratedHeader(src)
+	twice := injectGeneratedHeader(once)
+	if string(once) != string(twice) {
+		t.Errorf("injectGeneratedHeader should be idempotent\nonce:  %q\ntwice: %q", once, twice)
+	}
+}
+
+func TestInjectGeneratedHeader_WindowsLineEndings(t *testing.T) {
+	src := []byte("---\r\nname: pp-thing\r\n---\r\n\r\n# Body\r\n")
+	got := injectGeneratedHeader(src)
+	gotStr := string(got)
+	headerStart := strings.Index(gotStr, "<!-- GENERATED FILE")
+	if headerStart < 0 {
+		t.Fatalf("header not injected; got:\n%s", gotStr)
+	}
+	// Header must come AFTER the closing fence so frontmatter parsers
+	// don't see it as part of the YAML block.
+	closeFenceIdx := strings.Index(gotStr, "---\r\n\r\n")
+	if closeFenceIdx < 0 {
+		// Fence-with-trailing-blank pattern may have been split; fall back
+		// to checking the second `---\r\n` after the opener.
+		closeFenceIdx = strings.Index(gotStr[len("---\r\n"):], "---\r\n") + len("---\r\n")
+	}
+	if headerStart <= closeFenceIdx {
+		t.Errorf("header injected before frontmatter close; headerStart=%d closeFenceIdx=%d", headerStart, closeFenceIdx)
+	}
+}
+
+func TestFrontmatterEnd(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+		want int
+	}{
+		{"unix frontmatter", "---\nname: x\n---\nbody", len("---\nname: x\n---\n")},
+		{"windows frontmatter", "---\r\nname: x\r\n---\r\nbody", len("---\r\nname: x\r\n---\r\n")},
+		{"no frontmatter", "# Plain\n", 0},
+		{"missing close", "---\nname: x\nno close ever", 0},
+		{"three dashes mid-line is not fence", "---\nname: x\nfoo ---\n---\nbody", len("---\nname: x\nfoo ---\n---\n")},
+		{"empty input", "", 0},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := frontmatterEnd([]byte(tc.in))
+			if got != tc.want {
+				t.Errorf("frontmatterEnd(%q) = %d, want %d", tc.in, got, tc.want)
+			}
+		})
 	}
 }
 
