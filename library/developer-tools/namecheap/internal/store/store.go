@@ -22,11 +22,25 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-var uuidPattern = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
+var (
+	uuidPattern       = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
+	identifierPattern = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
+)
 
 // IsUUID returns true if the input looks like a UUID.
 func IsUUID(s string) bool {
 	return uuidPattern.MatchString(s)
+}
+
+func isSafeIdentifier(s string) bool {
+	return identifierPattern.MatchString(s)
+}
+
+func quoteIdentifier(s string) (string, bool) {
+	if !isSafeIdentifier(s) {
+		return "", false
+	}
+	return `"` + s + `"`, true
 }
 
 // StoreSchemaVersion is the on-disk schema version this binary understands.
@@ -877,10 +891,15 @@ func (s *Store) GetSyncCursor(resourceType string) string {
 // ListIDs returns all IDs from a resource's domain table, or from the generic
 // resources table if no domain table exists. Used by dependent sync to iterate parents.
 func (s *Store) ListIDs(resourceType string) ([]string, error) {
-	// Try domain table first (tables are named after the resource type)
-	query := fmt.Sprintf("SELECT id FROM %s", resourceType)
-	rows, err := s.db.Query(query)
-	if err != nil {
+	// PATCH(namecheap-store-sql-identifiers): quote and allowlist generated table identifiers before SQL interpolation.
+	var rows *sql.Rows
+	var err error
+	if tableName, ok := quoteIdentifier(resourceType); ok {
+		// Try domain table first (tables are named after the resource type)
+		query := fmt.Sprintf("SELECT id FROM %s", tableName)
+		rows, err = s.db.Query(query)
+	}
+	if rows == nil || err != nil {
 		// Fall back to generic resources table
 		rows, err = s.db.Query("SELECT id FROM resources WHERE resource_type = ?", resourceType)
 		if err != nil {
@@ -964,6 +983,10 @@ func (s *Store) ResolveByName(resourceType string, input string, matchFields ...
 
 	var matches []string
 	for _, field := range matchFields {
+		// PATCH(namecheap-store-sql-identifiers): JSON path keys are SQL literals, so only generated identifier-shaped fields are accepted.
+		if !isSafeIdentifier(field) {
+			continue
+		}
 		query := fmt.Sprintf(
 			`SELECT id FROM resources WHERE resource_type = ? AND LOWER(json_extract(data, '$.%s')) = LOWER(?)`,
 			field,

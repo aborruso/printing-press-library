@@ -125,7 +125,8 @@ func (c *Client) cacheKey(path string, params map[string]string) string {
 		key += k + "=" + params[k]
 	}
 	h := sha256.Sum256([]byte(key))
-	return hex.EncodeToString(h[:8])
+	// PATCH(namecheap-full-cache-key): keep the full digest to avoid avoidable cache filename collisions.
+	return hex.EncodeToString(h[:])
 }
 
 func (c *Client) readCache(path string, params map[string]string) (json.RawMessage, bool) {

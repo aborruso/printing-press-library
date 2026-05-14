@@ -101,6 +101,26 @@
         "internal/store/read_only_test.go"
       ],
       "validated_outcome": "TestOpenReadOnlyRejectsWrites verifies writes fail through OpenReadOnly while reads continue to work."
+    },
+    {
+      "id": "namecheap-store-sql-identifiers",
+      "summary": "Allowlist and quote generated SQL identifiers in exported store helper functions.",
+      "reason": "ListIDs and ResolveByName interpolate table names and JSON-path keys because SQLite cannot bind identifiers; generated helper inputs must be identifier-shaped before interpolation.",
+      "files": [
+        "internal/store/store.go",
+        "internal/store/sql_identifier_test.go"
+      ],
+      "validated_outcome": "TestListIDsRejectsUnsafeResourceTableIdentifier and TestResolveByNameRejectsUnsafeMatchField verify unsafe strings are not interpolated."
+    },
+    {
+      "id": "namecheap-full-cache-key",
+      "summary": "Use the full SHA-256 digest for cache filenames.",
+      "reason": "The generated cache key truncated to 64 bits; keeping the full digest avoids avoidable filename collisions.",
+      "files": [
+        "internal/client/client.go",
+        "internal/client/cache_test.go"
+      ],
+      "validated_outcome": "TestCacheKeyUsesFullSHA256Digest verifies cache keys are 64 hex characters."
     }
   ]
 }

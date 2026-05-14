@@ -26,3 +26,11 @@ func TestCacheKeySortsParameters(t *testing.T) {
 		t.Fatalf("cacheKey should be independent of map iteration/insertion order: %q != %q", leftKey, rightKey)
 	}
 }
+
+func TestCacheKeyUsesFullSHA256Digest(t *testing.T) {
+	c := &Client{}
+	key := c.cacheKey("/xml.response", map[string]string{"Command": "namecheap.users.getBalances"})
+	if len(key) != 64 {
+		t.Fatalf("cacheKey length = %d, want full SHA-256 hex length 64", len(key))
+	}
+}
