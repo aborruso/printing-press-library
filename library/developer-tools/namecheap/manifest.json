@@ -1,0 +1,39 @@
+{
+  "manifest_version": "0.3",
+  "name": "namecheap-pp-mcp",
+  "display_name": "Namecheap",
+  "version": "3.10.0",
+  "description": "Namecheap API surface as MCP tools.",
+  "author": {
+    "name": "CLI Printing Press"
+  },
+  "license": "Apache-2.0",
+  "server": {
+    "type": "binary",
+    "entry_point": "bin/namecheap-pp-mcp",
+    "mcp_config": {
+      "command": "${__dirname}/bin/namecheap-pp-mcp",
+      "args": [],
+      "env": {
+        "NAMECHEAP_API_KEY_QUERY": "${user_config.namecheap_api_key_query}"
+      }
+    }
+  },
+  "user_config": {
+    "namecheap_api_key_query": {
+      "type": "string",
+      "title": "NAMECHEAP_API_KEY_QUERY",
+      "description": "Sets NAMECHEAP_API_KEY_QUERY for the Namecheap MCP server.",
+      "sensitive": true,
+      "required": true
+    }
+  },
+  "compatibility": {
+    "claude_desktop": ">=1.0.0",
+    "platforms": [
+      "darwin",
+      "linux",
+      "win32"
+    ]
+  }
+}
