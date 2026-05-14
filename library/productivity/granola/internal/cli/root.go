@@ -39,6 +39,10 @@ type rootFlags struct {
 	rateLimit     float64
 	dataSource    string
 	freshnessMeta any
+	// PATCH(auto-refresh): --no-refresh hard opt-out for the
+	// per-command sync that PersistentPreRunE fires. Bound in U3;
+	// referenced by autoRefreshOptedOut.
+	noRefresh bool
 
 	// deliverBuf captures command output when --deliver is set to a
 	// non-stdout sink. Flushed to the sink after Execute returns.
