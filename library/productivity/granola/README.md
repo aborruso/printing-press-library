@@ -238,6 +238,18 @@ This CLI is designed for AI agent consumption:
 
 Exit codes: `0` success, `2` usage error, `3` not found, `4` auth error, `5` API error, `7` rate limited, `10` config error.
 
+## Auto-Refresh
+
+Every command auto-refreshes the local store as its first action. You do not need to run `granola-pp-cli sync` before `meetings list`, `panel get`, or any other read.
+
+Both auth surfaces refresh independently: the desktop encrypted cache (`~/Library/Application Support/Granola/cache-v6.json.enc`) via the embedded `sync` path, and the public REST API (when `GRANOLA_API_KEY` is set or an access token is saved) via the embedded `sync-api` path. When both are available, both refresh routines fire. When neither is configured, auto-refresh is a silent no-op.
+
+A one-line provenance summary lands on stderr in interactive mode: `auto-refresh: cache=ok (1.2s, 47 rows)`. It is suppressed under `--agent`, `--json`, `--compact`, `--quiet`, and when stderr is piped — so agent and CI consumers see no chatter on stdout or stderr.
+
+Opt out with `--no-refresh` for a single command, `GRANOLA_NO_AUTO_REFRESH=1` for a shell session or CI job, or by saving a profile with `--no-refresh` (`granola-pp-cli profile save fast --no-refresh`). The skip list (commands that never auto-refresh) is `sync`, `sync-api`, `auth`, `doctor`, `help`, `version`, `completion`, `agent-context`, `profile`, `feedback`, `which`. Run `granola-pp-cli agent-context --json` to see the full contract as structured JSON.
+
+Auto-refresh reads from Granola desktop's encrypted cache file; it does not poke the desktop app to refresh from Granola servers. The freshness ceiling is whatever Granola desktop has already pulled.
+
 ## Use with Claude Code
 
 Install the focused skill — it auto-installs the CLI on first invocation:
@@ -335,7 +347,7 @@ Environment variables:
 - **WorkOS token expired warning** — Open the Granola desktop app once — it refreshes the token. Or pass a personal API key via GRANOLA_API_KEY to route through the public API instead.
 - **memo run --since reports duplicate_of** — A file with the same title-date-attendees fingerprint already exists in --to. Pick a different `--to` directory, remove the existing file, or `mv` it out of the way.
 - **Transcript missing for a recent meeting** — Granola hasn’t flushed it yet. Run warm <id> <q> --launch to bring it forward in the GUI, wait 30 s, then re-run preflight.
-- **stats / talktime returns empty rows** — Run `sync` first; the store needs to be populated before these local-store queries return data.
+- **stats / talktime returns empty rows** — Auto-refresh runs `sync` on every command, so this usually means there is nothing to sync. Confirm Granola desktop is signed in and has captured at least one meeting; run `granola-pp-cli doctor` to verify the cache is decryptable. If you bypassed auto-refresh with `--no-refresh` or `GRANOLA_NO_AUTO_REFRESH=1`, run `granola-pp-cli sync` manually.
 
 ---
 
