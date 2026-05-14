@@ -55,5 +55,6 @@ func (s *Store) Clear() error {
 
 func (s *Store) path(key string) string {
 	h := sha256.Sum256([]byte(key))
-	return filepath.Join(s.Dir, hex.EncodeToString(h[:8])+".json")
+	// PATCH(namecheap-internal-cache-full-digest): match the client cache and keep the full digest to avoid avoidable filename collisions.
+	return filepath.Join(s.Dir, hex.EncodeToString(h[:])+".json")
 }
