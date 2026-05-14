@@ -87,7 +87,13 @@ type refreshResult struct {
 // It is best-effort end-to-end: any panic, error, or unexpected state
 // is captured into a refreshResult and the function returns without
 // propagating an error. The caller's command always proceeds.
-func runAutoRefresh(cmd *cobra.Command, flags *rootFlags) {
+//
+// Declared as a variable so integration tests can swap in a spy that
+// records call count without invoking the real cache/API sync paths.
+// Production reads runAutoRefreshImpl directly.
+var runAutoRefresh = runAutoRefreshImpl
+
+func runAutoRefreshImpl(cmd *cobra.Command, flags *rootFlags) {
 	if cmd == nil || flags == nil {
 		return
 	}
