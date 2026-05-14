@@ -47,12 +47,12 @@ Do not activate this CLI for requests that require creating, updating, deleting,
 
 **dns** — Manage dns
 
-- `namecheap-pp-cli dns domains-get-email-forwarding` — Runs `namecheap.domains.dns.getEmailForwarding`.
-- `namecheap-pp-cli dns domains-get-hosts` — Runs `namecheap.domains.dns.getHosts`.
-- `namecheap-pp-cli dns domains-get-list` — Get DNS nameserver type and nameservers.
-- `namecheap-pp-cli dns domains-set-custom` — Runs `namecheap.domains.dns.setCustom`.
-- `namecheap-pp-cli dns domains-set-default` — Switch a domain to Namecheap default DNS.
-- `namecheap-pp-cli dns domains-set-hosts` — Runs `namecheap.domains.dns.setHosts`; HostName1/RecordType1/Address1/TTL1 style parameters can be passed via...
+- `namecheap-pp-cli dns get-email-forwarding` — Runs `namecheap.domains.dns.getEmailForwarding`.
+- `namecheap-pp-cli dns get-hosts` — Runs `namecheap.domains.dns.getHosts`.
+- `namecheap-pp-cli dns get-list` — Get DNS nameserver type and nameservers.
+- `namecheap-pp-cli dns set-custom` — Runs `namecheap.domains.dns.setCustom`.
+- `namecheap-pp-cli dns set-default` — Switch a domain to Namecheap default DNS.
+- `namecheap-pp-cli dns set-hosts` — Runs `namecheap.domains.dns.setHosts`; HostName1/RecordType1/Address1/TTL1 style parameters can be passed via...
 
 **domains** — Manage domains
 
@@ -109,7 +109,7 @@ Add `--agent` to any command. Expands to: `--json --compact --no-input --no-colo
 - **Filterable** — `--select` keeps a subset of fields. Dotted paths descend into nested structures; arrays traverse element-wise. Critical for keeping context small on verbose APIs:
 
   ```bash
-  namecheap-pp-cli dns domains-get-email-forwarding --agent --select id,name,status
+  namecheap-pp-cli dns get-email-forwarding --agent --select id,name,status
   ```
 - **Previewable** — `--dry-run` shows the request without sending
 - **Offline-friendly** — sync/search commands can use the local SQLite store when available
@@ -161,7 +161,7 @@ A profile is a saved set of flag values, reused across invocations. Use it when 
 
 ```
 namecheap-pp-cli profile save briefing --json
-namecheap-pp-cli --profile briefing dns domains-get-email-forwarding
+namecheap-pp-cli --profile briefing dns get-email-forwarding
 namecheap-pp-cli profile list --json
 namecheap-pp-cli profile show briefing
 namecheap-pp-cli profile delete briefing --yes
