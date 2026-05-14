@@ -151,6 +151,16 @@
         "internal/cliutil/cliutil_test.go"
       ],
       "validated_outcome": "TestAuthErrorHelpers verifies ApiKey query params are redacted; go test ./... passes."
+    },
+    {
+      "id": "namecheap-private-cache-permissions",
+      "summary": "Write Namecheap client cache directories and files with owner-only permissions.",
+      "reason": "Cached Namecheap responses can include account, domain, balance, and certificate details; local users should not be able to read them through world-readable cache paths.",
+      "files": [
+        "internal/client/client.go",
+        "internal/client/cache_test.go"
+      ],
+      "validated_outcome": "TestWriteCacheUsesPrivatePermissions verifies cache directories use 0700 and cache files use 0600."
     }
   ]
 }
