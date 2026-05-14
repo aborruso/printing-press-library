@@ -94,8 +94,12 @@ func (c *Client) cacheKey(path string, params map[string]string) string {
 	if c.Config != nil {
 		key += "|auth_source=" + c.Config.AuthSource
 		if authHeader := c.Config.AuthHeader(); authHeader != "" {
-			authHash := sha256.Sum256([]byte(c.Config.AuthHeader()))
-			key += "|auth=" + hex.EncodeToString(authHash[:8])
+			// PATCH: use the full SHA-256 instead of 8 bytes. The auth-hash
+			// only namespaces the cache so two accounts don't share entries;
+			// truncation to 64 bits raises the collision probability above
+			// the threshold where two account hashes could coincide.
+			authHash := sha256.Sum256([]byte(authHeader))
+			key += "|auth=" + hex.EncodeToString(authHash[:])
 		}
 		if c.Config.Path != "" {
 			key += "|config_path=" + c.Config.Path
@@ -109,8 +113,11 @@ func (c *Client) cacheKey(path string, params map[string]string) string {
 	for _, k := range paramKeys {
 		key += k + "=" + params[k]
 	}
+	// PATCH: use the full SHA-256 digest as the cache-file basename.
+	// Truncating to 64 bits raised the collision probability — two distinct
+	// paths could resolve to the same filename and serve a stale body.
 	h := sha256.Sum256([]byte(key))
-	return hex.EncodeToString(h[:8])
+	return hex.EncodeToString(h[:])
 }
 
 func (c *Client) readCache(path string, params map[string]string) (json.RawMessage, bool) {

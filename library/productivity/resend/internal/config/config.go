@@ -79,17 +79,26 @@ func Load(configPath string) (*Config, error) {
 	return cfg, nil
 }
 
+// PATCH: AuthHeader must not clobber AuthSource set by Load(). Load distinguishes
+// env-loaded keys ("env:RESEND_API_KEY") from config-file-loaded keys ("config").
+// Previously this method unconditionally rewrote AuthSource to the env value
+// whenever ResendApiKey was non-empty, masking the config-file source from
+// client.cacheKey() which captures AuthSource for cache scoping.
 func (c *Config) AuthHeader() string {
 	if c.AuthHeaderVal != "" {
 		return c.AuthHeaderVal
 	}
 	// Env-var token wins over file-stored AccessToken (env > config convention).
 	if c.ResendApiKey != "" {
-		c.AuthSource = "env:RESEND_API_KEY"
+		if c.AuthSource == "" {
+			c.AuthSource = "env:RESEND_API_KEY"
+		}
 		return "Bearer " + c.ResendApiKey
 	}
 	if c.AccessToken != "" {
-		c.AuthSource = "oauth2"
+		if c.AuthSource == "" {
+			c.AuthSource = "oauth2"
+		}
 		return "Bearer " + c.AccessToken
 	}
 	return ""

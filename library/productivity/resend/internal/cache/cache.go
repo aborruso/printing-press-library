@@ -54,6 +54,9 @@ func (s *Store) Clear() error {
 }
 
 func (s *Store) path(key string) string {
+	// PATCH: full SHA-256 (was h[:8]); 64-bit truncation made cache-file
+	// collisions plausible enough that a stale body could be served for the
+	// wrong endpoint.
 	h := sha256.Sum256([]byte(key))
-	return filepath.Join(s.Dir, hex.EncodeToString(h[:8])+".json")
+	return filepath.Join(s.Dir, hex.EncodeToString(h[:])+".json")
 }

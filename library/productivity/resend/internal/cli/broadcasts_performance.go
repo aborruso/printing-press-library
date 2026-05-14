@@ -41,6 +41,9 @@ local store with delivery / open / click / bounce counts.`,
 			}
 			defer db.Close()
 
+			// Single LEFT JOIN with GROUP BY replaces 4 correlated subqueries
+			// that each did a full LIKE scan of the events table per broadcast.
+			// Now one events scan per broadcast row, producing all 4 counts.
 			q := `
 				SELECT
 					b.id,
@@ -49,17 +52,21 @@ local store with delivery / open / click / bounce counts.`,
 					COALESCE(b.status, '') AS status,
 					COALESCE(b.sent_at, '') AS sent_at,
 					COALESCE(b.audience_id, '') AS audience_id,
-					(SELECT COUNT(*) FROM events ev WHERE ev.name = 'email.delivered'  AND ev.data LIKE '%"' || b.id || '"%') AS delivered,
-					(SELECT COUNT(*) FROM events ev WHERE ev.name = 'email.opened'     AND ev.data LIKE '%"' || b.id || '"%') AS opened,
-					(SELECT COUNT(*) FROM events ev WHERE ev.name = 'email.clicked'    AND ev.data LIKE '%"' || b.id || '"%') AS clicked,
-					(SELECT COUNT(*) FROM events ev WHERE ev.name = 'email.bounced'    AND ev.data LIKE '%"' || b.id || '"%') AS bounced
+					COALESCE(SUM(CASE WHEN ev.name = 'email.delivered' THEN 1 ELSE 0 END), 0) AS delivered,
+					COALESCE(SUM(CASE WHEN ev.name = 'email.opened'    THEN 1 ELSE 0 END), 0) AS opened,
+					COALESCE(SUM(CASE WHEN ev.name = 'email.clicked'   THEN 1 ELSE 0 END), 0) AS clicked,
+					COALESCE(SUM(CASE WHEN ev.name = 'email.bounced'   THEN 1 ELSE 0 END), 0) AS bounced
 				FROM broadcasts b
+				LEFT JOIN events ev
+					ON ev.name IN ('email.delivered','email.opened','email.clicked','email.bounced')
+					AND ev.data LIKE '%"' || b.id || '"%'
 			`
 			qArgs := []any{}
 			if statusFilter != "" {
 				q += " WHERE b.status = ?"
 				qArgs = append(qArgs, statusFilter)
 			}
+			q += " GROUP BY b.id, b.name, b.subject, b.status, b.sent_at, b.audience_id, b.created_at"
 			q += " ORDER BY b.sent_at DESC, b.created_at DESC"
 
 			rows, err := db.Query(q, qArgs...)

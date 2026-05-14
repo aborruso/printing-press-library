@@ -2,6 +2,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -79,16 +80,11 @@ N GET /domains/{id} calls.`,
 				}
 				h.ClickTracking = clickInt == 1
 				h.OpenTracking = openInt == 1
-				// Best-effort extraction of record statuses; records is an array of {record, status, type, ...}.
-				if strings.Contains(recordsJSON, `"DKIM"`) {
-					h.DKIM = extractRecordStatus(recordsJSON, "DKIM")
-				}
-				if strings.Contains(recordsJSON, `"SPF"`) {
-					h.SPF = extractRecordStatus(recordsJSON, "SPF")
-				}
-				if strings.Contains(recordsJSON, `"MX"`) {
-					h.MX = extractRecordStatus(recordsJSON, "MX")
-				}
+				// Parse domain DNS records via encoding/json so field reorder
+				// or unrelated "status" values in the JSON can't fool the match.
+				h.DKIM = recordStatus(recordsJSON, "DKIM")
+				h.SPF = recordStatus(recordsJSON, "SPF")
+				h.MX = recordStatus(recordsJSON, "MX")
 				h.Healthy = h.Status == "verified"
 				results = append(results, h)
 			}
@@ -142,23 +138,26 @@ N GET /domains/{id} calls.`,
 	return cmd
 }
 
-// extractRecordStatus does a best-effort substring search for the status of a named record type.
-// We avoid pulling a JSON dependency since the data shape is simple.
-func extractRecordStatus(jsonStr, recordType string) string {
-	// Look for: {..."record":"DKIM",..."status":"verified"...}
-	idx := strings.Index(jsonStr, `"record":"`+recordType+`"`)
-	if idx < 0 {
+// recordStatus parses the records JSON and returns the status for the named
+// record type, case-insensitively. records is an array of objects with at
+// least {record, status, type} fields per Resend's domain schema.
+func recordStatus(jsonStr, recordType string) string {
+	if jsonStr == "" {
 		return ""
 	}
-	tail := jsonStr[idx:]
-	statusIdx := strings.Index(tail, `"status":"`)
-	if statusIdx < 0 {
+	var records []struct {
+		Record string `json:"record"`
+		Status string `json:"status"`
+		Type   string `json:"type"`
+	}
+	if err := json.Unmarshal([]byte(jsonStr), &records); err != nil {
 		return ""
 	}
-	start := statusIdx + len(`"status":"`)
-	end := strings.Index(tail[start:], `"`)
-	if end < 0 {
-		return ""
+	want := strings.ToUpper(recordType)
+	for _, r := range records {
+		if strings.ToUpper(r.Record) == want {
+			return r.Status
+		}
 	}
-	return tail[start : start+end]
+	return ""
 }

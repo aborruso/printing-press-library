@@ -49,7 +49,10 @@ store and returns the full timeline for one address.`,
 			}
 			defer db.Close()
 
-			pattern := "%\"" + recipient + "\"%"
+			// Escape LIKE metacharacters so addresses containing '%' or '_'
+			// (e.g., alice_b@example.com) don't widen the match.
+			escaped := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(recipient)
+			pattern := "%\"" + escaped + "\"%"
 			rows, err := db.Query(`
 				SELECT
 					e.id,
@@ -59,7 +62,7 @@ store and returns the full timeline for one address.`,
 					COALESCE(e.created_at, '') AS sent_at,
 					COALESCE(json_extract(e.data, '$.to'), '') AS to_field
 				FROM emails e
-				WHERE json_extract(e.data, '$.to') LIKE ?
+				WHERE json_extract(e.data, '$.to') LIKE ? ESCAPE '\'
 					OR json_extract(e.data, '$.to[0]') = ?
 				ORDER BY e.created_at DESC
 				LIMIT ?
