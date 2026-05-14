@@ -126,6 +126,9 @@ func newRootCmd(flags *rootFlags) *cobra.Command {
 		Long: `Generate videos and images on OpenArt from the terminal. Spend your existing OpenArt credits across Seedance, Kling, Veo, Wan, Grok Imagine and more.
 
 Highlights (not in the official API docs):
+  • video gen   Submit + poll + download videos in one command (Seedance, Kling, Veo, Wan, Grok Imagine).
+  • image gen   Submit + poll + download images in one command (Nano Banana, GPT Image 2, FLUX, Seedream, Imagen).
+  • video gen --no-audio   Disable Seedance's auto-generated audio (workaround for OutputAudioSensitiveContentDetected; halves cost).
   • cost estimate   Project the credit cost of a generation before you spend.
   • credits burn   Aggregate credit spend by model, tool, day, or project.
   • credits forecast   Project how many weeks of runway your current balance gives at recent burn.
@@ -246,6 +249,7 @@ Run 'openart-pp-cli doctor' to verify auth and connectivity.`,
 	rootCmd.AddCommand(newVersionCliCmd())
 	// Hand-written novel commands (the headline UX).
 	rootCmd.AddCommand(newVideoCmd(flags))
+	rootCmd.AddCommand(newImageCmd(flags))
 	rootCmd.AddCommand(newDownloadCmd(flags))
 	rootCmd.AddCommand(newCostCmd(flags))
 	rootCmd.AddCommand(newCompareCmd(flags))

@@ -43,6 +43,7 @@ func newVideoGenCmd(flags *rootFlags) *cobra.Command {
 		aspectRatio  string
 		resolution   string
 		autoEnhance  bool
+		noAudio      bool
 		projectID    string
 		folderID     string
 		wait         bool
@@ -130,22 +131,26 @@ Combine with --download <dir> to stream the finished MP4s to disk.`,
 				return printJSONFiltered(cmd.OutOrStdout(), out, flags)
 			}
 			if flags.dryRun {
+				body := map[string]any{
+					"prompt":            prompt,
+					"model":             model.Slug,
+					"projectId":         projectID,
+					"folderId":          nilOrString(folderID),
+					"videoCount":        count,
+					"duration":          duration,
+					"aspectRatio":       aspectRatio,
+					"resolution":        resolution,
+					"autoEnhancePrompt": autoEnhance,
+					"enableUnlimited":   true,
+				}
+				if noAudio {
+					body["generateAudio"] = false
+				}
 				out := map[string]any{
 					"action":        "submit",
 					"capability_id": model.Capability(openartmodels.FormText2Video),
 					"endpoint":      "/forms/creations/" + url.PathEscape(model.Capability(openartmodels.FormText2Video)),
-					"body": map[string]any{
-						"prompt":            prompt,
-						"model":             model.Slug,
-						"projectId":         projectID,
-						"folderId":          nilOrString(folderID),
-						"videoCount":        count,
-						"duration":          duration,
-						"aspectRatio":       aspectRatio,
-						"resolution":        resolution,
-						"autoEnhancePrompt": autoEnhance,
-						"enableUnlimited":   true,
-					},
+					"body":          body,
 					"estimate_credits": estimate,
 				}
 				return printJSONFiltered(cmd.OutOrStdout(), out, flags)
@@ -177,6 +182,16 @@ Combine with --download <dir> to stream the finished MP4s to disk.`,
 				"resolution":        resolution,
 				"autoEnhancePrompt": autoEnhance,
 				"enableUnlimited":   true,
+			}
+			if noAudio {
+				// Verified field name via 2026-05-13 JS-bundle scan: Zod
+				// schema had `generateAudio: a.z.boolean().default(!0)`.
+				// Submitting `generateAudio: false` skips Seedance's audio
+				// track (and its OutputAudioSensitiveContentDetected
+				// failure class). Cost matrix observed in the bundle shows
+				// noAudio is also CHEAPER on Seedance (e.g. 720p/normal:
+				// audio=135 credits, noAudio=70).
+				body["generateAudio"] = false
 			}
 
 			submitPath := "/forms/creations/" + url.PathEscape(capability)
@@ -261,6 +276,7 @@ Combine with --download <dir> to stream the finished MP4s to disk.`,
 	cmd.Flags().StringVar(&aspectRatio, "aspect-ratio", "16:9", "Aspect ratio (16:9, 9:16, 1:1)")
 	cmd.Flags().StringVar(&resolution, "resolution", "720p", "Output resolution")
 	cmd.Flags().BoolVar(&autoEnhance, "auto-enhance", false, "Run prompt through OpenArt auto-polish before submit")
+	cmd.Flags().BoolVar(&noAudio, "no-audio", false, "Disable Seedance's auto-generated audio track. Workaround for OutputAudioSensitiveContentDetected moderation failures; also halves the cost on Seedance 2.0 normal mode")
 	cmd.Flags().StringVar(&projectID, "project-id", "", "Project to file the generation under (default: workspace's default project)")
 	cmd.Flags().StringVar(&folderID, "folder-id", "", "Optional folder ID")
 	cmd.Flags().BoolVar(&wait, "wait", false, "Poll until each video reaches status=completed")

@@ -35,6 +35,25 @@ Spend your OpenArt credits programmatically. Generate videos with Seedance, Klin
 
 These capabilities aren't available in any other tool for this API.
 
+### Generation
+- **`video gen`** — Submit + poll + download videos in one command.
+
+  ```bash
+  openart-pp-cli video gen --prompt "..." --model byte-plus-seedance-2 --duration 10 --count 2 --wait --download ./out/
+  ```
+
+- **`image gen`** — Submit + poll + download images in one command. Nano Banana is verified; other image models (GPT Image 2, FLUX 2 Pro, Seedream, Imagen 4, Qwen Image) require `--accept-experimental` because their submit shapes are inferred from the JS bundle but not individually verified live.
+
+  ```bash
+  openart-pp-cli image gen --prompt "donkey on Mercer Island" --model nano-banana --count 2 --wait --download ./out/
+  ```
+
+- **`video gen --no-audio`** — Disables Seedance's auto-generated audio. Workaround for `OutputAudioSensitiveContentDetected` failures; halves the cost on Seedance 2.0 normal mode.
+
+  ```bash
+  openart-pp-cli video gen --prompt "..." --model seedance2 --no-audio --wait
+  ```
+
 ### Credit-aware spending
 - **`cost estimate`** — Project the credit cost of a generation before you spend.
 

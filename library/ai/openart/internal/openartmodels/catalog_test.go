@@ -92,3 +92,69 @@ func TestFilterVideo(t *testing.T) {
 		}
 	}
 }
+
+func TestFilterImage(t *testing.T) {
+	image := FilterImage()
+	if len(image) < 5 {
+		t.Fatalf("expected at least 5 image models in catalog, got %d", len(image))
+	}
+	for _, m := range image {
+		if m.Family != FamilyImage {
+			t.Errorf("FilterImage returned non-image model: %s", m.Slug)
+		}
+	}
+}
+
+func TestImageCapability(t *testing.T) {
+	m := FindBySlug("nano-banana")
+	if m == nil {
+		t.Fatal("nano-banana not in catalog")
+	}
+	if got := m.Capability(FormText2Image); got != "create-image:reference:nano-banana" {
+		t.Errorf("nano-banana Capability = %q; want create-image:reference:nano-banana", got)
+	}
+	if got := m.Capability(FormImage2Image); got != "create-image:reference:nano-banana" {
+		t.Errorf("nano-banana Capability(image2image) = %q; want create-image:reference:nano-banana", got)
+	}
+}
+
+func TestImageVsVideoCapability(t *testing.T) {
+	v := FindBySlug("byte-plus-seedance-2")
+	if v == nil {
+		t.Fatal("byte-plus-seedance-2 not in catalog")
+	}
+	if got := v.Capability(FormText2Video); got != "byte-plus-seedance-2:text2video" {
+		t.Errorf("video Capability changed: %q", got)
+	}
+}
+
+func TestImageEstimateCreditsIgnoresDuration(t *testing.T) {
+	m := FindBySlug("nano-banana")
+	if m == nil {
+		t.Fatal("nano-banana not in catalog")
+	}
+	base := m.EstimateCredits(0, 1, "1024x1024")
+	withDuration := m.EstimateCredits(10, 1, "1024x1024")
+	if base != withDuration {
+		t.Errorf("image EstimateCredits should ignore duration: base=%d withDuration=%d", base, withDuration)
+	}
+	bigger := m.EstimateCredits(0, 1, "1536x1024")
+	if bigger <= base {
+		t.Errorf("1536x1024 should cost more than 1024x1024: 1024=%d, 1536=%d", base, bigger)
+	}
+	multi := m.EstimateCredits(0, 4, "1024x1024")
+	if multi != base*4 {
+		t.Errorf("count multiplier broken on image: 1=%d, 4=%d", base, multi)
+	}
+}
+
+func TestExperimentalFlag(t *testing.T) {
+	nano := FindBySlug("nano-banana")
+	if nano == nil || nano.Experimental {
+		t.Errorf("nano-banana should be verified (Experimental=false)")
+	}
+	gpt := FindBySlug("gpt-image-2")
+	if gpt == nil || !gpt.Experimental {
+		t.Errorf("gpt-image-2 should be Experimental=true")
+	}
+}

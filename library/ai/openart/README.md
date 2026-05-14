@@ -93,6 +93,26 @@ openart-pp-cli history mock-value
 
 These capabilities aren't available in any other tool for this API.
 
+### Generation
+
+- **`video gen`** — Submit + poll + download videos in one command (Seedance, Kling, Veo, Wan, Grok Imagine).
+
+  ```bash
+  openart-pp-cli video gen --prompt "a phoenix" --model byte-plus-seedance-2 --duration 10 --count 2 --wait --download ./out/
+  ```
+
+- **`image gen`** — Submit + poll + download images in one command. Nano Banana is verified end-to-end; GPT Image 2, FLUX 2 Pro, Seedream 4, Imagen 4, and Qwen Image are gated as `--accept-experimental` (their submit shapes are inferred from the JS bundle but not individually exercised live).
+
+  ```bash
+  openart-pp-cli image gen --prompt "donkey on Mercer Island" --model nano-banana --count 2 --wait --download ./out/
+  ```
+
+- **`video gen --no-audio`** — Disables Seedance's auto-generated audio track. Workaround for `OutputAudioSensitiveContentDetected` moderation failures, and also halves the cost on Seedance 2.0 normal mode.
+
+  ```bash
+  openart-pp-cli video gen --prompt "..." --model seedance2 --no-audio --wait
+  ```
+
 ### Credit-aware spending
 - **`cost estimate`** — Project the credit cost of a generation before you spend.
 

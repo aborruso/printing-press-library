@@ -13,11 +13,21 @@
   "run_id": "20260513-152641",
   "description": "Generate videos and images on OpenArt from the terminal. Spend your existing OpenArt credits across Seedance, Kling, Veo, Wan, Grok Imagine and more.",
   "mcp_binary": "openart-pp-mcp",
-  "mcp_tool_count": 20,
+  "mcp_tool_count": 22,
   "mcp_ready": "partial",
   "api_version": "0.1.0",
   "auth_type": "cookie",
   "novel_features": [
+    {
+      "name": "Image generation",
+      "command": "image gen",
+      "description": "Submit + poll + download images in one command (Nano Banana verified; GPT Image 2, FLUX 2 Pro, Seedream, Imagen 4, Qwen Image gated as --accept-experimental)."
+    },
+    {
+      "name": "Disable Seedance audio",
+      "command": "video gen",
+      "description": "--no-audio flag turns off Seedance's auto-generated audio track. Workaround for OutputAudioSensitiveContentDetected moderation failures; halves the cost on Seedance 2.0 normal mode."
+    },
     {
       "name": "Cost preview before submit",
       "command": "cost estimate",

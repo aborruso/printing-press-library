@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -33,15 +34,39 @@ func newFormsPromotedCmd(flags *rootFlags) *cobra.Command {
 			if !cmd.Flags().Changed("prompt") && !flags.dryRun {
 				return fmt.Errorf("required flag \"%s\" not set", "prompt")
 			}
-			if !cmd.Flags().Changed("model") && !flags.dryRun {
-				return fmt.Errorf("required flag \"%s\" not set", "model")
-			}
-			if !cmd.Flags().Changed("project-id") && !flags.dryRun {
-				return fmt.Errorf("required flag \"%s\" not set", "project-id")
+			// `forms` is the low-level video-shape submit. The body it
+			// assembles (videoCount/duration/aspectRatio/resolution=720p) is
+			// rejected by image capability ids. Route image users to the
+			// dedicated `image gen` command instead of letting them 404.
+			if len(args) >= 1 {
+				cap := args[0]
+				if strings.HasPrefix(cap, "create-image:") || strings.Contains(cap, ":text2image") || strings.Contains(cap, ":image2image") {
+					return fmt.Errorf("capability_id %q is an image form; use 'openart-pp-cli image gen --model <slug>' instead. The low-level 'forms' command only handles video-shape bodies", cap)
+				}
 			}
 			c, err := flags.newClient()
 			if err != nil {
 				return err
+			}
+
+			// Auto-derive --model from the capability_id's slug half when
+			// the user did not pass it explicitly. Capability shape is
+			// "<slug>:<form-type>" for video; the slug is everything before
+			// the first colon.
+			if !cmd.Flags().Changed("model") && len(args) >= 1 {
+				if i := strings.IndexByte(args[0], ':'); i > 0 {
+					bodyModel = args[0][:i]
+				}
+			}
+
+			// Auto-resolve --project-id via /projects/default when not given.
+			// dry-run skips network so it can complete without the resolve.
+			if !cmd.Flags().Changed("project-id") && bodyProjectId == "" && !flags.dryRun {
+				resolved, perr := resolveDefaultProject(c)
+				if perr != nil {
+					return fmt.Errorf("auto-resolve project-id failed: %w (pass --project-id to override)", perr)
+				}
+				bodyProjectId = resolved
 			}
 
 			path := "/forms/creations/{capability_id}"

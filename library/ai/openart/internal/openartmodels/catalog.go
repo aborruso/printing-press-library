@@ -31,6 +31,19 @@ const (
 	FamilyAudio Family = "audio"
 )
 
+// CapabilityPattern templates for the requestFormId that gets POSTed to
+// /forms/creations/. Video models use "<slug>:<form-type>" (the slug-and-form
+// pattern); image models use a fixed prefix observed via browser-sniff:
+// "create-image:reference:<slug>". Send these distinct patterns; the
+// internal capabilityId field on the resource record (e.g.
+// "nano-banana:text2image") is NOT what gets POSTed — that's the resolved
+// internal id in OpenArt's records, and posting it 404s.
+//
+// Verified via 2026-05-13 browser-sniff against nano-banana.
+const (
+	CapabilityPatternImage = "create-image:reference:%s"
+)
+
 // Model describes one OpenArt model entry.
 type Model struct {
 	// Slug is the URL-safe identifier (e.g. "byte-plus-seedance-2", "kling2-6").
@@ -61,18 +74,44 @@ type Model struct {
 	// SupportsMultiShots is true when the model produces multi-shot output.
 	SupportsMultiShots bool
 	// CreditsPerVideoDefault is the credits cost for one generation at the
-	// model's default settings (typically 720p, mid-range duration). Used by
-	// `cost estimate` and `models cheapest` for ranking and forecasting.
+	// model's default settings. For video, that's typically 720p, mid-range
+	// duration. For image, it's the per-image cost at the default
+	// resolution/aspect-ratio. Used by `cost estimate` and `models cheapest`
+	// for ranking and forecasting.
 	// 0 means "unknown — verify via /suite/api/topaz/estimate".
 	CreditsPerVideoDefault int
 	// Tier is "fast" for low-latency models; empty otherwise.
 	Tier string
 	// Recommended is true when the model appears in the picker's "Recommended" group.
 	Recommended bool
+	// PixelResolutions lists output sizes for image-family models
+	// (e.g. "1024x1024", "1536x1024"). Empty for video models.
+	PixelResolutions []string
+	// AspectRatios lists supported aspect-ratio strings for image-family
+	// models (e.g. "1:1", "16:9", "9:16"). Empty for video models which use
+	// the standard Resolutions field.
+	AspectRatios []string
+	// Experimental marks an entry whose submit contract has NOT been
+	// end-to-end verified via browser-sniff. The CLI prints a warning when
+	// a user submits against an experimental model — it may 404 or require
+	// fields the catalog does not yet know about. Verified models have
+	// Experimental=false.
+	Experimental bool
 }
 
-// Capability returns the capability_id for a (slug, form) pair.
+// Capability returns the requestFormId that should be POSTed to
+// /suite/api/forms/creations/<id>. Family-aware: video uses
+// "<slug>:<form-type>", image uses "create-image:reference:<slug>".
+//
+// The form parameter is honored for video (text2video / image2video / etc.)
+// but is ignored for image — image models route through a single fixed
+// requestFormId pattern regardless of whether the user asked for
+// text2image or image2image (which is encoded in body fields like
+// `visualReferences`, not in the URL).
 func (m Model) Capability(form FormType) string {
+	if m.Family == FamilyImage {
+		return "create-image:reference:" + m.Slug
+	}
 	return m.Slug + ":" + string(form)
 }
 
@@ -227,6 +266,141 @@ var Catalog = []Model{
 		SupportsMultiShots:     true,
 		CreditsPerVideoDefault: 250,
 	},
+
+	// Image-family models. The submit-contract for `nano-banana` was
+	// verified end-to-end via browser-sniff on 2026-05-13 (request body,
+	// response envelope, polling URL, completion shape). Other entries are
+	// marked Experimental: true — they share the same body shape in the JS
+	// bundle but were not individually exercised against the live API.
+	// Submitting against an Experimental model surfaces a warning in the
+	// CLI; refresh-and-verify by running an actual gen and removing the
+	// flag.
+	{
+		Slug:                   "nano-banana",
+		DisplayName:            "Nano Banana",
+		Vendor:                 "Nano Banana",
+		Family:                 FamilyImage,
+		Description:            "Fast image generation with reference support",
+		SupportedForms:         []FormType{FormText2Image, FormImage2Image},
+		PixelResolutions:       []string{"1024x1024", "1024x1536", "1536x1024"},
+		AspectRatios:           []string{"1:1", "9:16", "16:9", "3:4", "4:3"},
+		SupportsReference:      true,
+		CreditsPerVideoDefault: 50, // observed: nano-banana submit consumed ~50 credits
+		Tier:                   "fast",
+	},
+	{
+		Slug:                   "nano-banana-pro",
+		DisplayName:            "Nano Banana Pro",
+		Vendor:                 "Nano Banana",
+		Family:                 FamilyImage,
+		Description:            "Higher-quality variant of Nano Banana",
+		SupportedForms:         []FormType{FormText2Image, FormImage2Image},
+		PixelResolutions:       []string{"1024x1024", "1536x1024", "1024x1536"},
+		AspectRatios:           []string{"1:1", "9:16", "16:9"},
+		SupportsReference:      true,
+		CreditsPerVideoDefault: 120,
+		Experimental:           true,
+	},
+	{
+		Slug:                   "gpt-image-2",
+		DisplayName:            "GPT Image 2",
+		Vendor:                 "OpenAI",
+		Family:                 FamilyImage,
+		Description:            "OpenAI's image-2 model with reference support",
+		SupportedForms:         []FormType{FormText2Image, FormImage2Image},
+		PixelResolutions:       []string{"1024x1024", "1024x1536", "1536x1024"},
+		AspectRatios:           []string{"1:1", "9:16", "16:9", "3:4", "4:3"},
+		SupportsReference:      true,
+		CreditsPerVideoDefault: 200,
+		Experimental:           true,
+	},
+	{
+		Slug:                   "gpt-image-1-5",
+		DisplayName:            "GPT Image 1.5",
+		Vendor:                 "OpenAI",
+		Family:                 FamilyImage,
+		Description:            "OpenAI's image-1.5 model",
+		SupportedForms:         []FormType{FormText2Image, FormImage2Image},
+		PixelResolutions:       []string{"1024x1024", "1024x1536", "1536x1024"},
+		AspectRatios:           []string{"1:1", "16:9", "9:16"},
+		SupportsReference:      true,
+		CreditsPerVideoDefault: 150,
+		Experimental:           true,
+	},
+	{
+		Slug:                   "flux-2-pro",
+		DisplayName:            "FLUX 2 Pro",
+		Vendor:                 "Black Forest Labs",
+		Family:                 FamilyImage,
+		Description:            "FLUX 2 Pro from Black Forest Labs",
+		SupportedForms:         []FormType{FormText2Image},
+		PixelResolutions:       []string{"1024x1024", "1024x1536", "1536x1024", "2048x2048"},
+		AspectRatios:           []string{"1:1", "16:9", "9:16", "3:4", "4:3"},
+		CreditsPerVideoDefault: 100,
+		Experimental:           true,
+	},
+	{
+		Slug:                   "flux-1-1-pro",
+		DisplayName:            "FLUX 1.1 Pro",
+		Vendor:                 "Black Forest Labs",
+		Family:                 FamilyImage,
+		Description:            "FLUX 1.1 Pro from Black Forest Labs",
+		SupportedForms:         []FormType{FormText2Image},
+		PixelResolutions:       []string{"1024x1024", "1024x1536", "1536x1024"},
+		AspectRatios:           []string{"1:1", "16:9", "9:16"},
+		CreditsPerVideoDefault: 80,
+		Experimental:           true,
+	},
+	{
+		Slug:                   "byte-plus-seedream-4",
+		DisplayName:            "Seedream 4",
+		Vendor:                 "BytePlus",
+		Family:                 FamilyImage,
+		Description:            "BytePlus Seedream 4 image model",
+		SupportedForms:         []FormType{FormText2Image, FormImage2Image},
+		PixelResolutions:       []string{"1024x1024", "1024x1536", "1536x1024"},
+		AspectRatios:           []string{"1:1", "16:9", "9:16", "3:4", "4:3"},
+		SupportsReference:      true,
+		CreditsPerVideoDefault: 100,
+		Experimental:           true,
+	},
+	{
+		Slug:                   "byte-plus-seedream-4-5",
+		DisplayName:            "Seedream 4.5",
+		Vendor:                 "BytePlus",
+		Family:                 FamilyImage,
+		Description:            "BytePlus Seedream 4.5 image model",
+		SupportedForms:         []FormType{FormText2Image, FormImage2Image},
+		PixelResolutions:       []string{"1024x1024", "1024x1536", "1536x1024"},
+		AspectRatios:           []string{"1:1", "16:9", "9:16"},
+		SupportsReference:      true,
+		CreditsPerVideoDefault: 130,
+		Experimental:           true,
+	},
+	{
+		Slug:                   "google-imagen-4",
+		DisplayName:            "Imagen 4",
+		Vendor:                 "Google DeepMind",
+		Family:                 FamilyImage,
+		Description:            "Google Imagen 4 image model",
+		SupportedForms:         []FormType{FormText2Image},
+		PixelResolutions:       []string{"1024x1024", "1024x1536", "1536x1024"},
+		AspectRatios:           []string{"1:1", "16:9", "9:16", "3:4", "4:3"},
+		CreditsPerVideoDefault: 250,
+		Experimental:           true,
+	},
+	{
+		Slug:                   "qwen-image-max",
+		DisplayName:            "Qwen Image Max",
+		Vendor:                 "Alibaba Qwen",
+		Family:                 FamilyImage,
+		Description:            "Alibaba Qwen Image Max model",
+		SupportedForms:         []FormType{FormText2Image},
+		PixelResolutions:       []string{"1024x1024", "1024x1536", "1536x1024"},
+		AspectRatios:           []string{"1:1", "16:9", "9:16"},
+		CreditsPerVideoDefault: 90,
+		Experimental:           true,
+	},
 }
 
 // FindBySlug returns the model with the given slug, or nil.
@@ -285,6 +459,17 @@ func FilterVideo() []Model {
 	out := make([]Model, 0, len(Catalog))
 	for _, m := range Catalog {
 		if m.Family == FamilyVideo {
+			out = append(out, m)
+		}
+	}
+	return out
+}
+
+// FilterImage returns the subset of Catalog with Family==FamilyImage.
+func FilterImage() []Model {
+	out := make([]Model, 0, len(Catalog))
+	for _, m := range Catalog {
+		if m.Family == FamilyImage {
 			out = append(out, m)
 		}
 	}
@@ -351,6 +536,23 @@ func (m Model) EstimateCredits(durationSec, count int, resolution string) int {
 	base := m.CreditsPerVideoDefault
 	if base == 0 {
 		return 0
+	}
+	// Image-family branch: no duration scaling; resolution multiplier is
+	// pixel-area-based. Default is 1024x1024; 1024x1536/1536x1024 = 1.5×;
+	// 2048x2048 = 4×. The video-shape resolution strings ("720p", "1080p",
+	// "4K") are video-only.
+	if m.Family == FamilyImage {
+		mult := 1
+		switch resolution {
+		case "1024x1536", "1536x1024":
+			mult = 3
+		case "2048x2048":
+			mult = 8
+		default:
+			// Unknown / 1024x1024 / empty falls through at 1×.
+			return base * count
+		}
+		return base * mult / 2 * count
 	}
 	defaultDuration := defaultDurationFor(m)
 	if defaultDuration == 0 {
