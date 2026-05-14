@@ -340,7 +340,7 @@ func classifyAPIError(err error, flags *rootFlags) error {
 		if flags != nil && flags.idempotent {
 			return writeNoop(flags, "already_exists", "already exists (no-op)")
 		}
-		classified := apiErr(err)
+		classified := apiErr(fmt.Errorf("%s", cliutil.SanitizeErrorBody(msg)))
 		writeAPIErrorEnvelope(flags, classified, ExitCode(classified))
 		return classified
 	case strings.Contains(msg, "HTTP 400") && cliutil.LooksLikeAuthError(msg):
@@ -358,11 +358,12 @@ func classifyAPIError(err error, flags *rootFlags) error {
 			"\n      Set it with: export NAMECHEAP_API_KEY=<your-key>"+
 			"\n      Run 'namecheap-pp-cli doctor' to check auth status.", err))
 	case strings.Contains(msg, "HTTP 404"):
-		return notFoundErr(fmt.Errorf("%w\nhint: resource not found. Run the 'list' command to see available items", err))
+		return notFoundErr(fmt.Errorf("%s\nhint: resource not found. Run the 'list' command to see available items", cliutil.SanitizeErrorBody(msg)))
 	case strings.Contains(msg, "HTTP 429"):
-		return rateLimitErr(err)
+		return rateLimitErr(fmt.Errorf("%s", cliutil.SanitizeErrorBody(msg)))
 	default:
-		return apiErr(err)
+		// PATCH(namecheap-cli-transport-error-sanitize): Go transport errors include full request URLs; Namecheap auth is query-param based.
+		return apiErr(fmt.Errorf("%s", cliutil.SanitizeErrorBody(msg)))
 	}
 }
 

@@ -161,6 +161,16 @@
         "internal/client/cache_test.go"
       ],
       "validated_outcome": "TestWriteCacheUsesPrivatePermissions verifies cache directories use 0700 and cache files use 0600."
+    },
+    {
+      "id": "namecheap-cli-transport-error-sanitize",
+      "summary": "Sanitize CLI transport/API error paths before printing to stderr.",
+      "reason": "Go transport errors can include full request URLs; Namecheap authenticates through query params, so CLI stderr must redact ApiKey-style query parameters like the MCP path.",
+      "files": [
+        "internal/cli/helpers.go",
+        "internal/cli/api_error_test.go"
+      ],
+      "validated_outcome": "TestClassifyAPIErrorSanitizesTransportURLCredentials verifies CLI transport errors do not expose ApiKey query params; go test ./... passes."
     }
   ]
 }
