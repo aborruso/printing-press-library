@@ -79,7 +79,7 @@ This checks your configuration and credentials.
 ### 4. Try Your First Command
 
 ```bash
-namecheap-pp-cli dns domains-get-email-forwarding
+namecheap-pp-cli dns get-email-forwarding
 ```
 
 ## Usage
@@ -92,12 +92,12 @@ Run `namecheap-pp-cli --help` for the full command reference and flag list.
 
 Manage dns
 
-- **`namecheap-pp-cli dns domains-get-email-forwarding`** - Runs `namecheap.domains.dns.getEmailForwarding`.
-- **`namecheap-pp-cli dns domains-get-hosts`** - Runs `namecheap.domains.dns.getHosts`.
-- **`namecheap-pp-cli dns domains-get-list`** - Get DNS nameserver type and nameservers.
-- **`namecheap-pp-cli dns domains-set-custom`** - Runs `namecheap.domains.dns.setCustom`.
-- **`namecheap-pp-cli dns domains-set-default`** - Switch a domain to Namecheap default DNS.
-- **`namecheap-pp-cli dns domains-set-hosts`** - Runs `namecheap.domains.dns.setHosts`; HostName1/RecordType1/Address1/TTL1 style parameters can be passed via --param-json in the patched CLI.
+- **`namecheap-pp-cli dns get-email-forwarding`** - Runs `namecheap.domains.dns.getEmailForwarding`.
+- **`namecheap-pp-cli dns get-hosts`** - Runs `namecheap.domains.dns.getHosts`.
+- **`namecheap-pp-cli dns get-list`** - Get DNS nameserver type and nameservers.
+- **`namecheap-pp-cli dns set-custom`** - Runs `namecheap.domains.dns.setCustom`.
+- **`namecheap-pp-cli dns set-default`** - Switch a domain to Namecheap default DNS.
+- **`namecheap-pp-cli dns set-hosts`** - Runs `namecheap.domains.dns.setHosts`; HostName1/RecordType1/Address1/TTL1 style parameters can be passed via --param-json in the patched CLI.
 
 ### domains
 
@@ -135,19 +135,19 @@ Manage users
 
 ```bash
 # Human-readable table (default in terminal, JSON when piped)
-namecheap-pp-cli dns domains-get-email-forwarding
+namecheap-pp-cli dns get-email-forwarding
 
 # JSON for scripting and agents
-namecheap-pp-cli dns domains-get-email-forwarding --json
+namecheap-pp-cli dns get-email-forwarding --json
 
 # Filter to specific fields
-namecheap-pp-cli dns domains-get-email-forwarding --json --select id,name,status
+namecheap-pp-cli dns get-email-forwarding --json --select id,name,status
 
 # Dry run — show the request without sending
-namecheap-pp-cli dns domains-get-email-forwarding --dry-run
+namecheap-pp-cli dns get-email-forwarding --dry-run
 
 # Agent mode — JSON + compact + no prompts in one flag
-namecheap-pp-cli dns domains-get-email-forwarding --agent
+namecheap-pp-cli dns get-email-forwarding --agent
 ```
 
 ## Agent Usage

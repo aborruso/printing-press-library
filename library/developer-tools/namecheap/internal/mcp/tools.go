@@ -25,7 +25,7 @@ import (
 // RegisterTools registers all API operations as MCP tools.
 func RegisterTools(s *server.MCPServer) {
 	s.AddTool(
-		mcplib.NewTool("dns_domains-get-email-forwarding",
+		mcplib.NewTool("dns_get-email-forwarding",
 			mcplib.WithDescription("Runs `namecheap.domains.dns.getEmailForwarding`. Optional: DomainName."),
 			mcplib.WithString("DomainName", mcplib.Description("Fully qualified domain name.")),
 			mcplib.WithReadOnlyHintAnnotation(true),
@@ -35,7 +35,7 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/dns/get-email-forwarding", []mcpParamBinding{{PublicName: "DomainName", WireName: "DomainName", Location: "query"}}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("dns_domains-get-hosts",
+		mcplib.NewTool("dns_get-hosts",
 			mcplib.WithDescription("Runs `namecheap.domains.dns.getHosts`. Optional: SLD, TLD."),
 			mcplib.WithString("SLD", mcplib.Description("Second-level domain, without the TLD.")),
 			mcplib.WithString("TLD", mcplib.Description("Top-level domain without the leading dot.")),
@@ -46,7 +46,7 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/dns/get-hosts", []mcpParamBinding{{PublicName: "SLD", WireName: "SLD", Location: "query"}, {PublicName: "TLD", WireName: "TLD", Location: "query"}}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("dns_domains-get-list",
+		mcplib.NewTool("dns_get-list",
 			mcplib.WithDescription("Get DNS nameserver type and nameservers. Optional: SLD, TLD."),
 			mcplib.WithString("SLD", mcplib.Description("Second-level domain, without the TLD.")),
 			mcplib.WithString("TLD", mcplib.Description("Top-level domain without the leading dot.")),
@@ -57,7 +57,7 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/dns/get-list", []mcpParamBinding{{PublicName: "SLD", WireName: "SLD", Location: "query"}, {PublicName: "TLD", WireName: "TLD", Location: "query"}}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("dns_domains-set-custom",
+		mcplib.NewTool("dns_set-custom",
 			mcplib.WithDescription("Runs `namecheap.domains.dns.setCustom`. Optional: SLD, TLD, Nameservers."),
 			mcplib.WithString("SLD", mcplib.Description("Second-level domain, without the TLD.")),
 			mcplib.WithString("TLD", mcplib.Description("Top-level domain without the leading dot.")),
@@ -69,7 +69,7 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/dns/set-custom", []mcpParamBinding{{PublicName: "SLD", WireName: "SLD", Location: "query"}, {PublicName: "TLD", WireName: "TLD", Location: "query"}, {PublicName: "Nameservers", WireName: "Nameservers", Location: "query"}}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("dns_domains-set-default",
+		mcplib.NewTool("dns_set-default",
 			mcplib.WithDescription("Switch a domain to Namecheap default DNS. Optional: SLD, TLD."),
 			mcplib.WithString("SLD", mcplib.Description("Second-level domain, without the TLD.")),
 			mcplib.WithString("TLD", mcplib.Description("Top-level domain without the leading dot.")),
@@ -80,7 +80,7 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/dns/set-default", []mcpParamBinding{{PublicName: "SLD", WireName: "SLD", Location: "query"}, {PublicName: "TLD", WireName: "TLD", Location: "query"}}, []string{}),
 	)
 	s.AddTool(
-		mcplib.NewTool("dns_domains-set-hosts",
+		mcplib.NewTool("dns_set-hosts",
 			mcplib.WithDescription("Runs `namecheap.domains.dns.setHosts`; HostName1/RecordType1/Address1/TTL1 style parameters can be passed via --param-json in the patched CLI. Optional: SLD, TLD."),
 			mcplib.WithString("SLD", mcplib.Description("Second-level domain, without the TLD.")),
 			mcplib.WithString("TLD", mcplib.Description("Top-level domain without the leading dot.")),
@@ -615,7 +615,7 @@ func handleContext(_ context.Context, _ mcplib.CallToolRequest) (*mcplib.CallToo
 			{
 				"name":        "dns",
 				"description": "Manage dns",
-				"endpoints":   []string{"domains-get-email-forwarding", "domains-get-hosts", "domains-get-list", "domains-set-custom", "domains-set-default", "domains-set-hosts"},
+				"endpoints":   []string{"get-email-forwarding", "get-hosts", "get-list", "set-custom", "set-default", "set-hosts"},
 				"syncable":    true,
 				"searchable":  true,
 			},

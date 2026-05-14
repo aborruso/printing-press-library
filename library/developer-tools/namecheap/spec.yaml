@@ -158,7 +158,7 @@ paths:
       responses: { '200': { $ref: '#/components/responses/NamecheapXML' } }
   /xml.response/dns/get-list:
     get:
-      operationId: domains_dns_get_list
+      operationId: dns_get_list
       tags: [dns]
       summary: Get DNS nameserver type and nameservers.
       description: Runs `namecheap.domains.dns.getList`.
@@ -168,7 +168,7 @@ paths:
       responses: { '200': { $ref: '#/components/responses/NamecheapXML' } }
   /xml.response/dns/get-hosts:
     get:
-      operationId: domains_dns_get_hosts
+      operationId: dns_get_hosts
       tags: [dns]
       summary: Get host records for a domain.
       description: Runs `namecheap.domains.dns.getHosts`.
@@ -178,7 +178,7 @@ paths:
       responses: { '200': { $ref: '#/components/responses/NamecheapXML' } }
   /xml.response/dns/set-hosts:
     get:
-      operationId: domains_dns_set_hosts
+      operationId: dns_set_hosts
       tags: [dns]
       summary: Replace host records for a domain.
       description: Runs `namecheap.domains.dns.setHosts`; HostName1/RecordType1/Address1/TTL1 style parameters can be passed via --param-json in the patched CLI.
@@ -188,7 +188,7 @@ paths:
       responses: { '200': { $ref: '#/components/responses/NamecheapXML' } }
   /xml.response/dns/set-default:
     get:
-      operationId: domains_dns_set_default
+      operationId: dns_set_default
       tags: [dns]
       summary: Switch a domain to Namecheap default DNS.
       description: Runs `namecheap.domains.dns.setDefault`.
@@ -198,7 +198,7 @@ paths:
       responses: { '200': { $ref: '#/components/responses/NamecheapXML' } }
   /xml.response/dns/set-custom:
     get:
-      operationId: domains_dns_set_custom
+      operationId: dns_set_custom
       tags: [dns]
       summary: Set custom nameservers.
       description: Runs `namecheap.domains.dns.setCustom`.
@@ -209,7 +209,7 @@ paths:
       responses: { '200': { $ref: '#/components/responses/NamecheapXML' } }
   /xml.response/dns/get-email-forwarding:
     get:
-      operationId: domains_dns_get_email_forwarding
+      operationId: dns_get_email_forwarding
       tags: [dns]
       summary: Get email forwarding settings.
       description: Runs `namecheap.domains.dns.getEmailForwarding`.

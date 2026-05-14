@@ -40,10 +40,10 @@
   "required_headers": [],
   "tools": [
     {
-      "name": "xml-response_domains-check",
+      "name": "domains_check",
       "description": "Check domain availability for one or more domains. Optional: DomainList.",
       "method": "GET",
-      "path": "/xml.response/domains/check",
+      "path": "/domains/check",
       "params": [
         {
           "name": "DomainList",
@@ -54,10 +54,10 @@
       ]
     },
     {
-      "name": "xml-response_domains-create",
+      "name": "domains_create",
       "description": "Runs `namecheap.domains.create`. This is a mutating paid operation; use dry-run unless intentionally registering. Optional: DomainName, Years, PromotionCode (plus 3 more).",
       "method": "GET",
-      "path": "/xml.response/domains/create",
+      "path": "/domains/create",
       "params": [
         {
           "name": "DomainName",
@@ -98,10 +98,10 @@
       ]
     },
     {
-      "name": "xml-response_domains-dns-get-email-forwarding",
+      "name": "dns_get-email-forwarding",
       "description": "Runs `namecheap.domains.dns.getEmailForwarding`. Optional: DomainName.",
       "method": "GET",
-      "path": "/xml.response/dns/get-email-forwarding",
+      "path": "/dns/get-email-forwarding",
       "params": [
         {
           "name": "DomainName",
@@ -112,10 +112,10 @@
       ]
     },
     {
-      "name": "xml-response_domains-dns-get-hosts",
+      "name": "dns_get-hosts",
       "description": "Runs `namecheap.domains.dns.getHosts`. Optional: SLD, TLD.",
       "method": "GET",
-      "path": "/xml.response/dns/get-hosts",
+      "path": "/dns/get-hosts",
       "params": [
         {
           "name": "SLD",
@@ -132,10 +132,10 @@
       ]
     },
     {
-      "name": "xml-response_domains-dns-get-list",
+      "name": "dns_get-list",
       "description": "Get DNS nameserver type and nameservers. Optional: SLD, TLD.",
       "method": "GET",
-      "path": "/xml.response/dns/get-list",
+      "path": "/dns/get-list",
       "params": [
         {
           "name": "SLD",
@@ -152,10 +152,10 @@
       ]
     },
     {
-      "name": "xml-response_domains-dns-set-custom",
+      "name": "dns_set-custom",
       "description": "Runs `namecheap.domains.dns.setCustom`. Optional: SLD, TLD, Nameservers.",
       "method": "GET",
-      "path": "/xml.response/dns/set-custom",
+      "path": "/dns/set-custom",
       "params": [
         {
           "name": "SLD",
@@ -178,10 +178,10 @@
       ]
     },
     {
-      "name": "xml-response_domains-dns-set-default",
+      "name": "dns_set-default",
       "description": "Switch a domain to Namecheap default DNS. Optional: SLD, TLD.",
       "method": "GET",
-      "path": "/xml.response/dns/set-default",
+      "path": "/dns/set-default",
       "params": [
         {
           "name": "SLD",
@@ -198,10 +198,10 @@
       ]
     },
     {
-      "name": "xml-response_domains-dns-set-hosts",
+      "name": "dns_set-hosts",
       "description": "Runs `namecheap.domains.dns.setHosts`; HostName1/RecordType1/Address1/TTL1 style parameters can be passed via --param-json in the patched CLI. Optional: SLD, TLD.",
       "method": "GET",
-      "path": "/xml.response/dns/set-hosts",
+      "path": "/dns/set-hosts",
       "params": [
         {
           "name": "SLD",
@@ -218,10 +218,10 @@
       ]
     },
     {
-      "name": "xml-response_domains-get-contacts",
+      "name": "domains_get-contacts",
       "description": "Runs `namecheap.domains.getContacts`. Optional: DomainName.",
       "method": "GET",
-      "path": "/xml.response/domains/get-contacts",
+      "path": "/domains/get-contacts",
       "params": [
         {
           "name": "DomainName",
@@ -232,10 +232,10 @@
       ]
     },
     {
-      "name": "xml-response_domains-get-info",
+      "name": "domains_get-info",
       "description": "Runs `namecheap.domains.getInfo` for a domain. Optional: DomainName.",
       "method": "GET",
-      "path": "/xml.response/domains/get-info",
+      "path": "/domains/get-info",
       "params": [
         {
           "name": "DomainName",
@@ -246,10 +246,10 @@
       ]
     },
     {
-      "name": "xml-response_domains-get-list",
+      "name": "domains_get-list",
       "description": "Runs `namecheap.domains.getList` with paging and optional filters. Optional: Page, PageSize, SortBy (plus 2 more).",
       "method": "GET",
-      "path": "/xml.response/domains/get-list",
+      "path": "/domains/get-list",
       "params": [
         {
           "name": "Page",
@@ -284,10 +284,10 @@
       ]
     },
     {
-      "name": "xml-response_domains-get-registrar-lock",
+      "name": "domains_get-registrar-lock",
       "description": "Runs `namecheap.domains.getRegistrarLock`. Optional: DomainName.",
       "method": "GET",
-      "path": "/xml.response/domains/get-registrar-lock",
+      "path": "/domains/get-registrar-lock",
       "params": [
         {
           "name": "DomainName",
@@ -298,17 +298,17 @@
       ]
     },
     {
-      "name": "xml-response_domains-get-tld-list",
+      "name": "domains_get-tld-list",
       "description": "Runs `namecheap.domains.getTldList`.",
       "method": "GET",
-      "path": "/xml.response/domains/get-tld-list",
+      "path": "/domains/get-tld-list",
       "params": []
     },
     {
-      "name": "xml-response_domains-renew",
+      "name": "domains_renew",
       "description": "Runs `namecheap.domains.renew`. Mutating paid operation. Optional: DomainName, Years, PromotionCode.",
       "method": "GET",
-      "path": "/xml.response/domains/renew",
+      "path": "/domains/renew",
       "params": [
         {
           "name": "DomainName",
@@ -331,10 +331,10 @@
       ]
     },
     {
-      "name": "xml-response_domains-set-registrar-lock",
+      "name": "domains_set-registrar-lock",
       "description": "Runs `namecheap.domains.setRegistrarLock`. Optional: DomainName, LockAction.",
       "method": "GET",
-      "path": "/xml.response/domains/set-registrar-lock",
+      "path": "/domains/set-registrar-lock",
       "params": [
         {
           "name": "DomainName",
@@ -351,10 +351,10 @@
       ]
     },
     {
-      "name": "xml-response_ssl-get-info",
+      "name": "ssl_get-info",
       "description": "Get SSL certificate information. Optional: CertificateID, CertificateType.",
       "method": "GET",
-      "path": "/xml.response/ssl/get-info",
+      "path": "/ssl/get-info",
       "params": [
         {
           "name": "CertificateID",
@@ -371,10 +371,10 @@
       ]
     },
     {
-      "name": "xml-response_ssl-get-list",
+      "name": "ssl_get-list",
       "description": "Runs `namecheap.ssl.getList`. Optional: Page, PageSize, ListType (plus 1 more).",
       "method": "GET",
-      "path": "/xml.response/ssl/get-list",
+      "path": "/ssl/get-list",
       "params": [
         {
           "name": "Page",
@@ -403,10 +403,10 @@
       ]
     },
     {
-      "name": "xml-response_ssl-parse-csr",
+      "name": "ssl_parse-csr",
       "description": "Parse a certificate signing request. Optional: csr, CertificateType.",
       "method": "GET",
-      "path": "/xml.response/ssl/parse-csr",
+      "path": "/ssl/parse-csr",
       "params": [
         {
           "name": "csr",
@@ -423,10 +423,10 @@
       ]
     },
     {
-      "name": "xml-response_users-address-get-info",
+      "name": "users_address-get-info",
       "description": "Runs `namecheap.users.address.getInfo`. Optional: AddressId.",
       "method": "GET",
-      "path": "/xml.response/users/address/get-info",
+      "path": "/users/address/get-info",
       "params": [
         {
           "name": "AddressId",
@@ -437,24 +437,24 @@
       ]
     },
     {
-      "name": "xml-response_users-address-get-list",
+      "name": "users_address-get-list",
       "description": "Runs `namecheap.users.address.getList`.",
       "method": "GET",
-      "path": "/xml.response/users/address/get-list",
+      "path": "/users/address/get-list",
       "params": []
     },
     {
-      "name": "xml-response_users-get-balances",
+      "name": "users_get-balances",
       "description": "Runs `namecheap.users.getBalances`.",
       "method": "GET",
-      "path": "/xml.response/users/get-balances",
+      "path": "/users/get-balances",
       "params": []
     },
     {
-      "name": "xml-response_users-get-pricing",
+      "name": "users_get-pricing",
       "description": "Runs `namecheap.users.getPricing`. Optional: ProductType, ProductCategory, PromotionCode (plus 1 more).",
       "method": "GET",
-      "path": "/xml.response/users/get-pricing",
+      "path": "/users/get-pricing",
       "params": [
         {
           "name": "ProductType",

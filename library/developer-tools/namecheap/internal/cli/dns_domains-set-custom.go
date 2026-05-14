@@ -17,10 +17,10 @@ func newDnsDomainsSetCustomCmd(flags *rootFlags) *cobra.Command {
 	var flagNameservers string
 
 	cmd := &cobra.Command{
-		Use:         "domains-set-custom",
+		Use:         "set-custom",
 		Short:       "Runs `namecheap.domains.dns.setCustom`.",
-		Example:     "  namecheap-pp-cli dns domains-set-custom",
-		Annotations: map[string]string{"pp:endpoint": "dns.domains-set-custom", "pp:method": "GET", "pp:path": "/dns/set-custom", "mcp:read-only": "true"},
+		Example:     "  namecheap-pp-cli dns set-custom",
+		Annotations: map[string]string{"pp:endpoint": "dns.set-custom", "pp:method": "GET", "pp:path": "/dns/set-custom", "mcp:read-only": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {

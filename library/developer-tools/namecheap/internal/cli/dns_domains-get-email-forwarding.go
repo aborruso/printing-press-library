@@ -15,11 +15,11 @@ func newDnsDomainsGetEmailForwardingCmd(flags *rootFlags) *cobra.Command {
 	var flagDomainName string
 
 	cmd := &cobra.Command{
-		Use:         "domains-get-email-forwarding",
+		Use:         "get-email-forwarding",
 		Aliases:     []string{"list"},
 		Short:       "Runs `namecheap.domains.dns.getEmailForwarding`.",
-		Example:     "  namecheap-pp-cli dns domains-get-email-forwarding",
-		Annotations: map[string]string{"pp:endpoint": "dns.domains-get-email-forwarding", "pp:method": "GET", "pp:path": "/dns/get-email-forwarding", "mcp:read-only": "true"},
+		Example:     "  namecheap-pp-cli dns get-email-forwarding",
+		Annotations: map[string]string{"pp:endpoint": "dns.get-email-forwarding", "pp:method": "GET", "pp:path": "/dns/get-email-forwarding", "mcp:read-only": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {

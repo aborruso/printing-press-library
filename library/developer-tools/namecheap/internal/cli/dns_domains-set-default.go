@@ -16,10 +16,10 @@ func newDnsDomainsSetDefaultCmd(flags *rootFlags) *cobra.Command {
 	var flagTLD string
 
 	cmd := &cobra.Command{
-		Use:         "domains-set-default",
+		Use:         "set-default",
 		Short:       "Switch a domain to Namecheap default DNS.",
-		Example:     "  namecheap-pp-cli dns domains-set-default",
-		Annotations: map[string]string{"pp:endpoint": "dns.domains-set-default", "pp:method": "GET", "pp:path": "/dns/set-default", "mcp:read-only": "true"},
+		Example:     "  namecheap-pp-cli dns set-default",
+		Annotations: map[string]string{"pp:endpoint": "dns.set-default", "pp:method": "GET", "pp:path": "/dns/set-default", "mcp:read-only": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {

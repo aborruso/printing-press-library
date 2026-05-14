@@ -27,12 +27,12 @@ type whichEntry struct {
 // `--help`; `which` exists to resolve a natural-language capability
 // query to one of the commands the skill says matter most.
 var whichIndex = []whichEntry{
-	{Command: "dns domains-get-email-forwarding", Description: "Runs `namecheap.domains.dns.getEmailForwarding`.", Group: "dns"},
-	{Command: "dns domains-get-hosts", Description: "Runs `namecheap.domains.dns.getHosts`.", Group: "dns"},
-	{Command: "dns domains-get-list", Description: "Get DNS nameserver type and nameservers.", Group: "dns"},
-	{Command: "dns domains-set-custom", Description: "Runs `namecheap.domains.dns.setCustom`.", Group: "dns"},
-	{Command: "dns domains-set-default", Description: "Switch a domain to Namecheap default DNS.", Group: "dns"},
-	{Command: "dns domains-set-hosts", Description: "Runs `namecheap.domains.dns.setHosts`; HostName1/RecordType1/Address1/TTL1 style parameters can be passed via --param-json in the patched CLI.", Group: "dns"},
+	{Command: "dns get-email-forwarding", Description: "Runs `namecheap.domains.dns.getEmailForwarding`.", Group: "dns"},
+	{Command: "dns get-hosts", Description: "Runs `namecheap.domains.dns.getHosts`.", Group: "dns"},
+	{Command: "dns get-list", Description: "Get DNS nameserver type and nameservers.", Group: "dns"},
+	{Command: "dns set-custom", Description: "Runs `namecheap.domains.dns.setCustom`.", Group: "dns"},
+	{Command: "dns set-default", Description: "Switch a domain to Namecheap default DNS.", Group: "dns"},
+	{Command: "dns set-hosts", Description: "Runs `namecheap.domains.dns.setHosts`; HostName1/RecordType1/Address1/TTL1 style parameters can be passed via --param-json in the patched CLI.", Group: "dns"},
 	{Command: "domains check", Description: "Check domain availability for one or more domains.", Group: "domains"},
 	{Command: "domains create", Description: "Runs `namecheap.domains.create`. This is a mutating paid operation; use dry-run unless intentionally registering.", Group: "domains"},
 	{Command: "domains get-contacts", Description: "Runs `namecheap.domains.getContacts`.", Group: "domains"},

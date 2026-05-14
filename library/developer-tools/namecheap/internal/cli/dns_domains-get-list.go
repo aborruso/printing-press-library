@@ -16,10 +16,10 @@ func newDnsDomainsGetListCmd(flags *rootFlags) *cobra.Command {
 	var flagTLD string
 
 	cmd := &cobra.Command{
-		Use:         "domains-get-list",
+		Use:         "get-list",
 		Short:       "Get DNS nameserver type and nameservers.",
-		Example:     "  namecheap-pp-cli dns domains-get-list",
-		Annotations: map[string]string{"pp:endpoint": "dns.domains-get-list", "pp:method": "GET", "pp:path": "/dns/get-list", "mcp:read-only": "true"},
+		Example:     "  namecheap-pp-cli dns get-list",
+		Annotations: map[string]string{"pp:endpoint": "dns.get-list", "pp:method": "GET", "pp:path": "/dns/get-list", "mcp:read-only": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
