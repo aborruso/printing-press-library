@@ -48,7 +48,10 @@ contacts_segments, and contacts_topics tables.`,
 			}
 			defer db.Close()
 
-			like := "%" + needle + "%"
+			// Escape LIKE metacharacters so a needle containing '%' or '_'
+			// (e.g., alice_b or first_name) doesn't widen the substring match.
+			escaped := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(needle)
+			like := "%" + escaped + "%"
 			rows, err := db.Query(`
 				SELECT
 					c.id,
@@ -60,9 +63,9 @@ contacts_segments, and contacts_topics tables.`,
 					COALESCE(c.created_at, '') AS created_at
 				FROM contacts c
 				WHERE c.email = ?
-					OR c.email LIKE ?
-					OR c.first_name LIKE ?
-					OR c.last_name LIKE ?
+					OR c.email LIKE ? ESCAPE '\'
+					OR c.first_name LIKE ? ESCAPE '\'
+					OR c.last_name LIKE ? ESCAPE '\'
 				ORDER BY c.email
 			`, needle, like, like, like)
 			if err != nil {

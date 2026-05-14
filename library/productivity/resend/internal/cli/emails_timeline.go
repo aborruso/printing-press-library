@@ -59,14 +59,18 @@ one email in a single table.`,
 			}
 
 			// Pull every event that references this email_id in the events.data JSON.
-			pattern := "%\"" + emailID + "\"%"
+			// Escape LIKE metacharacters so emailIDs containing '%' or '_'
+			// don't widen the match. Email IDs are normally UUIDs, but they
+			// can be any opaque string Resend assigns — defense in depth.
+			escapedID := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(emailID)
+			pattern := "%\"" + escapedID + "\"%"
 			rows, err := db.Query(`
 				SELECT
 					COALESCE(name, '') AS event_name,
 					COALESCE(created_at, '') AS occurred_at,
 					COALESCE(json_extract(data, '$.data.click.link'), '') AS link_url
 				FROM events
-				WHERE data LIKE ?
+				WHERE data LIKE ? ESCAPE '\'
 				ORDER BY created_at ASC
 			`, pattern)
 			if err != nil {
