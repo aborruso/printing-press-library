@@ -82,6 +82,25 @@
         "internal/cli/doctor.go"
       ],
       "validated_outcome": "TestNamecheapXMLStatusErrorReturnsError verifies Status=ERROR converts to *NamecheapAPIError."
+    },
+    {
+      "id": "namecheap-mcp-destructive-hints",
+      "summary": "Mark Namecheap paid and DNS-changing MCP tools as destructive and non-read-only.",
+      "reason": "MCP hosts use read-only/destructive annotations for auto-approval decisions; DNS changes and domain registration/renewal/lock changes must require confirmation.",
+      "files": [
+        "internal/mcp/tools.go"
+      ],
+      "validated_outcome": "Focused source scan and go test ./... verify mutation tools use ReadOnly=false and Destructive=true."
+    },
+    {
+      "id": "namecheap-read-only-store",
+      "summary": "Open MCP SQL stores with SQLite mode=ro for database-enforced read-only protection.",
+      "reason": "The MCP SQL validator allows WITH queries and relies on the read-only store as a second safety layer; the store must reject writes at the database level.",
+      "files": [
+        "internal/store/store.go",
+        "internal/store/read_only_test.go"
+      ],
+      "validated_outcome": "TestOpenReadOnlyRejectsWrites verifies writes fail through OpenReadOnly while reads continue to work."
     }
   ]
 }

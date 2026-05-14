@@ -11,6 +11,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -55,7 +56,33 @@ func Open(dbPath string) (*Store, error) {
 }
 
 func OpenReadOnly(dbPath string) (*Store, error) {
-	return OpenWithContext(context.Background(), dbPath)
+	return OpenReadOnlyWithContext(context.Background(), dbPath)
+}
+
+// OpenReadOnlyWithContext opens an existing SQLite store in database-enforced
+// read-only mode. It intentionally does not run migrations: callers using this
+// path, such as MCP ad-hoc SQL, need a defense-in-depth guard that rejects any
+// write even if a query validator misses a writable CTE shape.
+// PATCH(namecheap-read-only-store): generated OpenReadOnly used the writable Open path.
+func OpenReadOnlyWithContext(ctx context.Context, dbPath string) (*Store, error) {
+	dsn := (&url.URL{
+		Scheme:   "file",
+		Path:     dbPath,
+		RawQuery: "mode=ro&_busy_timeout=5000&_foreign_keys=ON&_temp_store=MEMORY",
+	}).String()
+
+	db, err := sql.Open("sqlite", dsn)
+	if err != nil {
+		return nil, fmt.Errorf("opening read-only database: %w", err)
+	}
+	db.SetMaxOpenConns(2)
+
+	s := &Store{db: db, path: dbPath}
+	if err := s.checkSchemaVersion(ctx); err != nil {
+		db.Close()
+		return nil, err
+	}
+	return s, nil
 }
 
 // OpenWithContext opens or creates the SQLite store at dbPath. The
@@ -111,6 +138,17 @@ func (s *Store) SchemaVersion() (int, error) {
 		return 0, fmt.Errorf("read user_version: %w", err)
 	}
 	return v, nil
+}
+
+func (s *Store) checkSchemaVersion(ctx context.Context) error {
+	var current int
+	if err := s.db.QueryRowContext(ctx, `PRAGMA user_version`).Scan(&current); err != nil {
+		return fmt.Errorf("read user_version: %w", err)
+	}
+	if current > StoreSchemaVersion {
+		return fmt.Errorf("database schema version %d is newer than supported version %d; upgrade the CLI binary or open an older database", current, StoreSchemaVersion)
+	}
+	return nil
 }
 
 // ensureColumn adds a column to an existing table if it isn't already
