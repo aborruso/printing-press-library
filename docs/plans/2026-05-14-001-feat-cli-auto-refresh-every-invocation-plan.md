@@ -1,7 +1,7 @@
 ---
 title: "feat: Auto-refresh on every CLI invocation (granola-pp-cli + skill)"
 type: feat
-status: active
+status: completed
 created: 2026-05-14
 depth: standard
 target_repo: printing-press-library
