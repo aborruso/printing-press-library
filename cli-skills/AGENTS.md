@@ -6,7 +6,7 @@ Every `cli-skills/pp-<slug>/SKILL.md` in this directory is a **verbatim mirror**
 
 - Silently overwritten on the next post-merge regen (`generate-skills.yml`).
 - Auto-reverted on PRs by the parity step in `verify-library-conventions.yml`.
-- Rejected by the `Guard against hand-edits to cli-skills mirror` step in the same workflow — any non-bot commit touching `cli-skills/` fails the PR.
+- Rejected by the `Guard against hand-edits to cli-skills mirror` step in the same workflow — any non-bot commit touching `cli-skills/pp-*/SKILL.md` fails the PR.
 
 ## What to edit instead
 

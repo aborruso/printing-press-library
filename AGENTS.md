@@ -301,13 +301,13 @@ Two files in this repo are **generated outputs**, regenerated post-merge by CI w
 | `registry.json` | `library/**/.printing-press.json` + `manifest.json` + `.goreleaser.yaml` | `tools/generate-registry/main.go` | `library/**` or generator changes on main |
 | `cli-skills/pp-<slug>/SKILL.md` | `library/<category>/<slug>/SKILL.md` | `tools/generate-skills/main.go` | `library/**/SKILL.md`, `library/**/README.md`, `library/**/.printing-press.json`, `registry.json`, or generator changes on main |
 
-**When you change `library/<cat>/<slug>/SKILL.md` (or README.md):**
+**When you change `library/<cat>/<slug>/SKILL.md`:**
 
-**Edit `library/<cat>/<slug>/SKILL.md`, never `cli-skills/pp-<slug>/SKILL.md` directly.** The mirror is verbatim-regenerated from the library copy — any direct edit to `cli-skills/` will be silently overwritten on the next regen. Same rule for README.md.
+**Edit `library/<cat>/<slug>/SKILL.md`, never `cli-skills/pp-<slug>/SKILL.md` directly.** The mirror is verbatim-regenerated from the library copy — any direct edit to `cli-skills/` will be silently overwritten on the next regen.
 
 **Don't commit `cli-skills/pp-*` changes in your PR at all** — drop them from the diff. The post-merge regen (`generate-skills.yml`, triggered on `library/**/SKILL.md` and `library/**/README.md` changes) updates the mirror after your PR lands. On the PR itself, the `cli-skills mirror parity` step in `verify-library-conventions.yml` runs the generator and auto-commits any drift back to the branch as `github-actions[bot]`, so the mirror is current before merge without you committing anything.
 
-The `Guard against hand-edits to cli-skills mirror` step in the same workflow **hard-fails** the PR if a non-bot commit touches `cli-skills/pp-*` — this catches `go run ./tools/generate-skills/main.go && git add cli-skills/` workflows that bypass the bot path. If you see that failure, drop the `cli-skills/` changes from your branch (`git restore --staged cli-skills/ && git checkout -- cli-skills/`, or `git reset` the offending commit) and let the bot mirror the library change instead. See [cli-skills/AGENTS.md](cli-skills/AGENTS.md) for the directory-local version of this rule.
+The `Guard against hand-edits to cli-skills mirror` step in the same workflow **hard-fails** the PR if a non-bot commit touches `cli-skills/pp-*/SKILL.md` — this catches `go run ./tools/generate-skills/main.go && git add cli-skills/` workflows that bypass the bot path. If you see that failure, drop the `cli-skills/` changes from your branch (`git restore --staged cli-skills/ && git checkout -- cli-skills/`, or `git reset` the offending commit) and let the bot mirror the library change instead. See [cli-skills/AGENTS.md](cli-skills/AGENTS.md) for the directory-local version of this rule.
 
 **When you change `library/**/.printing-press.json`, `manifest.json`, or `.goreleaser.yaml`:**
 
