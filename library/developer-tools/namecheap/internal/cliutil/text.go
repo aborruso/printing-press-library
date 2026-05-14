@@ -74,10 +74,13 @@ func LooksLikeAuthError(msg string) bool {
 
 // SanitizeErrorBody truncates and strips credential-shaped strings from error output.
 func SanitizeErrorBody(msg string) string {
+	// PATCH(namecheap-mcp-transport-error-sanitize): redact query-param credentials before truncating transport errors.
+	queryCredPatterns := regexp.MustCompile(`(?i)((?:api_?key|apikey|key|token|access_token|authorization)=)[^&\s]+`)
+	msg = queryCredPatterns.ReplaceAllString(msg, "${1}[REDACTED]")
+	credPatterns := regexp.MustCompile(`(?i)(sk-[a-zA-Z0-9]{8,}|sk_live_[a-zA-Z0-9]+|Bearer\s+[a-zA-Z0-9._\-]+)`)
+	msg = credPatterns.ReplaceAllString(msg, "[REDACTED]")
 	if len(msg) > 200 {
 		msg = msg[:200] + "..."
 	}
-	credPatterns := regexp.MustCompile(`(?i)(sk-[a-zA-Z0-9]{8,}|sk_live_[a-zA-Z0-9]+|Bearer\s+[a-zA-Z0-9._\-]+|key=[a-zA-Z0-9._\-]+)`)
-	msg = credPatterns.ReplaceAllString(msg, "[REDACTED]")
 	return msg
 }

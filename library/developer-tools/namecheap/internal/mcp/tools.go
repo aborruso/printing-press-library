@@ -418,9 +418,10 @@ func makeAPIHandler(method, pathTemplate string, bindings []mcpParamBinding, pos
 				}
 				return mcplib.NewToolResultError("not found: " + msg), nil
 			case strings.Contains(msg, "HTTP 429"):
-				return mcplib.NewToolResultError("rate limited: " + msg), nil
+				return mcplib.NewToolResultError("rate limited: " + cliutil.SanitizeErrorBody(msg)), nil
 			default:
-				return mcplib.NewToolResultError(msg), nil
+				// PATCH(namecheap-mcp-transport-error-sanitize): transport errors may embed Namecheap auth query params in URLs.
+				return mcplib.NewToolResultError(cliutil.SanitizeErrorBody(msg)), nil
 			}
 		}
 

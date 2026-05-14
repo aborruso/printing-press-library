@@ -91,8 +91,16 @@ func TestAuthErrorHelpers(t *testing.T) {
 	}
 
 	got := SanitizeErrorBody("token sk-abcdefghi Bearer abc.def key=secretvalue")
-	if got != "token [REDACTED] [REDACTED] [REDACTED]" {
+	if got != "token [REDACTED] [REDACTED] key=[REDACTED]" {
 		t.Fatalf("SanitizeErrorBody redaction = %q", got)
+	}
+
+	urlErr := SanitizeErrorBody("Get \"https://api.namecheap.com/xml.response?ApiKey=super-secret-key&ApiUser=littlemight\": dial tcp: timeout")
+	if urlErr == "" || urlErr == "super-secret-key" || bytes.Contains([]byte(urlErr), []byte("super-secret-key")) {
+		t.Fatalf("SanitizeErrorBody leaked query credential: %q", urlErr)
+	}
+	if !bytes.Contains([]byte(urlErr), []byte("ApiKey=[REDACTED]")) {
+		t.Fatalf("SanitizeErrorBody did not redact ApiKey query param: %q", urlErr)
 	}
 }
 

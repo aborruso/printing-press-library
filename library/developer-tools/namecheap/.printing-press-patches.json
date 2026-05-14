@@ -140,6 +140,17 @@
         "internal/cache/cache_test.go"
       ],
       "validated_outcome": "TestPathUsesFullSHA256Digest verifies the cache filename uses a 64-character digest."
+    },
+    {
+      "id": "namecheap-mcp-transport-error-sanitize",
+      "summary": "Sanitize MCP transport errors before returning them to hosts.",
+      "reason": "Go transport errors can include full request URLs; Namecheap authenticates through query params, so MCP error responses must redact ApiKey-style query parameters on every path.",
+      "files": [
+        "internal/mcp/tools.go",
+        "internal/cliutil/text.go",
+        "internal/cliutil/cliutil_test.go"
+      ],
+      "validated_outcome": "TestAuthErrorHelpers verifies ApiKey query params are redacted; go test ./... passes."
     }
   ]
 }
