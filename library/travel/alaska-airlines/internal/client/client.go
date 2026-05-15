@@ -257,7 +257,14 @@ func (c *Client) do(method, path string, params map[string]string, body any, hea
 		}
 
 		if authHeader != "" {
-			req.Header.Set("Authorization", authHeader)
+			// PATCH(authheader-as-cookie): alaskaair.com (SvelteKit __data.json
+			// endpoints + the Atmos Rewards API) authenticates via the
+			// browser Cookie header, not bearer tokens. authHeader is the
+			// composed cookie string built by `auth login --chrome`, so
+			// route it to `Cookie:`. The prior `Authorization:` header was
+			// silently ignored by the server, causing every authenticated
+			// command to behave as unauthenticated (greptile P1).
+			req.Header.Set("Cookie", authHeader)
 		}
 		if c.Config != nil {
 			for k, v := range c.Config.Headers {

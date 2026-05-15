@@ -44,16 +44,22 @@ func (l *AdaptiveLimiter) Wait() {
 	if l == nil {
 		return
 	}
+	// PATCH(ratelimit-serialize-under-lock): hold the mutex across the
+	// sleep and the lastRequest update so concurrent callers actually
+	// queue up behind one another. The prior shape dropped the lock
+	// before sleeping and only re-took it to write lastRequest, so when
+	// sync ran with --concurrency N every worker read the same stale
+	// lastRequest, slept for the same duration, and then fired the same
+	// instant - the limiter produced bursts of N requests rather than
+	// spacing them at 1/rate (greptile P1).
 	l.mu.Lock()
+	defer l.mu.Unlock()
 	delay := time.Duration(float64(time.Second) / l.rate)
 	elapsed := time.Since(l.lastRequest)
-	l.mu.Unlock()
 	if elapsed < delay {
 		time.Sleep(delay - elapsed)
 	}
-	l.mu.Lock()
 	l.lastRequest = time.Now()
-	l.mu.Unlock()
 }
 
 func (l *AdaptiveLimiter) OnSuccess() {

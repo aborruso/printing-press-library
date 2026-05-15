@@ -566,13 +566,20 @@ func extractViaPycookiecheat(domain, profileDir string) (string, error) {
 	}
 
 	var script string
+	var cookieFilePathEnv string
 	if cookiePath != "" {
-		// Use forward slashes so Python doesn't interpret backslashes as escapes on Windows
-		safePath := filepath.ToSlash(cookiePath)
+		// Use forward slashes so Python doesn't interpret backslashes as escapes on Windows.
+		// PATCH(python-cookie-path-escape): pass the cookie file path through an
+		// environment variable rather than splicing it into the Python source.
+		// The prior fmt.Sprintf interpolation embedded the path inside a Python
+		// "..." literal; any double-quote in the path (possible on unusual
+		// home-directory setups) broke out of the string and allowed arbitrary
+		// Python execution at the user's privilege level (greptile P1).
 		script = fmt.Sprintf(
-			`import json; from pycookiecheat import chrome_cookies; print(json.dumps(chrome_cookies("https://%s", cookie_file="%s")))`,
-			cleanDomain, safePath,
+			`import json, os; from pycookiecheat import chrome_cookies; print(json.dumps(chrome_cookies("https://%s", cookie_file=os.environ["ALASKA_AIRLINES_COOKIE_FILE"])))`,
+			cleanDomain,
 		)
+		cookieFilePathEnv = filepath.ToSlash(cookiePath)
 	} else {
 		script = fmt.Sprintf(
 			`import json; from pycookiecheat import chrome_cookies; print(json.dumps(chrome_cookies("https://%s")))`,
@@ -584,6 +591,11 @@ func extractViaPycookiecheat(domain, profileDir string) (string, error) {
 	cmd := exec.Command("python3", "-c", script)
 	cmd.Stdout = &out
 	cmd.Stderr = os.Stderr
+	if cookieFilePathEnv != "" {
+		// PATCH(python-cookie-path-escape): pass the path through env to keep
+		// it out of the source-text Python interpolation surface above.
+		cmd.Env = append(os.Environ(), "ALASKA_AIRLINES_COOKIE_FILE="+cookieFilePathEnv)
+	}
 	if err := cmd.Run(); err != nil {
 		return "", fmt.Errorf("pycookiecheat failed: %w", err)
 	}
@@ -662,7 +674,13 @@ func validateComposedAuth(authHeader string) error {
 	if err != nil {
 		return nil // can't validate, assume OK
 	}
-	req.Header.Set("Authorization", authHeader)
+	// PATCH(validate-uses-cookie-header): alaskaair.com uses cookie-based
+	// session auth; the composed value is a cookie string, not a bearer
+	// token. Sending it in `Authorization:` made the validation always
+	// pass (the site ignores Authorization) so expired sessions reported
+	// "valid" before every subsequent API call failed as unauthenticated
+	// (greptile P1).
+	req.Header.Set("Cookie", authHeader)
 
 	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Do(req)
