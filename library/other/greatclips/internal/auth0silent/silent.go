@@ -127,6 +127,13 @@ func Mint(audience string, cookies map[string]string) (*Token, error) {
 	if errCode := frag.Get("error"); errCode != "" {
 		return nil, classifyAuth0Error(errCode, frag.Get("error_description"))
 	}
+	// PATCH(oauth-state-roundtrip): verify Auth0 echoed back the state we
+	// sent. Even on a CLI without a browser-redirect attack surface,
+	// validating state catches a tampered or replayed Location header
+	// before we accept the token (greptile P2).
+	if got := frag.Get("state"); got != state {
+		return nil, fmt.Errorf("auth0 state mismatch: got %q, want %q", got, state)
+	}
 	accessToken := frag.Get("access_token")
 	if accessToken == "" {
 		return nil, fmt.Errorf("no access_token in auth0 fragment: %s", fragment)

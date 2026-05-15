@@ -77,9 +77,17 @@ func newCheckinPromotedCmd(flags *rootFlags) *cobra.Command {
 				"source":      "Browser",
 			}
 			if v := os.Getenv("GREATCLIPS_PROFILE_ID"); v != "" {
-				if id, err := strconv.Atoi(v); err == nil {
-					body["profileId"] = id
+				// PATCH(profile-id-strict-int): surface an explicit error when
+				// the env var is set but does not parse as a base-10 integer.
+				// Previously a misformatted value (UUID-shaped, stray newline,
+				// trimmed quote) was silently dropped and the body shipped
+				// without profileId, producing an opaque server-side rejection
+				// (greptile P1).
+				id, err := strconv.Atoi(v)
+				if err != nil {
+					return usageErr(fmt.Errorf("GREATCLIPS_PROFILE_ID=%q is not a valid integer: %w", v, err))
 				}
+				body["profileId"] = id
 			}
 			if v := os.Getenv("GREATCLIPS_IP_ADDRESS"); v != "" {
 				body["ipAddress"] = v

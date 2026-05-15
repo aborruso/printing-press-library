@@ -4,11 +4,9 @@ package cli
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 
 	"github.com/mvanhorn/printing-press-library/library/other/greatclips/internal/icssign"
 )
@@ -71,16 +69,11 @@ func newICSSignHook() func(*http.Request) error {
 		}
 
 		t, s := icssign.SignRequest(icssign.Timestamp(), string(body))
-
-		// Debug: dump exact wire bytes when GREATCLIPS_DEBUG_SIGN=1.
-		// Removed before publish; left in for v0.2 development only.
-		if os.Getenv("GREATCLIPS_DEBUG_SIGN") == "1" {
-			fmt.Fprintf(os.Stderr, "[icssign] host=%s method=%s\n", req.URL.Hostname(), req.Method)
-			fmt.Fprintf(os.Stderr, "[icssign] t=%s\n", t)
-			fmt.Fprintf(os.Stderr, "[icssign] body_bytes=%d body=%q\n", len(body), string(body))
-			fmt.Fprintf(os.Stderr, "[icssign] signing_input=%q\n", t+string(body))
-			fmt.Fprintf(os.Stderr, "[icssign] s=%s\n", s)
-		}
+		// PATCH(remove-debug-sign-dump): the GREATCLIPS_DEBUG_SIGN=1 stderr
+		// dump (request body + outgoing HMAC signature) was kept in the
+		// prior commit with a "remove before publish" note. Deleted now per
+		// greptile P2 so request signatures aren't captured by shell history
+		// or CI log collectors when the env var is set.
 
 		// Append t and s to the existing query string, preserving any
 		// other params that were already on the URL.

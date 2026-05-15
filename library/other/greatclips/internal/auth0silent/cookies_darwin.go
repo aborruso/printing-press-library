@@ -8,10 +8,12 @@
 package auth0silent
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/pbkdf2"
 	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -72,7 +74,7 @@ func ExtractAuth0Cookies() (map[string]string, error) {
 		if _, ok := wanted[r.name]; !ok {
 			continue
 		}
-		plain, err := decryptCookie(key, r.encrypted)
+		plain, err := decryptCookie(key, r.encrypted, CIDHost)
 		if err != nil {
 			return nil, fmt.Errorf("decrypting cookie %q: %w", r.name, err)
 		}
@@ -136,6 +138,15 @@ func copyToTemp(src string) (string, error) {
 // CGO dependency. encrypted_value is BLOB; we encode it as hex on the
 // SQL side and decode in Go.
 func readCookieRows(dbPath, host string) ([]cookieRow, error) {
+	// PATCH(cookies-host-allowlist): sqlite3 CLI doesn't expose parameter
+	// binding via -separator, so we restrict the host argument to the one
+	// caller-side constant the package actually uses. This removes the
+	// SQL-injection surface flagged by greptile P1 - any future caller
+	// passing user input would hit the allowlist error rather than splicing
+	// into the SQL.
+	if host != CIDHost {
+		return nil, fmt.Errorf("readCookieRows: unexpected host %q (only %q is allowed)", host, CIDHost)
+	}
 	// hex() returns uppercase hex; safe to round-trip via hex.DecodeString.
 	query := fmt.Sprintf("SELECT name, hex(encrypted_value) FROM cookies WHERE host_key = '%s';", host)
 	cmd := exec.Command("sqlite3", "-separator", "|", dbPath, query)
@@ -190,10 +201,19 @@ func chromeKey() ([]byte, error) {
 //   - strip the 3-byte "v10" prefix
 //   - AES-128-CBC with a 16-space IV
 //   - PKCS7 unpad
-//   - strip the 32-byte SHA-256-of-host-key prefix that newer Chrome
+//   - strip the 32-byte SHA-256(host_key) prefix that newer Chrome
 //     versions prepend to plaintext (binds the cookie value to its
 //     intended host)
-func decryptCookie(key, enc []byte) (string, error) {
+//
+// PATCH(host-key-binding-detection): the 32-byte SHA-256(host_key) prefix
+// is added by Chrome's cookie host-binding feature (M120+) and is NOT
+// present in cookies written by older Chrome versions. The previous code
+// stripped 32 bytes unconditionally for any plaintext > 32 bytes, so
+// older-Chrome cookies (every JWT-sized Auth0 cookie qualifies) were
+// silently mangled. We now compute the expected prefix and only strip
+// when it matches - if a future Chrome change reshapes the binding we'll
+// see the raw cookie value rather than 32 chars of garbage.
+func decryptCookie(key, enc []byte, hostKey string) (string, error) {
 	if len(enc) < 3 || string(enc[:3]) != "v10" {
 		return "", fmt.Errorf("expected v10 prefix, got %q", string(enc[:min(3, len(enc))]))
 	}
@@ -216,9 +236,15 @@ func decryptCookie(key, enc []byte) (string, error) {
 	}
 	plain = plain[:len(plain)-pad]
 
-	// Newer Chrome prepends 32 bytes of SHA-256(host_key) to plaintext.
-	if len(plain) > 32 {
-		plain = plain[32:]
+	// Newer Chrome (M120+) prepends 32 bytes of SHA-256(host_key) to
+	// the plaintext as a host-binding tag. Strip it only when it matches
+	// the computed prefix; older-Chrome cookies have no such prefix and
+	// stripping would discard the first 32 chars of the real value.
+	if len(plain) >= 32 && hostKey != "" {
+		sum := sha256.Sum256([]byte(hostKey))
+		if bytes.Equal(plain[:32], sum[:]) {
+			plain = plain[32:]
+		}
 	}
 	return string(plain), nil
 }
