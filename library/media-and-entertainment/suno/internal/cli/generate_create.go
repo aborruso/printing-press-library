@@ -266,7 +266,12 @@ func waitForGenerateVariants(c generateHTTP, data json.RawMessage) (json.RawMess
 			continue
 		}
 		current := v
-		for i := 0; i < 30; i++ {
+		// PATCH(greptile #577 P1): bump poll cap from 30*2s=60s to 150*2s=300s.
+		// Suno generations routinely complete in 60-180s; v5.5 (chirp-fenix) renders
+		// can exceed 90s, leaving variants with empty audio_url at the old cap.
+		// pickGenerateVariant penalizes empty audio_url by +1_000_000, so on cap
+		// timeout the "best" pick degenerated to a duration tie-break.
+		for i := 0; i < 150; i++ {
 			raw, err := c.Get("/api/clip/"+id, nil)
 			if err == nil {
 				obj := unmarshalObject(raw)

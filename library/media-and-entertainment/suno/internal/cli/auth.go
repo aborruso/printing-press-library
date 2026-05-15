@@ -652,8 +652,13 @@ func countCookiesForDomain(cookiesDB, domainPattern string) int {
 	_ = copyFileIfExists(cookiesDB+"-wal", tmpPath+"-wal")
 	_ = copyFileIfExists(cookiesDB+"-shm", tmpPath+"-shm")
 
-	query := fmt.Sprintf("SELECT COUNT(*) FROM cookies WHERE host_key LIKE '%s'", domainPattern)
-	out, err := exec.Command("sqlite3", tmpPath, query).Output()
+	// PATCH(greptile #577 P2): parameterize the host_key LIKE clause.
+	// Current call sites pass a hardcoded "suno.com", so no injection is reachable
+	// today, but the function accepts any string and a caller supplying a value
+	// with a single quote or semicolon would produce a malformed or multi-statement
+	// query against the (temp-copy) cookies database.
+	query := "SELECT COUNT(*) FROM cookies WHERE host_key LIKE ?"
+	out, err := exec.Command("sqlite3", tmpPath, query, domainPattern).Output()
 	if err != nil {
 		return 0
 	}

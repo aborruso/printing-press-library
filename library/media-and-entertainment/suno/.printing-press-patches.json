@@ -25,6 +25,18 @@
         "internal/cli/generate_create.go"
       ],
       "validated_outcome": "go build ./..., go vet ./..., go test ./..., and help checks for new command paths pass."
+    },
+    {
+      "id": "greptile-577-fixes",
+      "summary": "Greptile PR #577 review fixes: bump --wait poll cap to 5min, parameterize cookie SQL query, add CDN download timeout.",
+      "reason": "Greptile flagged 2 P1 + 2 P2 issues on the publish PR. waitForGenerateVariants capped polling at 60s but Suno generations routinely take 90-180s. countCookiesForDomain interpolated domainPattern into a sqlite3 subprocess query (latent SQL injection; no reachable callsite today). downloadOrPlaceholder used bare http.Get with no timeout. cli-skills/pp-suno/SKILL.md was removed from the commit per AGENTS.md (auto-regenerated post-merge by tools/generate-skills/).",
+      "files": [
+        "internal/cli/generate_create.go",
+        "internal/cli/auth.go",
+        "internal/cli/ship.go"
+      ],
+      "validated_outcome": "go build ./... and go vet ./... pass; PATCH markers anchor each change.",
+      "upstream_issue": "https://github.com/mvanhorn/cli-printing-press/issues/1418 covers the upstream browser-sniff body-shape inference class; the three local code fixes are CLI-specific defenses."
     }
   ]
 }

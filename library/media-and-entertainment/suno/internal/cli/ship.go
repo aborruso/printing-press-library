@@ -11,10 +11,17 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/mvanhorn/printing-press-library/library/media-and-entertainment/suno/internal/cliutil"
 )
+
+// PATCH(greptile #577 P2): bound CDN downloads. Stale or hung URLs would block
+// `ship` indefinitely on the bare http.Get default (no timeout). 120s covers
+// the longest legitimate audio/video render (Suno MP4 ~5MB, MP3 ~5MB) with
+// generous slack for slow networks.
+var shipDownloadClient = &http.Client{Timeout: 120 * time.Second}
 
 func newShipCmd(flags *rootFlags) *cobra.Command {
 	var toDir, format string
@@ -146,7 +153,7 @@ func downloadOrPlaceholder(url, path string) error {
 	if url == "" {
 		return os.WriteFile(path, nil, 0o644)
 	}
-	resp, err := http.Get(url)
+	resp, err := shipDownloadClient.Get(url)
 	if err != nil {
 		return fmt.Errorf("downloading %s: %w", url, err)
 	}
