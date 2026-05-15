@@ -21,8 +21,8 @@ const skillOutputDir = "cli-skills"
 // The header is intentionally a CommonMark HTML comment so renderers drop it.
 // It cannot live before the frontmatter — many skill loaders require the file
 // to start with `---` for frontmatter to be detected at all.
-const generatedHeader = "<!-- GENERATED FILE — DO NOT EDIT.\n" +
-	"     This file is a verbatim mirror of library/<category>/<slug>/SKILL.md,\n" +
+const generatedHeaderFmt = "<!-- GENERATED FILE — DO NOT EDIT.\n" +
+	"     This file is a verbatim mirror of %s,\n" +
 	"     regenerated post-merge by tools/generate-skills/. Hand-edits here are\n" +
 	"     silently overwritten on the next regen. Edit the library/ source instead.\n" +
 	"     See AGENTS.md \"Generated artifacts: registry.json, cli-skills/\". -->\n"
@@ -161,7 +161,7 @@ func copyUpstreamSkill(entryPath, skillDir, skillFile string) (bool, error) {
 	if err := os.MkdirAll(skillDir, 0755); err != nil {
 		return false, fmt.Errorf("mkdir %s: %w", skillDir, err)
 	}
-	if err := os.WriteFile(skillFile, injectGeneratedHeader(data), 0644); err != nil {
+	if err := os.WriteFile(skillFile, injectGeneratedHeader(data, filepath.ToSlash(upstreamPath)), 0644); err != nil {
 		return false, fmt.Errorf("write %s: %w", skillFile, err)
 	}
 	return true, nil
@@ -176,8 +176,9 @@ func copyUpstreamSkill(entryPath, skillDir, skillFile string) (bool, error) {
 // Idempotent: if the file already starts with the generated header (e.g. a
 // library SKILL.md authored from a previous mirror, or a re-run on an
 // already-injected file), the function returns the input unchanged.
-func injectGeneratedHeader(data []byte) []byte {
+func injectGeneratedHeader(data []byte, sourcePath string) []byte {
 	bodyOffset := frontmatterEnd(data)
+	generatedHeader := fmt.Sprintf(generatedHeaderFmt, sourcePath)
 	if bytes.Contains(data[bodyOffset:bodyOffset+min(len(generatedHeader)*2, len(data)-bodyOffset)], []byte("GENERATED FILE — DO NOT EDIT")) {
 		return data
 	}

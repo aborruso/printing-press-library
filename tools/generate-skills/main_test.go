@@ -47,12 +47,16 @@ func TestCopyUpstreamSkill_Present(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reading destination: %v", err)
 	}
-	want := injectGeneratedHeader(upstream)
+	sourcePath := filepath.ToSlash(filepath.Join(entryPath, "SKILL.md"))
+	want := injectGeneratedHeader(upstream, sourcePath)
 	if string(got) != string(want) {
 		t.Errorf("destination should be upstream with generated-header injected\nwant: %q\ngot:  %q", want, got)
 	}
 	if !bytes.Contains(got, []byte("GENERATED FILE")) {
 		t.Errorf("destination missing generated-header warning, got:\n%s", got)
+	}
+	if !bytes.Contains(got, []byte(sourcePath)) {
+		t.Errorf("destination missing concrete source path %q, got:\n%s", sourcePath, got)
 	}
 }
 
@@ -115,7 +119,7 @@ func TestCopyUpstreamSkill_OverwritesExisting(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := injectGeneratedHeader(upstream)
+	want := injectGeneratedHeader(upstream, filepath.ToSlash(filepath.Join(entryPath, "SKILL.md")))
 	if string(got) != string(want) {
 		t.Errorf("upstream (with header injected) should overwrite stale content\nwant: %q\ngot:  %q", want, got)
 	}
@@ -226,7 +230,7 @@ func TestIntegration_CopiesUpstreamVerbatim(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reading copied skill: %v", err)
 	}
-	want := string(injectGeneratedHeader([]byte(upstreamContent)))
+	want := string(injectGeneratedHeader([]byte(upstreamContent), "library/commerce/yahoo-finance/SKILL.md"))
 	if string(got) != want {
 		t.Errorf("mirrored skill should be upstream with generated-header injected\nwant: %q\ngot:  %q", want, got)
 	}
@@ -259,7 +263,7 @@ func TestIntegration_DiscoversNewCLIWithoutRegistry(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reading copied skill: %v", err)
 	}
-	want := string(injectGeneratedHeader([]byte(upstreamContent)))
+	want := string(injectGeneratedHeader([]byte(upstreamContent), "library/marketing/customer-io/SKILL.md"))
 	if string(got) != want {
 		t.Errorf("new CLI mirror should be upstream with generated-header injected\nwant: %q\ngot:  %q", want, got)
 	}
@@ -324,7 +328,7 @@ func TestIntegration_UpstreamOverwritesStaleMirror(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := string(injectGeneratedHeader([]byte(upstreamContent)))
+	want := string(injectGeneratedHeader([]byte(upstreamContent), "library/commerce/api/SKILL.md"))
 	if string(got) != want {
 		t.Errorf("upstream (with header injected) should overwrite stale mirror\nwant: %q\ngot:  %q", want, got)
 	}
@@ -369,7 +373,7 @@ func TestPruneOrphanSkills(t *testing.T) {
 
 func TestInjectGeneratedHeader_WithFrontmatter(t *testing.T) {
 	src := []byte("---\nname: pp-thing\ndescription: \"hi\"\n---\n\n# Body\n\nNarrative.\n")
-	got := injectGeneratedHeader(src)
+	got := injectGeneratedHeader(src, "library/productivity/thing/SKILL.md")
 	gotStr := string(got)
 
 	frontmatter := "---\nname: pp-thing\ndescription: \"hi\"\n---\n"
@@ -383,11 +387,17 @@ func TestInjectGeneratedHeader_WithFrontmatter(t *testing.T) {
 	if !strings.Contains(gotStr, "# Body\n\nNarrative.\n") {
 		t.Errorf("body content lost, got:\n%s", gotStr)
 	}
+	if !strings.Contains(gotStr, "library/productivity/thing/SKILL.md") {
+		t.Errorf("header should include the concrete source path, got:\n%s", gotStr)
+	}
+	if strings.Contains(gotStr, "library/<category>/<slug>/SKILL.md") {
+		t.Errorf("header should not include the placeholder path, got:\n%s", gotStr)
+	}
 }
 
 func TestInjectGeneratedHeader_NoFrontmatter(t *testing.T) {
 	src := []byte("# Plain skill\n\nNo frontmatter at all.\n")
-	got := injectGeneratedHeader(src)
+	got := injectGeneratedHeader(src, "library/productivity/plain/SKILL.md")
 	gotStr := string(got)
 
 	if !strings.HasPrefix(gotStr, "<!-- GENERATED FILE") {
@@ -400,8 +410,8 @@ func TestInjectGeneratedHeader_NoFrontmatter(t *testing.T) {
 
 func TestInjectGeneratedHeader_Idempotent(t *testing.T) {
 	src := []byte("---\nname: pp-thing\n---\n\n# Body\n")
-	once := injectGeneratedHeader(src)
-	twice := injectGeneratedHeader(once)
+	once := injectGeneratedHeader(src, "library/productivity/thing/SKILL.md")
+	twice := injectGeneratedHeader(once, "library/productivity/thing/SKILL.md")
 	if string(once) != string(twice) {
 		t.Errorf("injectGeneratedHeader should be idempotent\nonce:  %q\ntwice: %q", once, twice)
 	}
@@ -409,7 +419,7 @@ func TestInjectGeneratedHeader_Idempotent(t *testing.T) {
 
 func TestInjectGeneratedHeader_WindowsLineEndings(t *testing.T) {
 	src := []byte("---\r\nname: pp-thing\r\n---\r\n\r\n# Body\r\n")
-	got := injectGeneratedHeader(src)
+	got := injectGeneratedHeader(src, "library/productivity/thing/SKILL.md")
 	gotStr := string(got)
 	headerStart := strings.Index(gotStr, "<!-- GENERATED FILE")
 	if headerStart < 0 {
