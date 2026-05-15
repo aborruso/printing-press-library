@@ -148,15 +148,18 @@ func shouldSkipAutoRefresh(cmd *cobra.Command) bool {
 	return false
 }
 
-// autoRefreshOptedOut applies the three-tier precedence: explicit
-// --no-refresh flag wins over profile no_refresh, which wins over the
-// GRANOLA_NO_AUTO_REFRESH env var. When none are set, refresh is on.
+// autoRefreshOptedOut applies a two-tier precedence: --no-refresh=true
+// (possibly set by a profile via ApplyProfileToFlags during Phase 5.3 of
+// root.go's PersistentPreRunE) wins; otherwise GRANOLA_NO_AUTO_REFRESH
+// decides. Refresh is on by default.
 //
-// Flag precedence is implemented by reading flags.noRefresh after
-// PersistentPreRunE has already applied profile values onto flags
-// (Phase 5.3 in root.go's PersistentPreRunE ordering); env var is
-// consulted only when the flag is its default-zero value, which
-// preserves the "flag overrides env" semantics callers expect.
+// PATCH(autorefresh-doc-comment-honest): a bool flag carries no
+// "was-explicitly-set-to-false" signal at this call site, so the env var
+// runs whenever flags.noRefresh is false regardless of whether the user
+// or a profile said `--no-refresh=false` or simply left the flag at its
+// default. That means a profile setting `no_refresh: false` cannot
+// override a truthy GRANOLA_NO_AUTO_REFRESH — env beats the explicit
+// "leave it on" profile value. Captured here so the doc matches the code.
 func autoRefreshOptedOut(flags *rootFlags) bool {
 	if flags.noRefresh {
 		return true

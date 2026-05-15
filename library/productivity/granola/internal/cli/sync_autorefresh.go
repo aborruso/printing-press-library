@@ -102,6 +102,13 @@ func runApiSync(ctx context.Context, flags *rootFlags) (ApiSyncResult, error) {
 				firstErr = res.Err
 			}
 		case res.Warn != nil:
+			// PATCH(autorefresh-warn-rows-count): include warned-resource
+			// rows in TotalRecords. A warning ("partial success", e.g. a
+			// rate-limit notice) does not mean zero rows were written;
+			// excluding res.Count made provenance read "(0 rows)" for any
+			// API sync where every resource warned even when real data
+			// landed in the store.
+			totalSynced += res.Count
 			warnCount++
 		default:
 			totalSynced += res.Count
