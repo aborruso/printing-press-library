@@ -16,7 +16,7 @@ metadata:
         module: github.com/mvanhorn/printing-press-library/library/social-and-messaging/twilio/cmd/twilio-pp-cli
 ---
 <!-- GENERATED FILE — DO NOT EDIT.
-     This file is a verbatim mirror of library/<category>/<slug>/SKILL.md,
+     This file is a verbatim mirror of library/social-and-messaging/twilio/SKILL.md,
      regenerated post-merge by tools/generate-skills/. Hand-edits here are
      silently overwritten on the next regen. Edit the library/ source instead.
      See AGENTS.md "Generated artifacts: registry.json, cli-skills/". -->
