@@ -26,6 +26,7 @@ const generatedHeaderFmt = "<!-- GENERATED FILE — DO NOT EDIT.\n" +
 	"     regenerated post-merge by tools/generate-skills/. Hand-edits here are\n" +
 	"     silently overwritten on the next regen. Edit the library/ source instead.\n" +
 	"     See AGENTS.md \"Generated artifacts: registry.json, cli-skills/\". -->\n"
+const generatedHeaderPrefix = "<!-- GENERATED FILE — DO NOT EDIT"
 
 type PrintManifest struct {
 	APIName string `json:"api_name"`
@@ -179,7 +180,7 @@ func copyUpstreamSkill(entryPath, skillDir, skillFile string) (bool, error) {
 func injectGeneratedHeader(data []byte, sourcePath string) []byte {
 	bodyOffset := frontmatterEnd(data)
 	generatedHeader := fmt.Sprintf(generatedHeaderFmt, sourcePath)
-	if bytes.Contains(data[bodyOffset:bodyOffset+min(len(generatedHeader)*2, len(data)-bodyOffset)], []byte("GENERATED FILE — DO NOT EDIT")) {
+	if bytes.HasPrefix(data[bodyOffset:], []byte(generatedHeaderPrefix)) {
 		return data
 	}
 	out := make([]byte, 0, len(data)+len(generatedHeader)+1)

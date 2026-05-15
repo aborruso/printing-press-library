@@ -417,6 +417,15 @@ func TestInjectGeneratedHeader_Idempotent(t *testing.T) {
 	}
 }
 
+func TestInjectGeneratedHeader_IdempotentWithDifferentSourcePathLength(t *testing.T) {
+	src := []byte("---\nname: pp-thing\n---\n\n# Body\n")
+	once := injectGeneratedHeader(src, "library/productivity/a-very-long-generated-skill-source-path/SKILL.md")
+	twice := injectGeneratedHeader(once, "x/SKILL.md")
+	if string(once) != string(twice) {
+		t.Errorf("injectGeneratedHeader should not depend on formatted source path length\nonce:  %q\ntwice: %q", once, twice)
+	}
+}
+
 func TestInjectGeneratedHeader_WindowsLineEndings(t *testing.T) {
 	src := []byte("---\r\nname: pp-thing\r\n---\r\n\r\n# Body\r\n")
 	got := injectGeneratedHeader(src, "library/productivity/thing/SKILL.md")
