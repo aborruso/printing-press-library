@@ -559,13 +559,17 @@ func chromeDataDir() (string, error) {
 }
 
 // discoverChromeProfiles finds Chrome profiles and counts cookies matching the domain.
+// PATCH(greptile #577 round 5): drop the stale exec.LookPath("sqlite3") guard.
+// Round 4 replaced the shell-out in countCookiesForDomain with the modernc/sqlite
+// driver via sql.Open, so the sqlite3 CLI binary is no longer a dependency.
+// Leaving the guard in place caused Linux systems without sqlite3 installed
+// (Docker, CI, bare Ubuntu) to fall back to profile-less extraction, which
+// silently disabled Chrome profile auto-detection -- the exact problem the
+// round-4 fix was meant to solve.
 func discoverChromeProfiles(domain string) ([]chromeProfile, error) {
 	dataDir, err := chromeDataDir()
 	if err != nil {
 		return nil, err
-	}
-	if _, err := exec.LookPath("sqlite3"); err != nil {
-		return nil, fmt.Errorf("sqlite3 not found")
 	}
 
 	entries, err := os.ReadDir(dataDir)
@@ -635,7 +639,7 @@ func readProfileDisplayName(prefsPath string) string {
 }
 
 // countCookiesForDomain copies the Cookies DB (plus WAL/SHM) to temp and counts matching rows.
-// Uses sqlite3 when available; host_key is plaintext so no decryption is needed.
+// Uses the in-process modernc/sqlite driver (no sqlite3 CLI dependency); host_key is plaintext so no decryption is needed.
 func countCookiesForDomain(cookiesDB, domainPattern string) int {
 	tmpFile, err := os.CreateTemp("", "cookies-probe-*.db")
 	if err != nil {
