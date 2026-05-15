@@ -78,6 +78,14 @@ native streaming instead of polling.`,
 				fmt.Fprintf(os.Stderr, "warning: initial fetch failed: %v\n", err)
 			}
 
+			// PATCH(greptile #577 P1 round 3): honor --follow=false.
+			// Previously the flag was declared but never consulted, leaving
+			// `tail --follow=false` to loop forever despite the help text
+			// advertising "set --follow=false for single poll".
+			if !follow {
+				return nil
+			}
+
 			for {
 				select {
 				case <-sig:

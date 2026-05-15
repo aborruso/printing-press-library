@@ -81,6 +81,16 @@ func newGenerateEvolveCmd(flags *rootFlags) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			// PATCH(greptile #577 P1 round 3): mirror the budget cap check from
+			// runGenerateCreate. `generate evolve` reaches the same 10-credit
+			// /api/generate/v2-web/ endpoint and must honor the persisted cap.
+			if budgetStore, berr := openExistingStore(cmd.Context()); berr == nil && budgetStore != nil {
+				capLimit, period, exceeded, eerr := budgetCapExceeded(cmd.Context(), budgetStore)
+				budgetStore.Close()
+				if eerr == nil && exceeded {
+					return fmt.Errorf("budget cap reached: %s cap of %d credits would be exceeded by submitting this generation (10 credits per call). Raise the cap with `suno-pp-cli budget set %s <N>` or clear it with `suno-pp-cli budget clear`", period, capLimit, period)
+				}
+			}
 			data, _, err := c.Post("/api/generate/v2-web/", body)
 			if err != nil {
 				return classifyAPIError(err, flags)
