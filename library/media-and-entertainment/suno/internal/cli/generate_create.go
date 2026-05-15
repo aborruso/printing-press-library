@@ -103,7 +103,29 @@ func newGenerateCreateCmd(flags *rootFlags) *cobra.Command {
 			if maxAttempts <= 0 {
 				maxAttempts = 5
 			}
-			data, statusCode, spent, err := runGenerateCreate(c, path, body, wait, pick, targetDuration, untilDuration, maxAttempts, maxSpend)
+			// Build a budget-check callback for the retry loop so each attempt
+			// reconsults the persisted cap. nil callback means "no enforcement"
+			// (dry-run or local store unavailable).
+			var budgetCheck budgetCheckFn
+			if !dryRunOK(flags) {
+				ctx := cmd.Context()
+				budgetCheck = func() error {
+					budgetStore, berr := openExistingStore(ctx)
+					if berr != nil || budgetStore == nil {
+						return nil
+					}
+					defer budgetStore.Close()
+					capLimit, period, exceeded, eerr := budgetCapExceeded(ctx, budgetStore)
+					if eerr != nil {
+						return nil
+					}
+					if exceeded {
+						return fmt.Errorf("budget cap reached: %s cap of %d credits would be exceeded by submitting this generation (10 credits per call). Raise the cap with `suno-pp-cli budget set %s <N>` or clear it with `suno-pp-cli budget clear`", period, capLimit, period)
+					}
+					return nil
+				}
+			}
+			data, statusCode, spent, err := runGenerateCreate(c, path, body, wait, pick, targetDuration, untilDuration, maxAttempts, maxSpend, budgetCheck)
 			if err != nil {
 				var codeErr *cliError
 				if As(err, &codeErr) {
@@ -204,7 +226,12 @@ type generateHTTP interface {
 	Get(string, map[string]string) (json.RawMessage, error)
 }
 
-func runGenerateCreate(c generateHTTP, path string, body map[string]any, wait bool, pick, targetDuration, untilDuration string, maxAttempts, maxSpend int) (json.RawMessage, int, int, error) {
+// budgetCheckFn returns nil when submitting another 10-credit generation is allowed,
+// or an error describing which cap (daily/monthly) would be breached. nil callback
+// means "no enforcement" (e.g., dry-run, local store unavailable).
+type budgetCheckFn func() error
+
+func runGenerateCreate(c generateHTTP, path string, body map[string]any, wait bool, pick, targetDuration, untilDuration string, maxAttempts, maxSpend int, budgetCheck budgetCheckFn) (json.RawMessage, int, int, error) {
 	if pick == "" {
 		pick = "both"
 	}
@@ -233,6 +260,15 @@ func runGenerateCreate(c generateHTTP, path string, body map[string]any, wait bo
 	for attempt := 1; attempt <= attempts; attempt++ {
 		if maxSpend > 0 && spent+10 > maxSpend {
 			return last, lastStatus, spent, fmt.Errorf("max spend reached before attempt %d", attempt)
+		}
+		// PATCH(greptile #577 round 3 P1): re-check the persisted budget cap
+		// inside the retry loop. Previously the check fired once before the loop,
+		// allowing --until-duration runs (default 5 attempts) to overspend by up
+		// to 5x the per-call cost when a cap was reached mid-loop.
+		if budgetCheck != nil {
+			if err := budgetCheck(); err != nil {
+				return last, lastStatus, spent, err
+			}
 		}
 		if os.Getenv("SUNO_DEBUG") != "" {
 			b, _ := json.Marshal(body)

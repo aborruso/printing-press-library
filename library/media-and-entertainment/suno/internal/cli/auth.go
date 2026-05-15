@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -23,6 +24,8 @@ import (
 	"github.com/mvanhorn/printing-press-library/library/media-and-entertainment/suno/internal/client"
 	"github.com/mvanhorn/printing-press-library/library/media-and-entertainment/suno/internal/config"
 	"time"
+
+	_ "modernc.org/sqlite"
 )
 
 func newAuthCmd(flags *rootFlags) *cobra.Command {
@@ -652,19 +655,23 @@ func countCookiesForDomain(cookiesDB, domainPattern string) int {
 	_ = copyFileIfExists(cookiesDB+"-wal", tmpPath+"-wal")
 	_ = copyFileIfExists(cookiesDB+"-shm", tmpPath+"-shm")
 
-	// PATCH(greptile #577 P2): parameterize the host_key LIKE clause.
-	// Current call sites pass a hardcoded "suno.com", so no injection is reachable
-	// today, but the function accepts any string and a caller supplying a value
-	// with a single quote or semicolon would produce a malformed or multi-statement
-	// query against the (temp-copy) cookies database.
-	query := "SELECT COUNT(*) FROM cookies WHERE host_key LIKE ?"
-	out, err := exec.Command("sqlite3", tmpPath, query, domainPattern).Output()
+	// PATCH(greptile #577 round 3 P1): the prior round 1 fix swapped fmt.Sprintf
+	// interpolation for `?` and passed domainPattern as a positional argument to
+	// `exec.Command("sqlite3", tmpPath, "SELECT ... LIKE ?", domainPattern)`. The
+	// sqlite3 CLI does not bind positional args to SQL parameters — that "fix"
+	// silently broke the query, always returning zero matches and breaking Chrome
+	// profile auto-detection. The correct fix is to open the temp-copy cookies
+	// database via Go's database/sql + modernc/sqlite (the same driver the store
+	// package uses) where `?` IS a real parameterized placeholder.
+	db, err := sql.Open("sqlite", "file:"+tmpPath+"?mode=ro")
 	if err != nil {
 		return 0
 	}
-
-	count := 0
-	fmt.Sscanf(strings.TrimSpace(string(out)), "%d", &count)
+	defer db.Close()
+	var count int
+	if err := db.QueryRow("SELECT COUNT(*) FROM cookies WHERE host_key LIKE ?", domainPattern).Scan(&count); err != nil {
+		return 0
+	}
 	return count
 }
 
