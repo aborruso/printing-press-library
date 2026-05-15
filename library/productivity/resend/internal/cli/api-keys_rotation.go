@@ -83,11 +83,11 @@ reviews.`,
 				}
 				if lastUsed != nil {
 					e.LastUsedAt = *lastUsed
-					if t, perr := time.Parse(time.RFC3339, e.LastUsedAt); perr == nil {
+					if t, ok := parseTimestamp(e.LastUsedAt); ok {
 						e.DaysSinceUse = int(now.Sub(t).Hours() / 24)
 					}
 				}
-				if t, perr := time.Parse(time.RFC3339, e.CreatedAt); perr == nil {
+				if t, ok := parseTimestamp(e.CreatedAt); ok {
 					e.AgeDays = int(now.Sub(t).Hours() / 24)
 				}
 				results = append(results, e)

@@ -41,6 +41,12 @@ N GET /domains/{id} calls.`,
 			}
 			defer db.Close()
 
+			// The /domains list endpoint does NOT include the DNS records
+			// array — that field is only on GET /domains/{id}. Fall back to
+			// a per-domain live call to fill in DKIM/SPF/MX statuses when
+			// the cached records field is empty.
+			liveClient, _ := flags.newClient()
+
 			rows, err := db.Query(`
 				SELECT
 					d.id,
@@ -80,6 +86,18 @@ N GET /domains/{id} calls.`,
 				}
 				h.ClickTracking = clickInt == 1
 				h.OpenTracking = openInt == 1
+				// If the cached domain row didn't carry the records array
+				// (the list endpoint omits it), pull it live per-domain.
+				if recordsJSON == "" && liveClient != nil {
+					if raw, err := liveClient.Get("/domains/"+h.ID, nil); err == nil {
+						var detail struct {
+							Records json.RawMessage `json:"records"`
+						}
+						if json.Unmarshal(raw, &detail) == nil && len(detail.Records) > 0 {
+							recordsJSON = string(detail.Records)
+						}
+					}
+				}
 				// Parse domain DNS records via encoding/json so field reorder
 				// or unrelated "status" values in the JSON can't fool the match.
 				h.DKIM = recordStatus(recordsJSON, "DKIM")
