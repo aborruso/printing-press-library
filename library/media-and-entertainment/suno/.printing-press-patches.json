@@ -28,15 +28,16 @@
     },
     {
       "id": "greptile-577-fixes",
-      "summary": "Greptile PR #577 review fixes: bump --wait poll cap to 5min, parameterize cookie SQL query, add CDN download timeout.",
-      "reason": "Greptile flagged 2 P1 + 2 P2 issues on the publish PR. waitForGenerateVariants capped polling at 60s but Suno generations routinely take 90-180s. countCookiesForDomain interpolated domainPattern into a sqlite3 subprocess query (latent SQL injection; no reachable callsite today). downloadOrPlaceholder used bare http.Get with no timeout. cli-skills/pp-suno/SKILL.md was removed from the commit per AGENTS.md (auto-regenerated post-merge by tools/generate-skills/).",
+      "summary": "Greptile PR #577 review fixes: bump --wait poll cap to 5min, parameterize cookie SQL query, add CDN download timeout, wire persisted budget cap into generate, push budget spend filter into SQL.",
+      "reason": "Greptile flagged 4 issues across two review rounds (2 P1 + 2 P2 round 1; 1 P1 + 1 P2 round 2 after fixes pushed). Round 1: waitForGenerateVariants capped polling at 60s but Suno generations routinely take 90-180s; countCookiesForDomain interpolated domainPattern into a sqlite3 subprocess query (latent SQL injection; no reachable callsite today); downloadOrPlaceholder used bare http.Get with no timeout. Round 2: budget set daily/monthly stored a cap but generate never read it; estimatedSpendSince did a full table scan + JSON parse on every check. cli-skills/pp-suno/SKILL.md was initially removed per AGENTS.md but restored after verify-skills.yml CI required the mirror to be present (filed as Printing Press AGENTS/CI alignment issue).",
       "files": [
         "internal/cli/generate_create.go",
         "internal/cli/auth.go",
-        "internal/cli/ship.go"
+        "internal/cli/ship.go",
+        "internal/cli/budget.go"
       ],
       "validated_outcome": "go build ./... and go vet ./... pass; PATCH markers anchor each change.",
-      "upstream_issue": "https://github.com/mvanhorn/cli-printing-press/issues/1418 covers the upstream browser-sniff body-shape inference class; the three local code fixes are CLI-specific defenses."
+      "upstream_issue": "https://github.com/mvanhorn/cli-printing-press/issues/1418 covers the upstream browser-sniff body-shape inference class; the four local code fixes are CLI-specific defenses."
     }
   ]
 }

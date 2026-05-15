@@ -139,6 +139,33 @@ func newBudgetClearCmd(flags *rootFlags) *cobra.Command {
 }
 
 func estimatedSpendSince(ctx context.Context, s interface{ DB() *sql.DB }, since time.Time) (int, error) {
+	// PATCH(greptile #577 P2): filter by created_at in SQL via json_extract
+	// instead of loading every clip row's full data blob and filtering in Go.
+	// As the local library grows, the previous table scan would dominate every
+	// `budget show` and generate-time enforcement check.
+	sinceISO := since.UTC().Format(time.RFC3339)
+	rows, err := s.DB().QueryContext(ctx, `
+		SELECT COUNT(*) FROM resources
+		WHERE resource_type IN ('clip','clips')
+		  AND json_extract(data, '$.created_at') IS NOT NULL
+		  AND json_extract(data, '$.created_at') >= ?
+	`, sinceISO)
+	if err != nil {
+		// Fallback to legacy scan if json_extract isn't available (older SQLite).
+		return estimatedSpendSinceLegacy(ctx, s, since)
+	}
+	defer rows.Close()
+	if !rows.Next() {
+		return 0, rows.Err()
+	}
+	var count int
+	if err := rows.Scan(&count); err != nil {
+		return 0, fmt.Errorf("scanning clip spend: %w", err)
+	}
+	return count * 10, rows.Err()
+}
+
+func estimatedSpendSinceLegacy(ctx context.Context, s interface{ DB() *sql.DB }, since time.Time) (int, error) {
 	rows, err := s.DB().QueryContext(ctx, `SELECT data FROM resources WHERE resource_type IN ('clip','clips')`)
 	if err != nil {
 		return 0, fmt.Errorf("querying clip spend: %w", err)
@@ -156,4 +183,52 @@ func estimatedSpendSince(ctx context.Context, s interface{ DB() *sql.DB }, since
 		}
 	}
 	return total, rows.Err()
+}
+
+// budgetCapExceeded reports whether submitting one more generation (10 credits)
+// would breach the persisted budget_setting cap for daily or month-to-date spend.
+// Returns (cap, period, exceeded). period is "daily" or "monthly"; cap is the
+// configured limit; exceeded is true when current spend + 10 > cap. When no
+// cap is set or no setting exists, returns exceeded=false with zero values.
+//
+// PATCH(greptile #577 P1): wire the persisted budget_setting into the
+// generate path. The prior implementation stored caps but never enforced them.
+func budgetCapExceeded(ctx context.Context, s interface {
+	DB() *sql.DB
+	Get(resourceType, id string) (json.RawMessage, error)
+}) (cap int, period string, exceeded bool, err error) {
+	raw, gerr := s.Get("budget_setting", "current")
+	if gerr != nil && gerr != sql.ErrNoRows {
+		return 0, "", false, fmt.Errorf("reading budget setting: %w", gerr)
+	}
+	if raw == nil {
+		return 0, "", false, nil
+	}
+	var setting budgetSetting
+	if uerr := json.Unmarshal(raw, &setting); uerr != nil {
+		return 0, "", false, fmt.Errorf("parsing budget setting: %w", uerr)
+	}
+	now := time.Now()
+	const perGenerationCredits = 10
+	if setting.DailyCredits > 0 {
+		dayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+		spend, serr := estimatedSpendSince(ctx, s, dayStart)
+		if serr != nil {
+			return 0, "", false, serr
+		}
+		if spend+perGenerationCredits > setting.DailyCredits {
+			return setting.DailyCredits, "daily", true, nil
+		}
+	}
+	if setting.MonthlyCredits > 0 {
+		monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+		spend, serr := estimatedSpendSince(ctx, s, monthStart)
+		if serr != nil {
+			return 0, "", false, serr
+		}
+		if spend+perGenerationCredits > setting.MonthlyCredits {
+			return setting.MonthlyCredits, "monthly", true, nil
+		}
+	}
+	return 0, "", false, nil
 }

@@ -46,6 +46,21 @@ func newGenerateCreateCmd(flags *rootFlags) *cobra.Command {
 				return err
 			}
 
+			// PATCH(greptile #577 P1): enforce persisted budget_setting cap.
+			// `budget set daily N` / `budget set monthly N` previously stored a cap
+			// that generate never consulted. Honor `--max-spend` (per-command) AND
+			// the stored daily/monthly cap. Skip enforcement when the local store
+			// can't be opened — generation still works without sync.
+			if !dryRunOK(flags) {
+				if budgetStore, berr := openExistingStore(cmd.Context()); berr == nil && budgetStore != nil {
+					capLimit, period, exceeded, eerr := budgetCapExceeded(cmd.Context(), budgetStore)
+					budgetStore.Close()
+					if eerr == nil && exceeded {
+						return fmt.Errorf("budget cap reached: %s cap of %d credits would be exceeded by submitting this generation (10 credits per call). Raise the cap with `suno-pp-cli budget set %s <N>` or clear it with `suno-pp-cli budget clear`", period, capLimit, period)
+					}
+				}
+			}
+
 			path := "/api/generate/v2-web/"
 			var body map[string]any
 			if stdinBody {
