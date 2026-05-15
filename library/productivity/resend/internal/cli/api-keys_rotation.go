@@ -48,6 +48,12 @@ reviews.`,
 			}
 			defer db.Close()
 
+			// NULL created_at must not silently pass the age filter. SQLite's
+			// `COALESCE(x, '') < '<iso>'` is TRUE for the empty string (lex
+			// sorts before any digit), so NULL-created keys would otherwise
+			// appear in every result regardless of --older-than. Require a
+			// real timestamp explicitly and let SQL's NULL semantics drop
+			// the ambiguous rows from the comparison.
 			rows, err := db.Query(`
 				SELECT
 					k.id,
@@ -56,7 +62,7 @@ reviews.`,
 					COALESCE(json_extract(k.data, '$.permission'), '') AS permission,
 					(SELECT MAX(l.created_at) FROM logs l WHERE l.data LIKE '%"' || k.id || '"%') AS last_used_at
 				FROM api_keys k
-				WHERE COALESCE(k.created_at, '') < ?
+				WHERE k.created_at IS NOT NULL AND k.created_at < ?
 				ORDER BY k.created_at ASC
 			`, cutoff)
 			if err != nil {
