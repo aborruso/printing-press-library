@@ -19,7 +19,7 @@ func newDomainsSetRegistrarLockCmd(flags *rootFlags) *cobra.Command {
 		Use:         "set-registrar-lock",
 		Short:       "Runs `namecheap.domains.setRegistrarLock`.",
 		Example:     "  namecheap-pp-cli domains set-registrar-lock",
-		Annotations: map[string]string{"pp:endpoint": "domains.set-registrar-lock", "pp:method": "GET", "pp:path": "/domains/set-registrar-lock", "mcp:read-only": "true"},
+		Annotations: map[string]string{"pp:endpoint": "domains.set-registrar-lock", "pp:method": "GET", "pp:path": "/domains/set-registrar-lock", "mcp:destructive": "true", "mcp:read-only": "false"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if cmd.Flags().Changed("lock-action") {
 				allowedLockAction := []string{"LOCK", "UNLOCK"}

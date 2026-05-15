@@ -536,7 +536,11 @@ func (c *Client) prepareNamecheapRequest(path string, params map[string]string) 
 }
 
 func isSensitiveQueryParam(key string) bool {
-	return strings.EqualFold(key, "ApiKey") || strings.EqualFold(key, "APIKey")
+	return strings.EqualFold(key, "ApiKey") ||
+		strings.EqualFold(key, "APIKey") ||
+		strings.EqualFold(key, "ApiUser") ||
+		strings.EqualFold(key, "UserName") ||
+		strings.EqualFold(key, "ClientIp")
 }
 
 var namecheapCommandByPath = map[string]string{

@@ -20,7 +20,7 @@ func newDomainsRenewCmd(flags *rootFlags) *cobra.Command {
 		Use:         "renew",
 		Short:       "Runs `namecheap.domains.renew`. Mutating paid operation.",
 		Example:     "  namecheap-pp-cli domains renew",
-		Annotations: map[string]string{"pp:endpoint": "domains.renew", "pp:method": "GET", "pp:path": "/domains/renew", "mcp:read-only": "true"},
+		Annotations: map[string]string{"pp:endpoint": "domains.renew", "pp:method": "GET", "pp:path": "/domains/renew", "mcp:destructive": "true", "mcp:read-only": "false"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {

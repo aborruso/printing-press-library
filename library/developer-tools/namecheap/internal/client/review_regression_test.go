@@ -39,6 +39,18 @@ func TestDryRunMasksNamecheapAPIKeyParam(t *testing.T) {
 	}
 }
 
+func TestSensitiveNamecheapQueryParams(t *testing.T) {
+	sensitive := []string{"ApiKey", "APIKey", "ApiUser", "UserName", "ClientIp"}
+	for _, key := range sensitive {
+		if !isSensitiveQueryParam(key) {
+			t.Fatalf("%s should be treated as sensitive", key)
+		}
+	}
+	if isSensitiveQueryParam("DomainName") {
+		t.Fatal("DomainName should not be treated as sensitive")
+	}
+}
+
 // PATCH(namecheap-client-ip-cache): regression coverage for one public-IP lookup per Client.
 func TestPrepareNamecheapRequestCachesDetectedClientIP(t *testing.T) {
 	var calls int32

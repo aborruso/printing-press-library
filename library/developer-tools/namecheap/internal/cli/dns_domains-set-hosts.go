@@ -19,7 +19,7 @@ func newDnsDomainsSetHostsCmd(flags *rootFlags) *cobra.Command {
 		Use:         "set-hosts",
 		Short:       "Runs `namecheap.domains.dns.setHosts`; HostName1/RecordType1/Address1/TTL1 style parameters can be passed via...",
 		Example:     "  namecheap-pp-cli dns set-hosts",
-		Annotations: map[string]string{"pp:endpoint": "dns.set-hosts", "pp:method": "GET", "pp:path": "/dns/set-hosts", "mcp:read-only": "true"},
+		Annotations: map[string]string{"pp:endpoint": "dns.set-hosts", "pp:method": "GET", "pp:path": "/dns/set-hosts", "mcp:destructive": "true", "mcp:read-only": "false"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {

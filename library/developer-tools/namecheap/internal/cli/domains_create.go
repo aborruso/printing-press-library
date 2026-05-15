@@ -23,7 +23,7 @@ func newDomainsCreateCmd(flags *rootFlags) *cobra.Command {
 		Use:         "create",
 		Short:       "Runs `namecheap.domains.create`. This is a mutating paid operation; use dry-run unless intentionally registering.",
 		Example:     "  namecheap-pp-cli domains create",
-		Annotations: map[string]string{"pp:endpoint": "domains.create", "pp:method": "GET", "pp:path": "/domains/create", "mcp:read-only": "true"},
+		Annotations: map[string]string{"pp:endpoint": "domains.create", "pp:method": "GET", "pp:path": "/domains/create", "mcp:destructive": "true", "mcp:read-only": "false"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if cmd.Flags().Changed("add-free-whoisguard") {
 				allowedAddFreeWhoisguard := []string{"yes", "no"}
