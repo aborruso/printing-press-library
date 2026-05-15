@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "applied_at": "2026-05-15",
+  "base_run_id": "20260514-184203",
+  "base_printing_press_version": "4.6.1",
+  "patches": [
+    {
+      "id": "suno-transcendence-commands",
+      "summary": "Adds local Suno workflow and analytics commands beyond the sniffed endpoint spec.",
+      "reason": "These commands compose reverse-engineered API calls with the generic local SQLite resource store for recipes, spend analysis, lineage, budget caps, sessions, variant picking, evolution, and export bundles.",
+      "files": [
+        "internal/cli/vibes.go",
+        "internal/cli/burn.go",
+        "internal/cli/persona_leaderboard.go",
+        "internal/cli/tree.go",
+        "internal/cli/budget.go",
+        "internal/cli/sessions.go",
+        "internal/cli/generate_evolve.go",
+        "internal/cli/ship.go",
+        "internal/cli/transcendence_helpers.go",
+        "internal/cli/root.go",
+        "internal/cli/persona.go",
+        "internal/cli/generate.go",
+        "internal/cli/doctor.go",
+        "internal/cli/generate_create.go"
+      ],
+      "validated_outcome": "go build ./..., go vet ./..., go test ./..., and help checks for new command paths pass."
+    }
+  ]
+}
