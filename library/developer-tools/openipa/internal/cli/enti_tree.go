@@ -213,6 +213,13 @@ la struttura organizzativa completa di un ente IPA in un unico output.`,
 				}
 			}
 
+			// Show UOs not belonging to any AOO (cod_aoo empty)
+			for _, uo := range tree.UO {
+				if uo.CodAOO == "" {
+					fmt.Fprintf(w, "  └─ UO %s: %s\n", uo.CodUniOU, uo.DesOU)
+				}
+			}
+
 			return nil
 		},
 	}

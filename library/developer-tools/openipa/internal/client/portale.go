@@ -66,7 +66,7 @@ func (c *Client) PostJSON(path string, body any) (json.RawMessage, int, error) {
 
 		if resp.StatusCode < 400 {
 			c.limiter.OnSuccess()
-			return json.RawMessage(respBody), resp.StatusCode, nil
+			return json.RawMessage(sanitizeJSONResponse(respBody)), resp.StatusCode, nil
 		}
 
 		apiErr := &APIError{Method: "POST", Path: path, StatusCode: resp.StatusCode, Body: truncateBody(respBody)}
