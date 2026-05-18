@@ -23,7 +23,7 @@ comprese quelle cessate. Opzionalmente filtra per singola AOO tramite codice uni
 		Example: strings.Trim(`
   openipa-pp-cli aoo storico agid
   openipa-pp-cli aoo storico agid --storico
-  openipa-pp-cli aoo storico agid --aoo agid_aoo --json`, "\n"),
+  openipa-pp-cli aoo storico agid --aoo A463BFE --json`, "\n"),
 		Args: cobra.MaximumNArgs(1),
 		Annotations: map[string]string{
 			"mcp:read-only": "true",
@@ -83,7 +83,7 @@ comprese quelle cessate. Opzionalmente filtra per singola AOO tramite codice uni
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&codUniAOO, "aoo", "", "Codice univoco AOO (opzionale, es. agid_aoo)")
-	cmd.Flags().BoolVar(&storico, "storico", false, "Includi solo AOO cessate")
+	cmd.Flags().StringVar(&codUniAOO, "aoo", "", "Codice univoco AOO (opzionale, es. A463BFE — usa 'aoo storico <cod_amm> --json | jq .[].cod_uni_aoo' per trovarlo)")
+	cmd.Flags().BoolVar(&storico, "storico", false, "Includi AOO cessate nei risultati (default: solo AOO attive)")
 	return cmd
 }
