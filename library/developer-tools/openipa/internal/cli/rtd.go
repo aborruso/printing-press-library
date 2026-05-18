@@ -186,16 +186,16 @@ func newRtdEmailCmd(flags *rootFlags) *cobra.Command {
 						fmt.Fprintf(os.Stderr, "warning: WS06 failed for %s: %v\n", codUni, uoErr)
 					} else {
 						var uoWrap struct {
-							Data []struct {
+							Data struct {
 								DesOU string `json:"des_ou"`
 								Mail1 string `json:"mail1"`
 								Mail2 string `json:"mail2"`
 							} `json:"data"`
 						}
-						if json.Unmarshal(uoRaw, &uoWrap) == nil && len(uoWrap.Data) > 0 {
-							r.Ufficio = uoWrap.Data[0].DesOU
-							r.Email = uoWrap.Data[0].Mail1
-							r.PEC = uoWrap.Data[0].Mail2
+						if json.Unmarshal(uoRaw, &uoWrap) == nil {
+							r.Ufficio = uoWrap.Data.DesOU
+							r.Email = uoWrap.Data.Mail1
+							r.PEC = uoWrap.Data.Mail2
 						}
 					}
 				}
