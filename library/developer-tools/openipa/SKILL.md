@@ -119,8 +119,10 @@ These capabilities aren't available in any other tool for this API.
 
 **aoo** — Aree Organizzative Omogenee degli enti
 
+- `openipa-pp-cli aoo cerca <cod_uni_aoo>` — Dati AOO per codice univoco IPA a 7 caratteri (es. `A463BFE`) — **non** il cod_aoo testuale (es. `agid_aoo`)
 - `openipa-pp-cli aoo get` — AOO di un ente con filtro opzionale per codice AOO
 - `openipa-pp-cli aoo list` — Lista delle AOO di un ente
+- `openipa-pp-cli aoo storico <cod_amm>` — Lista AOO di un ente (attive + cessate); espone `cod_uni_aoo` utile per `aoo cerca`
 
 **cerca** — Ricerca trasversale — trova entità IPA per email
 
@@ -150,6 +152,12 @@ These capabilities aren't available in any other tool for this API.
 - `openipa-pp-cli nso cf` — Nodi NSO per codice fiscale ente
 - `openipa-pp-cli nso ente` — Canali NSO attivi di un ente per codice IPA
 
+**pec** — Indirizzi PEC degli enti IPA
+
+- `openipa-pp-cli pec ente <cod_amm>` — PEC attive di un ente per codice IPA (WS20)
+- `openipa-pp-cli pec storico <cod_amm>` — Storico PEC di un ente, attive e cessate (WS21)
+- `openipa-pp-cli pec cerca <indirizzo-pec>` — Storia di un indirizzo PEC specifico nell'IPA (WS22)
+
 **uo** — Unità Organizzative degli enti
 
 - `openipa-pp-cli uo get` — Dettagli di una singola UO per codice univoco
@@ -168,7 +176,7 @@ Restituisce 30 risultati per pagina; aggiungere `--tutti` per scaricare tutto.
 | Comando | Input | Quando usarlo |
 |---------|-------|---------------|
 | `aoo list --codice <cod_amm>` | codice ente padre | vuoi tutte le AOO di un ente noto |
-| `aoo cerca <cod_uni_aoo>` | codice univoco AOO | hai già il codice univoco (es. `m_it_001`) |
+| `aoo cerca <cod_uni_aoo>` | codice univoco IPA a 7 car. | hai già il cod_uni_aoo (es. `A463BFE`) — recuperalo con `aoo storico` |
 | `sede aoo --nome <nome>` | testo libero | cerchi per denominazione senza codice — **usa questo come fallback** |
 
 **rtd** — Responsabile Transizione Digitale (portale IPA — non API pubblica)
@@ -176,6 +184,11 @@ Restituisce 30 risultati per pagina; aggiungere `--tutti` per scaricare tutto.
 - `openipa-pp-cli rtd cerca` — Cerca RTD per nominativo, ente, area geografica, categoria
 
 Nota: l'RTD non è esposto dai web service ufficiali IPA (WS01-WS23); questo comando usa il portale PortaleServices.
+
+### Note operative sugli endpoint IPA
+
+- **`aoo cerca` vuole `cod_uni_aoo`, non `cod_aoo`** — Il parametro è l'identificatore univoco IPA a 7 caratteri (es. `A463BFE`), diverso dal cod_aoo testuale dell'ente (es. `agid_aoo`). Per ottenerlo: `openipa-pp-cli aoo storico <cod_amm> --json | jq '.[].cod_uni_aoo'`
+- **I web service WS18+ usano endpoint REST** — Dal 2021 IPA ha migrato i WS ≥ 18 a endpoint REST (`/ws/<Bundle>Services/api/<WS>`). Il CLI usa già il formato corretto; i vecchi path `.php` non sono più supportati per questi WS.
 
 ### Finding the right command
 
