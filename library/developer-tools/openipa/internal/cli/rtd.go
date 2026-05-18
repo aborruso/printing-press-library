@@ -181,7 +181,7 @@ func newRtdEmailCmd(flags *rootFlags) *cobra.Command {
 				}
 
 				if codUni != "" {
-					uoRaw, _, uoErr := ws.Post("/WS06_OU_CODUNI.php", map[string]any{"COD_UNI_OU": codUni})
+					uoRaw, _, uoErr := ws.Post("/ws/WS06OUCODUNIServices/api/WS06_OU_COD_UNI", map[string]any{"COD_UNI_OU": codUni})
 					if uoErr != nil {
 						fmt.Fprintf(os.Stderr, "warning: WS06 failed for %s: %v\n", codUni, uoErr)
 					} else {
