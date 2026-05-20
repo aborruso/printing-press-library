@@ -454,6 +454,14 @@ func syncResource(c syncFetcher, db *store.Store, resource, sinceTS string, full
 		// Apply user-supplied --param / --resource-param overrides last so they
 		// win over spec-derived defaults (e.g. forcing mine=true on a list
 		// endpoint whose OpenAPI spec marks the filter optional).
+		// PATCH(greptile-715-issue2: confirm locationId flows to POST body) —
+		// applyTo(resource, params, false) passes isDependent=false, which
+		// means flatGlobal (--param) AND trueGlobal (--global-param) are both
+		// injected into params. locationId set via --global-param locationId=<id>
+		// is stored in trueGlobal and reaches params["locationId"] here;
+		// fetchSyncPage then reads params["locationId"] into the POST body.
+		// The `false` argument does NOT suppress trueGlobal — see applyTo in
+		// helpers.go: trueGlobal always propagates regardless of isDependent.
 		userParams.applyTo(resource, params, false)
 
 		// PATCH(amend-2026-05-20: contacts + tags sync) — dispatch GET vs POST
@@ -499,10 +507,20 @@ func syncResource(c syncFetcher, db *store.Store, resource, sinceTS string, full
 		// Standard cursor handling in extractPaginationFromEnvelope assumes
 		// a string and misses this shape. Override here for the POST-search
 		// resources so paging advances correctly.
+		// PATCH(greptile-715-issue3: guard hasMore on full-page count) —
+		// extractSearchAfterCursor Strategy 2 (derive cursor from last
+		// contact's id) returns ok=true even on the final page when the
+		// page count equals the limit, causing one extra /contacts/search
+		// call per sync. Guard hasMore on len(items) >= pageSize.limit: if
+		// the page was short, it must be the last page regardless of whether
+		// we derived a cursor. This matches the same guard pattern used by
+		// the page-int paginator fallback just below.
 		if syncResourceMethod(resource) == "POST" {
 			if sa, ok := extractSearchAfterCursor(data); ok {
 				nextCursor = sa
-				hasMore = true
+				// Only assert hasMore when this page was full — a short page
+				// is definitively the last page even if we derived a cursor.
+				hasMore = len(items) >= pageSize.limit
 			}
 		}
 
@@ -562,12 +580,11 @@ func syncResource(c syncFetcher, db *store.Store, resource, sinceTS string, full
 		// dateUpdated as a coarse tagged_at proxy (GHL's API does not
 		// expose per-tag-application timestamps — see plan doc for the
 		// follow-up to capture true timestamps via tag add/remove wrappers).
-		// When the user explicitly syncs only "contacts_tags", the
-		// contacts page is still fetched (same endpoint), items get
-		// stored under the contacts table (idempotent upsert), and we
-		// derive the rows here. So a one-resource sync of contacts_tags
-		// works even without naming contacts.
-		if resource == "contacts" || resource == "contacts_tags" {
+		// PATCH(greptile-715-issue1: contacts_tags is derived only) —
+		// contacts_tags is no longer a standalone sync resource in
+		// defaultSyncResources; derivation runs exclusively as a side-effect
+		// of the contacts sync. The condition below is now contacts-only.
+		if resource == "contacts" {
 			if err := deriveContactsTagsFromPage(db, items); err != nil {
 				if humanFriendly {
 					fmt.Fprintf(os.Stderr, "\nwarning: contacts_tags derivation failed for %s page: %v\n", resource, err)
@@ -1081,17 +1098,22 @@ func parseSinceDuration(s string) (time.Time, error) {
 }
 
 func defaultSyncResources() []string {
-	// PATCH(amend-2026-05-20: contacts + tags sync) — added contacts,
-	// locations_tags, contacts_tags so downstream automation can run SQL
-	// queries against a local SQLite cache instead of round-tripping
-	// POST /contacts/search per query. contacts_tags is derived from
-	// each contacts page (not a separate endpoint) — see fetchSyncPage
-	// and deriveContactsTagsFromPage.
+	// PATCH(amend-2026-05-20: contacts + tags sync) — added contacts and
+	// locations_tags so downstream automation can run SQL queries against a
+	// local SQLite cache instead of round-tripping POST /contacts/search per
+	// query. contacts_tags is intentionally absent here: it is a derived
+	// side-effect of the contacts sync (deriveContactsTagsFromPage runs for
+	// every contacts page) and does NOT map to its own independent API call.
+	// PATCH(greptile-715-issue1: remove contacts_tags from default) — listing
+	// contacts_tags as a sync resource caused it to re-crawl /contacts/search
+	// a second time and store raw contact JSON blobs under
+	// resource_type='contacts_tags' in the generic resources table, corrupting
+	// that table and doubling API call budget. contacts_tags rows are populated
+	// automatically when contacts syncs; no explicit listing needed.
 	return []string{
 		"locations",
 		"contacts",
 		"locations_tags",
-		"contacts_tags",
 	}
 }
 
@@ -1107,17 +1129,19 @@ func knownSyncResourceNames() []string {
 // For REST APIs this is typically "/<resource>". For non-REST APIs (e.g., Steam)
 // this preserves the actual endpoint path like "/ISteamApps/GetAppList/v2".
 func syncResourcePath(resource string) (string, error) {
-	// PATCH(amend-2026-05-20: contacts + tags sync) — added contacts,
-	// locations_tags, contacts_tags. contacts_tags shares the contacts
-	// endpoint because rows are derived from the contact response (each
-	// contact's tags[] array fans out to one row per applied tag); the
-	// derivation hook in fetchSyncPage drops the contacts_tags request
-	// at issue time when contacts has already synced this run.
+	// PATCH(amend-2026-05-20: contacts + tags sync) — added contacts and
+	// locations_tags. contacts_tags is NOT listed here because it is not a
+	// standalone sync resource; its rows are derived inside the contacts sync
+	// loop via deriveContactsTagsFromPage (see defaultSyncResources).
+	// PATCH(greptile-715-issue1: remove contacts_tags path entry) — removed
+	// contacts_tags from the path map to match its removal from
+	// defaultSyncResources. A caller explicitly requesting
+	// --resource contacts_tags will now receive "unknown sync resource" and
+	// must use --resource contacts instead.
 	paths := map[string]string{
 		"locations":      "/locations/search",
 		"contacts":       "/contacts/search",
 		"locations_tags": "/locations/{locationId}/tags",
-		"contacts_tags":  "/contacts/search",
 	}
 	if p, ok := paths[resource]; ok {
 		return p, nil
@@ -1130,9 +1154,12 @@ func syncResourcePath(resource string) (string, error) {
 // (GHL contacts /contacts/search) flow through the same syncResource loop as
 // GET-list endpoints. Default for unlisted resources is GET (preserves
 // existing behavior for every resource that pre-existed this patch).
+// PATCH(greptile-715-issue1: remove contacts_tags from POST method list) —
+// contacts_tags is no longer a standalone sync resource; only contacts maps
+// to POST /contacts/search.
 func syncResourceMethod(resource string) string {
 	switch resource {
-	case "contacts", "contacts_tags":
+	case "contacts":
 		return "POST"
 	default:
 		return "GET"
