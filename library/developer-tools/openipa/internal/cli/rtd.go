@@ -192,7 +192,9 @@ func newRtdEmailCmd(flags *rootFlags) *cobra.Command {
 								Mail2 string `json:"mail2"`
 							} `json:"data"`
 						}
-						if json.Unmarshal(uoRaw, &uoWrap) == nil {
+						if err := json.Unmarshal(uoRaw, &uoWrap); err != nil {
+							fmt.Fprintf(os.Stderr, "warning: WS06 parse failed for %s: %v\n", codUni, err)
+						} else {
 							r.Ufficio = uoWrap.Data.DesOU
 							r.Email = uoWrap.Data.Mail1
 							r.PEC = uoWrap.Data.Mail2
