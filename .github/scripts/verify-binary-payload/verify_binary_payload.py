@@ -26,7 +26,6 @@ MAGIC_PREFIXES = {
     b"\x7fELF": "ELF executable/shared object",
     b"MZ": "Windows PE executable",
     b"\xca\xfe\xba\xbe": "Mach-O universal binary",
-    b"\xbe\xba\xfe\xca": "Mach-O universal binary",
     b"\xfe\xed\xfa\xce": "Mach-O executable",
     b"\xfe\xed\xfa\xcf": "Mach-O executable",
     b"\xce\xfa\xed\xfe": "Mach-O executable",
