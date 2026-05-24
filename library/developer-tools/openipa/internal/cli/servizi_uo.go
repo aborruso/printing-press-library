@@ -56,9 +56,9 @@ Usa "servizi tipi --uo" per scoprire gli ID da passare a --categoria.`,
 			var err error
 
 			if tutti {
-				items, pag, status, err = fetchAllPages(c, "/api/serviziufficio/ricercaServiziUO", body, "street")
+				items, pag, status, err = fetchAllPages(c, "/api/serviziufficio/ricercaServiziUO", body, "denominazione")
 			} else {
-				body["paginazione"] = newPaginazione("street", pagina)
+				body["paginazione"] = newPaginazione("denominazione", pagina)
 				var raw json.RawMessage
 				raw, status, err = c.PostJSON("/api/serviziufficio/ricercaServiziUO", body)
 				if err == nil {

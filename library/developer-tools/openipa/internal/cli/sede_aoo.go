@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/spf13/cobra"
 )
@@ -17,7 +18,7 @@ func normalizeNome(s string) string {
 	words := strings.Fields(s)
 	kept := words[:0]
 	for _, w := range words {
-		if len(w) > 2 {
+		if utf8.RuneCountInString(w) > 2 {
 			kept = append(kept, w)
 		}
 	}

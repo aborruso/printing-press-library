@@ -6,7 +6,6 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 
 	"github.com/spf13/cobra"
 )
@@ -52,7 +51,7 @@ restituire anche Bariano, Baricella o Barisardo; filtra il JSON per
 
 			var tipologiaVal any
 			if tipologia > 0 {
-				tipologiaVal = strconv.Itoa(tipologia)
+				tipologiaVal = tipologia
 			}
 
 			body := map[string]any{

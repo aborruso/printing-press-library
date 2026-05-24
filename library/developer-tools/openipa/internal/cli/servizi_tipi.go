@@ -47,8 +47,7 @@ spesso l'Albo Pretorio online.`,
 				resource = "servizi/tipi-uo"
 			}
 
-			raw, err := c.Get(path, nil)
-			status := 200
+			raw, status, err := c.GetJSON(path, nil)
 			if err != nil {
 				return classifyAPIError(err, flags)
 			}
@@ -67,7 +66,7 @@ spesso l'Albo Pretorio online.`,
 				if wrapper.DescrizioneErrore != nil && *wrapper.DescrizioneErrore != "" {
 					msg = *wrapper.DescrizioneErrore
 				}
-				return fmt.Errorf("%s", msg)
+				return fmt.Errorf("%s: %s", path, msg)
 			}
 
 			items := wrapper.Risposta
@@ -81,7 +80,7 @@ spesso l'Albo Pretorio online.`,
 			}
 
 			w := cmd.OutOrStdout()
-			if wantsHumanTable(w, flags) {
+			if wantsHumanTable(w, flags) && flags.selectFields == "" {
 				var list []map[string]any
 				if err := json.Unmarshal(items, &list); err == nil && len(list) > 0 {
 					if err2 := printAutoTable(w, list); err2 == nil {
