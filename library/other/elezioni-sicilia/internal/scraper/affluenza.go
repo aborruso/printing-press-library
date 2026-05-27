@@ -40,6 +40,7 @@ func cleanCell(s string) string {
 var trRe = regexp.MustCompile(`(?is)<tr[^>]*>(.*?)</tr>`)
 var tdRe = regexp.MustCompile(`(?is)<t[dh][^>]*>(.*?)</t[dh]>`)
 var provRe = regexp.MustCompile(`(?i)Provincia di ([A-Z]+)\s*\(([A-Z]+)\)`)
+var wsRe = regexp.MustCompile(`\s+`)
 
 // FetchAffluenza fetches and parses the regional affluenza table for a given year.
 func FetchAffluenza(anno int) ([]AffluenzaComune, string, error) {
