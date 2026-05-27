@@ -38,6 +38,10 @@ type RiportoListe struct {
 // tableRe matches a full <table>...</table> block.
 var tableRe = regexp.MustCompile(`(?is)<table[^>]*>(.*?)</table>`)
 
+// wsRe collapses runs of whitespace to a single space (used to normalise cells
+// where <br> stripping leaves double spaces, e.g. "Sindaco  Eletto").
+var wsRe = regexp.MustCompile(`\s+`)
+
 // FetchListe fetches and parses the liste page for a comune.
 func FetchListe(comune *Comune, anno int) (*RiportoListe, string, error) {
 	base := ArchiveURL(anno)
@@ -75,6 +79,9 @@ func parseListe(body string, comune *Comune, anno int) (*RiportoListe, error) {
 	// collapsed before the check.
 	startIdx := -1
 	for i, t := range tables {
+		if !strings.Contains(t[1], "Sindaco") && !strings.Contains(t[1], "Candidato") {
+			continue
+		}
 		rows := trRe.FindAllStringSubmatch(t[1], -1)
 		for _, r := range rows {
 			normalized := wsRe.ReplaceAllString(cleanCell(r[1]), " ")

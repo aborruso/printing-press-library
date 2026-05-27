@@ -74,7 +74,8 @@ func parseCandidati(body string, comune *Comune, anno int) (*RiportoCandidati, e
 		for i, v := range vals {
 			if v == "N°" && i+1 < len(vals) {
 				// Next might be the number
-				if len(vals) > i+2 && (strings.Contains(strings.ToLower(vals[i+2]), "candidat") || strings.Contains(strings.ToLower(vals[i+2]), "sindac")) {
+				label := strings.ToLower(vals[i+2])
+				if len(vals) > i+2 && (strings.Contains(label, "candidat") || strings.Contains(label, "sindac")) {
 					// Save previous candidate if any
 					if current.Nome != "" {
 						result.Candidati = append(result.Candidati, current)
