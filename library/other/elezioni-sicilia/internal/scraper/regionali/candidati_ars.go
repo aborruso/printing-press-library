@@ -58,14 +58,19 @@ func FetchCandidatiARS(anno int, provincia string) (*CandidatiARSProvincia, stri
 		}
 
 		// LISTA N. <num> <nome> header (single cell typically)
+		headerFound := false
 		for _, v := range vals {
 			if m := listaHeaderRe.FindStringSubmatch(v); len(m) == 3 {
 				if current != nil {
 					out.Liste = append(out.Liste, *current)
 				}
 				current = &ListaProvincialeARS{Numero: m[1], Nome: m[2]}
+				headerFound = true
 				break
 			}
+		}
+		if headerFound {
+			continue
 		}
 		if current == nil {
 			continue

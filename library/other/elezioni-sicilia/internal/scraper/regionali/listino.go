@@ -30,6 +30,7 @@ type ListinoRegionale struct {
 }
 
 var listaHeaderRe = regexp.MustCompile(`(?i)LISTA N\.\s*(\d+)\s+(.+)`)
+var capolistaRe = regexp.MustCompile(`(?i)CAPOLISTA|PRESIDENTE`)
 
 // FetchListino fetches and parses the rep_9/listeRegionali.html page.
 func FetchListino(anno int) (*ListinoRegionale, string, error) {
@@ -55,14 +56,19 @@ func FetchListino(anno int) (*ListinoRegionale, string, error) {
 		}
 
 		// Check for "LISTA N. <num> <name>" header in any cell
+		headerFound := false
 		for _, v := range vals {
 			if m := listaHeaderRe.FindStringSubmatch(v); len(m) == 3 {
 				if current != nil {
 					out.Liste = append(out.Liste, *current)
 				}
 				current = &ListaRegionale{Numero: m[1], Nome: m[2]}
+				headerFound = true
 				break
 			}
+		}
+		if headerFound {
+			continue
 		}
 		if current == nil {
 			continue
@@ -96,5 +102,5 @@ func FetchListino(anno int) (*ListinoRegionale, string, error) {
 }
 
 func isCapolistaMarker(s string) bool {
-	return regexp.MustCompile(`(?i)CAPOLISTA|PRESIDENTE`).MatchString(s)
+	return capolistaRe.MatchString(s)
 }

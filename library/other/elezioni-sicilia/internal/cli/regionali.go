@@ -44,7 +44,10 @@ func validateAnnoRegionali(anno int) error {
 
 func emitRegionaliJSON(cmd *cobra.Command, flags *rootFlags, data any, meta map[string]any) error {
 	out := map[string]any{"meta": meta, "data": data}
-	b, _ := json.MarshalIndent(out, "", "  ")
+	b, err := json.MarshalIndent(out, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal regionali JSON: %w", err)
+	}
 	if flags.selectFields != "" {
 		b = filterFields(b, flags.selectFields)
 	}
