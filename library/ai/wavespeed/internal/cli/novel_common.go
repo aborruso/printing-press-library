@@ -141,6 +141,12 @@ func openLibrary() (*store.Store, error) {
 	return store.OpenLibrary(libraryDBPath())
 }
 
+// openArchiveReadOnly opens the archive DB read-only for cache lookups (e.g.
+// cached pricing). Returns an error if the archive file does not exist.
+func openArchiveReadOnly() (*store.Store, error) {
+	return store.OpenReadOnly(archiveDBPath())
+}
+
 // recordPolicyFor normalizes the project's record policy. Default is
 // "novel-only": novel commands record, plain `run` does not (unless --record).
 func recordPolicyFor(project wavespeedProjectConfig) string {
