@@ -104,53 +104,57 @@ func runDdlIter(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error 
 
 	// 2. Sommari di commissione che citano il DDL nel testo (archivio 230).
 	if arc := icaro.BySlug("sommari"); arc != nil {
-		c2, _ := icaro.New(nil)
-		recs, err := c2.Search(ctx, *arc, icaro.SearchOptions{
-			Params: map[string]string{
-				"legisl": itoa(legisl),
-				"testo":  fmt.Sprintf("ddl %d", numero),
-			},
-			Limit:    20,
-			MaxPages: 2,
-		})
+		c2, err := icaro.New(nil)
 		if err == nil {
-			for _, r := range recs {
-				report.Eventi = append(report.Eventi, iterEvent{
-					Fase:      "commissione",
-					Data:      r.Fields["Data"],
-					Sede:      r.Fields["Commissione"],
-					Titolo:    r.Title,
-					URL:       r.URL,
-					ArchiveID: arc.ID,
-					DocID:     r.DocID,
-				})
+			recs, err := c2.Search(ctx, *arc, icaro.SearchOptions{
+				Params: map[string]string{
+					"legisl": itoa(legisl),
+					"testo":  fmt.Sprintf("ddl %d", numero),
+				},
+				Limit:    20,
+				MaxPages: 2,
+			})
+			if err == nil {
+				for _, r := range recs {
+					report.Eventi = append(report.Eventi, iterEvent{
+						Fase:      "commissione",
+						Data:      r.Fields["Data"],
+						Sede:      r.Fields["Commissione"],
+						Titolo:    r.Title,
+						URL:       r.URL,
+						ArchiveID: arc.ID,
+						DocID:     r.DocID,
+					})
+				}
 			}
 		}
 	}
 
 	// 3. Resoconti d'aula che citano il DDL (archivio 217).
 	if arc := icaro.BySlug("resoconti"); arc != nil {
-		c3, _ := icaro.New(nil)
-		recs, err := c3.Search(ctx, *arc, icaro.SearchOptions{
-			Params: map[string]string{
-				"legisl": itoa(legisl),
-				"testo":  fmt.Sprintf("ddl %d", numero),
-			},
-			Limit:    10,
-			MaxPages: 1,
-		})
+		c3, err := icaro.New(nil)
 		if err == nil {
-			for _, r := range recs {
-				report.Eventi = append(report.Eventi, iterEvent{
-					Fase:      "aula",
-					Data:      r.Fields["Data"],
-					Sede:      "Assemblea (aula)",
-					Titolo:    r.Title,
-					Oratori:   r.Fields["Oratori"],
-					URL:       r.URL,
-					ArchiveID: arc.ID,
-					DocID:     r.DocID,
-				})
+			recs, err := c3.Search(ctx, *arc, icaro.SearchOptions{
+				Params: map[string]string{
+					"legisl": itoa(legisl),
+					"testo":  fmt.Sprintf("ddl %d", numero),
+				},
+				Limit:    10,
+				MaxPages: 1,
+			})
+			if err == nil {
+				for _, r := range recs {
+					report.Eventi = append(report.Eventi, iterEvent{
+						Fase:      "aula",
+						Data:      r.Fields["Data"],
+						Sede:      "Assemblea (aula)",
+						Titolo:    r.Title,
+						Oratori:   r.Fields["Oratori"],
+						URL:       r.URL,
+						ArchiveID: arc.ID,
+						DocID:     r.DocID,
+					})
+				}
 			}
 		}
 	}

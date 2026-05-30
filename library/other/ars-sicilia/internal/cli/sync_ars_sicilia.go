@@ -99,6 +99,14 @@ func runSyncAll(cmd *cobra.Command, flags *rootFlags, dbPath string, maxPages in
 				fmt.Fprintf(os.Stderr, "  upsert %s/%s: %v\n", arc.Slug, id, uerr)
 				continue
 			}
+			// Snapshot into resources_history so ddl_drift can compare across syncs.
+			if arc.Slug == "ddl" {
+				_, _ = db.DB().ExecContext(cmd.Context(),
+					`INSERT INTO resources_history (resource_type, resource_id, data, captured_at)
+					 VALUES (?, ?, ?, ?)`,
+					arc.Slug, id, json.RawMessage(data), time.Now().UTC().Format(time.RFC3339),
+				)
+			}
 			count++
 		}
 
