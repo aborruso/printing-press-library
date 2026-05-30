@@ -240,6 +240,62 @@ ars-sicilia-pp-cli analytics --type ddl --group-by cofirmatari --limit 20 --legi
 
 Top 20 coppie di deputati che firmano insieme DDL nella XVIII legislatura — aggregazione locale sul DB sincronizzato.
 
+### Ricerca per tema (vocabolario materie)
+
+```bash
+# Scopri le materie disponibili, filtra per parola chiave
+ars-sicilia-pp-cli ddl materie | grep -i "sanit\|salut\|lavoro\|ambiente"
+
+# Tutti i DDL sull'ambiente nella XVIII
+ars-sicilia-pp-cli ddl cerca --legisl 18 --materia "Ambiente" --json | \
+  jq -r '.[] | "\(.data) — \(.title)"'
+```
+
+Utile per giornalisti che seguono un tema: la lista completa delle 123 materie è navigabile offline senza aprire il portale.
+
+### Veterani del parlamento — chi dura di più
+
+```bash
+ars-sicilia-pp-cli ddl firmatari --json | \
+  jq -r 'group_by(.nome)[] | select(length >= 4) | "\(length) legislature — \(.[0].nome)"' | \
+  sort -rn | head -10
+```
+
+Identifica i parlamentari con la carriera più lunga: quante e quali legislature hanno coperto. Cracolici Antonino è il record attuale con 6 legislature consecutive (XIII→XVIII).
+
+### Seguire un deputato — carriera e attività
+
+```bash
+# In quali legislature ha operato?
+ars-sicilia-pp-cli ddl firmatari --search "Scoma" --json | jq -r '.[].legisl' | sort | tr '\n' ' '
+
+# Tutti i DDL presentati nella XVIII
+ars-sicilia-pp-cli ddl cerca --legisl 18 --firmatario "Scoma Francesco" --json | \
+  jq -r '.[] | "\(.data) — \(.title)"'
+```
+
+### Nuovi deputati — chi è al primo mandato
+
+```bash
+ars-sicilia-pp-cli ddl firmatari --json | \
+  jq -r 'group_by(.nome)[] | select(length == 1 and .[0].legisl == "18") | .[0].nome'
+```
+
+Filtra i deputati presenti solo nella XVIII — al loro primo mandato regionale.
+
+### Iniziative parlamentari vs governative
+
+```bash
+# Tipi di iniziativa disponibili
+ars-sicilia-pp-cli ddl iniziative
+
+# DDL a iniziativa governativa nella XVIII
+ars-sicilia-pp-cli ddl cerca --legisl 18 \
+  --isis-query "(18.LEGISL E Governativa.FIRMAT)" --limit 50 --json | jq 'length'
+```
+
+Distingue le proposte dei deputati (parlamentare) da quelle dell'esecutivo regionale (governativa).
+
 ## Usage
 
 Run `ars-sicilia-pp-cli --help` for the full command reference and flag list.
