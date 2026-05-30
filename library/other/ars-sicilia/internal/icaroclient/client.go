@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/mvanhorn/printing-press-library/library/other/ars-sicilia/internal/cliutil"
 )
 
 // DefaultBaseURL points at the production data portal.
@@ -18,6 +20,25 @@ const DefaultBaseURL = "https://dati.ars.sicilia.it"
 // DefaultUserAgent is sent with every request so the portal team can identify
 // the CLI in their logs.
 const DefaultUserAgent = "ars-sicilia-pp-cli/0.1.0 (+https://github.com/aborruso/ars-trasparente)"
+
+// HTTPRateLimitError is returned by the icaroclient when the portal
+// responds with HTTP 429 Too Many Requests. Callers can check for this
+// type to surface a rate-limit-specific exit code (7) instead of a
+// generic error exit (1).
+type HTTPRateLimitError struct {
+	URL string
+}
+
+func (e *HTTPRateLimitError) Error() string {
+	return fmt.Sprintf("rate limited (HTTP 429) from ARS portal: %s", e.URL)
+}
+
+// DefaultRateLimit is the per-session request rate applied to the Icaro
+// portal unless the caller disables pacing (rateLimit <= 0). The ARS
+// portal is a legacy JSP application with no documented rate-limit policy;
+// 2 req/s matches the top-level CLI default and is conservative enough
+// to avoid session throttling.
+const DefaultRateLimit = 2.0
 
 // Client wraps the multi-step Icaro session flow:
 //
@@ -31,6 +52,7 @@ type Client struct {
 	BaseURL    string
 	UserAgent  string
 	HTTPClient *http.Client
+	limiter    *cliutil.AdaptiveLimiter
 }
 
 // Record is one short-list row. Fields are positional + free text — the
@@ -66,7 +88,8 @@ type SearchOptions struct {
 }
 
 // New constructs a Client with a fresh cookie jar and a 30 s default timeout.
-// Pass nil to use http.DefaultClient parameters with a jar.
+// Pass nil to use http.DefaultClient parameters with a jar. The client paces
+// outbound requests at DefaultRateLimit req/s using an adaptive limiter.
 func New(httpClient *http.Client) (*Client, error) {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
@@ -83,6 +106,7 @@ func New(httpClient *http.Client) (*Client, error) {
 		BaseURL:    DefaultBaseURL,
 		UserAgent:  DefaultUserAgent,
 		HTTPClient: httpClient,
+		limiter:    cliutil.NewAdaptiveLimiter(DefaultRateLimit),
 	}, nil
 }
 
@@ -176,7 +200,9 @@ func (c *Client) fetchPage(ctx context.Context, arc Archive, page int) ([]Record
 }
 
 // get issues a GET against the URL using the client's session jar.
+// The adaptive limiter paces requests and backs off on 429 responses.
 func (c *Client) get(ctx context.Context, rawURL string) (string, error) {
+	c.limiter.Wait()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
 		return "", err
@@ -191,6 +217,10 @@ func (c *Client) get(ctx context.Context, rawURL string) (string, error) {
 		return "", err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode == 429 {
+		c.limiter.OnRateLimit()
+		return "", &HTTPRateLimitError{URL: rawURL}
+	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 400 {
 		return "", fmt.Errorf("unexpected status %d for %s", resp.StatusCode, rawURL)
 	}
@@ -198,6 +228,7 @@ func (c *Client) get(ctx context.Context, rawURL string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	c.limiter.OnSuccess()
 	return string(raw), nil
 }
 

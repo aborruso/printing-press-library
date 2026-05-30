@@ -59,10 +59,7 @@ func runLeggeCronologia(cmd *cobra.Command, flags *rootFlags, legisl, numero int
 	report := iterReport{Legisl: legisl, Numero: numero}
 
 	// 1. La legge (archivio 201).
-	c, err := icaro.New(nil)
-	if err != nil {
-		return err
-	}
+	c, _ := icaro.New(nil)
 	if arc := icaro.BySlug("leggi"); arc != nil {
 		recs, err := c.Search(ctx, *arc, icaro.SearchOptions{
 			Params: map[string]string{"legisl": itoa(legisl), "numero": itoa(numero)},
@@ -89,10 +86,7 @@ func runLeggeCronologia(cmd *cobra.Command, flags *rootFlags, legisl, numero int
 	// 2. Risali al DDL originario via free-text sul titolo della legge.
 	if report.Titolo != "" {
 		if arc := icaro.BySlug("ddl"); arc != nil {
-			c2, err := icaro.New(nil)
-			if err != nil {
-				return err
-			}
+			c2, _ := icaro.New(nil)
 			// Usa solo le prime 4 parole significative come query per
 			// evitare match troppo lunghi.
 			words := strings.Fields(report.Titolo)
@@ -126,10 +120,7 @@ func runLeggeCronologia(cmd *cobra.Command, flags *rootFlags, legisl, numero int
 
 	// 3. Sommari di commissione che citano la legge nel testo.
 	if arc := icaro.BySlug("sommari"); arc != nil {
-		c3, err := icaro.New(nil)
-		if err != nil {
-			return err
-		}
+		c3, _ := icaro.New(nil)
 		recs, err := c3.Search(ctx, *arc, icaro.SearchOptions{
 			Params: map[string]string{
 				"legisl": itoa(legisl),

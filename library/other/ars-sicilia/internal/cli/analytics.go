@@ -119,7 +119,7 @@ func pairCofirmatari(ctx context.Context, db *sql.DB, typ string, legisl, limit 
 		FROM resources
 		WHERE resource_type = ?
 		` + whereLegisl + `
-		  AND json_extract(data, '$.firmatari') IS NOT NULL AND json_extract(data, '$.firmatari') != ''`
+		  AND firmat IS NOT NULL AND firmat != ''`
 	rows, err := db.QueryContext(ctx, q, args...)
 	if err != nil {
 		return nil, fmt.Errorf("query cofirmatari: %w", err)
@@ -147,9 +147,6 @@ func pairCofirmatari(ctx context.Context, db *sql.DB, typ string, legisl, limit 
 			}
 		}
 	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("lettura cofirmatari: %w", err)
-	}
 	result := make([]analyticsRow, 0, len(counts))
 	for k, v := range counts {
 		result = append(result, analyticsRow{Chiave: k, Conteggio: v})
@@ -174,7 +171,7 @@ func groupOratori(ctx context.Context, db *sql.DB, legisl, limit int) ([]analyti
 		FROM resources
 		WHERE resource_type = 'resoconti'
 		` + whereLegisl + `
-		  AND json_extract(data, '$.oratori') IS NOT NULL AND json_extract(data, '$.oratori') != ''`
+		  AND oratori IS NOT NULL AND oratori != ''`
 	rows, err := db.QueryContext(ctx, q, args...)
 	if err != nil {
 		return nil, fmt.Errorf("query oratori: %w", err)
@@ -193,17 +190,6 @@ func groupOratori(ctx context.Context, db *sql.DB, legisl, limit int) ([]analyti
 			}
 			counts[n]++
 		}
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("lettura oratori: %w", err)
-	}
-	if len(counts) == 0 {
-		return nil, fmt.Errorf(
-			"nessun dato oratori disponibile nel sync locale.\n" +
-				"Il portale Icaro espone gli oratori solo nel documento completo, non nella pagina lista;\n" +
-				"il sync non può quindi raccoglierli.\n" +
-				"Per l'attività di un deputato specifico usa:\n" +
-				"  ars-sicilia-pp-cli deputato profilo \"Nome Cognome\" --legisl 18 --json")
 	}
 	result := make([]analyticsRow, 0, len(counts))
 	for k, v := range counts {
@@ -228,7 +214,7 @@ func groupByAnno(ctx context.Context, db *sql.DB, typ string, legisl, limit int)
 		FROM resources
 		WHERE resource_type = ?
 		` + whereLegisl + `
-		  AND substr(json_extract(data, '$.data'), -4) != ''
+		  AND anno != ''
 		GROUP BY anno ORDER BY n DESC LIMIT ` + fmt.Sprintf("%d", limit)
 	rows, err := db.QueryContext(ctx, q, args...)
 	if err != nil {
@@ -243,9 +229,6 @@ func groupByAnno(ctx context.Context, db *sql.DB, typ string, legisl, limit int)
 			continue
 		}
 		result = append(result, analyticsRow{Chiave: anno.String, Conteggio: n})
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("lettura anni: %w", err)
 	}
 	return result, nil
 }

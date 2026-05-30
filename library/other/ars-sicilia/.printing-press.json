@@ -1,7 +1,11 @@
 {
+  "schema_version": 1,
+  "generated_at": "2026-05-29T12:36:06.482525487Z",
+  "printing_press_version": "4.18.0",
   "api_name": "ars-sicilia",
   "cli_name": "ars-sicilia-pp-cli",
-  "generated_at": "2026-05-29T12:36:06.482525487Z",
+  "spec_path": "ars-sicilia-spec.yaml",
+  "run_id": "20260528-181840",
   "novel_features": [
     {
       "name": "Iter completo di un DDL",
@@ -46,8 +50,5 @@
   ],
   "printer": "aborruso",
   "printer_name": "aborruso",
-  "printing_press_version": "4.18.0",
-  "run_id": "20260528-181840",
-  "schema_version": 1,
-  "spec_path": "ars-sicilia-spec.yaml"
+  "category": "other"
 }

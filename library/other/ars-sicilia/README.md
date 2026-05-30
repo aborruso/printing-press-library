@@ -128,7 +128,7 @@ ars-sicilia-pp-cli deputato profilo "Rossi Mario" --json --select tipo,data,tito
 
 ## Known Gaps
 
-- **HTTP error exit codes**: HTTP errors from the Icaro portal (404, 429, 5xx) exit with code 1 rather than typed exit codes (e.g. exit 3 for not-found, exit 7 for rate-limit). Scripts that branch on specific exit codes should use `ars-sicilia-pp-cli doctor` to check connectivity first.
+- **HTTP error exit codes**: Non-429 HTTP errors from the Icaro portal (404, 5xx) exit with code 1 rather than typed exit codes (e.g. exit 3 for not-found, exit 5 for server error). Rate-limit responses (HTTP 429) correctly return exit 7. Scripts that branch on specific exit codes should use `ars-sicilia-pp-cli doctor` to check connectivity first.
 - **`legge cronologia` date filtering**: The sommari search finds committee meetings that mention the law number in free text without a date ceiling. A committee meeting held after the law's promulgation date may appear in the timeline if it references the same number. Filter results by the `data` field when you need only pre-promulgation events.
 
 ## Unique Features

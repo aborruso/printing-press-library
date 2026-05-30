@@ -104,10 +104,7 @@ func runDdlIter(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error 
 
 	// 2. Sommari di commissione che citano il DDL nel testo (archivio 230).
 	if arc := icaro.BySlug("sommari"); arc != nil {
-		c2, err := icaro.New(nil)
-		if err != nil {
-			return err
-		}
+		c2, _ := icaro.New(nil)
 		recs, err := c2.Search(ctx, *arc, icaro.SearchOptions{
 			Params: map[string]string{
 				"legisl": itoa(legisl),
@@ -133,10 +130,7 @@ func runDdlIter(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error 
 
 	// 3. Resoconti d'aula che citano il DDL (archivio 217).
 	if arc := icaro.BySlug("resoconti"); arc != nil {
-		c3, err := icaro.New(nil)
-		if err != nil {
-			return err
-		}
+		c3, _ := icaro.New(nil)
 		recs, err := c3.Search(ctx, *arc, icaro.SearchOptions{
 			Params: map[string]string{
 				"legisl": itoa(legisl),

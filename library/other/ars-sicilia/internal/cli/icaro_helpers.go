@@ -7,6 +7,7 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -64,6 +65,9 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 		MaxPages: maxPages,
 	})
 	if err != nil {
+		if rlErr := new(icaro.HTTPRateLimitError); errors.As(err, &rlErr) {
+			return rateLimitErr(fmt.Errorf("ricerca %s: %w", arc.Slug, err))
+		}
 		return fmt.Errorf("ricerca %s: %w", arc.Slug, err)
 	}
 	return emitRecords(cmd, flags, *arc, recs)
@@ -110,6 +114,9 @@ func runGet(cmd *cobra.Command, flags *rootFlags, archiveSlug string, legisl, nu
 		Limit:  1,
 	})
 	if err != nil {
+		if rlErr := new(icaro.HTTPRateLimitError); errors.As(err, &rlErr) {
+			return rateLimitErr(fmt.Errorf("locating document: %w", err))
+		}
 		return fmt.Errorf("locating document: %w", err)
 	}
 	if len(recs) == 0 {

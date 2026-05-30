@@ -86,10 +86,7 @@ func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legis
 		if arc == nil {
 			continue
 		}
-		c, err := icaro.New(nil)
-		if err != nil {
-			continue
-		}
+		c, _ := icaro.New(nil)
 		params := map[string]string{"firmatario": name}
 		if legisl > 0 {
 			params["legisl"] = itoa(legisl)
@@ -119,10 +116,7 @@ func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legis
 
 	// Resoconti d'aula con free-text match sul nome dell'oratore.
 	if arc := icaro.BySlug("resoconti"); arc != nil {
-		c, err := icaro.New(nil)
-		if err != nil {
-			return err
-		}
+		c, _ := icaro.New(nil)
 		params := map[string]string{"testo": name}
 		if legisl > 0 {
 			params["legisl"] = itoa(legisl)

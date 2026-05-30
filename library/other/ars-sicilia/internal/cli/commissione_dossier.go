@@ -85,10 +85,7 @@ func runCommissioneDossier(cmd *cobra.Command, flags *rootFlags, arg string, leg
 		if arc == nil {
 			return
 		}
-		c, err := icaro.New(nil)
-		if err != nil {
-			return
-		}
+		c, _ := icaro.New(nil)
 		params := map[string]string{paramKey: arg}
 		if legisl > 0 {
 			params["legisl"] = itoa(legisl)

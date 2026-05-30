@@ -87,7 +87,7 @@ func runDdlDrift(cmd *cobra.Command, flags *rootFlags, since, dbPath string) err
 	cutoff := time.Now().Add(-window).UTC().Format(time.RFC3339)
 	// Tentativo con tabella resources_history (potrebbe non esistere).
 	rows, err := db.DB().QueryContext(ctx, `
-		SELECT cur.id, json_extract(cur.data, '$.legisl'),
+		SELECT cur.resource_id, json_extract(cur.data, '$.legisl'),
 		       json_extract(cur.data, '$.title'),
 		       json_extract(cur.data, '$.iter'),
 		       json_extract(prev.data, '$.iter'),
@@ -96,12 +96,9 @@ func runDdlDrift(cmd *cobra.Command, flags *rootFlags, since, dbPath string) err
 		       json_extract(cur.data, '$.url')
 		FROM resources cur
 		LEFT JOIN resources_history prev
-		   ON prev.rowid = (
-		       SELECT rowid FROM resources_history
-		       WHERE id = cur.id AND resource_type = cur.resource_type
-		         AND captured_at < cur.synced_at
-		       ORDER BY captured_at DESC LIMIT 1
-		   )
+		   ON prev.resource_id = cur.resource_id
+		   AND prev.resource_type = cur.resource_type
+		   AND prev.captured_at < cur.synced_at
 		WHERE cur.resource_type = 'ddl'
 		  AND cur.synced_at >= ?
 		  AND json_extract(cur.data, '$.iter') IS NOT NULL
@@ -133,9 +130,6 @@ func runDdlDrift(cmd *cobra.Command, flags *rootFlags, since, dbPath string) err
 		} else {
 			report.Nuovi = append(report.Nuovi, it)
 		}
-	}
-	if err := rows.Err(); err != nil {
-		return fmt.Errorf("lettura drift: %w", err)
 	}
 	sort.SliceStable(report.Mossi, func(i, j int) bool {
 		return parseICaroDate(report.Mossi[i].DataA) > parseICaroDate(report.Mossi[j].DataA)

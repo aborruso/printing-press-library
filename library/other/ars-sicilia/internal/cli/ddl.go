@@ -9,8 +9,25 @@ import (
 
 func newDdlCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:         "ddl",
-		Short:       "Disegni di Legge (archivio 221): proposte di legge presentate all'ARS.",
+		Use:   "ddl",
+		Short: "Disegni di Legge (archivio 221): proposte di legge presentate all'ARS.",
+		Long: `Disegni di Legge (archivio 221): proposte di legge presentate all'ARS.
+
+Equivalente agent-native della maschera di ricerca:
+  https://dati.ars.sicilia.it/home/cerca/221.jsp
+
+Ogni flag della CLI corrisponde a un campo della GUI:
+  --legisl      → Legislatura (obbligatorio nel portale)
+  --anno        → Anno
+  --firmatario  → 1° Firmatario / Altri Firmatari
+  --materia     → Materia  (vocabolario: 'ddl materie')
+  --iter        → Cerca nei Passi ITER
+  --testo       → Ricerca testuale libera
+  --isis-query  → Ricerca Avanzata (espressione ISIS grezza, es. "bilancio.TITOLO")
+
+Vocabolari controllati (valori ammessi):
+  ars-sicilia-pp-cli ddl materie      → 123 materie/settori per --materia
+  ars-sicilia-pp-cli ddl iniziative   → tipi di iniziativa`,
 		Annotations: map[string]string{"mcp:read-only": "true"},
 		RunE:        parentNoSubcommandRunE(flags),
 	}
@@ -19,5 +36,8 @@ func newDdlCmd(flags *rootFlags) *cobra.Command {
 	cmd.AddCommand(newDdlGetCmd(flags))
 	cmd.AddCommand(newNovelDdlDriftCmd(flags))
 	cmd.AddCommand(newNovelDdlIterCmd(flags))
+	cmd.AddCommand(newDdlMaterieCmd(flags))
+	cmd.AddCommand(newDdlIniziativeCmd(flags))
+	cmd.AddCommand(newDdlFirmatariCmd(flags))
 	return cmd
 }

@@ -43,7 +43,7 @@ var All = []Archive{
 			"anno":   "ANNSED",
 			"numero": "NUMSED",
 		},
-		Columns: []string{"Legisl.", "Numero", "Data", "Argomenti", "Oratori"},
+		Columns: []string{"Legisl.", "Numero", "Data", "Argomenti"},
 	},
 	{
 		ID: "221", Slug: "ddl",
@@ -55,7 +55,7 @@ var All = []Archive{
 			"materia":    "SETTOR",
 			"iter":       "ITERST",
 		},
-		Columns: []string{"Legisl.", "Numero", "Data", "Firmatari", "Titolo", "Iter"},
+		Columns: []string{"Legisl.", "Numero", "Data", "Firmatari", "Titolo"},
 	},
 	{
 		ID: "226", Slug: "pareri",
