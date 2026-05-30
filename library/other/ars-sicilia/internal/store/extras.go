@@ -16,7 +16,26 @@ import (
 // idempotent with CREATE TABLE IF NOT EXISTS / CREATE INDEX IF NOT EXISTS so
 // every store open can safely re-run them.
 func (s *Store) migrateExtras(ctx context.Context, conn *sql.Conn) error {
+	// If resources_history was created with the legacy schema (column "id TEXT"
+	// instead of "resource_id TEXT"), drop it so the CREATE TABLE below can
+	// recreate it with the correct schema. The table contains ephemeral snapshot
+	// data used by ddl_drift; dropping it is safe — drift history is rebuilt on
+	// the next sync pair.
+	var oldColCount int
+	_ = conn.QueryRowContext(ctx, `
+		SELECT COUNT(*) FROM pragma_table_info('resources_history')
+		WHERE name = 'id' AND type = 'TEXT'
+	`).Scan(&oldColCount)
+	if oldColCount > 0 {
+		if _, err := conn.ExecContext(ctx, `DROP TABLE IF EXISTS resources_history`); err != nil {
+			return fmt.Errorf("extra migration failed dropping legacy resources_history: %w", err)
+		}
+	}
+
 	migrations := []string{
+		// Drop legacy index names that referenced the old column before recreating.
+		`DROP INDEX IF EXISTS idx_rh_type_id`,
+		`DROP INDEX IF EXISTS idx_rh_captured`,
 		`CREATE TABLE IF NOT EXISTS resources_history (
 			id            INTEGER PRIMARY KEY AUTOINCREMENT,
 			resource_type TEXT    NOT NULL,
