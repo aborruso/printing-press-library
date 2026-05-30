@@ -87,7 +87,7 @@ func runDdlDrift(cmd *cobra.Command, flags *rootFlags, since, dbPath string) err
 	cutoff := time.Now().Add(-window).UTC().Format(time.RFC3339)
 	// Tentativo con tabella resources_history (potrebbe non esistere).
 	rows, err := db.DB().QueryContext(ctx, `
-		SELECT cur.resource_id, json_extract(cur.data, '$.legisl'),
+		SELECT cur.id, json_extract(cur.data, '$.legisl'),
 		       json_extract(cur.data, '$.title'),
 		       json_extract(cur.data, '$.iter'),
 		       json_extract(prev.data, '$.iter'),
@@ -98,7 +98,7 @@ func runDdlDrift(cmd *cobra.Command, flags *rootFlags, since, dbPath string) err
 		LEFT JOIN resources_history prev
 		   ON prev.id = (
 		       SELECT id FROM resources_history rh
-		       WHERE rh.resource_id   = cur.resource_id
+		       WHERE rh.resource_id   = cur.id
 		         AND rh.resource_type = cur.resource_type
 		         AND rh.captured_at   < cur.synced_at
 		       ORDER BY rh.captured_at DESC
