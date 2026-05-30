@@ -59,7 +59,10 @@ func runLeggeCronologia(cmd *cobra.Command, flags *rootFlags, legisl, numero int
 	report := iterReport{Legisl: legisl, Numero: numero}
 
 	// 1. La legge (archivio 201).
-	c, _ := icaro.New(nil)
+	c, err := icaro.New(nil)
+	if err != nil {
+		return fmt.Errorf("creazione client icaro: %w", err)
+	}
 	if arc := icaro.BySlug("leggi"); arc != nil {
 		recs, err := c.Search(ctx, *arc, icaro.SearchOptions{
 			Params: map[string]string{"legisl": itoa(legisl), "numero": itoa(numero)},

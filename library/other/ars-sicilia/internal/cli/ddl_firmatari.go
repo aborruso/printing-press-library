@@ -195,6 +195,6 @@ Utile per scoprire i valori corretti da passare a --firmatario in 'ddl cerca'.`,
 
 	cmd.Flags().StringVar(&flagLegisl, "legisl", "", "Filtra per legislatura (es. 18).")
 	cmd.Flags().StringVar(&flagSearch, "search", "", "Cerca per nome (parziale).")
-	cmd.Flags().StringVar(&flagDB, "db", "", "Percorso database SQLite (default: ~/.local/share/ars-sicilia-pp-cli/store.db).")
+	cmd.Flags().StringVar(&flagDB, "db", "", "Percorso database SQLite (default: ~/.local/share/ars-sicilia-pp-cli/data.db).")
 	return cmd
 }

@@ -17,7 +17,17 @@ import (
 // every store open can safely re-run them.
 func (s *Store) migrateExtras(ctx context.Context, conn *sql.Conn) error {
 	migrations := []string{
-		// Add CREATE TABLE IF NOT EXISTS statements here.
+		`CREATE TABLE IF NOT EXISTS resources_history (
+			id            INTEGER PRIMARY KEY AUTOINCREMENT,
+			resource_type TEXT    NOT NULL,
+			resource_id   TEXT    NOT NULL,
+			data          JSON    NOT NULL,
+			captured_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_resources_history_type_id
+			ON resources_history (resource_type, resource_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_resources_history_captured_at
+			ON resources_history (captured_at)`,
 	}
 	for _, m := range migrations {
 		if _, err := conn.ExecContext(ctx, m); err != nil {

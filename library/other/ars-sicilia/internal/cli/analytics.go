@@ -147,6 +147,9 @@ func pairCofirmatari(ctx context.Context, db *sql.DB, typ string, legisl, limit 
 			}
 		}
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("lettura righe: %w", err)
+	}
 	result := make([]analyticsRow, 0, len(counts))
 	for k, v := range counts {
 		result = append(result, analyticsRow{Chiave: k, Conteggio: v})
