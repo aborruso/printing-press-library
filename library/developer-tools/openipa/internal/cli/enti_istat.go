@@ -11,9 +11,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// ckanIstatResourceID is the CKAN datastore resource containing IPA anagrafica
-// with Codice_comune_ISTAT. Resource ID is stable; confirmed 2026-06-02.
-const ckanIstatResourceID = "cdaded04-f84e-4193-a720-47d6d5f422aa"
+// ckanAOOResourceID: one row per AOO — used for --codice (IPA→ISTAT, limit=1).
+const ckanAOOResourceID = "cdaded04-f84e-4193-a720-47d6d5f422aa"
+
+// ckanEntiResourceID: one row per entity with Tipologia — used for --istat (ISTAT→IPA).
+const ckanEntiResourceID = "d09adf99-dc10-4349-8c53-27b1e5aa97b6"
 
 func newEntiIstatCmd(flags *rootFlags) *cobra.Command {
 	var codiceIPA string
@@ -41,12 +43,16 @@ tramite il dataset CKAN del portale IPA open data (indicepa.gov.it/ipa-dati).
 			c := client.NewCKAN(flags.timeout)
 			c.DryRun = flags.dryRun
 
-			var filterKey, filterVal, limit string
+			// --codice: AOO dataset (one row/AOO, same ISTAT for all AOOs of an entity → limit=1).
+			// --istat:  Enti dataset (one row/entity, includes Tipologia and Codice_Categoria).
+			var resourceID, filterKey, filterVal, limit string
 			if codiceIPA != "" {
+				resourceID = ckanAOOResourceID
 				filterKey = "Codice_IPA"
 				filterVal = codiceIPA
 				limit = "1"
 			} else {
+				resourceID = ckanEntiResourceID
 				filterKey = "Codice_comune_ISTAT"
 				filterVal = codiceISTAT
 				limit = "500"
@@ -58,7 +64,7 @@ tramite il dataset CKAN del portale IPA open data (indicepa.gov.it/ipa-dati).
 			}
 
 			params := map[string]string{
-				"resource_id": ckanIstatResourceID,
+				"resource_id": resourceID,
 				"filters":     string(filtersJSON),
 				"limit":       limit,
 			}
