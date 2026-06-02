@@ -16,5 +16,6 @@ func newEntiCmd(flags *rootFlags) *cobra.Command {
 
 	cmd.AddCommand(newEntiCercaCmd(flags))
 	cmd.AddCommand(newEntiGetCmd(flags))
+	cmd.AddCommand(newEntiIstatCmd(flags))
 	return cmd
 }
