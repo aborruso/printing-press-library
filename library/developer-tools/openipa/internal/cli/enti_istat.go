@@ -5,6 +5,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/mvanhorn/printing-press-library/library/developer-tools/openipa/internal/client"
 	"github.com/spf13/cobra"
@@ -70,6 +71,7 @@ tramite il dataset CKAN del portale IPA open data (indicepa.gov.it/ipa-dati).
 			var resp struct {
 				Result struct {
 					Records []map[string]any `json:"records"`
+					Total   int              `json:"total"`
 				} `json:"result"`
 			}
 			if err := json.Unmarshal(raw, &resp); err != nil {
@@ -85,8 +87,16 @@ tramite il dataset CKAN del portale IPA open data (indicepa.gov.it/ipa-dati).
 
 			records := resp.Result.Records
 
+			// Warn when CKAN returned fewer records than the true total (--istat direction).
+			if codiceISTAT != "" && resp.Result.Total > len(records) {
+				fmt.Fprintf(os.Stderr, "warning: results truncated — %d of %d total records returned; use a smaller area or filter further\n",
+					len(records), resp.Result.Total)
+			}
+
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
-				if err := printAutoTable(cmd.OutOrStdout(), records); err == nil {
+				if err := printAutoTable(cmd.OutOrStdout(), records); err != nil {
+					fmt.Fprintf(os.Stderr, "warning: table rendering failed, falling back to JSON: %v\n", err)
+				} else {
 					return nil
 				}
 			}
