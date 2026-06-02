@@ -98,6 +98,11 @@ tramite il dataset CKAN del portale IPA open data (indicepa.gov.it/ipa-dati).
 				fmt.Fprintf(os.Stderr, "warning: results truncated — %d of %d total records returned; use a smaller area or filter further\n",
 					len(records), resp.Result.Total)
 			}
+			// Warn when entity has AOOs in multiple municipalities (--codice direction).
+			if codiceIPA != "" && resp.Result.Total > 1 {
+				fmt.Fprintf(os.Stderr, "warning: entity has %d AOOs across potentially different municipalities — only the first ISTAT code is returned\n",
+					resp.Result.Total)
+			}
 
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				if err := printAutoTable(cmd.OutOrStdout(), records); err != nil {
