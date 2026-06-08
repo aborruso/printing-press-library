@@ -208,6 +208,7 @@ See README.md or the bundled SKILL.md for recipes.`,
 	rootCmd.AddCommand(newRestatementsCmd(flags))
 	rootCmd.AddCommand(newLateFilersCmd(flags))
 	rootCmd.AddCommand(newHoldingsCmd(flags))
+	rootCmd.AddCommand(newOwnershipCmd(flags))
 
 	return rootCmd
 }
