@@ -1,0 +1,53 @@
+{
+  "api_name": "verto",
+  "api_version": "0.1.0",
+  "auth_type": "none",
+  "category": "developer-tools",
+  "cli_name": "verto-pp-cli",
+  "creator": {
+    "handle": "aborruso",
+    "name": "aborruso"
+  },
+  "description": "Official IGM coordinate transforms between every Italian reference system, from the command line, with zero grid-file setup.",
+  "display_name": "Verto Online",
+  "generated_at": "2026-06-08T11:11:29.005271347Z",
+  "mcp_binary": "verto-pp-mcp",
+  "mcp_public_tool_count": 1,
+  "mcp_ready": "full",
+  "mcp_tool_count": 1,
+  "novel_features": [
+    {
+      "name": "Round-trip precision report",
+      "command": "roundtrip",
+      "description": "Convert a coordinate from A to B and back, and report the residual error introduced by the datum transform."
+    },
+    {
+      "name": "Valid conversion targets",
+      "command": "targets",
+      "description": "List which Italian reference systems are valid destinations for a given source EPSG."
+    },
+    {
+      "name": "Reference-system inspection card",
+      "command": "inspect",
+      "description": "Show datum family, axis order (e/n), units, UTM/Gauss-Boaga zone, and false easting/northing for an EPSG."
+    },
+    {
+      "name": "Coordinate-based source detector",
+      "command": "detect",
+      "description": "Guess the plausible source reference system of a coordinate from its magnitude and axis ranges."
+    },
+    {
+      "name": "Offline conversion cache",
+      "command": "cache",
+      "description": "Inspect or clear the local write-through cache of conversion results for offline, reproducible replay."
+    }
+  ],
+  "owner": "aborruso",
+  "printer": "aborruso",
+  "printer_name": "aborruso",
+  "printing_press_version": "4.24.0",
+  "run_id": "20260608-115702",
+  "schema_version": 1,
+  "spec_checksum": "sha256:5860e681532d6407e1797fc5ec6c1651795d796162fb7815cca496b1e4cee4b4",
+  "spec_format": "internal"
+}

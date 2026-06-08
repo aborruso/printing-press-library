@@ -1,0 +1,62 @@
+{
+  "timestamp": "2026-06-08T11:19:36.67078901Z",
+  "cli_dir": "\u003ccli-dir\u003e/verto",
+  "findings": [
+    {
+      "kind": "phone-us",
+      "file": ".manuscripts/20260608-115702/discovery/manuale-verto-online.md",
+      "line": 55,
+      "column": 13,
+      "matched_span": "9996175526",
+      "status": "accepted",
+      "note": "Decimal fragment of a converted longitude (6.9996175526) in the IGM manual worked example, not a phone number.",
+      "category": "other",
+      "evidence_context": "IGM Verto Online manual extract, conversion-response example with e 6.9996175526, n 37.0006110152."
+    },
+    {
+      "kind": "phone-us",
+      "file": ".manuscripts/20260608-115702/discovery/manuale-verto-online.md",
+      "line": 56,
+      "column": 14,
+      "matched_span": "9997804498",
+      "status": "accepted",
+      "note": "Decimal fragment of a converted longitude (11.9997804498) in the IGM manual worked example, not a phone number.",
+      "category": "other",
+      "evidence_context": "IGM Verto Online manual extract, conversion-response example with e 11.9997804498, n 42.0006477023."
+    },
+    {
+      "kind": "phone-us",
+      "file": ".manuscripts/20260608-115702/discovery/manuale-verto-online.md",
+      "line": 57,
+      "column": 14,
+      "matched_span": "9999259776",
+      "status": "accepted",
+      "note": "Decimal fragment of a converted longitude (15.9999259776) in the IGM manual worked example, not a phone number.",
+      "category": "other",
+      "evidence_context": "IGM Verto Online manual extract, conversion-response example with e 15.9999259776, n 45.0006501430."
+    },
+    {
+      "kind": "phone-us",
+      "file": ".manuscripts/20260608-115702/proofs/2026-06-08-115702-fix-verto-pp-cli-build-log.md",
+      "line": 18,
+      "column": 80,
+      "matched_span": "8908506304",
+      "status": "accepted",
+      "note": "Decimal fragment of a geographic coordinate (latitude 41.8908506304) in the build-log fixture, not a phone number.",
+      "category": "other",
+      "evidence_context": "Build-log ground-truth fixture: 4265 to 6706 (12.4924,41.8902) gives (12.4921961827,41.8908506304)."
+    },
+    {
+      "kind": "phone-us",
+      "file": ".manuscripts/20260608-115702/research/2026-06-08-115702-feat-verto-pp-cli-brief.md",
+      "line": 26,
+      "column": 91,
+      "matched_span": "8908506304",
+      "status": "accepted",
+      "note": "Decimal fragment of a geographic coordinate (latitude 41.8908506304), not a phone number.",
+      "category": "other",
+      "evidence_context": "Ground-truth acceptance fixture line: input (e=12.4924, n=41.8902) to output (e=12.4921961827, n=41.8908506304). The match is a 10-digit run inside the decimal latitude 41.8908506304."
+    }
+  ],
+  "findings_count_before": 0
+}

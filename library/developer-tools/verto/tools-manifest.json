@@ -1,0 +1,29 @@
+{
+  "api_name": "verto",
+  "base_url": "https://igmi.esercito.difesa.it/porta-magna/wps",
+  "description": "Official IGM coordinate transforms between every Italian reference system, from the command line, with zero grid-file setup.",
+  "mcp_ready": "full",
+  "http_transport": "standard",
+  "auth": {
+    "type": "none"
+  },
+  "required_headers": [],
+  "tools": [
+    {
+      "name": "systems_list",
+      "description": "List the reference systems supported by the IGM Verto Online service. Required: richiesta (default: info). Returns array of System.",
+      "method": "POST",
+      "path": "/volapi",
+      "no_auth": true,
+      "params": [
+        {
+          "name": "richiesta",
+          "type": "string",
+          "location": "body",
+          "description": "Request type discriminator",
+          "required": true
+        }
+      ]
+    }
+  ]
+}

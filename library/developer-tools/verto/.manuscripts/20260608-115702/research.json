@@ -1,0 +1,173 @@
+{
+  "api_name": "verto",
+  "novelty_score": 0,
+  "alternatives": [],
+  "gaps": [],
+  "patterns": [],
+  "recommendation": "proceed",
+  "researched_at": "2026-06-08T10:05:00Z",
+  "novel_features": [
+    {
+      "name": "Round-trip precision report",
+      "command": "roundtrip",
+      "description": "Convert a coordinate from A to B and back, and report the residual error introduced by the datum transform.",
+      "rationale": "A precision metric requires chaining two official transforms and computing the local residual; no single volapi call returns it.",
+      "example": "verto-pp-cli roundtrip --from 3003 --to 6707 1500000 4640000 --json",
+      "why_it_matters": "Reach for this when you must certify a datum chain is lossless before publishing or depositing data.",
+      "group": "Precision and trust"
+    },
+    {
+      "name": "Valid conversion targets",
+      "command": "targets",
+      "description": "List which Italian reference systems are valid destinations for a given source EPSG.",
+      "rationale": "Filters the cached systems table and encodes the same-datum/identity edge the API rejects.",
+      "example": "verto-pp-cli targets 3003 --json",
+      "why_it_matters": "Reach for this before converting to avoid picking an unsupported or meaningless destination datum.",
+      "group": "Reference-system intelligence"
+    },
+    {
+      "name": "Reference-system inspection card",
+      "command": "inspect",
+      "description": "Show datum family, axis order (e/n), units, UTM/Gauss-Boaga zone, and false easting/northing for an EPSG.",
+      "rationale": "A curated static-reference table over the 20 known EPSGs, joined to the cached IGM description.",
+      "example": "verto-pp-cli inspect 3004 --json",
+      "why_it_matters": "Reach for this to disambiguate look-alike systems (3003 vs 3004, 23032 vs 23033) before a conversion goes wrong.",
+      "group": "Reference-system intelligence"
+    },
+    {
+      "name": "Coordinate-based source detector",
+      "command": "detect",
+      "description": "Guess the plausible source reference system of a coordinate from its magnitude and axis ranges.",
+      "rationale": "Pure-local heuristics over decimal-degree, Gauss-Boaga (~1.5M/2.5M easting), and UTM zone ranges; no API call.",
+      "example": "verto-pp-cli detect 2300000 4640000 --json",
+      "why_it_matters": "Reach for this when a dataset is labeled vaguely ('UTM', 'Gauss-Boaga') and you must recover its real EPSG.",
+      "group": "Reference-system intelligence"
+    },
+    {
+      "name": "Offline conversion cache",
+      "command": "cache",
+      "description": "Inspect or clear the local write-through cache of conversion results for offline, reproducible replay.",
+      "rationale": "Every convert/batch writes results to a local JSON cache keyed by (inEpsg,outEpsg,e,n); repeats are served instantly offline.",
+      "example": "verto-pp-cli cache --stats --json",
+      "why_it_matters": "Reach for this in CI or offline pipelines where re-running the same conversions must not hit the live service.",
+      "group": "Precision and trust"
+    }
+  ],
+  "novel_features_built": [
+    {
+      "name": "Round-trip precision report",
+      "command": "roundtrip",
+      "description": "Convert a coordinate from A to B and back, and report the residual error introduced by the datum transform.",
+      "rationale": "A precision metric requires chaining two official transforms and computing the local residual; no single volapi call returns it.",
+      "example": "verto-pp-cli roundtrip --from 3003 --to 6707 1500000 4640000 --json",
+      "why_it_matters": "Reach for this when you must certify a datum chain is lossless before publishing or depositing data.",
+      "group": "Precision and trust"
+    },
+    {
+      "name": "Valid conversion targets",
+      "command": "targets",
+      "description": "List which Italian reference systems are valid destinations for a given source EPSG.",
+      "rationale": "Filters the cached systems table and encodes the same-datum/identity edge the API rejects.",
+      "example": "verto-pp-cli targets 3003 --json",
+      "why_it_matters": "Reach for this before converting to avoid picking an unsupported or meaningless destination datum.",
+      "group": "Reference-system intelligence"
+    },
+    {
+      "name": "Reference-system inspection card",
+      "command": "inspect",
+      "description": "Show datum family, axis order (e/n), units, UTM/Gauss-Boaga zone, and false easting/northing for an EPSG.",
+      "rationale": "A curated static-reference table over the 20 known EPSGs, joined to the cached IGM description.",
+      "example": "verto-pp-cli inspect 3004 --json",
+      "why_it_matters": "Reach for this to disambiguate look-alike systems (3003 vs 3004, 23032 vs 23033) before a conversion goes wrong.",
+      "group": "Reference-system intelligence"
+    },
+    {
+      "name": "Coordinate-based source detector",
+      "command": "detect",
+      "description": "Guess the plausible source reference system of a coordinate from its magnitude and axis ranges.",
+      "rationale": "Pure-local heuristics over decimal-degree, Gauss-Boaga (~1.5M/2.5M easting), and UTM zone ranges; no API call.",
+      "example": "verto-pp-cli detect 2300000 4640000 --json",
+      "why_it_matters": "Reach for this when a dataset is labeled vaguely ('UTM', 'Gauss-Boaga') and you must recover its real EPSG.",
+      "group": "Reference-system intelligence"
+    },
+    {
+      "name": "Offline conversion cache",
+      "command": "cache",
+      "description": "Inspect or clear the local write-through cache of conversion results for offline, reproducible replay.",
+      "rationale": "Every convert/batch writes results to a local JSON cache keyed by (inEpsg,outEpsg,e,n); repeats are served instantly offline.",
+      "example": "verto-pp-cli cache --stats --json",
+      "why_it_matters": "Reach for this in CI or offline pipelines where re-running the same conversions must not hit the live service.",
+      "group": "Precision and trust"
+    }
+  ],
+  "narrative": {
+    "display_name": "Verto Online",
+    "headline": "Official IGM coordinate transforms between every Italian reference system, from the command line, with zero grid-file setup.",
+    "value_prop": "verto wraps the authoritative IGM Verto Online service (Roma40, ED50, IGM95, ETRS89, RDN2008) as a scriptable CLI. Convert one coordinate or batch a whole CSV/GeoJSON, list and inspect reference systems offline, detect a dataset's real EPSG, and measure round-trip precision -- all without installing licensed NTv2 grids and all with agent-native --json/--select/--csv output.",
+    "auth_narrative": "No authentication. The service is free and open; the utente/chiave fields the API requires are placeholders, filled automatically.",
+    "quickstart": [
+      {
+        "command": "verto-pp-cli systems",
+        "comment": "see the 20 supported Italian reference systems (cached offline after first run)"
+      },
+      {
+        "command": "verto-pp-cli convert --from 4265 --to 6706 12.4924 41.8902",
+        "comment": "convert one geographic coordinate Roma40 -\u003e RDN2008"
+      },
+      {
+        "command": "verto-pp-cli inspect 3003",
+        "comment": "check axis order, zone and false easting before a projected conversion"
+      },
+      {
+        "command": "verto-pp-cli batch points.csv --from 3003 --to 6707 --out converted.csv",
+        "comment": "batch-convert a CSV of Gauss-Boaga points to RDN2008/TM32"
+      }
+    ],
+    "troubleshoots": [
+      {
+        "symptom": "stato: errore, 'Manca l'elemento n'",
+        "fix": "every coordinate needs both e (est/lon) and n (nord/lat); check your CSV column mapping with --e-col/--n-col."
+      },
+      {
+        "symptom": "Converted points land far away / in the sea",
+        "fix": "wrong source EPSG or swapped axis. Run 'verto-pp-cli detect \u003ce\u003e \u003cn\u003e' to recover the likely system and confirm axis order with 'inspect'."
+      },
+      {
+        "symptom": "Batch rejected for too many coordinates",
+        "fix": "the service caps at 32000 coordinates per request; batch auto-chunks, so re-run -- if it persists, reduce --chunk-size."
+      }
+    ],
+    "when_to_use": "Use verto whenever you need the authoritative IGM transform between Italian datums from a script, pipeline, or agent -- single points, CSV/GeoJSON batches, CI jobs, or QA checks -- instead of the browser-only IGM web form or generic PROJ math that lacks the official grids.",
+    "recipes": [
+      {
+        "title": "Convert a CSV of cadastral points to RDN2008",
+        "command": "verto-pp-cli batch catasto.csv --from 3003 --to 6706 --e-col est --n-col nord --out rdn2008.csv",
+        "explanation": "Maps the est/nord columns, auto-chunks at 32000, writes a converted CSV."
+      },
+      {
+        "title": "Pipe a deeply nested GeoJSON conversion into jq",
+        "command": "verto-pp-cli geojson aree.geojson --from 4230 --to 6706 --agent --select features.geometry.coordinates",
+        "explanation": "Reprojects FeatureCollection geometries and narrows the response to just the coordinate arrays for downstream tooling."
+      },
+      {
+        "title": "QA a datum chain before publishing open data",
+        "command": "verto-pp-cli roundtrip --from 3003 --to 6707 1500000 4640000 --json",
+        "explanation": "Reports the residual error of A-\u003eB-\u003eA so you can certify the transform is within tolerance."
+      },
+      {
+        "title": "Recover the real EPSG of a vaguely-labeled file",
+        "command": "verto-pp-cli detect 2300000 4640000",
+        "explanation": "Heuristically identifies the likely source system from coordinate magnitude when the dataset just says 'Gauss-Boaga'."
+      }
+    ],
+    "trigger_phrases": [
+      "converti coordinate da Roma40 a RDN2008",
+      "trasforma coordinate IGM",
+      "da Gauss-Boaga a ETRS89",
+      "converti un CSV di coordinate",
+      "che EPSG hanno queste coordinate",
+      "usa verto",
+      "run verto"
+    ]
+  }
+}

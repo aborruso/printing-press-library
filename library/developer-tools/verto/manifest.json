@@ -1,0 +1,27 @@
+{
+  "manifest_version": "0.3",
+  "name": "verto-pp-mcp",
+  "display_name": "Verto Online",
+  "version": "0.0.0",
+  "description": "Official IGM coordinate transforms between every Italian reference system, from the command line, with zero grid-file setup.",
+  "author": {
+    "name": "CLI Printing Press"
+  },
+  "license": "Apache-2.0",
+  "server": {
+    "type": "binary",
+    "entry_point": "bin/verto-pp-mcp",
+    "mcp_config": {
+      "command": "${__dirname}/bin/verto-pp-mcp",
+      "args": []
+    }
+  },
+  "compatibility": {
+    "claude_desktop": ">=1.0.0",
+    "platforms": [
+      "darwin",
+      "linux",
+      "win32"
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+name: verto
+description: "Official IGM coordinate transforms between Italian reference systems"
+version: "0.1.0"
+base_url: "https://igmi.esercito.difesa.it/porta-magna/wps"
+cli_description: "Official IGM coordinate transforms between every Italian reference system, from the command line, with zero grid-file setup."
+
+auth:
+  type: none
+
+resources:
+  systems:
+    description: "Supported Italian reference systems (EPSG + description)"
+    endpoints:
+      list:
+        method: POST
+        path: /volapi
+        description: "List the reference systems supported by the IGM Verto Online service"
+        no_auth: true
+        body:
+          - name: richiesta
+            type: string
+            required: true
+            default: info
+            description: "Request type discriminator"
+        response:
+          type: array
+          item: System

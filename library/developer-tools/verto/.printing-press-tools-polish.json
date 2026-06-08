@@ -1,0 +1,9 @@
+{
+  "timestamp": "2026-06-08T10:57:41.051464109Z",
+  "cli_dir": "\u003ccli-dir\u003e/verto-pp-cli",
+  "findings": null,
+  "scorecard_before": {
+    "mcp_description_quality": 10,
+    "captured": "2026-06-08T10:43:26.631202648Z"
+  }
+}
