@@ -15,14 +15,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aborruso/printing-press-library/library/other/aol-puglia/internal/cli"
-	"github.com/aborruso/printing-press-library/library/other/aol-puglia/internal/client"
-	"github.com/aborruso/printing-press-library/library/other/aol-puglia/internal/cliutil"
-	"github.com/aborruso/printing-press-library/library/other/aol-puglia/internal/config"
-	"github.com/aborruso/printing-press-library/library/other/aol-puglia/internal/mcp/cobratree"
-	"github.com/aborruso/printing-press-library/library/other/aol-puglia/internal/store"
 	mcplib "github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"github.com/mvanhorn/printing-press-library/library/other/aol-puglia/internal/cli"
+	"github.com/mvanhorn/printing-press-library/library/other/aol-puglia/internal/client"
+	"github.com/mvanhorn/printing-press-library/library/other/aol-puglia/internal/cliutil"
+	"github.com/mvanhorn/printing-press-library/library/other/aol-puglia/internal/config"
+	"github.com/mvanhorn/printing-press-library/library/other/aol-puglia/internal/mcp/cobratree"
+	"github.com/mvanhorn/printing-press-library/library/other/aol-puglia/internal/store"
 )
 
 const (

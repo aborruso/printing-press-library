@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aborruso/printing-press-library/library/other/aol-puglia/internal/config"
+	"github.com/mvanhorn/printing-press-library/library/other/aol-puglia/internal/config"
 )
 
 // recordingRoundTripper counts how many times its RoundTrip method is

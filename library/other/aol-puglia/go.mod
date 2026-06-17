@@ -1,4 +1,4 @@
-module github.com/aborruso/printing-press-library/library/other/aol-puglia
+module github.com/mvanhorn/printing-press-library/library/other/aol-puglia
 
 go 1.26
 

@@ -17,8 +17,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aborruso/printing-press-library/library/other/aol-puglia/internal/client"
-	"github.com/aborruso/printing-press-library/library/other/aol-puglia/internal/store"
+	"github.com/mvanhorn/printing-press-library/library/other/aol-puglia/internal/client"
+	"github.com/mvanhorn/printing-press-library/library/other/aol-puglia/internal/store"
 )
 
 const networkFallbackReason = "api_unreachable"

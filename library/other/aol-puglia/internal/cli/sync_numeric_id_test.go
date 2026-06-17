@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/aborruso/printing-press-library/library/other/aol-puglia/internal/store"
+	"github.com/mvanhorn/printing-press-library/library/other/aol-puglia/internal/store"
 )
 
 func TestSyncSingleObject_PreservesLargeIntegerResourceIDs(t *testing.T) {

@@ -6,7 +6,7 @@ package main
 import (
 	"os"
 
-	"github.com/aborruso/printing-press-library/library/other/aol-puglia/internal/cli"
+	"github.com/mvanhorn/printing-press-library/library/other/aol-puglia/internal/cli"
 )
 
 func main() {

@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aborruso/printing-press-library/library/other/aol-puglia/internal/client"
-	"github.com/aborruso/printing-press-library/library/other/aol-puglia/internal/cliutil"
-	"github.com/aborruso/printing-press-library/library/other/aol-puglia/internal/config"
-	"github.com/aborruso/printing-press-library/library/other/aol-puglia/internal/store"
+	"github.com/mvanhorn/printing-press-library/library/other/aol-puglia/internal/client"
+	"github.com/mvanhorn/printing-press-library/library/other/aol-puglia/internal/cliutil"
+	"github.com/mvanhorn/printing-press-library/library/other/aol-puglia/internal/config"
+	"github.com/mvanhorn/printing-press-library/library/other/aol-puglia/internal/store"
 	"github.com/spf13/cobra"
 )
 

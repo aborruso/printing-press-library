@@ -5,8 +5,8 @@ package cli
 
 import (
 	"fmt"
-	"github.com/aborruso/printing-press-library/library/other/aol-puglia/internal/cliutil"
-	"github.com/aborruso/printing-press-library/library/other/aol-puglia/internal/config"
+	"github.com/mvanhorn/printing-press-library/library/other/aol-puglia/internal/cliutil"
+	"github.com/mvanhorn/printing-press-library/library/other/aol-puglia/internal/config"
 	"github.com/spf13/cobra"
 	"os"
 	"os/exec"
