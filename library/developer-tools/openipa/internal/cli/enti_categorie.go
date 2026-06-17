@@ -69,16 +69,16 @@ Il codice categoria può essere usato con: openipa-pp-cli sede enti --categoria 
 				records = filtered
 			}
 
+			if resp.Result.Total > 200 {
+				fmt.Fprintf(os.Stderr, "warning: results truncated — %d of %d total records returned\n",
+					len(resp.Result.Records), resp.Result.Total)
+			}
+
 			if len(records) == 0 {
 				if cerca != "" {
 					return fmt.Errorf("nessuna categoria trovata per %q", cerca)
 				}
 				return fmt.Errorf("nessuna categoria disponibile")
-			}
-
-			if resp.Result.Total > 200 {
-				fmt.Fprintf(os.Stderr, "warning: results truncated — %d of %d total records returned\n",
-					len(resp.Result.Records), resp.Result.Total)
 			}
 
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
