@@ -15,7 +15,15 @@ const (
 	oauthTokenURL = "https://sanita.puglia.it/sanita-auth/oauth/token"
 	// Basic YW9sLWNpZDphb2xAUFdEMjAxOUA= encodes "aol-cid:aol@PWD2019@"
 	oauthBasicAuth = "Basic YW9sLWNpZDphb2xAUFdEMjAxOUA="
+	// oauthHTTPTimeout caps the token request. Without it the request rides
+	// http.DefaultClient (no deadline): a slow or unresponsive auth endpoint
+	// would hang every CLI invocation while getAutoToken holds cachedToken.mu.
+	oauthHTTPTimeout = 30 * time.Second
 )
+
+// oauthHTTPClient is a dedicated, timeout-constrained client for the token
+// endpoint, mirroring the bounded http.Client built in client.go.
+var oauthHTTPClient = &http.Client{Timeout: oauthHTTPTimeout}
 
 type oauthToken struct {
 	value     string
@@ -25,24 +33,25 @@ type oauthToken struct {
 
 var cachedToken oauthToken
 
-// fetchClientCredentialsToken obtains a new OAuth2 client_credentials token.
-func fetchClientCredentialsToken() (string, error) {
+// fetchClientCredentialsToken obtains a new OAuth2 client_credentials token,
+// returning the access token and the server-reported expires_in (seconds).
+func fetchClientCredentialsToken() (string, int, error) {
 	data := url.Values{"grant_type": {"client_credentials"}}
 	req, err := http.NewRequest("POST", oauthTokenURL, strings.NewReader(data.Encode()))
 	if err != nil {
-		return "", fmt.Errorf("building oauth request: %w", err)
+		return "", 0, fmt.Errorf("building oauth request: %w", err)
 	}
 	req.Header.Set("Authorization", oauthBasicAuth)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := oauthHTTPClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("oauth token request: %w", err)
+		return "", 0, fmt.Errorf("oauth token request: %w", err)
 	}
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("oauth token: HTTP %d: %s", resp.StatusCode, string(body))
+		return "", 0, fmt.Errorf("oauth token: HTTP %d: %s", resp.StatusCode, string(body))
 	}
 
 	var result struct {
@@ -50,12 +59,12 @@ func fetchClientCredentialsToken() (string, error) {
 		ExpiresIn   int    `json:"expires_in"`
 	}
 	if err := json.Unmarshal(body, &result); err != nil {
-		return "", fmt.Errorf("parsing oauth response: %w", err)
+		return "", 0, fmt.Errorf("parsing oauth response: %w", err)
 	}
 	if result.AccessToken == "" {
-		return "", fmt.Errorf("oauth response missing access_token")
+		return "", 0, fmt.Errorf("oauth response missing access_token")
 	}
-	return result.AccessToken, nil
+	return result.AccessToken, result.ExpiresIn, nil
 }
 
 // getAutoToken returns a cached valid token, refreshing it when expired or missing.
@@ -65,12 +74,18 @@ func getAutoToken() (string, error) {
 	if cachedToken.value != "" && time.Now().Before(cachedToken.expiresAt) {
 		return cachedToken.value, nil
 	}
-	token, err := fetchClientCredentialsToken()
+	token, expiresIn, err := fetchClientCredentialsToken()
 	if err != nil {
 		return "", err
 	}
 	cachedToken.value = token
-	// Tokens typically expire in 1h; refresh 5 min early
-	cachedToken.expiresAt = time.Now().Add(55 * time.Minute)
+	// Honor the server-reported expires_in and refresh 5 minutes early so a
+	// short-lived token is never served stale. Fall back to 1h when the
+	// server omits or zeroes expires_in.
+	ttl := time.Duration(expiresIn) * time.Second
+	if ttl <= 0 {
+		ttl = 60 * time.Minute
+	}
+	cachedToken.expiresAt = time.Now().Add(ttl - 5*time.Minute)
 	return token, nil
 }

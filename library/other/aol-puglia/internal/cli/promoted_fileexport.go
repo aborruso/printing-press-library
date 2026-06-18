@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
@@ -118,7 +119,11 @@ func newFileexportPromotedCmd(flags *rootFlags) *cobra.Command {
 			dest := outputPath
 			if dest == "" {
 				if resp.NomeFile != "" {
-					dest = resp.NomeFile + resp.Estensione
+					// filepath.Base strips any path components from the
+					// server-supplied filename so a malicious response (e.g.
+					// NomeFile "../../etc/passwd") cannot escape the working
+					// directory. Mirrors atti_download-allegato.go.
+					dest = filepath.Base(resp.NomeFile + resp.Estensione)
 				} else {
 					dest = "export.csv"
 				}
@@ -140,7 +145,7 @@ func newFileexportPromotedCmd(flags *rootFlags) *cobra.Command {
 	cmd.Flags().IntVar(&bodyNumeroRepertorio, "numero-repertorio", 0, "Numero repertorio")
 	cmd.Flags().StringVar(&bodyOggetto, "oggetto", "", "Testo libero da cercare nell'oggetto")
 	cmd.Flags().StringVar(&bodyProponenteSelezionato, "proponente-selezionato", "", "Codice proponente")
-	cmd.Flags().StringVar(&bodyTipoItem, "tipo-item", "", "Tipo documento: bando, concorso (richiesto)")
+	cmd.Flags().StringVar(&bodyTipoItem, "tipo-item", "", "Tipo documento: bando, concorso, delibera, determina (richiesto). La disponibilità per tipo varia per azienda.")
 	cmd.Flags().StringVar(&outputPath, "output", "", "File CSV di output (default: export.csv)")
 
 	return cmd

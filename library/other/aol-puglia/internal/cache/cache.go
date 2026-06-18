@@ -12,6 +12,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -42,10 +43,17 @@ func (s *Store) Get(key string) (json.RawMessage, bool) {
 	return json.RawMessage(data), true
 }
 
-// Set stores a value in the cache.
-func (s *Store) Set(key string, value json.RawMessage) {
-	_ = os.MkdirAll(s.Dir, 0o700)
-	_ = os.WriteFile(s.path(key), []byte(value), 0o600)
+// Set stores a value in the cache. Filesystem errors (permission denied, full
+// disk) are returned rather than swallowed, so a silently-failing cache that
+// re-fetches on every run is observable by the caller.
+func (s *Store) Set(key string, value json.RawMessage) error {
+	if err := os.MkdirAll(s.Dir, 0o700); err != nil {
+		return fmt.Errorf("creating cache dir: %w", err)
+	}
+	if err := os.WriteFile(s.path(key), []byte(value), 0o600); err != nil {
+		return fmt.Errorf("writing cache entry: %w", err)
+	}
+	return nil
 }
 
 // Clear removes all cached entries.

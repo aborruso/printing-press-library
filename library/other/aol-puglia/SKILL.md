@@ -30,7 +30,7 @@ If the `npx` install fails before this CLI has a public-library category, instal
 If `--version` reports "command not found" after install, the runtime cannot see the binary directory on `$PATH`. Do not proceed with skill commands until verification succeeds.
 
 API per l'Albo Pretorio Online della Sanità Pugliese.
-Accesso pubblico (bandi e concorsi) tramite OAuth2 client_credentials.
+Accesso pubblico (bandi, concorsi, delibere, determine) tramite OAuth2 client_credentials.
 13 aziende sanitarie pugliesi disponibili.
 
 ## Command Reference
@@ -40,7 +40,7 @@ Accesso pubblico (bandi e concorsi) tramite OAuth2 client_credentials.
 - `aol-puglia-pp-cli atti download-allegato` — Restituisce il contenuto dell'allegato come base64 con il nome originale del file.
 - `aol-puglia-pp-cli atti get-atto` — Restituisce il dettaglio completo di un singolo atto inclusa la lista allegati.
 - `aol-puglia-pp-cli atti get-trasparenza` — Restituisce le sezioni di trasparenza disponibili per l'azienda.
-- `aol-puglia-pp-cli atti search` — Ricerca paginata degli atti pubblicati. Senza autenticazione utente sono visibili solo bandi e concorsi (logged=false).
+- `aol-puglia-pp-cli atti search` — Ricerca paginata degli atti pubblicati: bando, concorso, delibera, determina (la disponibilità per tipo varia per azienda).
 
 **config** — Manage config
 

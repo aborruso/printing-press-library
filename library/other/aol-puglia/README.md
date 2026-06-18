@@ -1,7 +1,7 @@
 # Aol Puglia CLI
 
 API per l'Albo Pretorio Online della Sanità Pugliese.
-Accesso pubblico (bandi e concorsi) tramite OAuth2 client_credentials.
+Accesso pubblico (bandi, concorsi, delibere, determine) tramite OAuth2 client_credentials.
 13 aziende sanitarie pugliesi disponibili.
 
 Learn more at [Aol Puglia](https://sanita.puglia.it/aol/).
@@ -157,9 +157,9 @@ Manage atti
 L'allegato ID è disponibile nel campo listaAllegati di ogni atto.
 - **`aol-puglia-pp-cli atti get-atto`** - Restituisce il dettaglio completo di un singolo atto inclusa la lista allegati.
 - **`aol-puglia-pp-cli atti get-trasparenza`** - Restituisce le sezioni di trasparenza disponibili per l'azienda.
-- **`aol-puglia-pp-cli atti search`** - Ricerca paginata degli atti pubblicati. Senza autenticazione utente
-sono visibili solo bandi e concorsi (logged=false).
-Supporta filtri per data, proponente, oggetto, CIG.
+- **`aol-puglia-pp-cli atti search`** - Ricerca paginata degli atti pubblicati: bando, concorso, delibera,
+determina (la disponibilità per tipo varia per azienda; alcune ASL non pubblicano delibere/determine).
+Il valore `repertorio` restituisce la vista aggregata di tutti i tipi. Supporta filtri per data, proponente, oggetto, CIG.
 
 ### config
 

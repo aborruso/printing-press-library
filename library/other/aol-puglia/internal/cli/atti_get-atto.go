@@ -16,7 +16,7 @@ func newAttiGetAttoCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:         "get-atto <id>",
 		Short:       "Restituisce il dettaglio completo di un singolo atto inclusa la lista allegati.",
-		Example:     "  aol-puglia-pp-cli atti get-atto 550e8400-e29b-41d4-a716-446655440000",
+		Example:     "  aol-puglia-pp-cli atti get-atto 7052795",
 		Annotations: map[string]string{"pp:endpoint": "atti.get-atto", "pp:method": "GET", "pp:path": "/atti/getAtto/{id}", "mcp:read-only": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {

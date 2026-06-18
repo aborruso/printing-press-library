@@ -33,8 +33,8 @@ func newAttiSearchCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:         "search",
 		Aliases:     []string{"create"},
-		Short:       "Ricerca paginata degli atti pubblicati. Senza autenticazione utente sono visibili solo bandi e concorsi (logged=false).",
-		Example:     "  aol-puglia-pp-cli atti search --azienda \"ASL Bari\" --tipo-item bando\n  aol-puglia-pp-cli atti search --azienda \"ASL Bari\" --tipo-item concorso --oggetto \"medico\"",
+		Short:       "Ricerca paginata degli atti pubblicati: bando, concorso, delibera, determina (la disponibilità per tipo varia per azienda).",
+		Example:     "  aol-puglia-pp-cli atti search --azienda \"ASL Bari\" --tipo-item bando\n  aol-puglia-pp-cli atti search --azienda \"ASL Lecce\" --tipo-item delibera\n  aol-puglia-pp-cli atti search --azienda \"ASL Bari\" --tipo-item concorso --oggetto \"medico\"",
 		Annotations: map[string]string{"pp:endpoint": "atti.search", "pp:method": "POST", "pp:path": "/atti/getListaAttiPaginata", "mcp:read-only": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Bare invocation of a command with required input prints help
@@ -261,7 +261,7 @@ func newAttiSearchCmd(flags *rootFlags) *cobra.Command {
 	cmd.Flags().StringVar(&bodyProponenteSelezionato, "proponente-selezionato", "", "Codice proponente (es. 'AGT')")
 	cmd.Flags().StringVar(&bodyStatoAtto, "stato-atto", "", "Stato atto. Inviare null quando logged=false.")
 	cmd.Flags().StringVar(&bodyTipoDocumentazione, "tipo-documentazione", "", "Tipo documentazione")
-	cmd.Flags().StringVar(&bodyTipoItem, "tipo-item", "", "Tipo documento. Senza login solo bando e concorso sono visibili.")
+	cmd.Flags().StringVar(&bodyTipoItem, "tipo-item", "", "Tipo documento: bando, concorso, delibera, determina, repertorio (vista aggregata). Disponibilità variabile per azienda.")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 
 	return cmd
