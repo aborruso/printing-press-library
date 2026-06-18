@@ -79,13 +79,19 @@ func getAutoToken() (string, error) {
 		return "", err
 	}
 	cachedToken.value = token
-	// Honor the server-reported expires_in and refresh 5 minutes early so a
-	// short-lived token is never served stale. Fall back to 1h when the
-	// server omits or zeroes expires_in.
+	// Honor the server-reported expires_in and refresh early so a token is
+	// never served stale. Fall back to 1h when the server omits or zeroes
+	// expires_in. Cap the early-refresh buffer at half the TTL: without this,
+	// a short-lived token (expires_in < 600s) would get ttl-5min as an expiry
+	// in the past, forcing a re-fetch on every single request.
 	ttl := time.Duration(expiresIn) * time.Second
 	if ttl <= 0 {
 		ttl = 60 * time.Minute
 	}
-	cachedToken.expiresAt = time.Now().Add(ttl - 5*time.Minute)
+	buffer := 5 * time.Minute
+	if buffer > ttl/2 {
+		buffer = ttl / 2
+	}
+	cachedToken.expiresAt = time.Now().Add(ttl - buffer)
 	return token, nil
 }
