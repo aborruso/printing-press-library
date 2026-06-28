@@ -153,3 +153,29 @@ func TestBuildQuery_EscludiOnly(t *testing.T) {
 		t.Errorf("BuildQuery(escludi only) = %q, want %q", got, want)
 	}
 }
+
+func TestBuildQuery_FreeTextAND(t *testing.T) {
+	arc := Archive{Slug: "leggi", FieldMap: map[string]string{"legisl": "LEGISL"}}
+	got := BuildQuery(arc, map[string]string{"legisl": "18", "testo": "obiezione di coscienza"}, "")
+	want := "(18.LEGISL) E (obiezione E di E coscienza)"
+	if got != want {
+		t.Errorf("BuildQuery(multi-word testo) = %q, want %q", got, want)
+	}
+}
+
+func TestBuildQuery_FreeTextOperatorPassthrough(t *testing.T) {
+	arc := Archive{Slug: "x", FieldMap: map[string]string{}}
+	for _, v := range []string{"sanità NOT ospedale", "a OR b", "(a b) c"} {
+		got := BuildQuery(arc, map[string]string{"testo": v}, "")
+		if got != "("+v+")" {
+			t.Errorf("BuildQuery(testo=%q) = %q, want verbatim", v, got)
+		}
+	}
+}
+
+func TestBuildQuery_FreeTextSingleWord(t *testing.T) {
+	arc := Archive{Slug: "x", FieldMap: map[string]string{}}
+	if got := BuildQuery(arc, map[string]string{"testo": "rifiuti"}, ""); got != "(rifiuti)" {
+		t.Errorf("single word = %q, want (rifiuti)", got)
+	}
+}

@@ -89,6 +89,14 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 // and numero, the query is `<legisl>.LEGISL E <numero>.<KEY>` where KEY is
 // the archive-specific id field.
 func runGet(cmd *cobra.Command, flags *rootFlags, archiveSlug string, legisl, numero int) error {
+	return runGetExtra(cmd, flags, archiveSlug, legisl, numero, nil)
+}
+
+// runGetExtra is runGet with additional pinning params (e.g. --anno) so callers
+// can disambiguate records that share legisl+numero (leggi reuse a number per
+// year). The extra keys are translated through the archive FieldMap like any
+// other criterion.
+func runGetExtra(cmd *cobra.Command, flags *rootFlags, archiveSlug string, legisl, numero int, extra map[string]string) error {
 	arc := icaro.BySlug(archiveSlug)
 	if arc == nil {
 		return fmt.Errorf("unknown archive slug: %q", archiveSlug)
@@ -110,6 +118,11 @@ func runGet(cmd *cobra.Command, flags *rootFlags, archiveSlug string, legisl, nu
 	}
 	if numero > 0 {
 		params["numero"] = fmt.Sprintf("%d", numero)
+	}
+	for k, v := range extra {
+		if v = strings.TrimSpace(v); v != "" {
+			params[k] = v
+		}
 	}
 	c, err := icaro.New(nil)
 	if err != nil {
