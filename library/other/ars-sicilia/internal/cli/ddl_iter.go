@@ -10,6 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -80,90 +81,56 @@ func runDdlIter(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error 
 	}
 	report := iterReport{Legisl: legisl, Numero: numero, Eventi: []iterEvent{}}
 
-	// 1. DDL stesso (archivio 221).
-	if arc := icaro.BySlug("ddl"); arc != nil {
-		recs, err := c.Search(ctx, *arc, icaro.SearchOptions{
-			Params: map[string]string{"legisl": itoa(legisl), "numero": itoa(numero)},
-			Limit:  1,
-		})
-		if err == nil && len(recs) > 0 {
-			report.Titolo = recs[0].Title
-			report.Eventi = append(report.Eventi, iterEvent{
-				Fase:      "presentazione",
-				Data:      recs[0].Fields["Data"],
-				Sede:      "Assemblea (presentazione DDL)",
-				Titolo:    recs[0].Title,
-				URL:       recs[0].URL,
-				ArchiveID: arc.ID,
-				DocID:     recs[0].DocID,
-			})
-		} else {
-			report.Note = fmt.Sprintf("DDL %d non trovato nell'archivio della legislatura %d. Verifica legisl e numero con `ars-sicilia-pp-cli ddl cerca`.", numero, legisl)
-		}
+	// 1. DDL stesso (archivio 221): presentazione + apertura del documento per
+	// leggere l'iter reale (sezione "Attuale … Storico" nel corpo del doc).
+	arc := icaro.BySlug("ddl")
+	if arc == nil {
+		report.Note = "archivio ddl non disponibile"
+		return emitIter(cmd, flags, report)
 	}
-
-	// 2. Sommari di commissione che citano il DDL nel testo (archivio 230).
-	if arc := icaro.BySlug("sommari"); arc != nil {
-		c2, err := icaro.New(nil)
-		if err == nil {
-			recs, err := c2.Search(ctx, *arc, icaro.SearchOptions{
-				Params: map[string]string{
-					"legisl": itoa(legisl),
-					"testo":  fmt.Sprintf("ddl %d", numero),
-				},
-				Limit:    20,
-				MaxPages: 2,
-			})
-			if err == nil {
-				for _, r := range recs {
-					report.Eventi = append(report.Eventi, iterEvent{
-						Fase:      "commissione",
-						Data:      r.Fields["Data"],
-						Sede:      r.Fields["Commissione"],
-						Titolo:    r.Title,
-						URL:       r.URL,
-						ArchiveID: arc.ID,
-						DocID:     r.DocID,
-					})
-				}
-			}
-		}
+	recs, err := c.Search(ctx, *arc, icaro.SearchOptions{
+		Params: map[string]string{"legisl": itoa(legisl), "numero": itoa(numero)},
+		Limit:  1,
+	})
+	if err != nil {
+		return fmt.Errorf("ricerca ddl: %w", err)
 	}
+	if len(recs) == 0 {
+		report.Note = fmt.Sprintf("DDL %d non trovato nell'archivio della legislatura %d. Verifica legisl e numero con `ars-sicilia-pp-cli ddl cerca`.", numero, legisl)
+		return emitIter(cmd, flags, report)
+	}
+	report.Titolo = recs[0].Title
+	report.Eventi = append(report.Eventi, iterEvent{
+		Fase:      "presentazione",
+		Data:      recs[0].Fields["Data"],
+		Sede:      "Assemblea (presentazione DDL)",
+		Titolo:    recs[0].Title,
+		URL:       recs[0].URL,
+		ArchiveID: arc.ID,
+		DocID:     recs[0].DocID,
+	})
 
-	// 3. Resoconti d'aula che citano il DDL (archivio 217).
-	if arc := icaro.BySlug("resoconti"); arc != nil {
-		c3, err := icaro.New(nil)
-		if err == nil {
-			recs, err := c3.Search(ctx, *arc, icaro.SearchOptions{
-				Params: map[string]string{
-					"legisl": itoa(legisl),
-					"testo":  fmt.Sprintf("ddl %d", numero),
-				},
-				Limit:    10,
-				MaxPages: 1,
-			})
-			if err == nil {
-				for _, r := range recs {
-					report.Eventi = append(report.Eventi, iterEvent{
-						Fase:      "aula",
-						Data:      r.Fields["Data"],
-						Sede:      "Assemblea (aula)",
-						Titolo:    r.Title,
-						Oratori:   r.Fields["Oratori"],
-						URL:       r.URL,
-						ArchiveID: arc.ID,
-						DocID:     r.DocID,
-					})
-				}
-			}
+	// 2. Iter reale dal corpo del documento: il portale elenca i passaggi
+	// ("Assegnato per esame Commissione QUARTA", "Approvato", "Promulgata legge
+	// regionale n. …") tra i marcatori "Attuale" e "Storico". È l'unica fonte
+	// affidabile: i sommari/resoconti NON citano il DDL con la stringa "ddl N".
+	if doc, derr := c.GetDoc(ctx, *arc, recs[0].DocID); derr == nil {
+		for _, ev := range parseIterFromBody(doc.Body) {
+			ev.URL = recs[0].URL
+			ev.ArchiveID = arc.ID
+			ev.DocID = recs[0].DocID
+			report.Eventi = append(report.Eventi, ev)
 		}
 	}
 
 	// Sort events by ISO date when parseable.
 	sort.SliceStable(report.Eventi, func(i, j int) bool {
-		return parseICaroDate(report.Eventi[i].Data) < parseICaroDate(report.Eventi[j].Data)
+		return iterDateKey(report.Eventi[i].Data) < iterDateKey(report.Eventi[j].Data)
 	})
+	return emitIter(cmd, flags, report)
+}
 
+func emitIter(cmd *cobra.Command, flags *rootFlags, report iterReport) error {
 	out := cmd.OutOrStdout()
 	if flags.asJSON || !isTerminal(out) {
 		enc := json.NewEncoder(out)
@@ -171,10 +138,103 @@ func runDdlIter(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error 
 		return enc.Encode(report)
 	}
 	fmt.Fprintf(out, "DDL %d/%d — %s\n", report.Legisl, report.Numero, report.Titolo)
+	if report.Note != "" {
+		fmt.Fprintf(out, "  %s\n", report.Note)
+	}
 	for _, e := range report.Eventi {
 		fmt.Fprintf(out, "  [%s] %s — %s\n", e.Fase, e.Data, strings.TrimSpace(e.Sede+" "+e.Titolo))
 	}
 	return nil
+}
+
+// reIterStep matches "<DD> <mese> <YYYY> <azione>" pairs inside the status
+// region. RE2 has no lookahead, so the action is captured as the run of
+// non-digit characters up to the next date (which begins with a digit).
+var reIterStep = regexp.MustCompile(`(\d{1,2})\s+([a-zàèéìòù]{3,})\s+(\d{4})\s+([^0-9]+)`)
+
+var itaMonths = map[string]string{
+	"gen": "01", "feb": "02", "mar": "03", "apr": "04", "mag": "05", "giu": "06",
+	"lug": "07", "ago": "08", "set": "09", "sett": "09", "ott": "10", "nov": "11", "dic": "12",
+}
+
+// parseIterFromBody extracts iter events (committee assignment, aula passage,
+// promulgation) from the "Attuale … Storico" status block the portal renders at
+// the top of a DDL document body. Returns nil when no status block is present.
+func parseIterFromBody(body string) []iterEvent {
+	if body == "" {
+		return nil
+	}
+	start := strings.Index(body, "Attuale")
+	if start < 0 {
+		return nil
+	}
+	region := body[start+len("Attuale"):]
+	if end := strings.Index(region, "Storico"); end >= 0 {
+		region = region[:end]
+	}
+	var events []iterEvent
+	for _, m := range reIterStep.FindAllStringSubmatch(region, -1) {
+		dd, mon, yyyy, action := m[1], strings.ToLower(m[2]), m[3], strings.TrimSpace(m[4])
+		if action == "" {
+			continue
+		}
+		events = append(events, iterEvent{
+			Fase:   classifyIterFase(action),
+			Data:   fmt.Sprintf("%s %s %s", dd, mon, yyyy),
+			Sede:   iterSede(action),
+			Titolo: action,
+		})
+	}
+	return events
+}
+
+func classifyIterFase(action string) string {
+	a := strings.ToLower(action)
+	switch {
+	case strings.Contains(a, "promulgat") || strings.Contains(a, "legge regionale") || strings.Contains(a, "l.r."):
+		return "legge"
+	case strings.Contains(a, "aula") || strings.Contains(a, "assemblea") || strings.Contains(a, "approvat"):
+		return "aula"
+	case strings.Contains(a, "commissione") || strings.Contains(a, "esame") || strings.Contains(a, "parere"):
+		return "commissione"
+	default:
+		return "iter"
+	}
+}
+
+// iterSede returns the committee name when the action references one.
+func iterSede(action string) string {
+	if i := strings.Index(strings.ToLower(action), "commissione"); i >= 0 {
+		return strings.TrimSpace(action[i:])
+	}
+	return ""
+}
+
+// iterDateKey returns a sortable "YYYY-MM-DD" key for both the short-list date
+// form (DD.MM.YY) and the document status form ("DD mese YYYY").
+func iterDateKey(s string) string {
+	s = strings.TrimSpace(s)
+	if strings.Contains(s, ".") {
+		return parseICaroDate(s)
+	}
+	parts := strings.Fields(s)
+	if len(parts) == 3 {
+		if mm, ok := itaMonths[strings.ToLower(parts[1])[:min3(len(parts[1]))]]; ok {
+			dd := parts[0]
+			if len(dd) == 1 {
+				dd = "0" + dd
+			}
+			return parts[2] + "-" + mm + "-" + dd
+		}
+	}
+	return s
+}
+
+func min3(n int) int {
+	if n < 3 {
+		return n
+	}
+	return 3
 }
 
 // parseICaroDate converts DD.MM.YYYY (or DD.MM.YY) into a sortable string

@@ -9,6 +9,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 
@@ -82,28 +83,28 @@ func runAnalytics(cmd *cobra.Command, flags *rootFlags, typ, groupBy string, lim
 
 	out := cmd.OutOrStdout()
 
+	var rows []analyticsRow
 	switch groupBy {
 	case "cofirmatari":
-		rows, err := pairCofirmatari(ctx, db.DB(), typ, legisl, limit)
-		if err != nil {
-			return err
-		}
-		return emitAnalytics(out, flags, rows)
+		rows, err = pairCofirmatari(ctx, db.DB(), typ, legisl, limit)
 	case "oratore", "oratori":
-		rows, err := groupOratori(ctx, db.DB(), legisl, limit)
-		if err != nil {
-			return err
-		}
-		return emitAnalytics(out, flags, rows)
+		rows, err = groupOratori(ctx, db.DB(), legisl, limit)
 	case "anno":
-		rows, err := groupByAnno(ctx, db.DB(), typ, legisl, limit)
-		if err != nil {
-			return err
-		}
-		return emitAnalytics(out, flags, rows)
+		rows, err = groupByAnno(ctx, db.DB(), typ, legisl, limit)
 	default:
 		return fmt.Errorf("group-by %q non supportato. Disponibili: cofirmatari, oratore, anno", groupBy)
 	}
+	if err != nil {
+		return err
+	}
+	// Empty result is most often an unsynced store, not a genuine zero. Mirror
+	// `search`'s behaviour and hint on stderr (keeps JSON/CSV on stdout clean).
+	if len(rows) == 0 {
+		fmt.Fprintf(os.Stderr,
+			"hint: nessun dato per --type %s --group-by %s. Lo store locale potrebbe non essere sincronizzato: esegui `ars-sicilia-pp-cli sync --resources %s` e riprova.\n",
+			typ, groupBy, typ)
+	}
+	return emitAnalytics(out, flags, rows)
 }
 
 // pairCofirmatari estrae le coppie di firmatari in un archivio (default: ddl)

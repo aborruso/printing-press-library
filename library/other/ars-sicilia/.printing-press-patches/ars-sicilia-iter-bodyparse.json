@@ -1,0 +1,11 @@
+{
+  "schema_version": 2,
+  "id": "ars-sicilia-iter-bodyparse",
+  "applied_at": "2026-06-28",
+  "base_run_id": "20260528-181840",
+  "base_printing_press_version": "4.18.0",
+  "summary": "ddl iter ricostruisce l'iter leggendo la sezione 'Attuale … Storico' del corpo del documento DDL (assegnazioni a commissione, aula, promulgazione) invece di cercare 'ddl N' nei sommari/resoconti (che non matcha mai).",
+  "reason": "La feature bandiera restituiva solo l'evento 'presentazione': i passaggi reali stanno nel corpo del doc, non sono citati come 'ddl N' negli altri archivi.",
+  "files": ["internal/cli/ddl_iter.go"],
+  "validated_outcome": "ddl iter 18 1153 -> 3 eventi (presentazione + 2 commissione); 1152/1151 -> 2; DDL non assegnati -> solo presentazione (corretto)."
+}
