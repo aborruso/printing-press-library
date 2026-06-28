@@ -154,7 +154,7 @@ var reIterStep = regexp.MustCompile(`(\d{1,2})\s+([a-zàèéìòù]{3,})\s+(\d{4
 
 var itaMonths = map[string]string{
 	"gen": "01", "feb": "02", "mar": "03", "apr": "04", "mag": "05", "giu": "06",
-	"lug": "07", "ago": "08", "set": "09", "sett": "09", "ott": "10", "nov": "11", "dic": "12",
+	"lug": "07", "ago": "08", "set": "09", "ott": "10", "nov": "11", "dic": "12",
 }
 
 // parseIterFromBody extracts iter events (committee assignment, aula passage,
