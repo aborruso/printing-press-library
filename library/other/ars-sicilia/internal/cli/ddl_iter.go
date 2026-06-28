@@ -147,10 +147,9 @@ func emitIter(cmd *cobra.Command, flags *rootFlags, report iterReport) error {
 	return nil
 }
 
-// reIterStep matches "<DD> <mese> <YYYY> <azione>" pairs inside the status
-// region. RE2 has no lookahead, so the action is captured as the run of
-// non-digit characters up to the next date (which begins with a digit).
-var reIterStep = regexp.MustCompile(`(\d{1,2})\s+([a-zàèéìòù]{3,})\s+(\d{4})\s+([^0-9]+)`)
+// reIterDate matches an Italian short date "<DD> <mese> <YYYY>" used to anchor
+// each iter step in the document status block.
+var reIterDate = regexp.MustCompile(`(\d{1,2})\s+([a-zàèéìòù]{3,})\s+(\d{4})`)
 
 var itaMonths = map[string]string{
 	"gen": "01", "feb": "02", "mar": "03", "apr": "04", "mag": "05", "giu": "06",
@@ -158,8 +157,12 @@ var itaMonths = map[string]string{
 }
 
 // parseIterFromBody extracts iter events (committee assignment, aula passage,
-// promulgation) from the "Attuale … Storico" status block the portal renders at
-// the top of a DDL document body. Returns nil when no status block is present.
+// approval/rejection, promulgation) from the status block the portal renders at
+// the top of a DDL document body. The block runs from "Attuale" up to the bill
+// header "(n. …)" and contains both the current status and, after the "Storico"
+// label, the full chronological history. Each step is "<date> <action> [Seduta
+// n. N …]"; we cut the action at "Seduta" to drop the sitting metadata (and its
+// stray digits). Returns nil when no status block is present.
 func parseIterFromBody(body string) []iterEvent {
 	if body == "" {
 		return nil
@@ -169,12 +172,28 @@ func parseIterFromBody(body string) []iterEvent {
 		return nil
 	}
 	region := body[start+len("Attuale"):]
-	if end := strings.Index(region, "Storico"); end >= 0 {
+	// The bill text proper begins with the "(n. <numero>)" header; everything
+	// after it is the document content, not iter.
+	if end := strings.Index(region, "(n."); end >= 0 {
 		region = region[:end]
 	}
+	// "Storico" is a section label between current status and history, not an event.
+	region = strings.ReplaceAll(region, "Storico", " ")
+
+	locs := reIterDate.FindAllStringIndex(region, -1)
+	subs := reIterDate.FindAllStringSubmatch(region, -1)
 	var events []iterEvent
-	for _, m := range reIterStep.FindAllStringSubmatch(region, -1) {
-		dd, mon, yyyy, action := m[1], strings.ToLower(m[2]), m[3], strings.TrimSpace(m[4])
+	for i, loc := range locs {
+		dd, mon, yyyy := subs[i][1], strings.ToLower(subs[i][2]), subs[i][3]
+		actEnd := len(region)
+		if i+1 < len(locs) {
+			actEnd = locs[i+1][0]
+		}
+		action := region[loc[1]:actEnd]
+		if s := strings.Index(action, "Seduta"); s >= 0 {
+			action = action[:s]
+		}
+		action = strings.Join(strings.Fields(action), " ")
 		if action == "" {
 			continue
 		}
@@ -186,6 +205,87 @@ func parseIterFromBody(body string) []iterEvent {
 		})
 	}
 	return events
+}
+
+type firmatario struct {
+	Nome   string `json:"nome"`
+	Gruppo string `json:"gruppo,omitempty"`
+}
+
+// reFirmEntry matches a "Nome Cognome (Gruppo)" firmatario entry. The name is a
+// run of capitalised words; the group is the parenthesised text.
+var reFirmEntry = regexp.MustCompile(`([A-ZÀ-Ù][\p{L}'.\-]*(?:\s+[A-ZÀ-Ù][\p{L}'.\-]*){0,3})\s*\(([^)]{2,90})\)`)
+
+// firmLabelWords are non-name capitalised words that can sit right before a
+// firmatario in the flattened body (section labels / iniziativa values).
+var firmLabelWords = map[string]bool{
+	"Parlamentare": true, "Governativa": true, "Popolare": true, "Iniziativa": true,
+	"Gruppo": true, "Firmatari": true, "Argomenti": true, "Premier": true, "ARS": true,
+}
+
+// parseDdlFirmatari extracts the bill signatories from the document body. It
+// handles the structured sidebar form ("Nome (Gruppo). • Nome (Gruppo).", with
+// party groups) and the relazione form ("presentato dai deputati: A, B, C",
+// names only). Returns nil when none is found (e.g. some governativi).
+func parseDdlFirmatari(body string) []firmatario {
+	if body == "" {
+		return nil
+	}
+	// Form A: bullet-separated "Nome (Gruppo)" entries.
+	if strings.Contains(body, "•") {
+		var out []firmatario
+		seen := map[string]bool{}
+		for _, seg := range strings.Split(body, "•") {
+			ms := reFirmEntry.FindAllStringSubmatch(seg, -1)
+			if len(ms) == 0 {
+				continue
+			}
+			m := ms[len(ms)-1] // firmatario sits at the end of the segment
+			nome := cleanFirmatarioName(m[1])
+			grp := strings.Join(strings.Fields(m[2]), " ")
+			if nome == "" || seen[nome+"|"+grp] {
+				continue
+			}
+			seen[nome+"|"+grp] = true
+			out = append(out, firmatario{Nome: nome, Gruppo: grp})
+		}
+		if len(out) > 0 {
+			return out
+		}
+	}
+	// Form B: "presentato dai deputati: A, B, C" (no groups).
+	for _, marker := range []string{"presentato dai deputati", "presentato dal deputato", "presentato dalla deputata"} {
+		if i := strings.Index(strings.ToLower(body), marker); i >= 0 {
+			rest := body[i+len(marker):]
+			rest = strings.TrimLeft(rest, ": ")
+			if e := strings.IndexAny(rest, ".\n"); e >= 0 {
+				rest = rest[:e]
+			}
+			var out []firmatario
+			for _, n := range strings.Split(rest, ",") {
+				if n = strings.Join(strings.Fields(n), " "); n != "" {
+					out = append(out, firmatario{Nome: n})
+				}
+			}
+			if len(out) > 0 {
+				return out
+			}
+		}
+	}
+	return nil
+}
+
+// cleanFirmatarioName strips leading section-label words and caps the name to
+// its trailing capitalised tokens.
+func cleanFirmatarioName(s string) string {
+	toks := strings.Fields(s)
+	for len(toks) > 0 && firmLabelWords[toks[0]] {
+		toks = toks[1:]
+	}
+	if len(toks) > 4 {
+		toks = toks[len(toks)-4:]
+	}
+	return strings.Join(toks, " ")
 }
 
 func classifyIterFase(action string) string {

@@ -158,6 +158,16 @@ func runGetExtra(cmd *cobra.Command, flags *rootFlags, archiveSlug string, legis
 	if recs[0].Excerpt != "" && doc.Body == "" {
 		doc.Body = recs[0].Excerpt
 	}
+	// For DDLs, surface the signatories parsed from the document body as a
+	// structured field (name + party group when available).
+	if arc.Slug == "ddl" {
+		if firm := parseDdlFirmatari(doc.Body); len(firm) > 0 {
+			return writeJSON(cmd.OutOrStdout(), struct {
+				icaro.Doc
+				Firmatari []firmatario `json:"firmatari"`
+			}{doc, firm})
+		}
+	}
 	return writeJSON(cmd.OutOrStdout(), doc)
 }
 
