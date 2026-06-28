@@ -35,7 +35,7 @@ func newNovelSyncStaleCmd(flags *rootFlags) *cobra.Command {
 			return runSyncStale(cmd, flags, flagDB, flagMaxAge)
 		},
 	}
-	cmd.Flags().StringVar(&flagDB, "db", "", "Percorso del database SQLite (default: ~/.local/share/ars-sicilia-pp-cli/store.db).")
+	cmd.Flags().StringVar(&flagDB, "db", "", "Percorso del database SQLite (default: ~/.local/share/ars-sicilia-pp-cli/data.db).")
 	cmd.Flags().StringVar(&flagMaxAge, "max-age", "7d", "Soglia di staleness (es. 24h, 7d).")
 	return cmd
 }

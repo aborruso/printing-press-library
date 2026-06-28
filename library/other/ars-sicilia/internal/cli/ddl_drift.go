@@ -36,7 +36,7 @@ func newNovelDdlDriftCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&flagSince, "since", "7d", "Finestra temporale del confronto (es. 24h, 7d, 30d).")
-	cmd.Flags().StringVar(&flagDB, "db", "", "Percorso del database SQLite (default: ~/.local/share/ars-sicilia-pp-cli/store.db).")
+	cmd.Flags().StringVar(&flagDB, "db", "", "Percorso del database SQLite (default: ~/.local/share/ars-sicilia-pp-cli/data.db).")
 	return cmd
 }
 

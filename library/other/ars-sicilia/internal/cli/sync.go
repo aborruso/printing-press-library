@@ -52,7 +52,7 @@ Successivamente, i comandi analytics, ddl drift e sync stale useranno i dati loc
 			return runSyncAll(cmd, flags, flagDB, maxPages, flagResources, flagLegisle)
 		},
 	}
-	cmd.Flags().StringVar(&flagDB, "db", "", "Percorso del database SQLite (default: ~/.local/share/ars-sicilia-pp-cli/store.db).")
+	cmd.Flags().StringVar(&flagDB, "db", "", "Percorso del database SQLite (default: ~/.local/share/ars-sicilia-pp-cli/data.db).")
 	cmd.Flags().IntVar(&flagMaxPages, "max-pages", 5, "Numero massimo di pagine per archivio (0 = tutte).")
 	cmd.Flags().BoolVar(&flagFull, "full", false, "Scarica tutte le pagine disponibili (equivale a --max-pages 0).")
 	cmd.Flags().StringSliceVar(&flagResources, "resources", nil, "Archivi da sincronizzare (default: tutti). Es: --resources ddl,leggi")

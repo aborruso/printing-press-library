@@ -97,12 +97,20 @@ func runAnalytics(cmd *cobra.Command, flags *rootFlags, typ, groupBy string, lim
 	if err != nil {
 		return err
 	}
-	// Empty result is most often an unsynced store, not a genuine zero. Mirror
-	// `search`'s behaviour and hint on stderr (keeps JSON/CSV on stdout clean).
+	// Empty result: hint on stderr (keeps JSON/CSV on stdout clean). Be honest
+	// about *why* it is empty — for cofirmatari/oratore a sync will NOT help,
+	// because the current sync does not extract those fields into the store.
 	if len(rows) == 0 {
-		fmt.Fprintf(os.Stderr,
-			"hint: nessun dato per --type %s --group-by %s. Lo store locale potrebbe non essere sincronizzato: esegui `ars-sicilia-pp-cli sync --resources %s` e riprova.\n",
-			typ, groupBy, typ)
+		switch groupBy {
+		case "cofirmatari", "oratore", "oratori":
+			fmt.Fprintf(os.Stderr,
+				"hint: --group-by %s non è alimentato dalla sync attuale (firmatari/oratori non vengono estratti nello store); un nuovo sync NON lo risolve. Vedi 'Known Gaps' nel README. Funziona invece --group-by anno.\n",
+				groupBy)
+		default:
+			fmt.Fprintf(os.Stderr,
+				"hint: nessun dato per --type %s --group-by %s. Lo store locale potrebbe non essere sincronizzato: esegui `ars-sicilia-pp-cli sync --resources %s` e riprova.\n",
+				typ, groupBy, typ)
+		}
 	}
 	return emitAnalytics(out, flags, rows)
 }
