@@ -34,6 +34,16 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 	if arc == nil {
 		return fmt.Errorf("unknown archive slug: %q", archiveSlug)
 	}
+	// --escludi is registered on every search command; read it centrally so the
+	// exclusion (ISIS NOT) is applied uniformly without per-command plumbing.
+	if cmd.Flags().Lookup("escludi") != nil {
+		if esc, _ := cmd.Flags().GetString("escludi"); strings.TrimSpace(esc) != "" {
+			if p.Params == nil {
+				p.Params = map[string]string{}
+			}
+			p.Params["escludi"] = esc
+		}
+	}
 	if flags.dryRun {
 		return emitDryRun(cmd, *arc, p)
 	}
@@ -139,7 +149,11 @@ func runGet(cmd *cobra.Command, flags *rootFlags, archiveSlug string, legisl, nu
 }
 
 // normalizeParams rewrites a few flag inputs to the shape the portal expects:
-//   - dates given as YYYY-MM-DD become DD.MM.YYYY (Icaro's storage format)
+//   - dates given as YYYY-MM-DD become AAMMGG (the 6-digit numeric form the
+//     ISIS date fields store, e.g. DATPRE/DATSED); a range YYYY-MM-DD:YYYY-MM-DD
+//     becomes AAMMGG/AAMMGG (ISIS interval syntax)
+//   - a numeric commission code (--codcom 1..6) is rerouted to the COMMIS field
+//     as its Roman ordinal name, since the upstream CODCOM field is not indexed
 //   - whitespace is trimmed
 func normalizeParams(arc icaro.Archive, in map[string]string) map[string]string {
 	if in == nil {
@@ -153,13 +167,88 @@ func normalizeParams(arc icaro.Archive, in map[string]string) map[string]string 
 		}
 		switch k {
 		case "data":
-			if iso := strings.SplitN(v, "-", 3); len(iso) == 3 {
-				v = fmt.Sprintf("%s.%s.%s", iso[2], iso[1], iso[0])
-			}
+			v = toISISDate(v)
 		}
 		out[k] = v
 	}
+	// --codcom 1..6 has no working upstream field; reroute to COMMIS by name.
+	if code, ok := out["codcom"]; ok {
+		if name := commissioneOrdinale(code); name != "" {
+			delete(out, "codcom")
+			if out["commissione"] == "" {
+				out["commissione"] = name
+			}
+		}
+	}
 	return out
+}
+
+// toISISDate converts a date (or a date range) to the 6-digit AAMMGG form the
+// ISIS engine stores. Accepts YYYY-MM-DD and ranges as YYYY-MM-DD:YYYY-MM-DD.
+// Values it cannot parse are returned unchanged (so already-AAMMGG input or
+// raw expressions still pass through).
+func toISISDate(v string) string {
+	// Emit a range only when BOTH bounds convert to a valid AAMMGG date.
+	// Otherwise (empty, non-numeric, or one-sided bound) fall through to the
+	// single-value path so we never produce a malformed "260225/" or
+	// "260225/garbage" range expression.
+	if lo, hi, isRange := strings.Cut(v, ":"); isRange {
+		loC, hiC := aammgg(lo), aammgg(hi)
+		if isAAMMGG(loC) && isAAMMGG(hiC) {
+			return loC + "/" + hiC
+		}
+		return aammgg(v)
+	}
+	return aammgg(v)
+}
+
+func aammgg(v string) string {
+	v = strings.TrimSpace(v)
+	iso := strings.SplitN(v, "-", 3)
+	if len(iso) == 3 && len(iso[0]) == 4 && len(iso[1]) == 2 && len(iso[2]) == 2 {
+		// Verify all components are numeric before accepting as a date, so the
+		// documented pass-through guarantee holds for non-date input.
+		if isDigits(iso[0]) && isDigits(iso[1]) && isDigits(iso[2]) {
+			return iso[0][2:] + iso[1] + iso[2]
+		}
+	}
+	return v
+}
+
+// isAAMMGG reports whether s is the 6-digit numeric date form the ISIS engine
+// stores (e.g. "260225").
+func isAAMMGG(s string) bool { return len(s) == 6 && isDigits(s) }
+
+func isDigits(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, r := range s {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+// commissioneOrdinale maps a numeric commission code to its Roman ordinal name
+// as stored in the COMMIS field. Returns "" for unknown codes.
+func commissioneOrdinale(code string) string {
+	switch strings.TrimSpace(code) {
+	case "1":
+		return "PRIMA"
+	case "2":
+		return "SECONDA"
+	case "3":
+		return "TERZA"
+	case "4":
+		return "QUARTA"
+	case "5":
+		return "QUINTA"
+	case "6":
+		return "SESTA"
+	}
+	return ""
 }
 
 // emitDryRun prints the would-be query without hitting the network, useful

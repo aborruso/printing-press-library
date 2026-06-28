@@ -223,7 +223,8 @@ func groupByAnno(ctx context.Context, db *sql.DB, typ string, legisl, limit int)
 		WHERE resource_type = ?
 		` + whereLegisl + `
 		  AND substr(json_extract(data, '$.data'), -4) != ''
-		GROUP BY anno ORDER BY n DESC LIMIT ` + fmt.Sprintf("%d", limit)
+		GROUP BY anno ORDER BY n DESC LIMIT ?`
+	args = append(args, limit)
 	rows, err := db.QueryContext(ctx, q, args...)
 	if err != nil {
 		return nil, fmt.Errorf("query anno: %w", err)

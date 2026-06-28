@@ -22,6 +22,7 @@ func BuildQuery(arc Archive, params map[string]string, isisRaw string) string {
 	}
 	var fielded []string
 	var freeText []string
+	var exclude string
 
 	// Stable key order so identical inputs produce identical queries (helps
 	// session caching, dogfood reproducibility).
@@ -34,6 +35,12 @@ func BuildQuery(arc Archive, params map[string]string, isisRaw string) string {
 	for _, k := range keys {
 		v := strings.TrimSpace(params[k])
 		if v == "" {
+			continue
+		}
+		// `escludi` is an exclusion term (ISIS NOT), not a positive criterion;
+		// it qualifies the whole expression below.
+		if k == "escludi" || k == "exclude" {
+			exclude = v
 			continue
 		}
 		if k == "testo" || k == "free" || k == "terms" || k == "q" {
@@ -58,13 +65,25 @@ func BuildQuery(arc Archive, params map[string]string, isisRaw string) string {
 		// boolean operators (we don't try to detect this — keep it simple).
 		parts = append(parts, "("+strings.Join(freeText, " E ")+")")
 	}
-	if len(parts) == 0 {
-		return "all"
+
+	var expr string
+	switch len(parts) {
+	case 0:
+		expr = "all"
+	case 1:
+		expr = parts[0]
+	default:
+		expr = strings.Join(parts, " E ")
 	}
-	if len(parts) == 1 {
-		return parts[0]
+
+	// Apply the exclusion (ISIS NOT). We wrap the excluded value in parentheses
+	// so a multi-word term stays a single operand. Field-qualified exclusions
+	// (e.g. "ospedale.titol") are unreliable upstream, so the CLI flag documents
+	// plain-term exclusion; power users can still field-qualify via --isis-query.
+	if exclude != "" {
+		expr = fmt.Sprintf("(%s) NOT (%s)", expr, exclude)
 	}
-	return strings.Join(parts, " E ")
+	return expr
 }
 
 // quoteValue returns the value as-is for purely alphanumeric/whitespace

@@ -124,8 +124,6 @@ func runCommissioneDossier(cmd *cobra.Command, flags *rootFlags, arg string, leg
 	section("sommari", "sommari", pickKey)
 	section("pareri", "pareri", "commissione")
 	if !isNumeric {
-		// Filter DDL by relatore/commissione name as free-text (no commission
-		// field in DDL archive); use the testo path.
 		section("ddl", "ddl_assegnati", "testo")
 	}
 

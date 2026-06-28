@@ -148,6 +148,12 @@ func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legis
 		}
 	}
 
+	// No matching activity in any archive: treat as not-found (exit 3) rather
+	// than emitting an empty profile with a success code.
+	if len(report.Atti) == 0 {
+		return notFoundErr(fmt.Errorf("nessun atto trovato per il deputato %q (verifica il nome e l'eventuale --legisl)", name))
+	}
+
 	// Sort by date (reverse chronological).
 	sort.SliceStable(report.Atti, func(i, j int) bool {
 		return parseICaroDate(report.Atti[i].Data) > parseICaroDate(report.Atti[j].Data)

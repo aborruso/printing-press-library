@@ -131,3 +131,25 @@ func TestBySlug_Unknown(t *testing.T) {
 		t.Errorf("BySlug(unknown) = %v, want nil", got)
 	}
 }
+
+func TestBuildQuery_Escludi(t *testing.T) {
+	arc := Archive{
+		ID:       "233",
+		Slug:     "interrogazioni",
+		FieldMap: map[string]string{"legisl": "LEGISL"},
+	}
+	got := BuildQuery(arc, map[string]string{"legisl": "18", "testo": "sanità", "escludi": "ospedale"}, "")
+	want := "((18.LEGISL) E (sanità)) NOT (ospedale)"
+	if got != want {
+		t.Errorf("BuildQuery(escludi) = %q, want %q", got, want)
+	}
+}
+
+func TestBuildQuery_EscludiOnly(t *testing.T) {
+	arc := Archive{Slug: "ddl", FieldMap: map[string]string{}}
+	got := BuildQuery(arc, map[string]string{"escludi": "regole"}, "")
+	want := "(all) NOT (regole)"
+	if got != want {
+		t.Errorf("BuildQuery(escludi only) = %q, want %q", got, want)
+	}
+}

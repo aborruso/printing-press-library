@@ -6,7 +6,7 @@ Sostituisce le 12 maschere JSP del portale ufficiale con una CLI agent-native. S
 
 Learn more at [ARS Sicilia](https://dati.ars.sicilia.it).
 
-Created by [@aborruso](https://github.com/aborruso) (aborruso).
+Printed by [@aborruso](https://github.com/aborruso) (aborruso).
 
 ## Install
 
@@ -35,15 +35,9 @@ npx -y @mvanhorn/printing-press-library install ars-sicilia --agent claude-code
 npx -y @mvanhorn/printing-press-library install ars-sicilia --agent claude-code --agent codex
 ```
 
-### Without Node (Go fallback)
+### Without Node
 
-If `npx` isn't available (no Node, offline), install the CLI directly via Go (requires Go 1.26.4 or newer):
-
-```bash
-go install github.com/mvanhorn/printing-press-library/library/other/ars-sicilia/cmd/ars-sicilia-pp-cli@latest
-```
-
-This installs the CLI only — no skill.
+The generated install path is category-agnostic until this CLI is published. If `npx` is not available before publish, install Node or use the category-specific Go fallback from the public-library entry after publish.
 
 ### Pre-built binary
 
@@ -51,14 +45,6 @@ Download a pre-built binary for your platform from the [latest release](https://
 
 <!-- pp-hermes-install-anchor -->
 ## Install for Hermes
-
-Install the CLI binary first. The installer writes binaries to a per-user managed bin directory by default: `$HOME/.local/bin` on macOS/Linux and `%LOCALAPPDATA%\Programs\PrintingPress\bin` on Windows.
-
-```bash
-npx -y @mvanhorn/printing-press-library install ars-sicilia --cli-only
-```
-
-Then install the focused Hermes skill.
 
 From the Hermes CLI:
 
@@ -72,17 +58,13 @@ Inside a Hermes chat session:
 /skills install mvanhorn/printing-press-library/cli-skills/pp-ars-sicilia --force
 ```
 
-Restart the Hermes session or gateway if the newly installed skill is not visible immediately.
-
 ## Install for OpenClaw
 
-Install both the CLI binary and the focused OpenClaw skill. The installer defaults binaries to a per-user bin directory (`$HOME/.local/bin` on macOS/Linux, `%LOCALAPPDATA%\Programs\PrintingPress\bin` on Windows):
+Tell your OpenClaw agent (copy this):
 
-```bash
-npx -y @mvanhorn/printing-press-library install ars-sicilia --agent openclaw
 ```
-
-Restart the OpenClaw session or gateway if the newly installed skill is not visible immediately.
+Install the pp-ars-sicilia skill from https://github.com/mvanhorn/printing-press-library/tree/main/cli-skills/pp-ars-sicilia. The skill defines how its required CLI can be installed.
+```
 
 ## Use with Claude Desktop
 
@@ -136,11 +118,11 @@ ars-sicilia-pp-cli ddl cerca --anno 2024 --legisl 18 --json
 # Ricerca full-text cross-archivio sui documenti già sincronizzati.
 ars-sicilia-pp-cli search "bilancio sanitario" --limit 20
 
-# Timeline completa del DDL 1500 della XVIII legislatura.
-ars-sicilia-pp-cli ddl iter 18 1500 --json
+# Timeline completa del DDL 1153 della XVIII legislatura.
+ars-sicilia-pp-cli ddl iter 18 1153 --json
 
 # Tutta l'attività parlamentare di un deputato in un'unica chiamata.
-ars-sicilia-pp-cli deputato profilo "Rossi Mario" --json --select tipo,data,titolo
+ars-sicilia-pp-cli deputato profilo "Abbate Ignazio" --json --select tipo,data,titolo
 
 ```
 
@@ -148,6 +130,7 @@ ars-sicilia-pp-cli deputato profilo "Rossi Mario" --json --select tipo,data,tito
 
 - **HTTP error exit codes**: Non-429 HTTP errors from the Icaro portal (404, 5xx) exit with code 1 rather than typed exit codes (e.g. exit 3 for not-found, exit 5 for server error). Rate-limit responses (HTTP 429) correctly return exit 7. Scripts that branch on specific exit codes should use `ars-sicilia-pp-cli doctor` to check connectivity first.
 - **`legge cronologia` date filtering**: The sommari search finds committee meetings that mention the law number in free text without a date ceiling. A committee meeting held after the law's promulgation date may appear in the timeline if it references the same number. Filter results by the `data` field when you need only pre-promulgation events.
+- **`--csv` on empty results**: when a command (e.g. `analytics --csv`) produces an empty result set, the CSV output is the JSON literal `[]` instead of an empty/header-only CSV. Piping that to a `.csv` file yields malformed content. Use `--json` for empty/unsynced data until this is fixed upstream.
 
 ## Unique Features
 
@@ -159,28 +142,28 @@ These capabilities aren't available in any other tool for this API.
   _Quando un agente deve raccontare 'a che punto sta il DDL X', questa è l'unica chiamata che restituisce la timeline completa senza incollare 5 ricerche manuali._
 
   ```bash
-  ars-sicilia-pp-cli ddl iter 18 1500 --json
+  ars-sicilia-pp-cli ddl iter 18 1153 --json
   ```
 - **`deputato profilo`** — Aggrega in un'unica vista tutti gli atti firmati o pronunciati da un deputato: DDL, interrogazioni, interpellanze, mozioni, ordini del giorno, risoluzioni e interventi in resoconti d'aula.
 
   _Sostituisce un workflow di 7 click manuali con un'unica chiamata strutturata: pensata per agenti che rispondono a 'che ha fatto il deputato X?'._
 
   ```bash
-  ars-sicilia-pp-cli deputato profilo "Rossi Mario" --legisl 18 --json --select tipo,data,titolo
+  ars-sicilia-pp-cli deputato profilo "Abbate Ignazio" --legisl 18 --json --select tipo,data,titolo
   ```
 - **`commissione dossier`** — Vista completa su una commissione: convocazioni in calendario, sommari lavori, DDL assegnati e pareri richiesti al Governo regionale.
 
   _Quando segui i lavori di una commissione specifica, questa è l'unica chiamata che dà il quadro completo invece di 3 ricerche separate._
 
   ```bash
-  ars-sicilia-pp-cli commissione dossier 5 --legisl 18 --json
+  ars-sicilia-pp-cli commissione dossier "SESTA" --legisl 18 --json
   ```
 - **`legge cronologia`** — Partendo da una legge regionale promulgata (archivio 201), risale al DDL originario, agli emendamenti citati nei resoconti d'aula e ai pareri di commissione: l'inverso temporale di ddl iter.
 
   _Per ricercatori e giornalisti che partono dalla legge promulgata e vogliono raccontare come ci si è arrivati._
 
   ```bash
-  ars-sicilia-pp-cli legge cronologia 18 5 --json
+  ars-sicilia-pp-cli legge cronologia 18 1 --json
   ```
 
 ### Analytics su campi strutturati
@@ -217,10 +200,11 @@ These capabilities aren't available in any other tool for this API.
 
 ## Recipes
 
+
 ### Sync iniziale completo XVIII legislatura
 
 ```bash
-ars-sicilia-pp-cli sync --full --resources leggi,ddl,interrogazioni,mozioni,interpellanze,odg,risoluzioni,pareri,resoconti_aula,convocazioni_commissioni,sommari_commissioni
+ars-sicilia-pp-cli sync --full --resources leggi,ddl,interrogazioni,mozioni,interpellanze,odg,risoluzioni,pareri,resoconti,convocazioni,sommari
 ```
 
 Prima sincronizzazione di tutti gli archivi politici della XVIII legislatura — i dati restano in `~/.local/share/ars-sicilia-pp-cli/store.db`.
@@ -228,10 +212,10 @@ Prima sincronizzazione di tutti gli archivi politici della XVIII legislatura —
 ### Iter completo di un DDL con output narrowing
 
 ```bash
-ars-sicilia-pp-cli ddl iter 18 1500 --json --select fase,data,sede,oratori
+ars-sicilia-pp-cli ddl iter 18 1153 --json --select fase,data,sede,oratori
 ```
 
-Timeline del DDL 1500, mostrando solo i campi essenziali — riduce il payload per agenti.
+Timeline del DDL 1153, mostrando solo i campi essenziali — riduce il payload per agenti.
 
 ### Network di co-firmatari su DDL
 
@@ -317,6 +301,10 @@ Distingue le proposte dei deputati (parlamentare) da quelle dell'esecutivo regio
 
 Run `ars-sicilia-pp-cli --help` for the full command reference and flag list.
 
+Per query avanzate con `--isis-query` (operatori `NOT`/`WITH`/`NEAR`/`ADJ`, qualificazione di
+campo, range di date, radici) vedi la guida [docs/isis-query-syntax.md](docs/isis-query-syntax.md),
+con la tabella delle sigle di campo verificate.
+
 ## Commands
 
 ### biblioteca
@@ -396,23 +384,24 @@ Risoluzioni parlamentari (archivio 238).
 - **`ars-sicilia-pp-cli risoluzioni cerca`** - Cerca risoluzioni.
 - **`ars-sicilia-pp-cli risoluzioni get`** - Scarica una singola risoluzione.
 
+
 ## Output Formats
 
 ```bash
 # Human-readable table (default in terminal, JSON when piped)
-ars-sicilia-pp-cli ddl get mock-value mock-value
+ars-sicilia-pp-cli ddl get 18 1153
 
 # JSON for scripting and agents
-ars-sicilia-pp-cli ddl get mock-value mock-value --json
+ars-sicilia-pp-cli ddl get 18 1153 --json
 
 # Filter to specific fields
-ars-sicilia-pp-cli ddl get mock-value mock-value --json --select id,name,status
+ars-sicilia-pp-cli ddl get 18 1153 --json --select data,numero,title
 
 # Dry run — show the request without sending
-ars-sicilia-pp-cli ddl get mock-value mock-value --dry-run
+ars-sicilia-pp-cli ddl get 18 1153 --dry-run
 
 # Agent mode — JSON + compact + no prompts in one flag
-ars-sicilia-pp-cli ddl get mock-value mock-value --agent
+ars-sicilia-pp-cli ddl get 18 1153 --agent
 ```
 
 ## Agent Usage
@@ -451,7 +440,7 @@ Static request headers can be configured under `headers`; per-command header ove
 ### API-specific
 - **I comandi `cerca` restituiscono 0 risultati ma il sito ne mostra molti.** — Verifica la legislatura: senza `--legisl` la query usa il default. Il portale ARS richiede sempre una legislatura nel criterio. Esempio: `--legisl 18` per XVIII.
 - **Errore di sessione o redirect inatteso.** — Il portale resetta la sessione dopo 30 minuti di inattività. Riprova il comando: il client acquisisce una nuova `JSESSIONID` automaticamente.
-- **Comando `ddl iter` o `deputato profilo` non trova nulla.** — Le viste cross-archivio leggono dal DB locale: esegui prima `ars-sicilia-pp-cli sync --resources ddl,leggi,resoconti,convocazioni_commissioni,sommari_commissioni`.
+- **Comando `ddl iter`, `deputato profilo`, `legge cronologia` o `commissione dossier` non trova nulla.** — Queste viste interrogano il portale **in diretta** (non richiedono `sync`): verifica `--legisl` e gli identificativi (numero DDL, nome deputato, numero legge, nome commissione). I comandi che invece leggono dal DB locale e richiedono `sync` sono solo `search`, `analytics`, `ddl drift` e `sync stale`.
 
 ## Sources & Inspiration
 
