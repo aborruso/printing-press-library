@@ -5,6 +5,7 @@
 The Techmeme CLI puts the tech industry's most trusted news curation into your terminal. Sync headlines to a local SQLite store, then search, filter by time, track topics, and analyze which stories and sources are dominating. The 'since' command answers the question every tech professional asks: 'what did I miss?'
 
 Created by [@davemorin](https://github.com/davemorin) (Dave Morin).
+Contributors: [@mvanhorn](https://github.com/mvanhorn) (Matt Van Horn).
 
 ## Install
 
@@ -35,7 +36,7 @@ npx -y @mvanhorn/printing-press-library install techmeme --agent claude-code --a
 
 ### Without Node (Go fallback)
 
-If `npx` isn't available (no Node, offline), install the CLI directly via Go (requires Go 1.26.3 or newer):
+If `npx` isn't available (no Node, offline), install the CLI directly via Go (requires Go 1.26.5 or newer):
 
 ```bash
 go install github.com/mvanhorn/printing-press-library/library/productivity/techmeme/cmd/techmeme-pp-cli@latest
