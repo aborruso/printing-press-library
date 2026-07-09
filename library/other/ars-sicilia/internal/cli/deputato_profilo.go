@@ -79,6 +79,10 @@ func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legis
 		Conteggio: map[string]int{},
 	}
 
+	// Archivi contattati con successo (Search senza errore). Serve a distinguere
+	// "nessun atto trovato" da "nessun archivio raggiungibile" (errori di rete).
+	archivesContacted := 0
+
 	// Archivi con FIRMAT.
 	firmaArchives := []string{"ddl", "interrogazioni", "interpellanze", "mozioni", "odg", "risoluzioni"}
 	for _, slug := range firmaArchives {
@@ -102,6 +106,7 @@ func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legis
 		if err != nil {
 			continue
 		}
+		archivesContacted++
 		for _, r := range recs {
 			report.Atti = append(report.Atti, profileItem{
 				Tipo:      slug,
@@ -119,38 +124,43 @@ func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legis
 
 	// Resoconti d'aula con free-text match sul nome dell'oratore.
 	if arc := icaro.BySlug("resoconti"); arc != nil {
-		c, err := icaro.New(nil)
-		if err != nil {
-			return nil
-		}
-		params := map[string]string{"testo": name}
-		if legisl > 0 {
-			params["legisl"] = itoa(legisl)
-		}
-		recs, err := c.Search(ctx, *arc, icaro.SearchOptions{
-			Params:   params,
-			Limit:    perArchive,
-			MaxPages: maxInt(1, (perArchive+9)/10),
-		})
-		if err == nil {
-			for _, r := range recs {
-				report.Atti = append(report.Atti, profileItem{
-					Tipo:     "resoconti",
-					Archivio: arc.ID,
-					DocID:    r.DocID,
-					Numero:   r.Fields["Numero"],
-					Data:     r.Fields["Data"],
-					Titolo:   r.Title,
-					URL:      r.URL,
-				})
-				report.Conteggio["resoconti"]++
+		// Un errore di init non deve azzerare gli atti già raccolti sopra:
+		// si salta solo questo archivio.
+		if c, err := icaro.New(nil); err == nil {
+			params := map[string]string{"testo": name}
+			if legisl > 0 {
+				params["legisl"] = itoa(legisl)
+			}
+			recs, err := c.Search(ctx, *arc, icaro.SearchOptions{
+				Params:   params,
+				Limit:    perArchive,
+				MaxPages: maxInt(1, (perArchive+9)/10),
+			})
+			if err == nil {
+				archivesContacted++
+				for _, r := range recs {
+					report.Atti = append(report.Atti, profileItem{
+						Tipo:     "resoconti",
+						Archivio: arc.ID,
+						DocID:    r.DocID,
+						Numero:   r.Fields["Numero"],
+						Data:     r.Fields["Data"],
+						Titolo:   r.Title,
+						URL:      r.URL,
+					})
+					report.Conteggio["resoconti"]++
+				}
 			}
 		}
 	}
 
-	// No matching activity in any archive: treat as not-found (exit 3) rather
-	// than emitting an empty profile with a success code.
+	// Distinguo "deputato non trovato" da "archivi non raggiungibili": senza
+	// alcun archivio contattato con successo, un report vuoto è quasi certamente
+	// un problema di connettività, non un nome inesistente.
 	if len(report.Atti) == 0 {
+		if archivesContacted == 0 {
+			return fmt.Errorf("impossibile contattare gli archivi ARS per il deputato %q (problema di rete o servizio non raggiungibile?)", name)
+		}
 		return notFoundErr(fmt.Errorf("nessun atto trovato per il deputato %q (verifica il nome e l'eventuale --legisl)", name))
 	}
 
