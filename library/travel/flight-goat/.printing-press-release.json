@@ -2,16 +2,16 @@
   "schema_version": 1,
   "slug": "flight-goat",
   "cli_name": "flight-goat-pp-cli",
-  "version": "2026.6.7",
-  "released_at": "2026-06-26T06:26:41Z",
-  "source_commit": "39128d2ec85f9bf9127938a8cd176bffc25d0bfe",
+  "version": "2026.7.1",
+  "released_at": "2026-07-08T18:21:21Z",
+  "source_commit": "11d7b4ea752c9c8fb8909037133058eb57560cc0",
   "printing_press_version": "3.6.0",
   "changes": [
     {
-      "title": "fix(flight-goat): harden google flights fallback",
-      "pr": 1368,
-      "url": "https://github.com/mvanhorn/printing-press-library/pull/1368",
-      "commit": "39128d2ec85f9bf9127938a8cd176bffc25d0bfe"
+      "title": "fix(catalog): require Go 1.26.5 across published modules",
+      "pr": 1467,
+      "url": "https://github.com/mvanhorn/printing-press-library/pull/1467",
+      "commit": "11d7b4ea752c9c8fb8909037133058eb57560cc0"
     }
   ]
 }
