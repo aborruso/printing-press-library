@@ -74,34 +74,41 @@ tramite il dataset CKAN del portale IPA open data (indicepa.gov.it/ipa-dati).
 				return classifyAPIError(err, flags)
 			}
 
-			records, total, err := parseCKANDatastore(raw)
-			if err != nil {
-				return err
-			}
-
-			if len(records) == 0 {
-				if codiceIPA != "" {
-					return fmt.Errorf("nessun risultato per codice IPA %q", codiceIPA)
+			// In dry-run GetJSON returns the {"dry_run": true} sentinel, not a
+			// CKAN response — skip parsing/records logic and fall through to the
+			// dry-run envelope below.
+			var records []map[string]any
+			if !flags.dryRun {
+				var total int
+				records, total, err = parseCKANDatastore(raw)
+				if err != nil {
+					return err
 				}
-				return fmt.Errorf("nessun risultato per codice ISTAT %q", codiceISTAT)
-			}
 
-			// Warn when CKAN returned fewer records than the true total (--istat direction).
-			if codiceISTAT != "" && total > len(records) {
-				fmt.Fprintf(os.Stderr, "warning: results truncated — %d of %d total records returned; use a smaller area or filter further\n",
-					len(records), total)
-			}
-			// Warn when entity has AOOs in multiple municipalities (--codice direction).
-			if codiceIPA != "" && total > 1 {
-				fmt.Fprintf(os.Stderr, "warning: entity has %d AOOs across potentially different municipalities — only the first ISTAT code is returned\n",
-					total)
-			}
+				if len(records) == 0 {
+					if codiceIPA != "" {
+						return fmt.Errorf("nessun risultato per codice IPA %q", codiceIPA)
+					}
+					return fmt.Errorf("nessun risultato per codice ISTAT %q", codiceISTAT)
+				}
 
-			if wantsHumanTable(cmd.OutOrStdout(), flags) {
-				if err := printAutoTable(cmd.OutOrStdout(), records); err != nil {
-					fmt.Fprintf(os.Stderr, "warning: table rendering failed, falling back to JSON: %v\n", err)
-				} else {
-					return nil
+				// Warn when CKAN returned fewer records than the true total (--istat direction).
+				if codiceISTAT != "" && total > len(records) {
+					fmt.Fprintf(os.Stderr, "warning: results truncated — %d of %d total records returned; use a smaller area or filter further\n",
+						len(records), total)
+				}
+				// Warn when entity has AOOs in multiple municipalities (--codice direction).
+				if codiceIPA != "" && total > 1 {
+					fmt.Fprintf(os.Stderr, "warning: entity has %d AOOs across potentially different municipalities — only the first ISTAT code is returned\n",
+						total)
+				}
+
+				if wantsHumanTable(cmd.OutOrStdout(), flags) {
+					if err := printAutoTable(cmd.OutOrStdout(), records); err != nil {
+						fmt.Fprintf(os.Stderr, "warning: table rendering failed, falling back to JSON: %v\n", err)
+					} else {
+						return nil
+					}
 				}
 			}
 

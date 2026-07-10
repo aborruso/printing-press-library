@@ -43,43 +43,50 @@ Il codice categoria può essere usato con: openipa-pp-cli sede enti --categoria 
 				return classifyAPIError(err, flags)
 			}
 
-			records, total, err := parseCKANDatastore(raw)
-			if err != nil {
-				return err
-			}
-			returned := len(records) // server-returned count, before the client-side --cerca filter
-
-			// Client-side filter when --cerca is set.
-			if cerca != "" {
-				q := strings.ToLower(cerca)
-				var filtered []map[string]any
-				for _, r := range records {
-					nome := strings.ToLower(fmt.Sprintf("%v", r["Nome_categoria"]))
-					tip := strings.ToLower(fmt.Sprintf("%v", r["Tipologia_categoria"]))
-					if strings.Contains(nome, q) || strings.Contains(tip, q) {
-						filtered = append(filtered, r)
-					}
+			// In dry-run GetJSON returns the {"dry_run": true} sentinel, not a
+			// CKAN response — skip parsing/records logic and fall through to the
+			// dry-run envelope below.
+			var records []map[string]any
+			if !flags.dryRun {
+				var total int
+				records, total, err = parseCKANDatastore(raw)
+				if err != nil {
+					return err
 				}
-				records = filtered
-			}
+				returned := len(records) // server-returned count, before the client-side --cerca filter
 
-			if total > 200 {
-				fmt.Fprintf(os.Stderr, "warning: results truncated — %d of %d total records returned\n",
-					returned, total)
-			}
-
-			if len(records) == 0 {
+				// Client-side filter when --cerca is set.
 				if cerca != "" {
-					return fmt.Errorf("nessuna categoria trovata per %q", cerca)
+					q := strings.ToLower(cerca)
+					var filtered []map[string]any
+					for _, r := range records {
+						nome := strings.ToLower(fmt.Sprintf("%v", r["Nome_categoria"]))
+						tip := strings.ToLower(fmt.Sprintf("%v", r["Tipologia_categoria"]))
+						if strings.Contains(nome, q) || strings.Contains(tip, q) {
+							filtered = append(filtered, r)
+						}
+					}
+					records = filtered
 				}
-				return fmt.Errorf("nessuna categoria disponibile")
-			}
 
-			if wantsHumanTable(cmd.OutOrStdout(), flags) {
-				if err := printAutoTable(cmd.OutOrStdout(), records); err != nil {
-					fmt.Fprintf(os.Stderr, "warning: table rendering failed, falling back to JSON: %v\n", err)
-				} else {
-					return nil
+				if total > 200 {
+					fmt.Fprintf(os.Stderr, "warning: results truncated — %d of %d total records returned\n",
+						returned, total)
+				}
+
+				if len(records) == 0 {
+					if cerca != "" {
+						return fmt.Errorf("nessuna categoria trovata per %q", cerca)
+					}
+					return fmt.Errorf("nessuna categoria disponibile")
+				}
+
+				if wantsHumanTable(cmd.OutOrStdout(), flags) {
+					if err := printAutoTable(cmd.OutOrStdout(), records); err != nil {
+						fmt.Fprintf(os.Stderr, "warning: table rendering failed, falling back to JSON: %v\n", err)
+					} else {
+						return nil
+					}
 				}
 			}
 
