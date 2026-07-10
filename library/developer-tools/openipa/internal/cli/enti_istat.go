@@ -74,34 +74,27 @@ tramite il dataset CKAN del portale IPA open data (indicepa.gov.it/ipa-dati).
 				return classifyAPIError(err, flags)
 			}
 
-			var resp struct {
-				Result struct {
-					Records []map[string]any `json:"records"`
-					Total   int              `json:"total"`
-				} `json:"result"`
-			}
-			if err := json.Unmarshal(raw, &resp); err != nil {
-				return fmt.Errorf("parsing CKAN response: %w", err)
+			records, total, err := parseCKANDatastore(raw)
+			if err != nil {
+				return err
 			}
 
-			if len(resp.Result.Records) == 0 {
+			if len(records) == 0 {
 				if codiceIPA != "" {
 					return fmt.Errorf("nessun risultato per codice IPA %q", codiceIPA)
 				}
 				return fmt.Errorf("nessun risultato per codice ISTAT %q", codiceISTAT)
 			}
 
-			records := resp.Result.Records
-
 			// Warn when CKAN returned fewer records than the true total (--istat direction).
-			if codiceISTAT != "" && resp.Result.Total > len(records) {
+			if codiceISTAT != "" && total > len(records) {
 				fmt.Fprintf(os.Stderr, "warning: results truncated — %d of %d total records returned; use a smaller area or filter further\n",
-					len(records), resp.Result.Total)
+					len(records), total)
 			}
 			// Warn when entity has AOOs in multiple municipalities (--codice direction).
-			if codiceIPA != "" && resp.Result.Total > 1 {
+			if codiceIPA != "" && total > 1 {
 				fmt.Fprintf(os.Stderr, "warning: entity has %d AOOs across potentially different municipalities — only the first ISTAT code is returned\n",
-					resp.Result.Total)
+					total)
 			}
 
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {

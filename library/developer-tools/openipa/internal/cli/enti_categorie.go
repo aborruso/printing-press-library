@@ -43,17 +43,11 @@ Il codice categoria può essere usato con: openipa-pp-cli sede enti --categoria 
 				return classifyAPIError(err, flags)
 			}
 
-			var resp struct {
-				Result struct {
-					Records []map[string]any `json:"records"`
-					Total   int              `json:"total"`
-				} `json:"result"`
+			records, total, err := parseCKANDatastore(raw)
+			if err != nil {
+				return err
 			}
-			if err := json.Unmarshal(raw, &resp); err != nil {
-				return fmt.Errorf("parsing CKAN response: %w", err)
-			}
-
-			records := resp.Result.Records
+			returned := len(records) // server-returned count, before the client-side --cerca filter
 
 			// Client-side filter when --cerca is set.
 			if cerca != "" {
@@ -69,9 +63,9 @@ Il codice categoria può essere usato con: openipa-pp-cli sede enti --categoria 
 				records = filtered
 			}
 
-			if resp.Result.Total > 200 {
+			if total > 200 {
 				fmt.Fprintf(os.Stderr, "warning: results truncated — %d of %d total records returned\n",
-					len(resp.Result.Records), resp.Result.Total)
+					returned, total)
 			}
 
 			if len(records) == 0 {
