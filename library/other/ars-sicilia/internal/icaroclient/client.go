@@ -85,6 +85,12 @@ type SearchOptions struct {
 	MaxPages int
 	// Limit is a max-records ceiling honored after collecting pages.
 	Limit int
+	// Truncated, when non-nil, is set by Search to report whether the portal
+	// had more matching records than were fetched (Limit or MaxPages reached
+	// before the last page). Callers that render Limit as a de facto total
+	// (deputato profilo, commissione dossier) use this to flag undercounts
+	// instead of silently presenting a capped count as complete.
+	Truncated *bool
 }
 
 // New constructs a Client with a fresh cookie jar and a 30 s default timeout.
@@ -125,12 +131,14 @@ func (c *Client) Search(ctx context.Context, arc Archive, opts SearchOptions) ([
 		maxPages = 1
 	}
 	var all []Record
+	lastPage, lastTotalPages := 0, 0
 	for page := 1; page <= maxPages; page++ {
 		rows, totalPages, err := c.fetchPage(ctx, arc, page)
 		if err != nil {
 			return all, err
 		}
 		all = append(all, rows...)
+		lastPage, lastTotalPages = page, totalPages
 		if opts.Limit > 0 && len(all) >= opts.Limit {
 			all = all[:opts.Limit]
 			break
@@ -141,6 +149,9 @@ func (c *Client) Search(ctx context.Context, arc Archive, opts SearchOptions) ([
 	}
 	if opts.Limit > 0 && len(all) > opts.Limit {
 		all = all[:opts.Limit]
+	}
+	if opts.Truncated != nil {
+		*opts.Truncated = lastPage < lastTotalPages
 	}
 	return all, nil
 }

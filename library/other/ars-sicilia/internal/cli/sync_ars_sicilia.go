@@ -164,11 +164,13 @@ func deriveSyncID(slug string, flat map[string]any) string {
 		// Columns: Legisl., Atto, Docum., Data, Titolo
 		return fmt.Sprintf("%s-%s", get("legisl"), get("atto"))
 	case "convocazioni":
-		// Columns: Legisl., Commissione, Data, ODG — nessun numero univoco
-		return fmt.Sprintf("%s-%s-%s", get("legisl"), get("commissione"), get("data"))
+		// Columns: Legisl., Data, Numero (N.Foglio), <blank>, ODG e Commissione.
+		// N.Foglio isn't confirmed globally unique across commissions, so
+		// pair it with data for a stable key.
+		return fmt.Sprintf("%s-%s-%s", get("legisl"), get("numero"), get("data"))
 	case "sommari":
-		// Columns: Legisl., Commissione, Data, Numero, Argomenti
-		return fmt.Sprintf("%s-%s-%s", get("legisl"), get("commissione"), get("numero"))
+		// Columns: Legisl., Numero (N.Seduta), Data, <blank>, ODG e Commissione.
+		return fmt.Sprintf("%s-%s-%s", get("legisl"), get("numero"), get("data"))
 	case "biblioteca":
 		// Columns: Autore, Titolo, Anno
 		return fmt.Sprintf("%s-%s", get("autore"), get("titolo"))

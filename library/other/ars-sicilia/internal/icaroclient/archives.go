@@ -66,7 +66,14 @@ var All = []Archive{
 			"commissione": "COMMIS",
 			"numero":      "NUMISC",
 		},
-		Columns: []string{"Legisl.", "Numero", "Commissione", "Oggetto"},
+		// Columns mirror the real shortList header (verified against the
+		// live portal: Legisl./N.Isc./Data Pres./<blank>/Titolo e Primo
+		// Firmatario), naming the numero/data slots consistently with the
+		// other archives rather than the portal's own labels. The previous
+		// 4-entry version undercounted the real 5 <div>s per row, so index 2
+		// ("Commissione" per the old labels) actually held the presentation
+		// date, and there was no "Data" field at all.
+		Columns: []string{"Legisl.", "Numero", "Data", "", "Titolo e Primo Firmatario"},
 	},
 	{
 		ID: "229", Slug: "convocazioni",
@@ -78,7 +85,14 @@ var All = []Archive{
 			"numero":      "NUMINT",
 			"data":        "DATSED",
 		},
-		Columns: []string{"Legisl.", "Commissione", "Data", "ODG"},
+		// Real shortList header: Legisl./Data/N.Foglio/<blank>/Ordine del
+		// Giorno e Commissione (verified against the live portal). The
+		// previous 4-entry version undercounted the real 5 <div>s per row
+		// and put "Commissione" and "Data" at the wrong indices — "data"
+		// ended up holding the N.Foglio sitting number instead of the date,
+		// and there's no dedicated commissione column at all (its name only
+		// appears in the title block's excerpt).
+		Columns: []string{"Legisl.", "Data", "Numero", "", "Ordine del Giorno e Commissione"},
 	},
 	{
 		ID: "230", Slug: "sommari",
@@ -91,7 +105,12 @@ var All = []Archive{
 			"presidente":  "PRESID",
 			"data":        "DATSED",
 		},
-		Columns: []string{"Legisl.", "Commissione", "Data", "Numero", "Argomenti"},
+		// Real shortList header: Legisl./N.Seduta/Data/<blank>/Ordine del
+		// Giorno e Commissione (verified against the live portal). "Data"
+		// was already at the right index by coincidence; "Commissione" was
+		// not — it held the seduta number, and the declared "Numero" landed
+		// on the always-blank 4th column.
+		Columns: []string{"Legisl.", "Numero", "Data", "", "Ordine del Giorno e Commissione"},
 	},
 	{
 		ID: "233", Slug: "interrogazioni",

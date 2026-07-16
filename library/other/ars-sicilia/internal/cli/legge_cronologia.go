@@ -142,11 +142,14 @@ func runLeggeCronologia(cmd *cobra.Command, flags *rootFlags, legisl, numero, an
 		})
 		if err == nil {
 			for _, r := range recs {
+				// Sommari's title block is "Commissione X - Materia" (h3) with
+				// the work summary as the excerpt (p) — not the wrong seduta
+				// number that used to sit under Fields["Commissione"].
 				report.Eventi = append(report.Eventi, iterEvent{
 					Fase:      "commissione",
 					Data:      r.Fields["Data"],
-					Sede:      r.Fields["Commissione"],
-					Titolo:    r.Title,
+					Sede:      r.Title,
+					Titolo:    r.Excerpt,
 					URL:       r.URL,
 					ArchiveID: arc.ID,
 					DocID:     r.DocID,

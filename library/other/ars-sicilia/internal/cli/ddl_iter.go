@@ -34,9 +34,6 @@ func newNovelDdlIterCmd(flags *rootFlags) *cobra.Command {
 				}
 				return usageErr(fmt.Errorf("richiesti 2 argomenti: <legisl> e <numero>"))
 			}
-			if dryRunOK(flags) {
-				return nil
-			}
 			legisl, err := atoiArg(args[0], "legisl")
 			if err != nil {
 				return err
@@ -44,6 +41,9 @@ func newNovelDdlIterCmd(flags *rootFlags) *cobra.Command {
 			numero, err := atoiArg(args[1], "numero")
 			if err != nil {
 				return err
+			}
+			if dryRunOK(flags) {
+				return emitDdlIterDryRun(cmd, legisl, numero)
 			}
 			return runDdlIter(cmd, flags, legisl, numero)
 		},
@@ -128,6 +128,27 @@ func runDdlIter(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error 
 		return iterDateKey(report.Eventi[i].Data) < iterDateKey(report.Eventi[j].Data)
 	})
 	return emitIter(cmd, flags, report)
+}
+
+// emitDdlIterDryRun previews the ddl iter request without sending it. Unlike
+// the silent no-op this used to be, it mirrors the ISIS-query preview that
+// `*/cerca` commands already show — ddl iter's --dry-run should be as useful
+// a diagnostic as the rest of the CLI.
+func emitDdlIterDryRun(cmd *cobra.Command, legisl, numero int) error {
+	arc := icaro.BySlug("ddl")
+	if arc == nil {
+		return fmt.Errorf("archivio ddl non disponibile")
+	}
+	expr := icaro.BuildQuery(*arc, map[string]string{"legisl": itoa(legisl), "numero": itoa(numero)}, "")
+	out := map[string]any{
+		"archive":     arc.Slug,
+		"archive_id":  arc.ID,
+		"isis_query":  expr,
+		"would_fetch": fmt.Sprintf("%s/icaro/default.jsp?icaDB=%s&icaQuery=%s", icaro.DefaultBaseURL, arc.ID, expr),
+		"note":        "pins the DDL via this query, then fetches its document body to parse the iter timeline",
+		"dry_run":     true,
+	}
+	return writeJSON(cmd.OutOrStdout(), out)
 }
 
 func emitIter(cmd *cobra.Command, flags *rootFlags, report iterReport) error {

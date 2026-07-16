@@ -62,7 +62,11 @@ type profileReport struct {
 	Deputato  string         `json:"deputato"`
 	Legisl    int            `json:"legisl,omitempty"`
 	Conteggio map[string]int `json:"conteggio"`
-	Atti      []profileItem  `json:"atti"`
+	// Troncato lists the archive slugs where Conteggio is a --limit cap, not
+	// the true total: the portal had more matching records than were
+	// fetched. Re-run with a higher --limit to see the rest.
+	Troncato []string      `json:"troncato,omitempty"`
+	Atti     []profileItem `json:"atti"`
 }
 
 func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legisl, perArchive int) error {
@@ -98,10 +102,12 @@ func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legis
 		if legisl > 0 {
 			params["legisl"] = itoa(legisl)
 		}
+		var truncated bool
 		recs, err := c.Search(ctx, *arc, icaro.SearchOptions{
-			Params:   params,
-			Limit:    perArchive,
-			MaxPages: maxInt(1, (perArchive+9)/10),
+			Params:    params,
+			Limit:     perArchive,
+			MaxPages:  maxInt(1, (perArchive+9)/10),
+			Truncated: &truncated,
 		})
 		if err != nil {
 			continue
@@ -120,6 +126,9 @@ func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legis
 			})
 			report.Conteggio[slug]++
 		}
+		if truncated {
+			report.Troncato = append(report.Troncato, slug)
+		}
 	}
 
 	// Resoconti d'aula con free-text match sul nome dell'oratore.
@@ -131,10 +140,12 @@ func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legis
 			if legisl > 0 {
 				params["legisl"] = itoa(legisl)
 			}
+			var truncated bool
 			recs, err := c.Search(ctx, *arc, icaro.SearchOptions{
-				Params:   params,
-				Limit:    perArchive,
-				MaxPages: maxInt(1, (perArchive+9)/10),
+				Params:    params,
+				Limit:     perArchive,
+				MaxPages:  maxInt(1, (perArchive+9)/10),
+				Truncated: &truncated,
 			})
 			if err == nil {
 				archivesContacted++
@@ -149,6 +160,9 @@ func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legis
 						URL:      r.URL,
 					})
 					report.Conteggio["resoconti"]++
+				}
+				if truncated {
+					report.Troncato = append(report.Troncato, "resoconti")
 				}
 			}
 		}
@@ -180,8 +194,16 @@ func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legis
 		fmt.Fprintf(out, "Legislatura: %d\n", report.Legisl)
 	}
 	fmt.Fprintf(out, "\nConteggi per archivio:\n")
+	troncato := map[string]bool{}
+	for _, slug := range report.Troncato {
+		troncato[slug] = true
+	}
 	for k, v := range report.Conteggio {
-		fmt.Fprintf(out, "  %-15s %d\n", k, v)
+		suffix := ""
+		if troncato[k] {
+			suffix = " (troncato, aumenta --limit)"
+		}
+		fmt.Fprintf(out, "  %-15s %d%s\n", k, v, suffix)
 	}
 	fmt.Fprintf(out, "\nAtti (%d totali):\n", len(report.Atti))
 	for _, a := range report.Atti {

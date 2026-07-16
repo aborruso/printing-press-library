@@ -133,11 +133,12 @@ func parseRow(li *html.Node, arc Archive, baseURL string) Record {
 			if excerpt := nthPText(div, 0); excerpt != "" && excerpt != rec.Title {
 				rec.Excerpt = collapseSpaces(excerpt)
 			}
-			// Save the raw column text too, minus the title which is already lifted.
-			if rec.Title != "" {
-				text = strings.TrimSpace(strings.TrimPrefix(text, rec.Title))
-				text = strings.TrimSpace(text)
-			}
+			// The Fields entry for this column takes its name from the column
+			// label (e.g. "Titolo", "Argomenti") — it must hold the title
+			// itself. Previously it held the raw div text with the title
+			// stripped out, i.e. the excerpt, which then masqueraded as the
+			// title in JSON/CSV output and in biblioteca's sync ID.
+			text = rec.Title
 		}
 		if text != "" {
 			rec.Fields[colName] = text
