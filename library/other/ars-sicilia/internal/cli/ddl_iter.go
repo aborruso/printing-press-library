@@ -172,10 +172,21 @@ func parseIterFromBody(body string) []iterEvent {
 		return nil
 	}
 	region := body[start+len("Attuale"):]
-	// The bill text proper begins with the "(n. <numero>)" header; everything
-	// after it is the document content, not iter.
-	if end := strings.Index(region, "(n."); end >= 0 {
-		region = region[:end]
+	// The bill text proper begins either with the "(n. <numero>)" header or,
+	// for records lacking that header (e.g. the finanziaria and other
+	// governativi that open straight into the masthead), with the fixed
+	// "ASSEMBLEA REGIONALE SICILIANA" line. Cut the region at whichever comes
+	// first; everything after it is document content, not iter. Without this,
+	// long articolati leak into the region and dates cited inside the bill
+	// text (e.g. "3 luglio 1950, n. 51") get parsed as iter events.
+	cutAt := -1
+	for _, marker := range []string{"(n.", "ASSEMBLEA REGIONALE SICILIANA"} {
+		if i := strings.Index(region, marker); i >= 0 && (cutAt < 0 || i < cutAt) {
+			cutAt = i
+		}
+	}
+	if cutAt >= 0 {
+		region = region[:cutAt]
 	}
 	// "Storico" is a section label between current status and history, not an event.
 	region = strings.ReplaceAll(region, "Storico", " ")

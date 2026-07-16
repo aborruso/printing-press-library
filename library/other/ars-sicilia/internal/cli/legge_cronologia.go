@@ -17,6 +17,7 @@ import (
 )
 
 func newNovelLeggeCronologiaCmd(flags *rootFlags) *cobra.Command {
+	var flagAnno int
 	cmd := &cobra.Command{
 		Use:   "cronologia <legisl> <numero>",
 		Short: "Inversa di `ddl iter`: dalla legge promulgata risale al DDL originario e ai passaggi parlamentari.",
@@ -45,13 +46,16 @@ Per un DDL ancora in iter usare ` + "`ars-sicilia ddl iter`" + `.`,
 			if err != nil {
 				return err
 			}
-			return runLeggeCronologia(cmd, flags, legisl, numero)
+			return runLeggeCronologia(cmd, flags, legisl, numero, flagAnno)
 		},
 	}
+	// Lo stesso numero di legge si ripete ogni anno (es. L.R. 3/2023 e
+	// L.R. 3/2024): --anno disambigua sul campo LEGANN, come in `leggi get`.
+	cmd.Flags().IntVar(&flagAnno, "anno", 0, "Anno della legge, per disambiguare numeri ripetuti tra anni diversi.")
 	return cmd
 }
 
-func runLeggeCronologia(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error {
+func runLeggeCronologia(cmd *cobra.Command, flags *rootFlags, legisl, numero, anno int) error {
 	ctx := cmd.Context()
 	if ctx == nil {
 		ctx = context.Background()
@@ -64,8 +68,12 @@ func runLeggeCronologia(cmd *cobra.Command, flags *rootFlags, legisl, numero int
 		return fmt.Errorf("creazione client icaro: %w", err)
 	}
 	if arc := icaro.BySlug("leggi"); arc != nil {
+		params := map[string]string{"legisl": itoa(legisl), "numero": itoa(numero)}
+		if anno != 0 {
+			params["anno"] = itoa(anno)
+		}
 		recs, err := c.Search(ctx, *arc, icaro.SearchOptions{
-			Params: map[string]string{"legisl": itoa(legisl), "numero": itoa(numero)},
+			Params: params,
 			Limit:  3,
 		})
 		if err == nil {
