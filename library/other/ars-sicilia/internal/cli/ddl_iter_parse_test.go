@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"strings"
 	"testing"
 
 	icaro "github.com/mvanhorn/printing-press-library/library/other/ars-sicilia/internal/icaroclient"
@@ -68,6 +69,32 @@ func TestParseDdlFirmatari_Presentato(t *testing.T) {
 	f := parseDdlFirmatari(body)
 	if len(f) != 3 || f[2].Nome != "Cracolici" {
 		t.Fatalf("presentato parse wrong: %+v", f)
+	}
+}
+
+// TestDocIterEvents_PrefersField covers DDLs whose relazione/articolato
+// quotes dates from the law they amend with no reliable end-of-status marker
+// (e.g. DDL 331/2018 "Modifiche alla l.r. 9/2010", which repeats "8 aprile
+// 2010" throughout and has neither "(n." nor "ASSEMBLEA REGIONALE SICILIANA").
+// Text-mining Body alone used to leak those quoted dates in as fake events;
+// the labeled "Iter" field has none of that text to leak from.
+func TestDocIterEvents_PrefersField(t *testing.T) {
+	doc := icaro.Doc{
+		Body: "x Attuale 25 set 2018 Annunzio assegnazione Seduta n. 64 AULA Storico 07 ago 2018 Annunziato Seduta n. 60 AULA 24 set 2018 Assegnato per esame Commissione PRIMA " +
+			"Onorevoli colleghi, il presente disegno di legge modifica la legge regionale 8 aprile 2010, n. 9. " +
+			"Art. 1. Il comma 1 dell'art. 5 della l.r. 8 aprile 2010, n. 9 è così sostituito: ...",
+		Fields: map[string]string{
+			"Iter": "Attuale 25 set 2018 Annunzio assegnazione Seduta n. 64 AULA Storico 07 ago 2018 Annunziato Seduta n. 60 AULA 24 set 2018 Assegnato per esame Commissione PRIMA",
+		},
+	}
+	ev := docIterEvents(doc)
+	if len(ev) != 3 {
+		t.Fatalf("want 3 events from the clean Iter field, got %d: %+v", len(ev), ev)
+	}
+	for _, e := range ev {
+		if e.Data == "8 aprile 2010" || strings.Contains(e.Titolo, "così sostituito") {
+			t.Fatalf("bill-text date leaked into iter events despite a labeled Iter field: %+v", ev)
+		}
 	}
 }
 

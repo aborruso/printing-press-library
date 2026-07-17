@@ -109,12 +109,12 @@ func runDdlIter(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error 
 		DocID:     recs[0].DocID,
 	})
 
-	// 2. Iter reale dal corpo del documento: il portale elenca i passaggi
-	// ("Assegnato per esame Commissione QUARTA", "Approvato", "Promulgata legge
-	// regionale n. …") tra i marcatori "Attuale" e "Storico". È l'unica fonte
-	// affidabile: i sommari/resoconti NON citano il DDL con la stringa "ddl N".
+	// 2. Iter reale: preferisce il blocco HTML etichettato "Iter" che il
+	// portale rende separato dal testo del disegno di legge (doc.Fields),
+	// con fallback sul corpo del documento solo se quel campo manca. Vedi
+	// docIterEvents.
 	if doc, derr := c.GetDoc(ctx, *arc, recs[0].DocID); derr == nil {
-		for _, ev := range parseIterFromBody(doc.Body) {
+		for _, ev := range docIterEvents(doc) {
 			ev.URL = recs[0].URL
 			ev.ArchiveID = arc.ID
 			ev.DocID = recs[0].DocID
@@ -234,6 +234,25 @@ func parseIterFromBody(body string) []iterEvent {
 		})
 	}
 	return events
+}
+
+// docIterEvents reads a DDL's iter timeline. It prefers the page's labeled
+// "Iter" block, which the portal renders in a div separate from the bill
+// text and contains nothing but the "Attuale ... Storico ..." status steps,
+// and only falls back to scanning the flattened Body when that block is
+// absent. The distinction matters: DDLs whose relazione/articolato quotes
+// dates from the law they amend (e.g. "l.r. 8 aprile 2010, n. 9" repeated
+// throughout) have no reliable end-of-status marker in Body, so those quoted
+// dates used to leak in as spurious iter events. The labeled field has no
+// such text to leak from, and is not truncated even for long iters (verified
+// on a 40-event, 2.7kB history).
+func docIterEvents(doc icaro.Doc) []iterEvent {
+	if s := doc.Fields["Iter"]; s != "" {
+		if ev := parseIterFromBody(s); len(ev) > 0 {
+			return ev
+		}
+	}
+	return parseIterFromBody(doc.Body)
 }
 
 type firmatario struct {
