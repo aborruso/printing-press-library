@@ -7,7 +7,6 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -146,9 +145,7 @@ func runCommissioneDossier(cmd *cobra.Command, flags *rootFlags, arg string, leg
 
 	out := cmd.OutOrStdout()
 	if flags.asJSON || !isTerminal(out) {
-		enc := json.NewEncoder(out)
-		enc.SetIndent("", "  ")
-		return enc.Encode(report)
+		return printJSONFiltered(out, report, flags)
 	}
 	fmt.Fprintf(out, "Commissione: %s\n", report.Commissione)
 	if report.Legisl > 0 {

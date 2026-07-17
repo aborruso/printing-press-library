@@ -8,7 +8,6 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"sort"
@@ -154,9 +153,7 @@ func emitDdlIterDryRun(cmd *cobra.Command, legisl, numero int) error {
 func emitIter(cmd *cobra.Command, flags *rootFlags, report iterReport) error {
 	out := cmd.OutOrStdout()
 	if flags.asJSON || !isTerminal(out) {
-		enc := json.NewEncoder(out)
-		enc.SetIndent("", "  ")
-		return enc.Encode(report)
+		return printJSONFiltered(out, report, flags)
 	}
 	fmt.Fprintf(out, "DDL %d/%d — %s\n", report.Legisl, report.Numero, report.Titolo)
 	if report.Note != "" {
@@ -255,10 +252,64 @@ var firmLabelWords = map[string]bool{
 	"Gruppo": true, "Firmatari": true, "Argomenti": true, "Premier": true, "ARS": true,
 }
 
+// docFirmatari reads the signatories of a document. It prefers the page's
+// labeled "Firmatari" block, which contains nothing but signatories, and only
+// falls back to scanning the whole flattened Body when that block is absent.
+// The distinction matters: in Body the neighbouring "Gruppo Parlamentare"
+// block runs straight into the first name ("Partito Democratico Chinnici
+// Valentina"), and the bullet-segment heuristics drop signatories that share
+// a segment.
+func docFirmatari(doc icaro.Doc) []firmatario {
+	if s := doc.Fields["Firmatari"]; s != "" {
+		if f := parseFirmatariBlock(s); len(f) > 0 {
+			return f
+		}
+	}
+	return parseDdlFirmatari(doc.Body)
+}
+
+// reFirmTrunc matches a trailing signatory whose group parenthesis the portal
+// left unclosed — it truncates the Firmatari field at a fixed width, so the
+// last entry can arrive as "Galluzzo Giuseppe (Fratelli d'Italia".
+var reFirmTrunc = regexp.MustCompile(`([A-ZÀ-Ù][\p{L}'.\-]*(?:\s+[A-ZÀ-Ù][\p{L}'.\-]*){0,3})\s*\(([^)]*)$`)
+
+// parseFirmatariBlock parses the page's "Firmatari" block: a run of
+// "Nome Cognome (Gruppo)" entries separated by bullets, <br> or nothing at
+// all. Because the block holds only signatories, every match is taken
+// verbatim — no label stripping, no per-segment guessing.
+func parseFirmatariBlock(s string) []firmatario {
+	var out []firmatario
+	seen := map[string]bool{}
+	add := func(nome, grp string) {
+		nome = strings.Join(strings.Fields(nome), " ")
+		grp = strings.Join(strings.Fields(grp), " ")
+		if nome == "" || seen[nome+"|"+grp] {
+			return
+		}
+		seen[nome+"|"+grp] = true
+		out = append(out, firmatario{Nome: nome, Gruppo: grp})
+	}
+	locs := reFirmEntry.FindAllStringSubmatchIndex(s, -1)
+	for _, l := range locs {
+		add(s[l[2]:l[3]], s[l[4]:l[5]])
+	}
+	// Recover a truncated trailing entry rather than dropping the signatory:
+	// the name is intact even when the portal cut its group short.
+	tail := s
+	if len(locs) > 0 {
+		tail = s[locs[len(locs)-1][1]:]
+	}
+	if m := reFirmTrunc.FindStringSubmatch(tail); m != nil {
+		add(m[1], m[2])
+	}
+	return out
+}
+
 // parseDdlFirmatari extracts the bill signatories from the document body. It
 // handles the structured sidebar form ("Nome (Gruppo). • Nome (Gruppo).", with
 // party groups) and the relazione form ("presentato dai deputati: A, B, C",
 // names only). Returns nil when none is found (e.g. some governativi).
+// Prefer docFirmatari, which reads the labeled block when the page has one.
 func parseDdlFirmatari(body string) []firmatario {
 	if body == "" {
 		return nil

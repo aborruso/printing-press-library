@@ -7,7 +7,6 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -48,14 +47,13 @@ func newNovelDeputatoProfiloCmd(flags *rootFlags) *cobra.Command {
 }
 
 type profileItem struct {
-	Tipo      string `json:"tipo"`
-	Archivio  string `json:"archivio"`
-	DocID     int    `json:"doc_id"`
-	Numero    string `json:"numero,omitempty"`
-	Data      string `json:"data,omitempty"`
-	Titolo    string `json:"titolo"`
-	Firmatari string `json:"firmatari,omitempty"`
-	URL       string `json:"url,omitempty"`
+	Tipo     string `json:"tipo"`
+	Archivio string `json:"archivio"`
+	DocID    int    `json:"doc_id"`
+	Numero   string `json:"numero,omitempty"`
+	Data     string `json:"data,omitempty"`
+	Titolo   string `json:"titolo"`
+	URL      string `json:"url,omitempty"`
 }
 
 type profileReport struct {
@@ -115,14 +113,13 @@ func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legis
 		archivesContacted++
 		for _, r := range recs {
 			report.Atti = append(report.Atti, profileItem{
-				Tipo:      slug,
-				Archivio:  arc.ID,
-				DocID:     r.DocID,
-				Numero:    r.Fields["Numero"],
-				Data:      r.Fields["Data"],
-				Titolo:    r.Title,
-				Firmatari: r.Fields["Firmatari"],
-				URL:       r.URL,
+				Tipo:     slug,
+				Archivio: arc.ID,
+				DocID:    r.DocID,
+				Numero:   r.Fields["Numero"],
+				Data:     r.Fields["Data"],
+				Titolo:   r.Title,
+				URL:      r.URL,
 			})
 			report.Conteggio[slug]++
 		}
@@ -185,9 +182,7 @@ func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legis
 
 	out := cmd.OutOrStdout()
 	if flags.asJSON || !isTerminal(out) {
-		enc := json.NewEncoder(out)
-		enc.SetIndent("", "  ")
-		return enc.Encode(report)
+		return printJSONFiltered(out, report, flags)
 	}
 	fmt.Fprintf(out, "Deputato: %s\n", report.Deputato)
 	if report.Legisl > 0 {

@@ -1,6 +1,59 @@
 package cli
 
-import "testing"
+import (
+	"testing"
+
+	icaro "github.com/mvanhorn/printing-press-library/library/other/ars-sicilia/internal/icaroclient"
+)
+
+// TestParseFirmatariBlock_NoLabelLeak covers the labeled "Firmatari" block:
+// every "Nome (Gruppo)" entry is taken verbatim. Parsing the flattened body
+// instead used to let the neighbouring "Gruppo Parlamentare" block run into
+// the first name, and to drop signatories sharing a bullet segment.
+func TestParseFirmatariBlock_NoLabelLeak(t *testing.T) {
+	block := "Chinnici Valentina (Partito Democratico XVIII Legislatura). • Cracolici Antonino (Partito Democratico XVIII Legislatura).• Burtone Giovanni (Partito Democratico XVIII Legislatura).•"
+	f := parseFirmatariBlock(block)
+	if len(f) != 3 {
+		t.Fatalf("want 3 firmatari, got %d: %+v", len(f), f)
+	}
+	if f[0].Nome != "Chinnici Valentina" {
+		t.Fatalf("first name = %q, want %q (no group-label leak)", f[0].Nome, "Chinnici Valentina")
+	}
+	if f[1].Nome != "Cracolici Antonino" {
+		t.Fatalf("cofirmatario dropped: %+v", f)
+	}
+}
+
+// TestParseFirmatariBlock_SharedSegmentAndTruncatedTail covers two portal
+// quirks in one block: signatories separated by nothing but a space (no
+// bullet), and a trailing entry whose group parenthesis the portal cut off.
+func TestParseFirmatariBlock_SharedSegmentAndTruncatedTail(t *testing.T) {
+	block := "Scuvera Salvatore (Fratelli d'Italia XVIII Legislatura). • Assenza Giorgio (Fratelli d'Italia XVIII Legislatura).• Porto Alessandro (Fratelli d'Italia XVIII Legislatura) Bica Giuseppe (Fratelli d'Italia XVIII Legislatura) Galluzzo Giuseppe (Fratelli d'Italia"
+	f := parseFirmatariBlock(block)
+	if len(f) != 5 {
+		t.Fatalf("want 5 firmatari, got %d: %+v", len(f), f)
+	}
+	if f[2].Nome != "Porto Alessandro" {
+		t.Fatalf("signatory sharing a bullet segment dropped: %+v", f)
+	}
+	if f[4].Nome != "Galluzzo Giuseppe" || f[4].Gruppo != "Fratelli d'Italia" {
+		t.Fatalf("truncated trailing signatory wrong: %+v", f[4])
+	}
+}
+
+// TestDocFirmatari_PrefersBlock checks that the labeled block wins over the
+// flattened body, which carries the same names polluted by the neighbouring
+// "Gruppo Parlamentare" value.
+func TestDocFirmatari_PrefersBlock(t *testing.T) {
+	doc := icaro.Doc{
+		Body:   "Risposta orale\n\nPartito Democratico\n\nChinnici Valentina (Partito Democratico XVIII Legislatura). • Cracolici Antonino (Partito Democratico XVIII Legislatura).•",
+		Fields: map[string]string{"Firmatari": "Chinnici Valentina (Partito Democratico XVIII Legislatura). • Cracolici Antonino (Partito Democratico XVIII Legislatura).•"},
+	}
+	f := docFirmatari(doc)
+	if len(f) != 2 || f[0].Nome != "Chinnici Valentina" {
+		t.Fatalf("docFirmatari should read the block: %+v", f)
+	}
+}
 
 func TestParseDdlFirmatari_Bullet(t *testing.T) {
 	body := "Parlamentare  Geraci Salvatore (Prima l'Italia - Lega Salvini premier). • Assenza Giorgio (Fratelli d'Italia XVIII Legislatura).• Pellegrino Stefano (Forza Italia all'ARS). (n. 1089/A) DISEGNO DI LEGGE"

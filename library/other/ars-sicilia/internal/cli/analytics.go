@@ -7,7 +7,6 @@ package cli
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"os"
 	"sort"
@@ -310,9 +309,7 @@ func emitAnalytics(w interface{ Write(p []byte) (int, error) }, flags *rootFlags
 		asJSON = !isTerminal(w) && !flags.csv
 	}
 	if asJSON {
-		enc := json.NewEncoder(w)
-		enc.SetIndent("", "  ")
-		return enc.Encode(rows)
+		return printJSONFiltered(w, rows, flags)
 	}
 	if flags.csv {
 		return writeAnalyticsCSV(w, rows)

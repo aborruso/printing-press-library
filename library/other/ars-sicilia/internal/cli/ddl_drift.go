@@ -7,7 +7,6 @@ package cli
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"time"
@@ -145,9 +144,7 @@ func runDdlDrift(cmd *cobra.Command, flags *rootFlags, since, dbPath string) err
 func emitDriftReport(cmd *cobra.Command, flags *rootFlags, r driftReport) error {
 	out := cmd.OutOrStdout()
 	if flags.asJSON || !isTerminal(out) {
-		enc := json.NewEncoder(out)
-		enc.SetIndent("", "  ")
-		return enc.Encode(r)
+		return printJSONFiltered(out, r, flags)
 	}
 	fmt.Fprintf(out, "Window: %s   Snapshot: %s\n\n", r.Window, r.GeneratedAt)
 	if r.Note != "" {

@@ -3,7 +3,6 @@ package cli
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -155,9 +154,7 @@ Utile per scoprire i valori corretti da passare a --firmatario in 'ddl cerca'.`,
 			}
 
 			if flags.asJSON || (!humanFriendly && !isTerminal(cmd.OutOrStdout())) {
-				enc := json.NewEncoder(cmd.OutOrStdout())
-				enc.SetIndent("", "  ")
-				return enc.Encode(results)
+				return printJSONFiltered(cmd.OutOrStdout(), results, flags)
 			}
 
 			// Output tabellare: raggruppa le legislature per nome.

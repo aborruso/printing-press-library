@@ -16,10 +16,20 @@ type Archive struct {
 	// Flags missing from this map are not translated automatically and must be
 	// supplied via --isis-query.
 	FieldMap map[string]string
-	// Columns names the short-list table column labels in display order. The
-	// parser uses len(Columns) to know how many positional divs to read per
-	// row. Title and body extracts always come from the last column's <h3>
-	// and trailing <p>.
+	// Columns names the short-list table columns POSITIONALLY: entry i names
+	// the i-th <div> of a result row, and len(Columns) tells the parser how
+	// many divs to read. Names become the record's Fields keys (and hence
+	// JSON/CSV keys), so they are normalized here rather than copied verbatim
+	// from the portal's own headers: every archive's last column is "Titolo"
+	// (it is the title block — <h3> title plus <p> excerpt), and the id/date
+	// slots are "Numero"/"Data" whatever the portal calls them (N.Ord.,
+	// N.Seduta, N.Foglio, Data Pres., ...). "" marks a real column that the
+	// portal renders empty; it is a placeholder to keep later entries at the
+	// right index, and is never emitted.
+	//
+	// Getting these wrong silently mislabels data (a sitting number surfacing
+	// as "data", an author as "anno"), so they are verified against the live
+	// portal headers — see the per-archive notes below.
 	Columns []string
 }
 
@@ -33,6 +43,7 @@ var All = []Archive{
 			"anno":   "LEGANN",
 			"numero": "LEGNUM",
 		},
+		// Portal header: Legisl. | Atto | Docum. | Data | Titolo e Testo della Legge
 		Columns: []string{"Legisl.", "Atto", "Docum.", "Data", "Titolo"},
 	},
 	{
@@ -44,7 +55,10 @@ var All = []Archive{
 			"numero": "NUMSED",
 			"data":   "DATSED",
 		},
-		Columns: []string{"Legisl.", "Numero", "Data", "Argomenti"},
+		// Portal header: Legisl. | N.Seduta | Data | <blank> | Argomento e Oratori
+		// The previous 4-entry version undercounted the real 5 divs, so the
+		// title block landed on an unnamed index and surfaced as "col5".
+		Columns: []string{"Legisl.", "Numero", "Data", "", "Titolo"},
 	},
 	{
 		ID: "221", Slug: "ddl",
@@ -56,7 +70,12 @@ var All = []Archive{
 			"materia":    "SETTOR",
 			"iter":       "ITERST",
 		},
-		Columns: []string{"Legisl.", "Numero", "Data", "Firmatari", "Titolo"},
+		// Portal header: Legisl. | Numero | Data | <blank> | Titolo e Identificazione del DDL
+		// Index 3 was declared "Firmatari", but the portal renders no
+		// signatory column here — it is the blank one. The name only ever
+		// produced an always-empty "firmatari" CSV column; the real list
+		// lives in the document (see --con-firmatari).
+		Columns: []string{"Legisl.", "Numero", "Data", "", "Titolo"},
 	},
 	{
 		ID: "226", Slug: "pareri",
@@ -66,14 +85,11 @@ var All = []Archive{
 			"commissione": "COMMIS",
 			"numero":      "NUMISC",
 		},
-		// Columns mirror the real shortList header (verified against the
-		// live portal: Legisl./N.Isc./Data Pres./<blank>/Titolo e Primo
-		// Firmatario), naming the numero/data slots consistently with the
-		// other archives rather than the portal's own labels. The previous
-		// 4-entry version undercounted the real 5 <div>s per row, so index 2
-		// ("Commissione" per the old labels) actually held the presentation
-		// date, and there was no "Data" field at all.
-		Columns: []string{"Legisl.", "Numero", "Data", "", "Titolo e Primo Firmatario"},
+		// Portal header: Legisl. | N.Isc. | Data Pres. | <blank> | Titolo e Primo Firmatario
+		// The older 4-entry version undercounted the real 5 divs, so index 2
+		// ("Commissione" back then) actually held the presentation date and
+		// there was no "Data" field at all.
+		Columns: []string{"Legisl.", "Numero", "Data", "", "Titolo"},
 	},
 	{
 		ID: "229", Slug: "convocazioni",
@@ -85,14 +101,12 @@ var All = []Archive{
 			"numero":      "NUMINT",
 			"data":        "DATSED",
 		},
-		// Real shortList header: Legisl./Data/N.Foglio/<blank>/Ordine del
-		// Giorno e Commissione (verified against the live portal). The
-		// previous 4-entry version undercounted the real 5 <div>s per row
-		// and put "Commissione" and "Data" at the wrong indices — "data"
-		// ended up holding the N.Foglio sitting number instead of the date,
-		// and there's no dedicated commissione column at all (its name only
-		// appears in the title block's excerpt).
-		Columns: []string{"Legisl.", "Data", "Numero", "", "Ordine del Giorno e Commissione"},
+		// Portal header: Legisl. | Data | N.Foglio | <blank> | Ordine del Giorno e Commissione
+		// Note the date comes BEFORE the number here, unlike every other
+		// archive. The older version had both at the wrong index, so "data"
+		// held the N.Foglio sitting number. There is no commissione column
+		// at all — its name only appears in the title block's excerpt.
+		Columns: []string{"Legisl.", "Data", "Numero", "", "Titolo"},
 	},
 	{
 		ID: "230", Slug: "sommari",
@@ -105,12 +119,11 @@ var All = []Archive{
 			"presidente":  "PRESID",
 			"data":        "DATSED",
 		},
-		// Real shortList header: Legisl./N.Seduta/Data/<blank>/Ordine del
-		// Giorno e Commissione (verified against the live portal). "Data"
-		// was already at the right index by coincidence; "Commissione" was
-		// not — it held the seduta number, and the declared "Numero" landed
-		// on the always-blank 4th column.
-		Columns: []string{"Legisl.", "Numero", "Data", "", "Ordine del Giorno e Commissione"},
+		// Portal header: Legisl. | N.Seduta | Data | <blank> | Ordine del Giorno e Commissione
+		// "Data" was already at the right index by coincidence; "Commissione"
+		// was not — it held the seduta number, and the declared "Numero"
+		// landed on the always-blank 4th column.
+		Columns: []string{"Legisl.", "Numero", "Data", "", "Titolo"},
 	},
 	{
 		ID: "233", Slug: "interrogazioni",
@@ -121,7 +134,11 @@ var All = []Archive{
 			"firmatario": "FIRMAT",
 			"rubrica":    "RUBRIC",
 		},
-		Columns: []string{"Legisl.", "Numero", "Data", "Firmatari", "Titolo"},
+		// Portal header: Legisl. | N.Ord. | Data Pres. | <blank> | Titolo e Primo Firmatario
+		// Index 3 was declared "Firmatari": the portal renders that column
+		// empty and puts only the FIRST signatory in the title block's
+		// excerpt. The full list lives in the document (--con-firmatari).
+		Columns: []string{"Legisl.", "Numero", "Data", "", "Titolo"},
 	},
 	{
 		ID: "234", Slug: "interpellanze",
@@ -132,7 +149,11 @@ var All = []Archive{
 			"firmatario": "FIRMAT",
 			"rubrica":    "RUBRIC",
 		},
-		Columns: []string{"Legisl.", "Numero", "Data", "Firmatari", "Titolo"},
+		// Portal header: Legisl. | N.Ord. | Data Pres. | <blank> | Titolo e Primo Firmatario
+		// Index 3 was declared "Firmatari": the portal renders that column
+		// empty and puts only the FIRST signatory in the title block's
+		// excerpt. The full list lives in the document (--con-firmatari).
+		Columns: []string{"Legisl.", "Numero", "Data", "", "Titolo"},
 	},
 	{
 		ID: "235", Slug: "mozioni",
@@ -143,7 +164,11 @@ var All = []Archive{
 			"firmatario": "FIRMAT",
 			"rubrica":    "RUBRIC",
 		},
-		Columns: []string{"Legisl.", "Numero", "Data", "Firmatari", "Titolo"},
+		// Portal header: Legisl. | N.Ord. | Data Pres. | <blank> | Titolo e Primo Firmatario
+		// Index 3 was declared "Firmatari": the portal renders that column
+		// empty and puts only the FIRST signatory in the title block's
+		// excerpt. The full list lives in the document (--con-firmatari).
+		Columns: []string{"Legisl.", "Numero", "Data", "", "Titolo"},
 	},
 	{
 		ID: "236", Slug: "odg",
@@ -154,7 +179,11 @@ var All = []Archive{
 			"firmatario": "FIRMAT",
 			"rubrica":    "RUBRIC",
 		},
-		Columns: []string{"Legisl.", "Numero", "Data", "Firmatari", "Titolo"},
+		// Portal header: Legisl. | N.Ord. | Data Pres. | <blank> | Titolo e Primo Firmatario
+		// Index 3 was declared "Firmatari": the portal renders that column
+		// empty and puts only the FIRST signatory in the title block's
+		// excerpt. The full list lives in the document (--con-firmatari).
+		Columns: []string{"Legisl.", "Numero", "Data", "", "Titolo"},
 	},
 	{
 		ID: "238", Slug: "risoluzioni",
@@ -165,7 +194,11 @@ var All = []Archive{
 			"firmatario":  "FIRMAT",
 			"commissione": "COMMIS",
 		},
-		Columns: []string{"Legisl.", "Numero", "Data", "Firmatari", "Titolo"},
+		// Portal header: Legisl. | N.Ord. | Data Pres. | <blank> | Titolo e Primo Firmatario
+		// Index 3 was declared "Firmatari": the portal renders that column
+		// empty and puts only the FIRST signatory in the title block's
+		// excerpt. The full list lives in the document (--con-firmatari).
+		Columns: []string{"Legisl.", "Numero", "Data", "", "Titolo"},
 	},
 	{
 		ID: "205", Slug: "biblioteca",
@@ -177,7 +210,13 @@ var All = []Archive{
 			"dewey":    "DEWEY",
 			"isbn":     "ISBN",
 		},
-		Columns: []string{"Autore", "Titolo", "Anno"},
+		// Portal header: - | - | Autore | <blank> | Titolo e Note Tipografiche
+		// The first two columns are placeholders the portal renders empty.
+		// The old 3-entry version was shifted two slots left, so the author
+		// surfaced under "anno" and the title under an unnamed "col5"; there
+		// is no year column at all. This also fixes biblioteca's sync ID,
+		// which is derived from autore+titolo.
+		Columns: []string{"", "", "Autore", "", "Titolo"},
 	},
 }
 

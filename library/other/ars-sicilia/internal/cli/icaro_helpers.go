@@ -80,7 +80,46 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 		}
 		return fmt.Errorf("ricerca %s: %w", arc.Slug, err)
 	}
-	return emitRecords(cmd, flags, *arc, recs)
+	var firm map[int][]firmatario
+	if conFirmatariRequested(cmd) {
+		if _, ok := arc.FieldMap["firmatario"]; ok {
+			firm = firmatariByDoc(ctx, c, *arc, recs)
+		}
+	}
+	return emitRecords(cmd, flags, *arc, recs, firm)
+}
+
+// conFirmatariRequested reports whether --con-firmatari was set. Like
+// --escludi, the flag is registered per-command and read centrally here so
+// the behavior stays uniform without per-command plumbing.
+func conFirmatariRequested(cmd *cobra.Command) bool {
+	if cmd.Flags().Lookup("con-firmatari") == nil {
+		return false
+	}
+	v, _ := cmd.Flags().GetBool("con-firmatari")
+	return v
+}
+
+// firmatariByDoc opens each record's document and parses its full signatory
+// list. The portal's short list carries only the FIRST signatory (the column
+// is literally "Titolo e Primo Firmatario") or none at all for ddl, so a
+// --firmatario hit cannot be verified from the list alone. Resolving that
+// costs one extra request per row — paced by the client's rate limiter —
+// which is why this is opt-in behind --con-firmatari rather than always on.
+// A document that fails to load is skipped: one bad row must not sink the
+// whole result set.
+func firmatariByDoc(ctx context.Context, c *icaro.Client, arc icaro.Archive, recs []icaro.Record) map[int][]firmatario {
+	out := make(map[int][]firmatario, len(recs))
+	for _, r := range recs {
+		doc, err := c.GetDoc(ctx, arc, r.DocID)
+		if err != nil {
+			continue
+		}
+		if f := docFirmatari(doc); len(f) > 0 {
+			out[r.DocID] = f
+		}
+	}
+	return out
 }
 
 // runGet fetches and emits a single document. Get needs a fresh session, so
@@ -161,14 +200,17 @@ func runGetExtra(cmd *cobra.Command, flags *rootFlags, archiveSlug string, legis
 	// For DDLs, surface the signatories parsed from the document body as a
 	// structured field (name + party group when available).
 	if arc.Slug == "ddl" {
-		if firm := parseDdlFirmatari(doc.Body); len(firm) > 0 {
-			return writeJSON(cmd.OutOrStdout(), struct {
+		if firm := docFirmatari(doc); len(firm) > 0 {
+			return printJSONFiltered(cmd.OutOrStdout(), struct {
 				icaro.Doc
 				Firmatari []firmatario `json:"firmatari"`
-			}{doc, firm})
+			}{doc, firm}, flags)
 		}
 	}
-	return writeJSON(cmd.OutOrStdout(), doc)
+	// printJSONFiltered (not the bare writeJSON) so --select/--compact/--csv
+	// behave the same as on generator-emitted commands — writeJSON always
+	// dumped the full payload regardless of --select.
+	return printJSONFiltered(cmd.OutOrStdout(), doc, flags)
 }
 
 // normalizeParams rewrites a few flag inputs to the shape the portal expects:
@@ -291,7 +333,9 @@ func emitDryRun(cmd *cobra.Command, arc icaro.Archive, p cercaParams) error {
 // emitRecords prints search records honoring --json/--csv/table formats.
 // When the user did not pass --json explicitly and stdout is a TTY, we
 // produce a small table; otherwise we default to JSON for pipe friendliness.
-func emitRecords(cmd *cobra.Command, flags *rootFlags, arc icaro.Archive, recs []icaro.Record) error {
+// firmatari, when non-nil, carries the full signatory list per doc ID (see
+// firmatariByDoc); a nil map simply leaves the field out.
+func emitRecords(cmd *cobra.Command, flags *rootFlags, arc icaro.Archive, recs []icaro.Record, firmatari map[int][]firmatario) error {
 	out := cmd.OutOrStdout()
 	asJSON := flags.asJSON || (!isTerminal(out) && !flags.csv && !flags.quiet && !flags.plain)
 	if asJSON {
@@ -307,12 +351,18 @@ func emitRecords(cmd *cobra.Command, flags *rootFlags, arc icaro.Archive, recs [
 			for k, v := range r.Fields {
 				row[strings.ToLower(strings.TrimSuffix(k, "."))] = v
 			}
+			if f, ok := firmatari[r.DocID]; ok {
+				row["firmatari"] = f
+			}
 			flat = append(flat, row)
 		}
-		return writeJSON(out, flat)
+		// printJSONFiltered (not the bare writeJSON) so --select/--compact
+		// behave the same as on generator-emitted commands — writeJSON
+		// always dumped the full array regardless of --select.
+		return printJSONFiltered(out, flat, flags)
 	}
 	if flags.csv {
-		return writeRecordsCSV(out, arc, recs)
+		return writeRecordsCSV(out, arc, recs, firmatari)
 	}
 	// Table view (default for TTY).
 	if len(recs) == 0 {
@@ -332,16 +382,43 @@ func emitRecords(cmd *cobra.Command, flags *rootFlags, arc icaro.Archive, recs [
 		if r.Excerpt != "" {
 			fmt.Fprintf(out, "  %s\n", r.Excerpt)
 		}
+		if f, ok := firmatari[r.DocID]; ok {
+			fmt.Fprintf(out, "  %-10s %s\n", "Firmatari", firmatariLine(f))
+		}
 		fmt.Fprintln(out)
 	}
 	return nil
 }
 
-func writeRecordsCSV(out io.Writer, arc icaro.Archive, recs []icaro.Record) error {
-	// Header
-	hdr := []string{"doc_id", "title", "excerpt", "url"}
+// firmatariLine renders a signatory list as "Nome (Gruppo); Nome (Gruppo)"
+// for the flat table and CSV views.
+func firmatariLine(f []firmatario) string {
+	parts := make([]string, 0, len(f))
+	for _, x := range f {
+		if x.Gruppo != "" {
+			parts = append(parts, x.Nome+" ("+x.Gruppo+")")
+			continue
+		}
+		parts = append(parts, x.Nome)
+	}
+	return strings.Join(parts, "; ")
+}
+
+func writeRecordsCSV(out io.Writer, arc icaro.Archive, recs []icaro.Record, firmatari map[int][]firmatario) error {
+	// Header. Unnamed columns are portal placeholders (see Archive.Columns)
+	// and get no CSV column of their own.
+	cols := make([]string, 0, len(arc.Columns))
 	for _, c := range arc.Columns {
+		if c != "" {
+			cols = append(cols, c)
+		}
+	}
+	hdr := []string{"doc_id", "title", "excerpt", "url"}
+	for _, c := range cols {
 		hdr = append(hdr, strings.ToLower(strings.TrimSuffix(c, ".")))
+	}
+	if firmatari != nil {
+		hdr = append(hdr, "firmatari")
 	}
 	for i, h := range hdr {
 		if i > 0 {
@@ -352,8 +429,11 @@ func writeRecordsCSV(out io.Writer, arc icaro.Archive, recs []icaro.Record) erro
 	fmt.Fprintln(out)
 	for _, r := range recs {
 		row := []string{fmt.Sprintf("%d", r.DocID), r.Title, r.Excerpt, r.URL}
-		for _, c := range arc.Columns {
+		for _, c := range cols {
 			row = append(row, r.Fields[c])
+		}
+		if firmatari != nil {
+			row = append(row, firmatariLine(firmatari[r.DocID]))
 		}
 		for i, v := range row {
 			if i > 0 {

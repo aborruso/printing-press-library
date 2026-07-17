@@ -126,9 +126,7 @@ func runSyncAll(cmd *cobra.Command, flags *rootFlags, dbPath string, maxPages in
 	}
 
 	if flags.asJSON {
-		enc := json.NewEncoder(out)
-		enc.SetIndent("", "  ")
-		return enc.Encode(results)
+		return printJSONFiltered(out, results, flags)
 	}
 	return nil
 }

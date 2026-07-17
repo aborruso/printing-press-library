@@ -6,7 +6,6 @@ package cli
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"time"
@@ -123,9 +122,7 @@ func runSyncStale(cmd *cobra.Command, flags *rootFlags, dbPath, maxAge string) e
 func emitJSONOrTable(cmd *cobra.Command, flags *rootFlags, entries []staleEntry) error {
 	out := cmd.OutOrStdout()
 	if flags.asJSON || !isTerminal(out) {
-		enc := json.NewEncoder(out)
-		enc.SetIndent("", "  ")
-		return enc.Encode(entries)
+		return printJSONFiltered(out, entries, flags)
 	}
 	fmt.Fprintf(out, "%-15s %-10s %-25s %-10s %-8s  %s\n", "ARCHIVIO", "ID", "ULTIMA SYNC", "ETÀ", "RECORDS", "NOTE")
 	for _, e := range entries {

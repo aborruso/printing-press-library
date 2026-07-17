@@ -7,7 +7,6 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -164,9 +163,7 @@ func runLeggeCronologia(cmd *cobra.Command, flags *rootFlags, legisl, numero, an
 
 	out := cmd.OutOrStdout()
 	if flags.asJSON || !isTerminal(out) {
-		enc := json.NewEncoder(out)
-		enc.SetIndent("", "  ")
-		return enc.Encode(report)
+		return printJSONFiltered(out, report, flags)
 	}
 	fmt.Fprintf(out, "Legge %d/%d — %s\n", report.Legisl, report.Numero, report.Titolo)
 	for _, e := range report.Eventi {

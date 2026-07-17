@@ -48,3 +48,33 @@ func TestParseShortList_LastColumnHoldsTitle(t *testing.T) {
 		t.Fatalf(`Fields["Titolo"] = %q, want it to match Title %q (not the excerpt)`, got, r.Title)
 	}
 }
+
+// TestParseDoc_TitleIsValueNotLabel covers the doc detail page: every field,
+// including the title, is rendered as a ".blocchi_info" block — a ".title"
+// <h3> LABEL followed by a ".testo_gestionale" VALUE sibling. Doc.Title used
+// to be the first bare <h3> on the page, which is that label ("Titolo"), not
+// the value.
+func TestParseDoc_TitleIsValueNotLabel(t *testing.T) {
+	arc := Archive{ID: "221", Slug: "ddl"}
+	body := `<html><body>
+		<div class="colonna_2">
+			<div class="blocchi_info">
+				<div class="title"><h3 class="">Titolo</h3></div>
+				<div class="testo_gestionale">Costituzione osservatorio per l'intelligenza artificiale in Sicilia</div>
+			</div>
+			<div class="blocchi_info">
+				<div class="title"><h3 class="">Iter</h3></div>
+				<div class="testo_gestionale"><p>Attuale 08 lug 2026 Esaminato in commissione</p></div>
+			</div>
+		</div>
+	</body></html>`
+
+	doc, err := ParseDoc(body, arc, 1)
+	if err != nil {
+		t.Fatalf("ParseDoc error: %v", err)
+	}
+	want := "Costituzione osservatorio per l'intelligenza artificiale in Sicilia"
+	if doc.Title != want {
+		t.Fatalf("Title = %q, want %q", doc.Title, want)
+	}
+}
