@@ -24,14 +24,15 @@ con le sigle di campo verificate su questa CLI.
 | `--firmatario` | ddl, interrogazioni, interpellanze, mozioni, odg, risoluzioni | `FIRMAT` | `Cracolici.FIRMAT` |
 | `--materia` | ddl | `SETTOR` | vocabolario: `ddl materie` |
 | `--rubrica` | interrogazioni, interpellanze, mozioni, odg | `RUBRIC` | |
-| `--anno` | leggi | `LEGANN` | |
-| `--anno` | resoconti | `ANNSED` | |
+| `--anno` | leggi | `LEGANN` | valore letterale (anno intero) |
+| `--anno` | resoconti | `ANNSED` | valore letterale (anno intero) |
+| `--anno` | ddl | `DATPRE` | ddl non ha un campo anno: la CLI converte l'anno intero in un range `AAMMGG1/AAMMGG2` (1° gen - 31 dic) su `DATPRE` |
 | `--numero` | ddl | `NUMDDL` | |
 | `--numero` | leggi | `LEGNUM` | |
 | `--numero` | interrogazioni/… | `NUMORD` | |
 | `--numero` | resoconti | `NUMSED` | |
 | `--data` | resoconti, convocazioni, sommari | `DATSED` | formato `AAMMGG`; range `AAMMGG/AAMMGG` |
-| (data) | ddl | `DATPRE` | presentazione, `AAMMGG` |
+| (data) | ddl | `DATPRE` | presentazione, `AAMMGG`; niente flag `--data` su ddl, solo `--anno` (sopra) o `--isis-query` |
 | `--commissione` | convocazioni, sommari, pareri, risoluzioni | `COMMIS` | nome: `SESTA.COMMIS` |
 | `--presidente` | sommari | `PRESID` | |
 | `--autore` | biblioteca | `AUTORE` | |

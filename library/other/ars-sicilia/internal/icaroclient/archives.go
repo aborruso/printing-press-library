@@ -69,6 +69,13 @@ var All = []Archive{
 			"firmatario": "FIRMAT",
 			"materia":    "SETTOR",
 			"iter":       "ITERST",
+			// ddl has no year field of its own (unlike leggi.LEGANN or
+			// resoconti.ANNSED): "anno" is qualified on DATPRE, the
+			// presentation date, as a Jan-1..Dec-31 range. See
+			// normalizeParams' "anno"/ddl case, which builds that range —
+			// without it, --anno was silently unqualified and matched the
+			// year as free text anywhere in the document.
+			"anno": "DATPRE",
 		},
 		// Portal header: Legisl. | Numero | Data | <blank> | Titolo e Identificazione del DDL
 		// Index 3 was declared "Firmatari", but the portal renders no

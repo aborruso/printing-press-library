@@ -57,7 +57,7 @@ func newDdlCercaCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().IntVar(&flagLegisl, "legisl", 0, "Legislatura (es. 18).")
-	cmd.Flags().IntVar(&flagAnno, "anno", 0, "Anno di presentazione.")
+	cmd.Flags().IntVar(&flagAnno, "anno", 0, "Anno di presentazione (qualificato su DATPRE come range 1 gen - 31 dic, non testo libero).")
 	cmd.Flags().IntVar(&flagNumero, "numero", 0, "Numero del DDL (campo NUMDDL; per gli stralci è l'ID numerico interno, non la sigla \"N/A Stralcio\" — vedi il campo excerpt per la designazione ufficiale).")
 	cmd.Flags().StringVar(&flagFirmatario, "firmatario", "", "Nome o cognome del firmatario.")
 	cmd.Flags().StringVar(&flagMateria, "materia", "", "Materia/settore.")

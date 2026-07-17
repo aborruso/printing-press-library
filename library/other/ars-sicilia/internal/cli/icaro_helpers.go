@@ -217,6 +217,8 @@ func runGetExtra(cmd *cobra.Command, flags *rootFlags, archiveSlug string, legis
 //   - dates given as YYYY-MM-DD become AAMMGG (the 6-digit numeric form the
 //     ISIS date fields store, e.g. DATPRE/DATSED); a range YYYY-MM-DD:YYYY-MM-DD
 //     becomes AAMMGG/AAMMGG (ISIS interval syntax)
+//   - on ddl, a bare --anno year becomes a DATPRE Jan-1..Dec-31 AAMMGG range
+//     (ddl has no year field to qualify a plain year against)
 //   - a numeric commission code (--codcom 1..6) is rerouted to the COMMIS field
 //     as its Roman ordinal name, since the upstream CODCOM field is not indexed
 //   - whitespace is trimmed
@@ -230,9 +232,14 @@ func normalizeParams(arc icaro.Archive, in map[string]string) map[string]string 
 		if v == "" {
 			continue
 		}
-		switch k {
-		case "data":
+		switch {
+		case k == "data":
 			v = toISISDate(v)
+		case k == "anno" && arc.Slug == "ddl":
+			// ddl has no year field (unlike leggi.LEGANN/resoconti.ANNSED):
+			// --anno is qualified on DATPRE (presentation date) as a
+			// Jan-1..Dec-31 range. See archives.go's ddl.FieldMap["anno"].
+			v = yearToISISRange(v)
 		}
 		out[k] = v
 	}
@@ -265,6 +272,18 @@ func toISISDate(v string) string {
 		return aammgg(v)
 	}
 	return aammgg(v)
+}
+
+// yearToISISRange converts a bare 4-digit year to a DATPRE-style AAMMGG range
+// spanning the whole year (Jan 1 to Dec 31), e.g. "2024" -> "240101/241231".
+// Anything else (already-AAMMGG input, a range from --isis-query, garbage)
+// passes through unchanged rather than producing a malformed expression.
+func yearToISISRange(v string) string {
+	if len(v) != 4 || !isDigits(v) {
+		return v
+	}
+	yy := v[2:]
+	return yy + "0101/" + yy + "1231"
 }
 
 func aammgg(v string) string {

@@ -25,6 +25,45 @@ func TestToISISDate(t *testing.T) {
 	}
 }
 
+func TestYearToISISRange(t *testing.T) {
+	cases := []struct{ in, want string }{
+		{"2024", "240101/241231"},
+		{"1999", "990101/991231"},
+		{"24", "24"},           // not 4 digits → unchanged
+		{"20245", "20245"},     // not 4 digits → unchanged
+		{"abcd", "abcd"},       // non-numeric → unchanged
+		{"240101/241231", "240101/241231"}, // already a range → unchanged
+	}
+	for _, c := range cases {
+		if got := yearToISISRange(c.in); got != c.want {
+			t.Errorf("yearToISISRange(%q) = %q, want %q", c.in, got, c.want)
+		}
+	}
+}
+
+// TestNormalizeParams_AnnoOnDdlBecomesDatpreRange covers the bug where
+// `ddl cerca --anno 2024` matched "2024" as free text anywhere in the
+// document (no DATPRE field for ddl to qualify a plain year against),
+// returning DDLs from other years that merely mention "2024" in the text.
+func TestNormalizeParams_AnnoOnDdlBecomesDatpreRange(t *testing.T) {
+	arc := *icaro.BySlug("ddl")
+	out := normalizeParams(arc, map[string]string{"anno": "2024"})
+	if out["anno"] != "240101/241231" {
+		t.Errorf("anno = %q, want 240101/241231", out["anno"])
+	}
+}
+
+// TestNormalizeParams_AnnoOnLeggiUnchanged covers archives that already have
+// a real year field (leggi.LEGANN, resoconti.ANNSED): --anno must stay a
+// bare year there, not be rewritten into a DATPRE-style range.
+func TestNormalizeParams_AnnoOnLeggiUnchanged(t *testing.T) {
+	arc := *icaro.BySlug("leggi")
+	out := normalizeParams(arc, map[string]string{"anno": "2024"})
+	if out["anno"] != "2024" {
+		t.Errorf("anno = %q, want unchanged 2024", out["anno"])
+	}
+}
+
 func TestCommissioneOrdinale(t *testing.T) {
 	cases := []struct{ in, want string }{
 		{"1", "PRIMA"},
