@@ -37,9 +37,28 @@ con le sigle di campo verificate su questa CLI.
 | `--autore` | biblioteca | `AUTORE` | |
 | `--titolo` | biblioteca | `TITOLO` | |
 | `--soggetto` | biblioteca | `SOGGET` | |
+| (nessuno) | ddl | `P010`, `P012` | legge di destinazione: `alr <anno> nlr <numero>`. Vedi sotto |
 
 Nota: la **commissione** si cerca per nome ordinale (`PRIMA`…`SESTA`) sul campo `COMMIS`; il
 codice numerico `CODCOM` non è indicizzato. La CLI mappa automaticamente `--codcom 6` → `SESTA`.
+
+### Dalla legge al DDL d'origine (`P010`/`P012`)
+
+Un DDL confluito in legge registra la legge di destinazione nei campi `P010`/`P012`, nella
+forma `alr <anno> nlr <numero>` (**a**nno **l**egge **r**egionale, **n**umero **l**egge
+**r**egionale). È il legame **autorevole** fra legge e disegno di legge: lo stesso che la
+scheda-legge del portale espone col link «DDL ed Iter».
+
+```bash
+# Da quale DDL nasce la L.R. 1 del 2024 (legge di stabilità)? -> ddl 638
+ars-sicilia-pp-cli ddl cerca \
+  --isis-query "alr adj 2024.P010,P012 sfrase nlr adj 1.P010,P012"
+```
+
+`legge cronologia` costruisce da sé questa query: usa il comando, non la query grezza. La
+sigla serve se vuoi partire dai DDL (es. tutti i ddl confluiti in legge nel 2024:
+`alr adj 2024.P010,P012`). Non cercare il DDL d'origine per **titolo**: i titoli si ripetono
+ogni anno (ogni «Legge di stabilità regionale») e si aggancia l'anno sbagliato.
 
 ## Operatori (verificati ✓)
 
