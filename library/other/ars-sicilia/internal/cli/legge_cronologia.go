@@ -135,12 +135,20 @@ func runLeggeCronologia(cmd *cobra.Command, flags *rootFlags, legisl, numero, an
 						DocID:     r.DocID,
 					})
 					// 3. I passaggi parlamentari veri, letti dall'iter del ddl
-					// d'origine. Prima venivano approssimati con una ricerca
-					// free-text "legge <numero>" sui sommari, che intercettava
-					// qualunque seduta citasse quelle due parole — sedute di
-					// altri anni su tutt'altri disegni di legge.
+					// d'origine — preferendo il blocco HTML etichettato "Iter"
+					// (doc.Fields, via docIterEvents) al corpo del documento.
+					// Prima venivano approssimati con una ricerca free-text
+					// "legge <numero>" sui sommari, che intercettava qualunque
+					// seduta citasse quelle due parole — sedute di altri anni
+					// su tutt'altri disegni di legge. Anche dopo quel fix,
+					// text-minare doc.Body restava fragile: il corpo concatena
+					// anche i blocchi di coda (Firmatari, Gruppo Parlamentare,
+					// Iniziativa) dopo l'articolato, e frammenti come "Seduta
+					// n. 104" combaciano per caso con il pattern data
+					// "<numero> <parola> <4 cifre>" quando il taglio di fine
+					// iter non li esclude.
 					if doc, gerr := c2.GetDoc(ctx, *arcDdl, r.DocID); gerr == nil {
-						for _, ev := range parseIterFromBody(doc.Body) {
+						for _, ev := range docIterEvents(doc) {
 							ev.URL = r.URL
 							ev.ArchiveID = arcDdl.ID
 							ev.DocID = r.DocID
