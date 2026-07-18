@@ -33,6 +33,18 @@ API per l'Albo Pretorio Online della Sanità Pugliese.
 Accesso pubblico (bandi, concorsi, delibere, determine) tramite OAuth2 client_credentials.
 13 aziende sanitarie pugliesi disponibili.
 
+## Known Data Limitations
+
+Questa API espone i dati così come pubblicati dalla piattaforma regionale (`sanita.puglia.it/AlboOnline`). Verificato al 2026-07-18: 10 delle 13 aziende sono aggiornate correntemente, ma 3 risultano ferme:
+
+| Azienda | Ultimo aggiornamento rilevato |
+|---|---|
+| ASL Taranto | ~agosto/settembre 2018 |
+| ARES | ~inizio 2018 |
+| Sanitaservice ASL BR | ~inizio 2024 |
+
+Per queste 3 aziende non fidarsi del risultato di `atti search` come "atti recenti": la fonte non riceve più (o riceve con forte ritardo) i nuovi atti di quegli enti. Avvisare l'utente se la ricerca riguarda una di queste aziende ed è rilevante la recenza dei dati.
+
 ## Command Reference
 
 **atti** — Manage atti
