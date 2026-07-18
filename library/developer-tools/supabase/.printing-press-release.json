@@ -2,15 +2,17 @@
   "schema_version": 1,
   "slug": "supabase",
   "cli_name": "supabase-pp-cli",
-  "version": "2026.6.1",
-  "released_at": "2026-06-08T00:00:00Z",
-  "source_commit": "40610a4e649ed7db2f033b1abff765949bbad99d",
+  "version": "2026.7.2",
+  "released_at": "2026-07-13T08:40:26Z",
+  "source_commit": "24a07b1badcaa3e6f967b0e9e7d001aa916c591b",
   "printing_press_version": "4.5.1",
   "run_id": "20260512-165514",
   "changes": [
     {
-      "title": "Baseline release metadata added for this published CLI.",
-      "commit": "40610a4e649ed7db2f033b1abff765949bbad99d"
+      "title": "fix(supabase): harden store scopes and exact Auth Admin lookup",
+      "pr": 1482,
+      "url": "https://github.com/mvanhorn/printing-press-library/pull/1482",
+      "commit": "24a07b1badcaa3e6f967b0e9e7d001aa916c591b"
     }
   ]
 }

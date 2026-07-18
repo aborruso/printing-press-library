@@ -7,6 +7,7 @@ Mirrors the official X v2 API and adds what no other X tool has: a local SQLite 
 Learn more at [X (Twitter)](https://developer.x.com/).
 
 Created by [@cathrynlavery](https://github.com/cathrynlavery) (Cathryn Lavery).
+Contributors: [@tmchow](https://github.com/tmchow) (Trevin Chow), [@mvanhorn](https://github.com/mvanhorn) (Matt Van Horn).
 
 ## Install
 
@@ -37,7 +38,7 @@ npx -y @mvanhorn/printing-press-library install x-twitter --agent claude-code --
 
 ### Without Node (Go fallback)
 
-If `npx` isn't available (no Node, offline), install the CLI directly via Go (requires Go 1.26.4 or newer):
+If `npx` isn't available (no Node, offline), install the CLI directly via Go (requires Go 1.26.5 or newer):
 
 ```bash
 go install github.com/mvanhorn/printing-press-library/library/social-and-messaging/x-twitter/cmd/x-twitter-pp-cli@latest
@@ -127,17 +128,19 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 
 X auth has three separate lanes. Run `x-twitter-pp-cli doctor --json` and inspect `auth_lanes` before choosing a command; do not assume one credential can stand in for another.
 
-- `auth_lanes.app_only_api`: `X_BEARER_TOKEN`, the app-only bearer token from the X developer console. Use this for public reads such as post/user lookup, recent search, lists, and spaces.
-- `auth_lanes.oauth2_user_context`: `X_OAUTH2_USER_TOKEN` or a stored OAuth2 access token. Required for `/2/users/me`, writes, bookmarks, personal reads, DMs, follows, likes, reposts, and user-context analytics. If this lane is missing or invalid, do not retry with `X_BEARER_TOKEN`; get a real OAuth2 authorization-code + PKCE user token and set/import it explicitly.
+- `auth_lanes.app_only_api`: an app-only X API Bearer token from the X developer console. Use this for public read-only API access such as post/user lookup, recent search, lists, and spaces. Store it with `x-twitter-pp-cli auth set-bearer-token <token>` or export `X_BEARER_TOKEN`.
+- `auth_lanes.oauth2_user_context`: `X_OAUTH2_USER_TOKEN` or a stored OAuth2 access token from `x-twitter-pp-cli auth oauth2-login` / `auth import-oauth2`. Required for `/2/users/me`, writes, bookmarks, personal reads, DMs, follows, likes, reposts, and user-context analytics. If this lane is missing or invalid, do not retry with the app-only bearer token; run the OAuth2 authorization-code + PKCE flow or import a real user-context token explicitly.
 - `auth_lanes.x_articles_cookie`: logged-in x.com browser cookies captured by `x-twitter-pp-cli auth login --chrome`. This lane is only for X Articles / x.com browser-session endpoints. It does not create `X_OAUTH2_USER_TOKEN` and does not authenticate v2 API user-context commands.
 
 Setup sequence:
 
 1. Attach the app to a Project in the X developer console (`console.x.com`). Any environment, including Development, unlocks v2 API access; standalone-app tokens are rejected.
 2. Set app permissions to Read and write when you need posting or other mutations.
-3. Copy the app Bearer Token into `X_BEARER_TOKEN` for app-only public reads.
-4. Enable OAuth2 with suitable scopes such as `tweet.read`, `tweet.write`, `users.read`, `offline.access`, and `bookmark.read` (required if you intend to sync or search bookmarks), complete the authorization-code + PKCE flow, and set the resulting user-context token in `X_OAUTH2_USER_TOKEN` or import it with `x-twitter-pp-cli auth import-oauth2 --access-token <token> --refresh-token <token> --scopes tweet.read,tweet.write,users.read,offline.access,bookmark.read`.
+3. Copy the app Bearer Token and run `x-twitter-pp-cli auth set-bearer-token <bearer-token>` for app-only public reads. Environment alternative: `export X_BEARER_TOKEN="<bearer-token>"`.
+4. Enable OAuth2 with suitable scopes such as `tweet.read`, `tweet.write`, `users.read`, `offline.access`, `bookmark.read`, `like.read`, `like.write`, `follows.read`, and `follows.write`. Add `http://127.0.0.1:8787/callback` as an OAuth2 redirect URI in the X developer app, then run `x-twitter-pp-cli auth oauth2-login --client-id <oauth2-client-id>` to complete the authorization-code + PKCE browser flow. Non-interactive fallback when you already have tokens: `x-twitter-pp-cli auth import-oauth2 --client-id <oauth2-client-id> --access-token <oauth2-access-token> --refresh-token <oauth2-refresh-token> --scopes tweet.read,tweet.write,users.read,offline.access,bookmark.read,like.read,like.write,follows.read,follows.write`. Environment alternative: `export X_OAUTH2_USER_TOKEN="<oauth2-access-token>"`.
 5. Separately run `x-twitter-pp-cli auth login --chrome` only when using X Articles commands such as `articles-publish-md` or `articles ...` (needs `pycookiecheat` or `press-auth`; manual DevTools fallback is available).
+
+`auth set-token` is deprecated because “token” is ambiguous for X. It remains as a compatibility alias for `auth set-bearer-token` and must not be used for OAuth2 user-context tokens. Use `auth oauth2-login` for the interactive OAuth2 browser flow or `auth import-oauth2` when you already have tokens.
 
 `doctor --json` is the machine-readable preflight. It reports `selected_profile`, per-lane status, `/2/users/me` probe results, authenticated user identity when returned, stored scopes, missing workflow scopes, token expiry, refresh-token presence, and X Articles cookie status without printing secrets.
 
@@ -148,6 +151,9 @@ A Development project does not limit the account; capability is set by app permi
 ```bash
 # Health check first: reports selected profile, auth lanes, scopes, token expiry, and what workflows are safe.
 x-twitter-pp-cli doctor --json
+
+# Debug an endpoint directly when no generated command fits yet. Generated and curated commands are preferred.
+x-twitter-pp-cli raw GET /2/users/me --dry-run --agent
 
 # Pull recent posts into the local SQLite store once, so later reads query locally instead of re-spending API credits.
 x-twitter-pp-cli sync --resources tweets --since 7d
@@ -274,12 +280,13 @@ These capabilities aren't available in any other tool for this API.
   ```bash
   x-twitter-pp-cli thread compose ./update.md
   ```
-- **`articles-publish-md`** — Parse a markdown file with YAML frontmatter into the Draft.js content_state JSON X's Articles editor accepts; previews by default; --draft saves a draft, --post publishes publicly.
+- **`articles-publish-md`** — Parse a markdown file with YAML frontmatter into the Draft.js content_state JSON X's Articles editor accepts; previews by default; --draft creates a new draft, --update edits an existing draft, --post publishes publicly.
 
-  _The only programmatic way to author a long-form X Article from a document; preview and --draft keep it private until you explicitly --post._
+  _The only programmatic way to author a long-form X Article from a document; preview, --draft, and --update keep it private until you explicitly --post._
 
   ```bash
   x-twitter-pp-cli articles-publish-md ./post.md
+  x-twitter-pp-cli articles-publish-md ./post.md --update 1750000000000000000
   ```
 
 ## Recipes
@@ -587,6 +594,7 @@ This CLI is designed for AI agent consumption:
 - **Pipeable** - `--json` output to stdout, errors to stderr
 - **Filterable** - `--select id,name` returns only fields you need
 - **Previewable** - `--dry-run` shows the request without sending. Under `--agent`, mutation dry-runs return JSON with `sent:false`, method/path/body, selected profile, auth lane, mutation classification, and public action when known.
+- **Debuggable** - `raw <method> <path-or-url>` calls an allowlisted X API path through the same auth, dry-run, retry, masking, and error-classification pipeline as generated commands while preserving the upstream response body. Use it only when no generated command fits yet.
 - **Explicit retries** - add `--idempotent` to create retries and `--ignore-missing` to delete retries when a no-op success is acceptable
 - **Confirmable** - `--yes` for explicit confirmation of destructive actions
 - **Piped input** - write commands can accept structured input when their help lists `--stdin`
@@ -597,11 +605,23 @@ Exit codes: `0` success, `2` usage error, `3` not found, `4` auth error, `5` API
 
 ## Health Check
 
+Verifies configuration, credentials, and connectivity to the API.
+
 ```bash
 x-twitter-pp-cli doctor
 ```
 
-Verifies configuration, credentials, and connectivity to the API.
+## Raw API Escape Hatch
+
+Use `raw` for debugging new X endpoints or reproducing auth/API failures before a generated command exists. It accepts relative API paths or allowlisted HTTPS X absolute URLs, repeatable query params and headers, and JSON bodies from `--body`, `--body-file`, or `--body @-`.
+
+```bash
+x-twitter-pp-cli raw GET /2/users/me --agent
+x-twitter-pp-cli raw GET /2/tweets --param ids=123,456 --json
+x-twitter-pp-cli raw POST /2/tweets --body '{"text":"hello"}' --dry-run --agent
+```
+
+Generated commands remain the default for normal workflows because they carry endpoint-specific validation, pagination, local-cache provenance, and workflow hints. `raw` uses the same auth lanes as the rest of the CLI: app-only public reads still need `X_BEARER_TOKEN`; user-context reads and writes still need `X_OAUTH2_USER_TOKEN` or an imported OAuth2 user-context token.
 
 ## Configuration
 
@@ -634,7 +654,7 @@ If you use agentcookie to sync secrets across machines, this CLI auto-adopts age
 - **403 on a reply, quote-tweet, or @mention post** — X's Feb-2026 restriction blocks programmatic replies/quotes/cold mentions; use self-reply threads (thread compose) instead, which still post.
 - **402 Payment Required** — Pay-per-use credit or spend limit exhausted; raise the limit or add credit in the Developer Console.
 - **403 on a write or personal read with only a bearer token set** — App-only bearer tokens can't write or read 'me' data; set X_OAUTH2_USER_TOKEN for user-context operations.
-- **Need to verify a user-context token non-interactively** — Run `x-twitter-pp-cli auth import-oauth2 --access-token <token> --scopes ... --json`, then `x-twitter-pp-cli users get-me --agent` and `x-twitter-pp-cli doctor --json`. Browser cookies from `auth login --chrome` do not satisfy these v2 API calls.
+- **Need to verify a user-context token non-interactively** — Run `x-twitter-pp-cli auth import-oauth2 --access-token <token> --scopes ... --json` for access-token-only checks, or include `--client-id <oauth2-client-id> --refresh-token <refresh-token>` when storing refresh credentials; then run `x-twitter-pp-cli users get-me --agent` and `x-twitter-pp-cli doctor --json`. Browser cookies from `auth login --chrome` do not satisfy these v2 API calls.
 
 ## Sources & Inspiration
 

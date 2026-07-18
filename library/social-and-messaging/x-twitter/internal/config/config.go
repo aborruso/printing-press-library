@@ -198,13 +198,35 @@ func (c *Config) SaveTokens(clientID, clientSecret, accessToken, refreshToken st
 	return c.save()
 }
 
-func (c *Config) SaveOAuth2UserContext(accessToken, refreshToken string, expiry time.Time, scopes []string) error {
+func (c *Config) SaveOAuth2UserContext(clientID, clientSecret, accessToken, refreshToken string, expiry time.Time, scopes []string) error {
+	clientID = strings.TrimSpace(clientID)
+	clientSecret = strings.TrimSpace(clientSecret)
 	c.AuthHeaderVal = ""
+	if clientID != "" {
+		c.ClientID = clientID
+	}
+	if clientSecret != "" {
+		c.ClientSecret = clientSecret
+	}
 	c.XOauth2UserToken = strings.TrimSpace(accessToken)
 	c.AccessToken = ""
 	c.RefreshToken = strings.TrimSpace(refreshToken)
 	c.TokenExpiry = expiry
 	c.Scopes = normalizeScopes(scopes)
+	return c.save()
+}
+
+func (c *Config) SaveBearerToken(token string) error {
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return fmt.Errorf("bearer token must not be empty")
+	}
+	c.AuthHeaderVal = ""
+	c.XBearerToken = token
+	// access_token is the legacy ambiguous field. Keep it empty so app-only
+	// doctor/status checks read the same bearer_token field AuthHeader() and
+	// AppOnlyAuthHeader() use for public app-only API reads.
+	c.AccessToken = ""
 	return c.save()
 }
 

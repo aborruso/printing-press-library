@@ -29,7 +29,7 @@ This skill drives the `x-twitter-pp-cli` binary. **You must verify the CLI is in
 2. Verify: `x-twitter-pp-cli --version`
 3. Ensure the reported install directory is on `$PATH` for the agent/runtime that will invoke this skill.
 
-If the `npx` install fails (no Node, offline, etc.), fall back to a direct Go install (requires Go 1.26.4 or newer). This installs into `$GOPATH/bin` (default `$HOME/go/bin`), so add that directory to `$PATH` instead:
+If the `npx` install fails (no Node, offline, etc.), fall back to a direct Go install (requires Go 1.26.5 or newer). This installs into `$GOPATH/bin` (default `$HOME/go/bin`), so add that directory to `$PATH` instead:
 
 ```bash
 go install github.com/mvanhorn/printing-press-library/library/social-and-messaging/x-twitter/cmd/x-twitter-pp-cli@latest
@@ -144,13 +144,27 @@ These capabilities aren't available in any other tool for this API.
   ```bash
   x-twitter-pp-cli thread compose ./update.md
   ```
-- **`articles-publish-md`** — Parse a markdown file with YAML frontmatter into the Draft.js content_state JSON X's Articles editor accepts; previews by default; --draft saves a draft, --post publishes publicly.
+- **`articles-publish-md`** — Parse a markdown file with YAML frontmatter into the Draft.js content_state JSON X's Articles editor accepts; previews by default; --draft creates a new draft, --update edits an existing draft, --post publishes publicly.
 
-  _The only programmatic way to author a long-form X Article from a document; preview and --draft keep it private until you explicitly --post._
+  _The only programmatic way to author a long-form X Article from a document; preview, --draft, and --update keep it private until you explicitly --post._
+
+  The converter supports paragraphs, `#`/`##` headers (`###` and deeper are downgraded to `##`), lists, blockquotes, fenced code blocks, tables, dividers, image lines (`![alt](path)`), standalone tweet URLs (native embeds), bold/italic/code inline styles (including inside blockquotes), and `[text](url)` inline links, which become real LINK entities (working hyperlinks) in the article. Lines that are HTML comments (`<!-- ... -->`) are stripped and never ship as article text.
 
   ```bash
   x-twitter-pp-cli articles-publish-md ./post.md
+  x-twitter-pp-cli articles-publish-md ./post.md --update 1750000000000000000
   ```
+- **`articles update-md`** — Update an existing X Article draft in place from a markdown file: title (frontmatter), body, links, and new inline images, all in one command. Find the article id via `articles list --agent`.
+
+  _Edit the markdown, re-run one command. No duplicate drafts: the draft keeps its id, so the edit URL and any saved state stay valid._
+
+  ```bash
+  x-twitter-pp-cli articles update-md ./post.md --article-id 1750000000000000000 --agent
+  ```
+
+  **WARNING — body replacement:** `articles update-md` replaces the ENTIRE body of the target draft. Anything added by hand in the X composer that the markdown converter cannot reproduce is destroyed by the update. The command preflights the draft's content_state and refuses when it finds entity types outside the converter's emit set (LINK, MARKDOWN, MEDIA, TWEET, DIVIDER); pass `--replace-unknown-entities` only when you genuinely want to overwrite those artifacts. Markdown-authored content round-trips cleanly; if a draft holds composer-only embeds or other manual artifacts, edit it in the composer instead.
+
+  Draft-only by default: a published article is refused unless you pass `--republish`, which runs Unpublish -> UpdateContent -> Publish (the article is briefly unpublished). Use `--dry-run` to preview the converted payload with no API call.
 
 ## Command Reference
 
@@ -369,21 +383,35 @@ Splits the markdown into a numbered 280-char-packed self-reply thread and prints
 
 X auth has three separate lanes. Do not infer one lane from another; run `x-twitter-pp-cli doctor --json` and inspect `auth_lanes` before choosing a command.
 
-- `auth_lanes.app_only_api`: `X_BEARER_TOKEN`, the app-only bearer token from the X developer console. Use this for public reads such as tweet/user lookup, recent search, lists, and spaces.
-- `auth_lanes.oauth2_user_context`: `X_OAUTH2_USER_TOKEN` or a stored OAuth2 access token. Required for `/2/users/me`, writes, bookmarks, personal reads, DMs, follows, likes, reposts, and user-context analytics. If this lane is `missing` or `invalid`, do not retry with `X_BEARER_TOKEN`; get a real OAuth2 authorization-code + PKCE user token and set/import it explicitly.
+- `auth_lanes.app_only_api`: an app-only X API Bearer token from the X developer console. Use this for public read-only API access such as tweet/user lookup, recent search, lists, and spaces. Store it with `x-twitter-pp-cli auth set-bearer-token <token>` or export `X_BEARER_TOKEN`.
+- `auth_lanes.oauth2_user_context`: `X_OAUTH2_USER_TOKEN` or a stored OAuth2 access token from `x-twitter-pp-cli auth oauth2-login` / `auth import-oauth2`. Required for `/2/users/me`, writes, bookmarks, personal reads, DMs, follows, likes, reposts, and user-context analytics. If this lane is `missing` or `invalid`, do not retry with the app-only bearer token; run the OAuth2 authorization-code + PKCE flow or import a real user-context token explicitly.
 - `auth_lanes.x_articles_cookie`: browser cookies captured by `x-twitter-pp-cli auth login --chrome`. This lane is only for X Articles / x.com browser-session endpoints. It does not create `X_OAUTH2_USER_TOKEN` and does not authenticate v2 API user-context commands.
 
 Setup sequence:
 
 1. Attach the app to a Project in the X developer console.
 2. Set app permissions to Read and write when you need posting or other mutations.
-3. Copy the app Bearer Token into `X_BEARER_TOKEN` for app-only public reads.
-4. Enable OAuth2 with suitable scopes such as `tweet.read`, `tweet.write`, `users.read`, `offline.access`, and `bookmark.read` (required if you intend to sync or search bookmarks), complete the authorization-code + PKCE flow, and set the resulting user-context token in `X_OAUTH2_USER_TOKEN` or import it with `x-twitter-pp-cli auth import-oauth2 --access-token <token> --refresh-token <token> --scopes tweet.read,tweet.write,users.read,offline.access,bookmark.read`.
+3. Copy the app Bearer Token and run `x-twitter-pp-cli auth set-bearer-token <bearer-token>` for app-only public reads. Environment alternative: set `X_BEARER_TOKEN` in your shell or runtime secret manager.
+4. Enable OAuth2 with suitable scopes such as `tweet.read`, `tweet.write`, `users.read`, `offline.access`, `bookmark.read`, `like.read`, `like.write`, `follows.read`, and `follows.write`. Add `http://127.0.0.1:8787/callback` as an OAuth2 redirect URI in the X developer app, then run `x-twitter-pp-cli auth oauth2-login --client-id <oauth2-client-id>` to complete the authorization-code + PKCE browser flow. Non-interactive fallback when you already have tokens: `x-twitter-pp-cli auth import-oauth2 --client-id <oauth2-client-id> --access-token <oauth2-access-token> --refresh-token <oauth2-refresh-token> --scopes tweet.read,tweet.write,users.read,offline.access,bookmark.read,like.read,like.write,follows.read,follows.write`. Environment alternative: set `X_OAUTH2_USER_TOKEN` in your shell or runtime secret manager.
 5. Separately run `x-twitter-pp-cli auth login --chrome` only when using `articles ...` commands.
+
+`auth set-token` is deprecated because “token” is ambiguous for X. It remains as a compatibility alias for `auth set-bearer-token` and must not be used for OAuth2 user-context tokens. Use `auth oauth2-login` for the interactive OAuth2 browser flow or `auth import-oauth2` when you already have tokens.
 
 `doctor --json` is the machine-readable preflight. It reports `selected_profile`, per-lane status, `/2/users/me` probe results, authenticated user identity when returned, stored scopes, missing workflow scopes, token expiry, refresh-token presence, and X Articles cookie status without printing secrets.
 
 When X returns `Unsupported Authentication` with `Application-Only is forbidden`, the command requires OAuth2 user-context auth. Fix `auth_lanes.oauth2_user_context`; cookie auth and app-only bearer auth will not satisfy that endpoint.
+
+## Raw API Escape Hatch
+
+Use `raw` only for debugging new X endpoints, auth-lane behavior, or API errors when no generated command fits yet. It accepts relative API paths or allowlisted HTTPS X absolute URLs, repeatable query params and headers, and JSON bodies from `--body`, `--body-file`, or `--body @-`.
+
+```bash
+x-twitter-pp-cli raw GET /2/users/me --agent
+x-twitter-pp-cli raw GET /2/tweets --param ids=123,456 --json
+x-twitter-pp-cli raw POST /2/tweets --body '{"text":"hello"}' --dry-run --agent
+```
+
+Generated commands remain preferred for normal workflows because they include endpoint-specific validation, pagination, provenance, response envelopes, and workflow hints. `raw` preserves the upstream response body while using the same auth lanes as every other command: app-only public reads still need `X_BEARER_TOKEN`; user-context reads and writes still need `X_OAUTH2_USER_TOKEN` or an imported OAuth2 user-context token.
 
 ## Agent Mode
 
