@@ -98,6 +98,32 @@ func TestDocIterEvents_PrefersField(t *testing.T) {
 	}
 }
 
+// TestParseIterFromBody_CleansLrAnnotation covers the portal's raw
+// "Lr <giorno> <mese> alr <anno> nlr <numero> Titolo : ..." law-registration
+// event (real example from DDL 4991 -> L.R. 27/2024's Iter field, including
+// the stray repeated quote characters the portal sometimes renders): it
+// should collapse to a short "Promulgata legge regionale n. <numero>/<anno>"
+// event classified as fase "legge", not surface the garbled title repeat.
+func TestParseIterFromBody_CleansLrAnnotation(t *testing.T) {
+	body := `x Attuale 20 nov 2024 Concluso Storico 18 nov 2024 Inviato Presidenza della Regione 18 nov 2024 Lr 18 novembre alr 2024 nlr 27 Titolo : * Disposizioni in materia di urbanistica"""""""""""""" ed edilizia. Modifiche di norme.20 nov 2024 Pubblicazione Gurs n. 51 del 20 novembre 2024 (n. 4991) DISEGNO`
+	ev := parseIterFromBody(body)
+	var found *iterEvent
+	for i := range ev {
+		if ev[i].Titolo == "Promulgata legge regionale n. 27/2024" {
+			found = &ev[i]
+		}
+		if strings.Contains(ev[i].Titolo, "Lr ") || strings.Contains(ev[i].Titolo, `""""`) {
+			t.Fatalf("raw Lr annotation leaked into iter events: %+v", ev)
+		}
+	}
+	if found == nil {
+		t.Fatalf("cleaned law-registration event not found: %+v", ev)
+	}
+	if found.Fase != "legge" {
+		t.Fatalf("fase = %q, want \"legge\": %+v", found.Fase, found)
+	}
+}
+
 func TestParseIterFromBody_FullHistory(t *testing.T) {
 	body := "x Attuale 11 mar 2026 Respinto dall' Aula Seduta n. 236 AULA Storico 03 mar 2026 Assegnato per esame Commissione PRIMA 10 mar 2026 Esaminato in commissione Seduta n. 252 0100 Commissione (n. 1089/A) DISEGNO"
 	ev := parseIterFromBody(body)

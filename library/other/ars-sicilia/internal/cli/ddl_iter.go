@@ -169,6 +169,15 @@ func emitIter(cmd *cobra.Command, flags *rootFlags, report iterReport) error {
 // each iter step in the document status block.
 var reIterDate = regexp.MustCompile(`(\d{1,2})\s+([a-zàèéìòù]{3,})\s+(\d{4})`)
 
+// reLrAnnotation matches the portal's raw law-registration annotation
+// ("Lr <giorno> <mese> alr <anno> nlr <numero> Titolo : ...") that appears as
+// a DDL's own iter event once it is promulgated. Everything after "Titolo :"
+// just repeats the bill's title — sometimes mangled with runs of stray quote
+// characters, a portal rendering quirk — and duplicates information already
+// carried by year+numero, so it is dropped in favor of a short, correctly
+// classified event (see its use in parseIterFromBody).
+var reLrAnnotation = regexp.MustCompile(`(?i)^Lr\s+\d{1,2}\s+\S+\s+alr\s+(\d{4})\s+nlr\s+(\d+)\b`)
+
 var itaMonths = map[string]string{
 	"gen": "01", "feb": "02", "mar": "03", "apr": "04", "mag": "05", "giu": "06",
 	"lug": "07", "ago": "08", "set": "09", "ott": "10", "nov": "11", "dic": "12",
@@ -180,7 +189,9 @@ var itaMonths = map[string]string{
 // header "(n. …)" and contains both the current status and, after the "Storico"
 // label, the full chronological history. Each step is "<date> <action> [Seduta
 // n. N …]"; we cut the action at "Seduta" to drop the sitting metadata (and its
-// stray digits). Returns nil when no status block is present.
+// stray digits). The raw "Lr ... alr ... nlr ..." law-registration annotation
+// (see reLrAnnotation) is reduced to a short, correctly classified event.
+// Returns nil when no status block is present.
 func parseIterFromBody(body string) []iterEvent {
 	if body == "" {
 		return nil
@@ -225,6 +236,9 @@ func parseIterFromBody(body string) []iterEvent {
 		action = strings.Join(strings.Fields(action), " ")
 		if action == "" {
 			continue
+		}
+		if m := reLrAnnotation.FindStringSubmatch(action); m != nil {
+			action = fmt.Sprintf("Promulgata legge regionale n. %s/%s", m[2], m[1])
 		}
 		events = append(events, iterEvent{
 			Fase:   classifyIterFase(action),
