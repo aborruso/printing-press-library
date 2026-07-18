@@ -197,9 +197,14 @@ func runGetExtra(cmd *cobra.Command, flags *rootFlags, archiveSlug string, legis
 	if recs[0].Excerpt != "" && doc.Body == "" {
 		doc.Body = recs[0].Excerpt
 	}
-	// For DDLs, surface the signatories parsed from the document body as a
-	// structured field (name + party group when available).
-	if arc.Slug == "ddl" {
+	// For every archive with signatories (same gate as --con-firmatari in
+	// runCerca: ddl, interrogazioni, interpellanze, mozioni, odg, risoluzioni
+	// all share the FIRMAT field and the portal's "Nome (Gruppo)." doc
+	// format), surface them as a structured field instead of leaving the
+	// caller to parse fields.Firmatari by hand. Was ddl-only: interrogazioni
+	// get et al. left the raw string in place, forcing a second parsing path
+	// for any consumer iterating across atto types.
+	if _, ok := arc.FieldMap["firmatario"]; ok {
 		if firm := docFirmatari(doc); len(firm) > 0 {
 			return printJSONFiltered(cmd.OutOrStdout(), struct {
 				icaro.Doc
