@@ -70,6 +70,8 @@ func runDdlDrift(cmd *cobra.Command, flags *rootFlags, since, dbPath string) err
 	report := driftReport{
 		Window:      since,
 		GeneratedAt: time.Now().UTC().Format(time.RFC3339),
+		Mossi:       []driftItem{},
+		Nuovi:       []driftItem{},
 	}
 
 	db, err := store.OpenReadOnly(dbPath)
@@ -138,6 +140,20 @@ func runDdlDrift(cmd *cobra.Command, flags *rootFlags, since, dbPath string) err
 	sort.SliceStable(report.Mossi, func(i, j int) bool {
 		return parseICaroDate(report.Mossi[i].DataA) > parseICaroDate(report.Mossi[j].DataA)
 	})
+
+	// Empty result: distinguish "no iter data at all" (needs a deep sync — the
+	// iter field drift compares is populated only by `sync --deep`) from "iter
+	// data present but nothing changed in the window".
+	if len(report.Mossi) == 0 && len(report.Nuovi) == 0 {
+		var withIter int
+		_ = db.DB().QueryRowContext(ctx,
+			`SELECT COUNT(*) FROM resources WHERE resource_type = 'ddl' AND json_extract(data, '$.iter') IS NOT NULL`).Scan(&withIter)
+		if withIter == 0 {
+			report.Note = "Nessuno stato iter nello store: `ddl drift` confronta il campo iter, popolato solo da `ars-sicilia-pp-cli sync --resources ddl --deep`. Esegui due deep-sync a distanza di tempo per rilevare i movimenti."
+		} else {
+			report.Note = "Nessun ddl mosso nella finestra indicata (lo store contiene stati iter ma nessuna variazione rispetto allo snapshot precedente)."
+		}
+	}
 	return emitDriftReport(cmd, flags, report)
 }
 

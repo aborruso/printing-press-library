@@ -55,7 +55,7 @@ These capabilities aren't available in any other tool for this API.
   ```bash
   ars-sicilia-pp-cli ddl iter 18 1153 --json
   ```
-- **`deputato profilo`** — Aggrega in un'unica vista tutti gli atti firmati o pronunciati da un deputato: DDL, interrogazioni, interpellanze, mozioni, ordini del giorno, risoluzioni e interventi in resoconti d'aula.
+- **`deputato profilo`** — Aggrega in un'unica vista tutti gli atti firmati o pronunciati da un deputato: DDL, interrogazioni, interpellanze, mozioni, ordini del giorno, risoluzioni e interventi in resoconti d'aula. `--data` (range `YYYY-MM-DD:YYYY-MM-DD`) filtra per data su tutti i sotto-archivi.
 
   _Sostituisce un workflow di 7 click manuali con un'unica chiamata strutturata: pensata per agenti che rispondono a 'che ha fatto il deputato X?'._
 
@@ -78,11 +78,12 @@ These capabilities aren't available in any other tool for this API.
   ```
 
 ### Analytics su campi strutturati
-- **`analytics`** — Identifica i deputati che firmano insieme atti parlamentari, restituendo coppie e cluster con conteggio per analisi di network politico.
+- **`analytics`** — Identifica i deputati che firmano insieme atti parlamentari, restituendo coppie e cluster con conteggio per analisi di network politico. Richiede una **deep sync** dei ddl (`sync --resources ddl --deep`), che estrae i firmatari dalle schede di dettaglio.
 
   _Per ricercatori e giornalisti che analizzano alleanze e dinamiche politiche: niente foglio Excel di trascrizioni manuali._
 
   ```bash
+  ars-sicilia-pp-cli sync --resources ddl --legisl 18 --deep
   ars-sicilia-pp-cli analytics --type ddl --group-by cofirmatari --limit 50 --json
   ```
 - **`analytics`** — Classifica i deputati per numero di interventi nei resoconti d'aula, con range date e legislatura, opzionale conteggio parole.
@@ -94,7 +95,7 @@ These capabilities aren't available in any other tool for this API.
   ```
 
 ### Stato e monitoraggio
-- **`ddl drift`** — Confronta lo stato dell'iter dei DDL nella sync corrente con la precedente e segnala i disegni di legge che si sono mossi nel periodo (passati da commissione ad aula, approvati, ritirati).
+- **`ddl drift`** — Confronta lo stato dell'iter dei DDL nella sync corrente con la precedente e segnala i disegni di legge che si sono mossi nel periodo (passati da commissione ad aula, approvati, ritirati). Richiede due **deep sync** (`sync --resources ddl --deep`) a distanza di tempo: solo la deep sync scrive il campo `iter` confrontato.
 
   _L'RSS shell esistente segnala solo 'nuovi'; per 'mossi' non c'è alternativa. Questo è il segnale che cercavano i journalist che seguono iter politici._
 
@@ -108,6 +109,8 @@ These capabilities aren't available in any other tool for this API.
   ```bash
   ars-sicilia-pp-cli sync stale --json
   ```
+
+  Nota: `sync stale --max-age` ha default `7d` (i dati ARS non cambiano su base oraria); `doctor`'s cache section usa invece una soglia fissa di 6h, non configurabile. Le due soglie divergono di proposito — uno store che `sync stale` giudica fresco può risultare `"status": "stale"` in `doctor`. Un agente che orchestra sync automatico non deve fidarsi solo di `sync stale`: controlla anche `doctor`'s `cache.status` se vuoi il segnale più conservativo.
 
 ## Command Reference
 
@@ -214,10 +217,11 @@ Confronta lo stato dell'iter rispetto a una settimana fa — i DDL che si sono m
 ### Top cofirmatari DDL (XVIII legislatura)
 
 ```bash
+ars-sicilia-pp-cli sync --resources ddl --legisl 18 --deep
 ars-sicilia-pp-cli analytics --type ddl --group-by cofirmatari --limit 20 --legisl 18 --json
 ```
 
-Classifica i deputati che firmano più DDL insieme (richiede sync).
+Classifica i deputati che firmano più DDL insieme (richiede una **deep sync** dei ddl: i firmatari stanno solo nelle schede di dettaglio).
 
 ## Auth Setup
 

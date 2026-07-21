@@ -56,6 +56,37 @@ func TestDocFirmatari_PrefersBlock(t *testing.T) {
 	}
 }
 
+func TestFirmatariNames(t *testing.T) {
+	got := firmatariNames([]firmatario{
+		{Nome: "Abbate Ignazio", Gruppo: "Democrazia Cristiana"},
+		{Nome: "Pace Carmelo"},
+		{Nome: ""},
+	})
+	if got != "Abbate Ignazio, Pace Carmelo" {
+		t.Errorf("firmatariNames = %q", got)
+	}
+}
+
+func TestCurrentIterState(t *testing.T) {
+	// Prefers the labeled "Iter" field, cut at "Storico".
+	doc := icaro.Doc{
+		Fields: map[string]string{"Iter": "Attuale 08 lug 2026 Esaminato in commissione Seduta n. 270 Storico 24 set 2025 Assegnato"},
+		Body:   "Attuale 01 gen 2020 Vecchio Storico (n. 1) DISEGNO",
+	}
+	if got := currentIterState(doc); got != "08 lug 2026 Esaminato in commissione Seduta n. 270" {
+		t.Errorf("currentIterState (field) = %q", got)
+	}
+	// Falls back to Body when no labeled field.
+	body := icaro.Doc{Body: "x Attuale 30 giu 2026 Assegnato per esame Commissione PRIMA (n. 1161) DISEGNO"}
+	if got := currentIterState(body); got != "30 giu 2026 Assegnato per esame Commissione PRIMA" {
+		t.Errorf("currentIterState (body) = %q", got)
+	}
+	// No status block → empty.
+	if got := currentIterFromBody("nessun blocco di stato"); got != "" {
+		t.Errorf("currentIterFromBody(no block) = %q, want empty", got)
+	}
+}
+
 func TestParseDdlFirmatari_Bullet(t *testing.T) {
 	body := "Parlamentare  Geraci Salvatore (Prima l'Italia - Lega Salvini premier). • Assenza Giorgio (Fratelli d'Italia XVIII Legislatura).• Pellegrino Stefano (Forza Italia all'ARS). (n. 1089/A) DISEGNO DI LEGGE"
 	f := parseDdlFirmatari(body)

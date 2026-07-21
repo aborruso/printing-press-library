@@ -269,6 +269,46 @@ func docIterEvents(doc icaro.Doc) []iterEvent {
 	return parseIterFromBody(doc.Body)
 }
 
+// currentIterState returns the DDL's current iter status as a single stable
+// string for `sync --deep` to persist as `iter` — the field `ddl drift` compares
+// across snapshots. It prefers the page's labeled "Iter" block (the same source
+// docIterEvents trusts first) and falls back to the flattened Body.
+func currentIterState(doc icaro.Doc) string {
+	if s := doc.Fields["Iter"]; s != "" {
+		if c := currentIterFromBody(s); c != "" {
+			return c
+		}
+	}
+	return currentIterFromBody(doc.Body)
+}
+
+// currentIterFromBody extracts the collapsed current-status segment the portal
+// renders between the "Attuale" marker and the "Storico" history label (or the
+// bill header when there is no history yet). Returns "" when no status block is
+// present. Mirrors parseIterFromBody's region boundaries so the two stay in sync.
+func currentIterFromBody(body string) string {
+	start := strings.Index(body, "Attuale")
+	if start < 0 {
+		return ""
+	}
+	region := body[start+len("Attuale"):]
+	if end := strings.Index(region, "Storico"); end >= 0 {
+		region = region[:end]
+	} else {
+		// No history yet: cut at whichever bill-header marker comes first.
+		cutAt := -1
+		for _, marker := range []string{"(n.", "ASSEMBLEA REGIONALE SICILIANA"} {
+			if i := strings.Index(region, marker); i >= 0 && (cutAt < 0 || i < cutAt) {
+				cutAt = i
+			}
+		}
+		if cutAt >= 0 {
+			region = region[:cutAt]
+		}
+	}
+	return strings.Join(strings.Fields(region), " ")
+}
+
 type firmatario struct {
 	Nome   string `json:"nome"`
 	Gruppo string `json:"gruppo,omitempty"`
@@ -299,6 +339,20 @@ func docFirmatari(doc icaro.Doc) []firmatario {
 		}
 	}
 	return parseDdlFirmatari(doc.Body)
+}
+
+// firmatariNames joins signatory names into the comma-separated string form that
+// `sync --deep` persists as `$.firmatari` — the shape splitFirmatari re-parses in
+// analytics cofirmatari. Only names are kept (party groups dropped) so the split
+// yields clean deputy names. Returns "" for no signatories.
+func firmatariNames(fs []firmatario) string {
+	names := make([]string, 0, len(fs))
+	for _, f := range fs {
+		if n := strings.TrimSpace(f.Nome); n != "" {
+			names = append(names, n)
+		}
+	}
+	return strings.Join(names, ", ")
 }
 
 // reFirmTrunc matches a trailing signatory whose group parenthesis the portal

@@ -97,14 +97,19 @@ func runAnalytics(cmd *cobra.Command, flags *rootFlags, typ, groupBy string, lim
 		return err
 	}
 	// Empty result: hint on stderr (keeps JSON/CSV on stdout clean). Be honest
-	// about *why* it is empty — for cofirmatari/oratore a sync will NOT help,
-	// because the current sync does not extract those fields into the store.
+	// about *why* it is empty and whether a sync can fix it.
 	if len(rows) == 0 {
 		switch groupBy {
-		case "cofirmatari", "oratore", "oratori":
+		case "cofirmatari":
+			// The firmatari are not in the short-list; only the deep sync
+			// extracts them from each ddl's detail page.
 			fmt.Fprintf(os.Stderr,
-				"hint: --group-by %s non è alimentato dalla sync attuale (firmatari/oratori non vengono estratti nello store); un nuovo sync NON lo risolve. Vedi 'Known Gaps' nel README. Funziona invece --group-by anno.\n",
-				groupBy)
+				"hint: --group-by cofirmatari richiede i firmatari estratti dalle schede di dettaglio dei ddl. Esegui `ars-sicilia-pp-cli sync --resources ddl --deep` (più lento) e riprova; una sync normale non li popola.\n")
+		case "oratore", "oratori":
+			// The speakers live only in the full transcript, which no sync
+			// currently fetches or parses.
+			fmt.Fprintf(os.Stderr,
+				"hint: --group-by oratore non è alimentato dalla sync (gli oratori compaiono solo nel testo integrale dei resoconti, non estratto nello store). Vedi 'Known Gaps' nel README. Funzionano invece --group-by cofirmatari (con `sync --deep`) e --group-by anno.\n")
 		default:
 			fmt.Fprintf(os.Stderr,
 				"hint: nessun dato per --type %s --group-by %s. Lo store locale potrebbe non essere sincronizzato: esegui `ars-sicilia-pp-cli sync --resources %s` e riprova.\n",

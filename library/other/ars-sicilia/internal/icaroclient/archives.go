@@ -76,6 +76,10 @@ var All = []Archive{
 			// without it, --anno was silently unqualified and matched the
 			// year as free text anywhere in the document.
 			"anno": "DATPRE",
+			// --data qualifies a specific presentation date (or range) on the
+			// same DATPRE field; used by `deputato profilo --data` to bound a
+			// deputy's acts to a period without guessing a large --limit.
+			"data": "DATPRE",
 		},
 		// Portal header: Legisl. | Numero | Data | <blank> | Titolo e Identificazione del DDL
 		// Index 3 was declared "Firmatari", but the portal renders no
@@ -140,6 +144,7 @@ var All = []Archive{
 			"numero":     "NUMORD",
 			"firmatario": "FIRMAT",
 			"rubrica":    "RUBRIC",
+			"data":       "DATPRE",
 		},
 		// Portal header: Legisl. | N.Ord. | Data Pres. | <blank> | Titolo e Primo Firmatario
 		// Index 3 was declared "Firmatari": the portal renders that column
@@ -155,6 +160,7 @@ var All = []Archive{
 			"numero":     "NUMORD",
 			"firmatario": "FIRMAT",
 			"rubrica":    "RUBRIC",
+			"data":       "DATPRE",
 		},
 		// Portal header: Legisl. | N.Ord. | Data Pres. | <blank> | Titolo e Primo Firmatario
 		// Index 3 was declared "Firmatari": the portal renders that column
@@ -170,6 +176,7 @@ var All = []Archive{
 			"numero":     "NUMORD",
 			"firmatario": "FIRMAT",
 			"rubrica":    "RUBRIC",
+			"data":       "DATPRE",
 		},
 		// Portal header: Legisl. | N.Ord. | Data Pres. | <blank> | Titolo e Primo Firmatario
 		// Index 3 was declared "Firmatari": the portal renders that column
@@ -185,6 +192,7 @@ var All = []Archive{
 			"numero":     "NUMORD",
 			"firmatario": "FIRMAT",
 			"rubrica":    "RUBRIC",
+			"data":       "DATPRE",
 		},
 		// Portal header: Legisl. | N.Ord. | Data Pres. | <blank> | Titolo e Primo Firmatario
 		// Index 3 was declared "Firmatari": the portal renders that column
@@ -200,6 +208,7 @@ var All = []Archive{
 			"numero":      "NUMORD",
 			"firmatario":  "FIRMAT",
 			"commissione": "COMMIS",
+			"data":        "DATPRE",
 		},
 		// Portal header: Legisl. | N.Ord. | Data Pres. | <blank> | Titolo e Primo Firmatario
 		// Index 3 was declared "Firmatari": the portal renders that column

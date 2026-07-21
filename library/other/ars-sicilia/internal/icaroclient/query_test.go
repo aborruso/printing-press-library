@@ -132,6 +132,22 @@ func TestBySlug_Unknown(t *testing.T) {
 	}
 }
 
+// TestDataQualifiesOnDatpre covers the --data flag mapping added for
+// `deputato profilo --data`: on ddl and the atti-parlamentari archives the
+// presentation date is qualified on DATPRE (there is no dedicated data column
+// in the short-list, but DATPRE is queryable upstream).
+func TestDataQualifiesOnDatpre(t *testing.T) {
+	for _, slug := range []string{"ddl", "interrogazioni", "interpellanze", "mozioni", "odg", "risoluzioni"} {
+		arc := BySlug(slug)
+		if arc == nil {
+			t.Fatalf("BySlug(%q) nil", slug)
+		}
+		if arc.FieldMap["data"] != "DATPRE" {
+			t.Errorf("%s: FieldMap[data] = %q, want DATPRE", slug, arc.FieldMap["data"])
+		}
+	}
+}
+
 func TestBuildQuery_Escludi(t *testing.T) {
 	arc := Archive{
 		ID:       "233",

@@ -18,12 +18,13 @@ import (
 func newNovelDeputatoProfiloCmd(flags *rootFlags) *cobra.Command {
 	var (
 		flagLegisl int
+		flagData   string
 		flagLimit  int
 	)
 	cmd := &cobra.Command{
 		Use:     "profilo <nome>",
 		Short:   "Aggrega in un'unica vista tutti gli atti firmati o pronunciati da un deputato.",
-		Example: "  ars-sicilia-pp-cli deputato profilo \"Rossi Mario\" --legisl 18 --json",
+		Example: "  ars-sicilia-pp-cli deputato profilo \"Rossi Mario\" --legisl 18 --data 2024-01-01:2024-12-31 --json",
 		Annotations: map[string]string{
 			"mcp:read-only": "true",
 		},
@@ -38,10 +39,11 @@ func newNovelDeputatoProfiloCmd(flags *rootFlags) *cobra.Command {
 			if name == "" {
 				return fmt.Errorf("nome del deputato richiesto (es. \"Rossi Mario\")")
 			}
-			return runDeputatoProfilo(cmd, flags, name, flagLegisl, flagLimit)
+			return runDeputatoProfilo(cmd, flags, name, flagLegisl, flagData, flagLimit)
 		},
 	}
 	cmd.Flags().IntVar(&flagLegisl, "legisl", 0, "Legislatura (es. 18). 0 = tutte le legislature.")
+	cmd.Flags().StringVar(&flagData, "data", "", "Data di presentazione/seduta (YYYY-MM-DD; range con YYYY-MM-DD:YYYY-MM-DD). Filtra tutti i sotto-archivi su DATPRE/DATSED.")
 	cmd.Flags().IntVar(&flagLimit, "limit", 30, "Max risultati per archivio.")
 	return cmd
 }
@@ -59,6 +61,7 @@ type profileItem struct {
 type profileReport struct {
 	Deputato  string         `json:"deputato"`
 	Legisl    int            `json:"legisl,omitempty"`
+	Data      string         `json:"data,omitempty"`
 	Conteggio map[string]int `json:"conteggio"`
 	// Troncato lists the archive slugs where Conteggio is a --limit cap, not
 	// the true total: the portal had more matching records than were
@@ -67,7 +70,7 @@ type profileReport struct {
 	Atti     []profileItem `json:"atti"`
 }
 
-func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legisl, perArchive int) error {
+func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legisl int, data string, perArchive int) error {
 	ctx := cmd.Context()
 	if ctx == nil {
 		ctx = context.Background()
@@ -78,6 +81,7 @@ func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legis
 	report := profileReport{
 		Deputato:  name,
 		Legisl:    legisl,
+		Data:      data,
 		Conteggio: map[string]int{},
 	}
 
@@ -100,9 +104,12 @@ func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legis
 		if legisl > 0 {
 			params["legisl"] = itoa(legisl)
 		}
+		if data != "" {
+			params["data"] = data
+		}
 		var truncated bool
 		recs, err := c.Search(ctx, *arc, icaro.SearchOptions{
-			Params:    params,
+			Params:    normalizeParams(*arc, params),
 			Limit:     perArchive,
 			MaxPages:  maxInt(1, (perArchive+9)/10),
 			Truncated: &truncated,
@@ -137,9 +144,12 @@ func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legis
 			if legisl > 0 {
 				params["legisl"] = itoa(legisl)
 			}
+			if data != "" {
+				params["data"] = data
+			}
 			var truncated bool
 			recs, err := c.Search(ctx, *arc, icaro.SearchOptions{
-				Params:    params,
+				Params:    normalizeParams(*arc, params),
 				Limit:     perArchive,
 				MaxPages:  maxInt(1, (perArchive+9)/10),
 				Truncated: &truncated,
@@ -187,6 +197,9 @@ func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legis
 	fmt.Fprintf(out, "Deputato: %s\n", report.Deputato)
 	if report.Legisl > 0 {
 		fmt.Fprintf(out, "Legislatura: %d\n", report.Legisl)
+	}
+	if report.Data != "" {
+		fmt.Fprintf(out, "Data: %s\n", report.Data)
 	}
 	fmt.Fprintf(out, "\nConteggi per archivio:\n")
 	troncato := map[string]bool{}

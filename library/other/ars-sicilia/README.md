@@ -139,7 +139,9 @@ ars-sicilia-pp-cli deputato profilo "Abbate Ignazio" --json --select tipo,data,t
 - **`--csv` on empty results**: when a command (e.g. `analytics --csv`) produces an empty result set, the CSV output is the JSON literal `[]` instead of an empty/header-only CSV. Piping that to a `.csv` file yields malformed content. Use `--json` for empty/unsynced data until this is fixed upstream.
 - **`search` JSON shape**: `search --json` returns an object `{ "meta": {...}, "results": [...] }`, not a top-level array. When piping to `jq`, select `.results` (e.g. `search "x" --json | jq '.results[]'`). Status lines ("no search endpoint…", sync hints) go to stderr, so `2>/dev/null` keeps stdout clean.
 - **Local-store commands need a sync first**: `search`, `analytics` and `sync stale` read the local SQLite store. On a fresh install run `ars-sicilia-pp-cli sync --full` first; until then they return empty results (with a sync hint on stderr). All other commands (`*/cerca`, `*/get`, `ddl iter`, `deputato profilo`, `legge cronologia`, `commissione dossier`) query the portal live and need no sync.
-- **`analytics --group-by cofirmatari` / `oratore` and `ddl drift` are not fed by the current sync** ⚠️: the sync stores only the list-page fields (`data`, `numero`, `title`, `url`, …). The signatories (`firmatari`), speakers (`oratori`) and per-bill iter status (`iter`) live only inside each document `body` (reachable via `get`) and are **not** extracted into the store. As a result these aggregations return empty/`null` **regardless of how much you sync**. Only `analytics --group-by anno` works today. Extracting per-document detail during sync is planned but not yet implemented.
+- **`analytics --group-by cofirmatari` and `ddl drift` need a deep sync** ⚠️: a plain sync stores only the list-page fields (`data`, `numero`, `title`, `url`, …). The signatories (`firmatari`) and per-bill iter status (`iter`) live only inside each document `body`, so run **`ars-sicilia-pp-cli sync --resources ddl --deep`** to extract them into the store — then `analytics --group-by cofirmatari --type ddl` works, and `ddl drift` compares the iter state across two deep syncs. The deep pass fetches one detail page per ddl (~1 extra request each), so a full legislature takes a few minutes; a normal sync stays fast.
+- **`analytics --group-by oratore` is not fed by any sync** ⚠️: the speakers (`oratori`) appear only inside the full aula transcript text, which the sync does not fetch or parse, so this aggregation returns empty **regardless of how much you sync** (including `--deep`). Use `--group-by cofirmatari` (with `--deep`) or `--group-by anno` instead.
+- **`doctor`'s cache-staleness threshold (6h) and `sync stale`'s default (7d) are intentionally different, not a bug**: `doctor`'s cache section is generated framework code with a fixed, conservative 6h default and no flag to change it — it's a generic "is this stale enough to worry about" signal. `sync stale --max-age` defaults to 7d because ARS parliamentary data (sedute, commissioni, interrogazioni) doesn't turn over hourly; a weekly sync is normally plenty. An agent that automates sync should not rely on `sync stale`'s default alone as the sole freshness signal — it can report `stale: false` on a store `doctor` already flags as stale. Check `doctor`'s `cache.status` (or pass an explicit `sync stale --max-age` matching your own freshness needs) rather than assuming the two agree.
 
 ## Unique Features
 
@@ -153,12 +155,13 @@ These capabilities aren't available in any other tool for this API.
   ```bash
   ars-sicilia-pp-cli ddl iter 18 1153 --json
   ```
-- **`deputato profilo`** — Aggrega in un'unica vista tutti gli atti firmati o pronunciati da un deputato: DDL, interrogazioni, interpellanze, mozioni, ordini del giorno, risoluzioni e interventi in resoconti d'aula.
+- **`deputato profilo`** — Aggrega in un'unica vista tutti gli atti firmati o pronunciati da un deputato: DDL, interrogazioni, interpellanze, mozioni, ordini del giorno, risoluzioni e interventi in resoconti d'aula. `--data` (range `YYYY-MM-DD:YYYY-MM-DD`) filtra per data di presentazione/seduta su tutti i sotto-archivi, per query storiche mirate senza dover alzare `--limit`.
 
   _Sostituisce un workflow di 7 click manuali con un'unica chiamata strutturata: pensata per agenti che rispondono a 'che ha fatto il deputato X?'._
 
   ```bash
   ars-sicilia-pp-cli deputato profilo "Abbate Ignazio" --legisl 18 --json --select tipo,data,titolo
+  ars-sicilia-pp-cli deputato profilo "Safina" --legisl 18 --data 2024-07-01:2024-07-31 --json
   ```
 - **`commissione dossier`** — Vista completa su una commissione: convocazioni in calendario, sommari lavori, DDL assegnati e pareri richiesti al Governo regionale.
 
@@ -181,10 +184,11 @@ These capabilities aren't available in any other tool for this API.
   ```bash
   ars-sicilia-pp-cli analytics --type ddl --group-by anno --limit 50 --json
   ```
-- **`analytics --group-by cofirmatari` / `oratore`** — ⚠️ _Non ancora funzionanti._ Pensati per mappare alleanze (coppie di co-firmatari) e classificare gli oratori più attivi, ma oggi restituiscono vuoto: i firmatari/oratori non vengono estratti nello store dalla sync attuale (vedi **Known Gaps**). L'estrazione del dettaglio per documento è pianificata.
+- **`analytics --group-by cofirmatari`** — Mappa le alleanze legislative (coppie di co-firmatari di DDL). Richiede una **deep sync** che estragga i firmatari dalle schede di dettaglio: `ars-sicilia-pp-cli sync --resources ddl --deep`. Dopo, funziona su `--type ddl` (vedi **Known Gaps** per i costi).
+- **`analytics --group-by oratore`** — ⚠️ _Non funzionante._ Pensato per classificare gli oratori più attivi in aula, ma gli oratori compaiono solo nel testo integrale dei resoconti, non estratto da nessuna sync (nemmeno `--deep`); vedi **Known Gaps**.
 
 ### Stato e monitoraggio
-- **`ddl drift`** — ⚠️ _Non ancora funzionante._ Dovrebbe confrontare lo stato dell'iter dei DDL tra due sync e segnalare quelli "mossi", ma oggi restituisce `null`: il campo `iter` non viene scritto dalla sync attuale (vedi **Known Gaps**). Per la cronologia di un singolo DDL usa invece `ddl iter <legisl> <numero>`, che la legge in diretta dal documento.
+- **`ddl drift`** — Confronta lo stato dell'iter dei DDL tra due sync e segnala quelli "mossi" (da commissione ad aula, approvati, ritirati). Richiede due **deep sync** a distanza di tempo (`sync --resources ddl --deep`), perché il campo `iter` viene scritto solo dalla deep sync (vedi **Known Gaps**). Per la cronologia di un singolo DDL usa `ddl iter <legisl> <numero>`, che la legge in diretta dal documento.
 - **`sync stale`** — Mostra per ognuno dei 12 archivi ARS: timestamp ultima sync, n. record locali, età della sync, eventuale segnalazione di staleness.
 
   _Per agenti che orchestrano sync automatico: decide se rinfrescare prima di rispondere o se i dati locali sono ancora freschi._
@@ -203,6 +207,14 @@ ars-sicilia-pp-cli sync --full --resources leggi,ddl,interrogazioni,mozioni,inte
 ```
 
 Prima sincronizzazione di tutti gli archivi politici della XVIII legislatura — i dati restano in `~/.local/share/ars-sicilia-pp-cli/store.db`.
+
+### Deep sync dei DDL (firmatari + iter)
+
+```bash
+ars-sicilia-pp-cli sync --resources ddl --legisl 18 --deep
+```
+
+Per ogni ddl scarica anche la scheda di dettaglio ed estrae i **firmatari** e lo **stato dell'iter** (assenti nella short-list). Sblocca `analytics --group-by cofirmatari --type ddl` e `ddl drift` (quest'ultimo richiede due deep sync a distanza di tempo). Costa ~1 richiesta extra per ddl, quindi è più lento di una sync normale.
 
 ### Iter completo di un DDL con output narrowing
 
