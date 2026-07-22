@@ -35,8 +35,8 @@ func TestParseBDList(t *testing.T) {
 		t.Fatalf("rows = %d, want 1 (header must be skipped)", len(rows))
 	}
 	r := rows[0]
-	if r.Fields["Legisl."] != "XVIII" {
-		t.Errorf("Legisl. = %q", r.Fields["Legisl."])
+	if r.Fields["Legisl."] != "18" { // "XVIII" normalizzato in arabo
+		t.Errorf("Legisl. = %q, want 18", r.Fields["Legisl."])
 	}
 	if r.Fields["Data"] != "14/07/2026" {
 		t.Errorf("Data = %q", r.Fields["Data"])
@@ -225,6 +225,19 @@ func TestDdmmyyyyToISO(t *testing.T) {
 	}
 	if got := ddmmyyyyToISO("boh"); got != "" {
 		t.Errorf("ddmmyyyyToISO(boh) = %q, want empty", got)
+	}
+}
+
+func TestRomanToArabic(t *testing.T) {
+	cases := map[string]string{
+		"XVIII": "18", "XVII": "17", "I": "1", "IV": "4", "IX": "9", "XIV": "14",
+		"18":  "18", // già arabo -> invariato
+		"foo": "foo",
+	}
+	for in, want := range cases {
+		if got := romanToArabic(in); got != want {
+			t.Errorf("romanToArabic(%q) = %q, want %q", in, got, want)
+		}
 	}
 }
 

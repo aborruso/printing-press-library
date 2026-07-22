@@ -278,6 +278,11 @@ func groupByAnno(ctx context.Context, db *sql.DB, typ string, legisl, limit int)
 // form and the "DD mese YYYY" document-body form), returning "" when the
 // date doesn't parse to a sortable "YYYY-MM-DD" key.
 func yearOf(dateStr string) string {
+	s := strings.TrimSpace(dateStr)
+	// Formato del backend /bd/: DD/MM/YYYY (es. 21/07/2026).
+	if len(s) == 10 && s[2] == '/' && s[5] == '/' && isDigits(s[6:10]) {
+		return s[6:10]
+	}
 	key := iterDateKey(dateStr)
 	if len(key) >= 5 && key[4] == '-' {
 		return key[:4]

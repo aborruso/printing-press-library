@@ -309,6 +309,12 @@ func (c *Client) searchBD(ctx context.Context, arc Archive, opts SearchOptions) 
 		if err != nil {
 			return all, err
 		}
+		// URL di sorgente: la scheda per-record (openRisultati) non è un deep-link
+		// risolvibile, quindi puntiamo alla pagina della banca dati /bd/, così il
+		// campo url non è vuoto e resta cliccabile.
+		for i := range rows {
+			rows[i].URL = bdURL
+		}
 		if keepDate != nil {
 			kept := rows[:0]
 			for _, r := range rows {
@@ -480,13 +486,42 @@ func parseBDRow(li *html.Node) Record {
 		if val == "" || label == "" {
 			continue
 		}
-		rec.Fields[label] = val
 		switch label {
+		case "Legisl.":
+			// Il /bd/ mostra la legislatura in numero romano (XVIII); la
+			// normalizziamo in arabo ("18") per coerenza con il flusso Icaro e
+			// perché lo store/le query locali filtrano su "$.legisl" == "18".
+			val = romanToArabic(val)
 		case "N. Seduta", "N. Foglio":
 			rec.Fields["Numero"] = val
 		}
+		rec.Fields[label] = val
 	}
 	return rec
+}
+
+// romanToArabic converte un numero romano nella sua forma arabica come stringa.
+// Se s non è un numero romano valido lo restituisce invariato.
+func romanToArabic(s string) string {
+	vals := map[byte]int{'I': 1, 'V': 5, 'X': 10, 'L': 50, 'C': 100, 'D': 500, 'M': 1000}
+	u := strings.ToUpper(strings.TrimSpace(s))
+	total, prev := 0, 0
+	for i := len(u) - 1; i >= 0; i-- {
+		v, ok := vals[u[i]]
+		if !ok {
+			return s // non romano
+		}
+		if v < prev {
+			total -= v
+		} else {
+			total += v
+			prev = v
+		}
+	}
+	if total <= 0 {
+		return s
+	}
+	return strconv.Itoa(total)
 }
 
 // post esegue una POST x-www-form-urlencoded usando il jar/limiter del Client.
