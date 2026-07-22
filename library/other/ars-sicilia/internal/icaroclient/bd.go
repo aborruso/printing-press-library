@@ -33,6 +33,12 @@ type bdSpec struct {
 	// (es. "$Ispeakers"): il filtro --oratore viene risolto da nome a ID leggendo
 	// le <option> del form, poi inviato su questo campo con modalità "$S..."="or".
 	speakerField string
+	// commissioneField, se valorizzato, è il <select> delle commissioni (es.
+	// "$Icommissione_id" sommari, "$Iidcomm" convocazioni): --commissione/--codcom
+	// vengono risolti in id (per-legislatura). commissioneMode, se non vuoto, è il
+	// valore del selettore "$S<field>" (es. "or" per i select multipli).
+	commissioneField string
+	commissioneMode  string
 }
 
 // bdArchives elenca gli archivi serviti dal backend /bd/. Gli altri restano su
@@ -46,7 +52,8 @@ var bdArchives = map[string]bdSpec{
 			"numero": "$Iseduta_numero",
 			"testo":  "$TTEXT",
 		},
-		static: map[string]string{"$S$TTEXT": "all", "$S$Todg": "all"},
+		static:           map[string]string{"$S$TTEXT": "all", "$S$Todg": "all"},
+		commissioneField: "$Icommissione_id", // single-select: nessun $S
 	},
 	"resoconti": {
 		path: "resoconti",
@@ -66,61 +73,129 @@ var bdArchives = map[string]bdSpec{
 			"anno":   "anno",
 			"testo":  "$TTEXT",
 		},
-		static: map[string]string{"$S$TTEXT": "all"},
-		// NB: il filtro --commissione/--codcom non è ancora mappato su /bd/
-		// (il campo $Iidcomm è un <select> con id per-commissione: va risolto
-		// nome->id come per gli oratori — miglioramento condiviso con sommari).
+		static:           map[string]string{"$S$TTEXT": "all"},
+		commissioneField: "$Iidcomm", // multi-select
+		commissioneMode:  "or",
 	},
 }
 
-// isBDArchive segnala se lo slug è servito dal backend /bd/.
-func isBDArchive(slug string) bool {
+// IsBDArchive segnala se lo slug è servito dal backend /bd/.
+func IsBDArchive(slug string) bool {
 	_, ok := bdArchives[slug]
 	return ok
 }
 
-// bdSpeaker è un oratore estratto dal <select> del form: id numerico, nome e le
-// legislature in cui è attivo (attributo data-legs, es. "18,17,16").
-type bdSpeaker struct {
+// bdOption è una <option> di un <select> del form (oratori o commissioni): id,
+// nome e le legislature associate (data-leg/data-legs). Per commissioni gli id
+// sono PER-LEGISLATURA (es. "I - Affari Istituzionali" ha id 116 in leg 18, 1 in
+// leg 13), quindi il filtro per legislatura è essenziale per prendere l'id giusto.
+type bdOption struct {
 	ID   string
 	Name string
 	Legs string
 }
 
-// reSpeakerOption matcha le <option> del select oratori:
-// `<option  value="971" data-legs="18">Abbate Ignazio</option>` (due spazi dopo
-// <option nel markup del portale). Le option di legislatura/anno non hanno
-// data-legs, quindi restano escluse.
-var reSpeakerOption = regexp.MustCompile(`<option\s+value="(\d+)" data-legs="([^"]*)">([^<]+)</option>`)
+// reBDOption matcha le <option> di un select (due spazi dopo <option nel markup).
+// Il secondo gruppo cattura gli attributi residui, da cui si estrae data-leg(s).
+var reBDOption = regexp.MustCompile(`<option\s+value="([^"]*)"([^>]*)>([^<]+)</option>`)
+var reDataLegs = regexp.MustCompile(`data-legs?="([^"]*)"`)
 
-// parseBDSpeakers estrae l'elenco oratori dal form (nome->ID + legislature).
-func parseBDSpeakers(body string) []bdSpeaker {
-	ms := reSpeakerOption.FindAllStringSubmatch(body, -1)
-	out := make([]bdSpeaker, 0, len(ms))
-	for _, m := range ms {
-		out = append(out, bdSpeaker{ID: m[1], Legs: m[2], Name: unescapeMini(strings.TrimSpace(m[3]))})
+// parseSelectOptions estrae le <option> del solo <select id="selectID">. Lo scoping
+// al select giusto evita di mescolare select diversi presenti nello stesso form
+// (legislatura, anno, oratori, commissioni).
+func parseSelectOptions(body, selectID string) []bdOption {
+	start := strings.Index(body, `<select id="`+selectID+`"`)
+	if start < 0 {
+		return nil
+	}
+	rest := body[start:]
+	end := strings.Index(rest, "</select>")
+	if end < 0 {
+		return nil
+	}
+	var out []bdOption
+	for _, m := range reBDOption.FindAllStringSubmatch(rest[:end], -1) {
+		if strings.TrimSpace(m[1]) == "" { // opzione "Tutte" (value vuoto)
+			continue
+		}
+		legs := ""
+		if lm := reDataLegs.FindStringSubmatch(m[2]); lm != nil {
+			legs = lm[1]
+		}
+		out = append(out, bdOption{ID: m[1], Name: unescapeMini(strings.TrimSpace(m[3])), Legs: legs})
 	}
 	return out
 }
 
-// resolveSpeakerIDs cerca gli oratori il cui nome contiene la query (case-insensitive)
-// e, se legisl è dato, sono attivi in quella legislatura. Ritorna i loro ID.
-func resolveSpeakerIDs(speakers []bdSpeaker, query, legisl string) []string {
+// resolveOptionIDs ritorna gli id delle option il cui nome contiene la query
+// (case-insensitive) e, se legisl è dato, associate a quella legislatura.
+func resolveOptionIDs(opts []bdOption, query, legisl string) []string {
 	q := strings.ToLower(strings.TrimSpace(query))
 	if q == "" {
 		return nil
 	}
 	var ids []string
-	for _, s := range speakers {
-		if !strings.Contains(strings.ToLower(s.Name), q) {
+	for _, o := range opts {
+		if !strings.Contains(strings.ToLower(o.Name), q) {
 			continue
 		}
-		if legisl != "" && !legsContains(s.Legs, legisl) {
+		if legisl != "" && o.Legs != "" && !legsContains(o.Legs, legisl) {
 			continue
 		}
-		ids = append(ids, s.ID)
+		ids = append(ids, o.ID)
 	}
 	return ids
+}
+
+// resolveCommissioneIDs risolve --codcom (1-6, per numero ordinale romano) oppure
+// --commissione (nome, substring) negli id del <select> commissioni, filtrando per
+// legislatura (gli id sono per-legislatura). Ritorna [] (non nil) se il filtro è
+// richiesto ma non corrisponde nulla; nil se nessun filtro è richiesto.
+func resolveCommissioneIDs(opts []bdOption, codcom, commissione, legisl string) []string {
+	if cod := strings.TrimSpace(codcom); cod != "" {
+		roman := romanOrdinal(cod)
+		if roman == "" {
+			return []string{}
+		}
+		ids := []string{}
+		for _, o := range opts {
+			if !strings.HasPrefix(o.Name, roman+" ") { // "I - Affari…" inizia con "I "
+				continue
+			}
+			if legisl != "" && o.Legs != "" && !legsContains(o.Legs, legisl) {
+				continue
+			}
+			ids = append(ids, o.ID)
+		}
+		return ids
+	}
+	if com := strings.TrimSpace(commissione); com != "" {
+		ids := resolveOptionIDs(opts, com, legisl)
+		if ids == nil {
+			return []string{}
+		}
+		return ids
+	}
+	return nil
+}
+
+// romanOrdinal converte il codice commissione 1-6 nel numero romano I..VI ("" altrimenti).
+func romanOrdinal(n string) string {
+	switch strings.TrimSpace(n) {
+	case "1":
+		return "I"
+	case "2":
+		return "II"
+	case "3":
+		return "III"
+	case "4":
+		return "IV"
+	case "5":
+		return "V"
+	case "6":
+		return "VI"
+	}
+	return ""
 }
 
 // legsContains riporta se legs ("18,17,16") include la legislatura leg.
@@ -174,24 +249,43 @@ func (c *Client) searchBD(ctx context.Context, arc Archive, opts SearchOptions) 
 			keepDate = keep
 			continue
 		}
-		if k == "oratore" && spec.speakerField != "" {
-			continue // risolto sotto, serve l'HTML del form
+		// oratore, codcom e commissione sono risolti sotto (servono le <option>).
+		if k == "oratore" || k == "codcom" || k == "commissione" {
+			continue
 		}
 		if field, ok := spec.fields[k]; ok {
 			form.Set(field, v)
 		}
 	}
 
+	legisl := strings.TrimSpace(opts.Params["legisl"])
+
 	// Filtro --oratore: risolve il nome negli ID del <select> oratori del form
 	// (con le legislature in cui l'oratore è attivo) e li invia in modalità "or".
 	if spec.speakerField != "" {
 		if orat := strings.TrimSpace(opts.Params["oratore"]); orat != "" {
-			ids := resolveSpeakerIDs(parseBDSpeakers(sessionHTML), orat, strings.TrimSpace(opts.Params["legisl"]))
+			ids := resolveOptionIDs(parseSelectOptions(sessionHTML, spec.speakerField), orat, legisl)
 			if len(ids) == 0 {
 				return nil, nil // nessun oratore corrisponde: risultato vuoto
 			}
 			form[spec.speakerField] = ids
 			form.Set("$S"+spec.speakerField, "or")
+		}
+	}
+
+	// Filtro --commissione / --codcom: risolve in id (per-legislatura) dal <select>.
+	if spec.commissioneField != "" {
+		cod := strings.TrimSpace(opts.Params["codcom"])
+		com := strings.TrimSpace(opts.Params["commissione"])
+		if cod != "" || com != "" {
+			ids := resolveCommissioneIDs(parseSelectOptions(sessionHTML, spec.commissioneField), cod, com, legisl)
+			if len(ids) == 0 {
+				return nil, nil // nessuna commissione corrisponde: risultato vuoto
+			}
+			form[spec.commissioneField] = ids
+			if spec.commissioneMode != "" {
+				form.Set("$S"+spec.commissioneField, spec.commissioneMode)
+			}
 		}
 	}
 

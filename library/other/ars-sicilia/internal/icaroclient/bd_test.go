@@ -161,9 +161,9 @@ func TestBDSpeakers(t *testing.T) {
 <option  value="">Tutte</option>
 </select>
 <option selected value="18" >XVIII</option>`
-	sp := parseBDSpeakers(form)
+	sp := parseSelectOptions(form, "$Ispeakers")
 	if len(sp) != 3 { // "Tutte" e la legislatura (senza data-legs) esclusi
-		t.Fatalf("parseBDSpeakers = %d oratori, want 3: %+v", len(sp), sp)
+		t.Fatalf("parseSelectOptions = %d oratori, want 3: %+v", len(sp), sp)
 	}
 	cases := []struct {
 		q, legisl string
@@ -176,13 +176,46 @@ func TestBDSpeakers(t *testing.T) {
 		{"nessuno", "18", nil},              // nessun match
 	}
 	for _, c := range cases {
-		got := resolveSpeakerIDs(sp, c.q, c.legisl)
+		got := resolveOptionIDs(sp, c.q, c.legisl)
 		if len(got) != len(c.want) || (len(got) == 1 && got[0] != c.want[0]) {
-			t.Errorf("resolveSpeakerIDs(%q, legisl=%q) = %v, want %v", c.q, c.legisl, got, c.want)
+			t.Errorf("resolveOptionIDs(%q, legisl=%q) = %v, want %v", c.q, c.legisl, got, c.want)
 		}
 	}
 	if !legsContains("18,17,16", "18") || legsContains("13", "18") {
 		t.Error("legsContains errato")
+	}
+}
+
+func TestResolveCommissioneIDs(t *testing.T) {
+	// id commissione per-legislatura: "I - Affari Istituzionali" = 1 (leg13), 116 (leg18)
+	opts := []bdOption{
+		{ID: "1", Name: "I - Affari Istituzionali", Legs: "13"},
+		{ID: "116", Name: "I - Affari Istituzionali", Legs: "18"},
+		{ID: "2", Name: "II - Bilancio e Programmazione", Legs: "13"},
+		{ID: "117", Name: "II - Bilancio", Legs: "18"},
+		{ID: "11", Name: "Antimafia", Legs: "18"},
+	}
+	cases := []struct {
+		cod, com, legisl string
+		want             []string
+	}{
+		{"1", "", "18", []string{"116"}},        // codcom 1 -> "I " -> leg18
+		{"1", "", "13", []string{"1"}},          // stessa commissione, leg diversa
+		{"2", "", "18", []string{"117"}},        // "II " non confonde con "I "
+		{"", "Bilancio", "18", []string{"117"}}, // nome, substring
+		{"", "Antimafia", "18", []string{"11"}}, // commissione speciale
+		{"", "inesistente", "18", []string{}},   // richiesto ma nessun match -> [] non nil
+		{"7", "", "18", []string{}},             // codcom fuori 1-6 -> []
+	}
+	for _, c := range cases {
+		got := resolveCommissioneIDs(opts, c.cod, c.com, c.legisl)
+		if len(got) != len(c.want) || (len(got) == 1 && got[0] != c.want[0]) {
+			t.Errorf("resolveCommissioneIDs(cod=%q com=%q leg=%q) = %v, want %v", c.cod, c.com, c.legisl, got, c.want)
+		}
+	}
+	// nessun filtro richiesto -> nil
+	if resolveCommissioneIDs(opts, "", "", "18") != nil {
+		t.Error("senza codcom/commissione deve tornare nil")
 	}
 }
 
@@ -196,10 +229,10 @@ func TestDdmmyyyyToISO(t *testing.T) {
 }
 
 func TestIsBDArchive(t *testing.T) {
-	if !isBDArchive("sommari") {
+	if !IsBDArchive("sommari") {
 		t.Error("sommari deve essere un archivio /bd/")
 	}
-	if isBDArchive("ddl") {
+	if IsBDArchive("ddl") {
 		t.Error("ddl NON deve essere /bd/ (resta su Icaro)")
 	}
 }

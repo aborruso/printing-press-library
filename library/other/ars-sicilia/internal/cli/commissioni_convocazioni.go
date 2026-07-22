@@ -44,7 +44,7 @@ func newCommissioniConvocazioniCmd(flags *rootFlags) *cobra.Command {
 	}
 	cmd.Flags().IntVar(&flagLegisl, "legisl", 0, "Legislatura.")
 	cmd.Flags().IntVar(&flagAnno, "anno", 0, "Anno della convocazione (es. 2026). Filtro nativo del backend /bd/.")
-	cmd.Flags().StringVar(&flagCodcom, "codcom", "", "Codice commissione 1-6 (PRIMA..SESTA); in alternativa usa --commissione. NB: su /bd/ non ancora attivo.")
+	cmd.Flags().StringVar(&flagCodcom, "codcom", "", "Codice commissione 1-6 (I..VI); in alternativa usa --commissione. Usare con --legisl (gli id commissione sono per-legislatura).")
 	cmd.Flags().StringVar(&flagCommis, "commissione", "", "Nome commissione.")
 	cmd.Flags().StringVar(&flagData, "data", "", "Data seduta (YYYY-MM-DD; range con YYYY-MM-DD:YYYY-MM-DD).")
 	cmd.Flags().StringVar(&flagISIS, "isis-query", "", "Espressione ISIS grezza (escape hatch).")

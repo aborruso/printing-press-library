@@ -68,8 +68,15 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 	if ctx == nil {
 		ctx = context.Background()
 	}
+	// Gli archivi /bd/ ricevono i param grezzi: la loro traduzione (codcom/
+	// commissione risolti in id, date in AAMMGG o ISO) avviene in searchBD, non
+	// con normalizeParams (specifico del motore Icaro).
+	searchParams := p.Params
+	if !icaro.IsBDArchive(arc.Slug) {
+		searchParams = normalizeParams(*arc, p.Params)
+	}
 	recs, err := c.Search(ctx, *arc, icaro.SearchOptions{
-		Params:   normalizeParams(*arc, p.Params),
+		Params:   searchParams,
 		ISISRaw:  p.ISISRaw,
 		Limit:    p.Limit,
 		MaxPages: maxPages,
