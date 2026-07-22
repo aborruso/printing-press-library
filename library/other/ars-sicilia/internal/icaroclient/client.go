@@ -123,6 +123,12 @@ func (c *Client) Search(ctx context.Context, arc Archive, opts SearchOptions) ([
 	if c == nil {
 		return nil, fmt.Errorf("nil icaroclient.Client")
 	}
+	// Gli archivi delle sedute migrati al backend /bd/ (sommari, resoconti,
+	// convocazioni) hanno l'indice Icaro congelato: instradiamo qui, dove i dati
+	// sono correnti. Gli altri archivi restano sul flusso Icaro sotto.
+	if isBDArchive(arc.Slug) {
+		return c.searchBD(ctx, arc, opts)
+	}
 	expr := BuildQuery(arc, opts.Params, opts.ISISRaw)
 	if err := c.bootstrapSession(ctx, arc.ID, expr); err != nil {
 		return nil, err

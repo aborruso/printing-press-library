@@ -6,6 +6,7 @@ import "github.com/spf13/cobra"
 func newCommissioniSommariCmd(flags *rootFlags) *cobra.Command {
 	var (
 		flagLegisl   int
+		flagAnno     int
 		flagCodcom   string
 		flagCommis   string
 		flagData     string
@@ -25,6 +26,9 @@ func newCommissioniSommariCmd(flags *rootFlags) *cobra.Command {
 			params := map[string]string{}
 			if flagLegisl != 0 {
 				params["legisl"] = itoa(flagLegisl)
+			}
+			if flagAnno != 0 {
+				params["anno"] = itoa(flagAnno)
 			}
 			if flagCodcom != "" {
 				params["codcom"] = flagCodcom
@@ -51,6 +55,7 @@ func newCommissioniSommariCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().IntVar(&flagLegisl, "legisl", 0, "Legislatura.")
+	cmd.Flags().IntVar(&flagAnno, "anno", 0, "Anno della seduta (es. 2026). Filtro nativo del backend /bd/.")
 	cmd.Flags().StringVar(&flagCodcom, "codcom", "", "Codice commissione 1-6 (PRIMA..SESTA); in alternativa usa --commissione.")
 	cmd.Flags().StringVar(&flagCommis, "commissione", "", "Nome commissione.")
 	cmd.Flags().StringVar(&flagData, "data", "", "Data seduta (YYYY-MM-DD; range con YYYY-MM-DD:YYYY-MM-DD).")
