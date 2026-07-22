@@ -91,7 +91,7 @@ These capabilities aren't available in any other tool for this API.
   _Per le persone che vogliono sapere 'chi parla di più' senza scaricare 200 resoconti PDF e fare ctrl+F._
 
   ```bash
-  ars-sicilia-pp-cli analytics --type resoconti --group-by oratore --limit 30 --csv
+  ars-sicilia-pp-cli analytics --type resoconti --group-by oratore --legisl 18 --limit 30 --csv
   ```
 
 ### Stato e monitoraggio

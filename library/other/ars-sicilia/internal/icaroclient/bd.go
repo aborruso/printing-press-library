@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -99,6 +100,7 @@ type bdOption struct {
 // Il secondo gruppo cattura gli attributi residui, da cui si estrae data-leg(s).
 var reBDOption = regexp.MustCompile(`<option\s+value="([^"]*)"([^>]*)>([^<]+)</option>`)
 var reDataLegs = regexp.MustCompile(`data-legs?="([^"]*)"`)
+var reBDCount = regexp.MustCompile(`Trovati\s+(\d+)\s+risultati`)
 
 // parseSelectOptions estrae le <option> del solo <select id="selectID">. Lo scoping
 // al select giusto evita di mescolare select diversi presenti nello stesso form
@@ -519,4 +521,65 @@ func (c *Client) post(ctx context.Context, rawURL string, form url.Values) (stri
 	}
 	c.limiter.OnSuccess()
 	return string(raw), nil
+}
+
+// SpeakerCount è il numero di sedute d'Aula in cui un oratore è intervenuto.
+type SpeakerCount struct {
+	Name  string `json:"nome"`
+	ID    string `json:"id"`
+	Count int    `json:"sedute"`
+}
+
+// SpeakerSessionCounts costruisce la classifica degli oratori per numero di sedute
+// (archivio /bd/resoconti). Enumera gli oratori del <select> attivi nella
+// legislatura data e, per ciascuno, conta le sedute (una POST per oratore). anno
+// opzionale restringe l'anno. progress, se non nil, è chiamato ad ogni oratore.
+// Richiede legisl (senza, gli oratori sarebbero ~1000 = troppe richieste).
+func (c *Client) SpeakerSessionCounts(ctx context.Context, legisl, anno string, progress func(done, total int)) ([]SpeakerCount, error) {
+	if strings.TrimSpace(legisl) == "" {
+		return nil, fmt.Errorf("legislatura richiesta per la classifica oratori")
+	}
+	spec, ok := bdArchives["resoconti"]
+	if !ok {
+		return nil, fmt.Errorf("archivio resoconti non configurato per /bd/")
+	}
+	bdURL := c.BaseURL + "/bd/" + spec.path
+	sessionHTML, err := c.get(ctx, bdURL)
+	if err != nil {
+		return nil, fmt.Errorf("bd session (resoconti): %w", err)
+	}
+	var sel []bdOption
+	for _, s := range parseSelectOptions(sessionHTML, spec.speakerField) {
+		if s.Legs == "" || legsContains(s.Legs, legisl) {
+			sel = append(sel, s)
+		}
+	}
+	out := make([]SpeakerCount, 0, len(sel))
+	for i, s := range sel {
+		if ctx.Err() != nil {
+			return out, ctx.Err()
+		}
+		form := url.Values{}
+		form.Set("$Ilegislatura", legisl)
+		if strings.TrimSpace(anno) != "" {
+			form.Set("anno", anno)
+		}
+		form.Set(spec.speakerField, s.ID)
+		form.Set("$S"+spec.speakerField, "or")
+		form.Set("page", "1")
+		body, err := c.post(ctx, bdURL, form)
+		if err != nil {
+			return out, err
+		}
+		n := 0
+		if m := reBDCount.FindStringSubmatch(body); m != nil {
+			n, _ = strconv.Atoi(m[1])
+		}
+		out = append(out, SpeakerCount{Name: s.Name, ID: s.ID, Count: n})
+		if progress != nil {
+			progress(i+1, len(sel))
+		}
+	}
+	sort.SliceStable(out, func(i, j int) bool { return out[i].Count > out[j].Count })
+	return out, nil
 }

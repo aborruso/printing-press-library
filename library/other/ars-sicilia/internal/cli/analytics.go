@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strings"
 
+	icaro "github.com/mvanhorn/printing-press-library/library/other/ars-sicilia/internal/icaroclient"
 	"github.com/mvanhorn/printing-press-library/library/other/ars-sicilia/internal/store"
 	"github.com/spf13/cobra"
 )
@@ -33,8 +34,8 @@ Esempi:
   # Le 50 coppie di deputati che firmano più DDL insieme
   ars-sicilia-pp-cli analytics --type ddl --group-by cofirmatari --limit 50
 
-  # I 30 oratori più attivi in aula
-  ars-sicilia-pp-cli analytics --type resoconti --group-by oratore --limit 30`,
+  # I 30 oratori più attivi in aula nella XVIII legislatura (in diretta, richiede --legisl)
+  ars-sicilia-pp-cli analytics --type resoconti --group-by oratore --legisl 18 --limit 30`,
 		Example: "  ars-sicilia-pp-cli analytics --type ddl --group-by cofirmatari --limit 50 --json",
 		Annotations: map[string]string{
 			"mcp:read-only": "true",
@@ -74,6 +75,14 @@ func runAnalytics(cmd *cobra.Command, flags *rootFlags, typ, groupBy string, lim
 	if ctx == nil {
 		ctx = context.Background()
 	}
+
+	// group-by oratore: percorso LIVE su /bd/resoconti. L'anagrafica oratori non è
+	// nello store locale (né lo era su Icaro); la classifica si costruisce contando
+	// le sedute per ciascun oratore della legislatura direttamente dal portale.
+	if groupBy == "oratore" || groupBy == "oratori" {
+		return runOratoreAnalyticsLive(cmd, flags, legisl, limit)
+	}
+
 	db, err := store.OpenWithContext(ctx, dbPath)
 	if err != nil {
 		return fmt.Errorf("apertura database (%s): %w. Esegui prima `ars-sicilia-pp-cli sync --resources %s`.", dbPath, err, typ)
@@ -86,8 +95,6 @@ func runAnalytics(cmd *cobra.Command, flags *rootFlags, typ, groupBy string, lim
 	switch groupBy {
 	case "cofirmatari":
 		rows, err = pairCofirmatari(ctx, db.DB(), typ, legisl, limit)
-	case "oratore", "oratori":
-		rows, err = groupOratori(ctx, db.DB(), legisl, limit)
 	case "anno":
 		rows, err = groupByAnno(ctx, db.DB(), typ, legisl, limit)
 	default:
@@ -97,7 +104,7 @@ func runAnalytics(cmd *cobra.Command, flags *rootFlags, typ, groupBy string, lim
 		return err
 	}
 	// Empty result: hint on stderr (keeps JSON/CSV on stdout clean). Be honest
-	// about *why* it is empty and whether a sync can fix it.
+	// about *why* it is empty e se un sync può aiutare.
 	if len(rows) == 0 {
 		switch groupBy {
 		case "cofirmatari":
@@ -105,11 +112,6 @@ func runAnalytics(cmd *cobra.Command, flags *rootFlags, typ, groupBy string, lim
 			// extracts them from each ddl's detail page.
 			fmt.Fprintf(os.Stderr,
 				"hint: --group-by cofirmatari richiede i firmatari estratti dalle schede di dettaglio dei ddl. Esegui `ars-sicilia-pp-cli sync --resources ddl --deep` (più lento) e riprova; una sync normale non li popola.\n")
-		case "oratore", "oratori":
-			// The speakers live only in the full transcript, which no sync
-			// currently fetches or parses.
-			fmt.Fprintf(os.Stderr,
-				"hint: --group-by oratore non è alimentato dalla sync (gli oratori compaiono solo nel testo integrale dei resoconti, non estratto nello store). Vedi 'Known Gaps' nel README. Funzionano invece --group-by cofirmatari (con `sync --deep`) e --group-by anno.\n")
 		default:
 			fmt.Fprintf(os.Stderr,
 				"hint: nessun dato per --type %s --group-by %s. Lo store locale potrebbe non essere sincronizzato: esegui `ars-sicilia-pp-cli sync --resources %s` e riprova.\n",
@@ -117,6 +119,50 @@ func runAnalytics(cmd *cobra.Command, flags *rootFlags, typ, groupBy string, lim
 		}
 	}
 	return emitAnalytics(out, flags, rows)
+}
+
+// runOratoreAnalyticsLive costruisce la classifica degli oratori per numero di
+// sedute d'Aula, interrogando /bd/resoconti in diretta (l'anagrafica oratori non
+// è nello store). Richiede --legisl per limitare gli oratori a quelli attivi nella
+// legislatura (~90), altrimenti sarebbero ~1000 = troppe richieste.
+func runOratoreAnalyticsLive(cmd *cobra.Command, flags *rootFlags, legisl, limit int) error {
+	if legisl <= 0 {
+		return fmt.Errorf("--group-by oratore richiede --legisl (senza, gli oratori sarebbero circa mille: troppe richieste). Es: analytics --type resoconti --group-by oratore --legisl 18")
+	}
+	ctx := cmd.Context()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	c, err := icaro.New(nil)
+	if err != nil {
+		return err
+	}
+	// Progress su stderr (una richiesta per oratore): tenuto fuori dallo stdout
+	// così JSON/CSV restano puliti.
+	progress := func(done, total int) {
+		if flags.asJSON {
+			return
+		}
+		fmt.Fprintf(os.Stderr, "\rclassifica oratori (leg %d): %d/%d   ", legisl, done, total)
+		if done == total {
+			fmt.Fprintln(os.Stderr)
+		}
+	}
+	counts, err := c.SpeakerSessionCounts(ctx, itoa(legisl), "", progress)
+	if err != nil {
+		return err
+	}
+	rows := make([]analyticsRow, 0, len(counts))
+	for _, sc := range counts {
+		if sc.Count == 0 {
+			continue // oratore senza sedute nella legislatura
+		}
+		rows = append(rows, analyticsRow{Chiave: sc.Name, Conteggio: sc.Count})
+	}
+	if limit > 0 && len(rows) > limit {
+		rows = rows[:limit]
+	}
+	return emitAnalytics(cmd.OutOrStdout(), flags, rows)
 }
 
 // pairCofirmatari estrae le coppie di firmatari in un archivio (default: ddl)
@@ -175,53 +221,9 @@ func pairCofirmatari(ctx context.Context, db *sql.DB, typ string, legisl, limit 
 	return result, nil
 }
 
-// groupOratori conta interventi per nome oratore nei resoconti d'aula.
-// Per ora usa il campo libero `data->>'$.oratori'` (presente nei record sync).
-func groupOratori(ctx context.Context, db *sql.DB, legisl, limit int) ([]analyticsRow, error) {
-	whereLegisl := ""
-	args := []any{}
-	if legisl > 0 {
-		whereLegisl = "AND json_extract(data, '$.legisl') = ? "
-		args = append(args, fmt.Sprintf("%d", legisl))
-	}
-	q := `SELECT json_extract(data, '$.oratori') AS oratori
-		FROM resources
-		WHERE resource_type = 'resoconti'
-		` + whereLegisl + `
-		  AND json_extract(data, '$.oratori') IS NOT NULL
-		  AND json_extract(data, '$.oratori') != ''`
-	rows, err := db.QueryContext(ctx, q, args...)
-	if err != nil {
-		return nil, fmt.Errorf("query oratori: %w", err)
-	}
-	defer rows.Close()
-
-	counts := map[string]int{}
-	for rows.Next() {
-		var raw sql.NullString
-		if err := rows.Scan(&raw); err != nil {
-			continue
-		}
-		for _, n := range splitFirmatari(raw.String) {
-			if n == "" {
-				continue
-			}
-			counts[n]++
-		}
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("lettura righe oratori: %w", err)
-	}
-	result := make([]analyticsRow, 0, len(counts))
-	for k, v := range counts {
-		result = append(result, analyticsRow{Chiave: k, Conteggio: v})
-	}
-	sort.SliceStable(result, func(i, j int) bool { return result[i].Conteggio > result[j].Conteggio })
-	if len(result) > limit {
-		result = result[:limit]
-	}
-	return result, nil
-}
+// (--group-by oratore ora è gestito da runOratoreAnalyticsLive via /bd/resoconti;
+// la vecchia groupOratori che leggeva `$.oratori` dallo store — campo mai popolato
+// — è stata rimossa.)
 
 // groupByAnno conta documenti per anno in un archivio. L'anno va estratto
 // con iterDateKey (non un substr SQL a larghezza fissa): le date nello store
