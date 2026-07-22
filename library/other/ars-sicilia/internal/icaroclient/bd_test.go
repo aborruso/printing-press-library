@@ -87,6 +87,39 @@ func TestParseBDList_Resoconti(t *testing.T) {
 	}
 }
 
+// TestParseBDList_Convocazioni copre la forma a 5 colonne: "Commissione" è una
+// colonna propria (<p> semplice), "N. Foglio" -> "Numero", l'OdG è l'<h3>.
+func TestParseBDList_Convocazioni(t *testing.T) {
+	const fixture = `<ul class="tabella">
+  <li class="intestazione"><div class="intesta"><p>Legisl.</p></div></li>
+  <li>
+    <div class="intesta intesta_10"><strong><span class="simobile">Legisl.</span></strong><p> XVIII </p></div>
+    <div class="intesta intesta_10"><strong><span class="simobile">Data</span></strong><p> 22/07/2026 </p></div>
+    <div class="intesta intesta_10"><strong><span class="simobile">N. Foglio</span></strong><p> 287 </p></div>
+    <div class="intesta intesta_20"><strong><span class="simobile">Commissione</span></strong><p> I - Affari Istituzionali </p></div>
+    <div class="intesta intesta_40"><strong><span class="simobile">Ordine del giorno</span></strong>
+      <h3><a href="javascript: openRisultati('uuid')"> 1) Esame del ddl 779 </a></h3></div>
+  </li>
+</ul><span class="pagina_di">Pagina 1 di 28</span>`
+	rows, pages, err := parseBDList(fixture, Archive{Slug: "convocazioni"})
+	if err != nil {
+		t.Fatalf("parseBDList: %v", err)
+	}
+	if pages != 28 || len(rows) != 1 {
+		t.Fatalf("pages=%d rows=%d, want 28/1", pages, len(rows))
+	}
+	r := rows[0]
+	if r.Fields["Commissione"] != "I - Affari Istituzionali" {
+		t.Errorf("Commissione = %q", r.Fields["Commissione"])
+	}
+	if r.Fields["Numero"] != "287" { // da "N. Foglio"
+		t.Errorf("Numero = %q", r.Fields["Numero"])
+	}
+	if r.Title != "1) Esame del ddl 779" {
+		t.Errorf("Title = %q", r.Title)
+	}
+}
+
 func TestBDDateFilter(t *testing.T) {
 	cases := []struct {
 		in       string

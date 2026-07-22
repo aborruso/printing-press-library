@@ -59,6 +59,18 @@ var bdArchives = map[string]bdSpec{
 		static:       map[string]string{"$S$TTEXT": "all"},
 		speakerField: "$Ispeakers", // --oratore risolto nome->ID dalle <option> del form
 	},
+	"convocazioni": {
+		path: "convocazioni",
+		fields: map[string]string{
+			"legisl": "$Ilegislatura",
+			"anno":   "anno",
+			"testo":  "$TTEXT",
+		},
+		static: map[string]string{"$S$TTEXT": "all"},
+		// NB: il filtro --commissione/--codcom non è ancora mappato su /bd/
+		// (il campo $Iidcomm è un <select> con id per-commissione: va risolto
+		// nome->id come per gli oratori — miglioramento condiviso con sommari).
+	},
 }
 
 // isBDArchive segnala se lo slug è servito dal backend /bd/.
