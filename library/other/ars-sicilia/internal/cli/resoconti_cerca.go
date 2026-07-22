@@ -60,7 +60,7 @@ func newResocontiCercaCmd(flags *rootFlags) *cobra.Command {
 	cmd.Flags().IntVar(&flagAnno, "anno", 0, "Anno della seduta.")
 	cmd.Flags().StringVar(&flagData, "data", "", "Data seduta (YYYY-MM-DD; range con YYYY-MM-DD:YYYY-MM-DD).")
 	cmd.Flags().IntVar(&flagNumero, "numero", 0, "Numero seduta.")
-	cmd.Flags().StringVar(&flagOratore, "oratore", "", "Oratore.")
+	cmd.Flags().StringVar(&flagOratore, "oratore", "", "Cognome/nome dell'oratore: filtra le sedute in cui è intervenuto (risolto sull'anagrafica del portale; se combinato con --legisl considera solo chi vi è attivo).")
 	cmd.Flags().StringVar(&flagArgomento, "argomento", "", "Argomento.")
 	cmd.Flags().StringVar(&flagTesto, "testo", "", "Ricerca testuale.")
 	cmd.Flags().StringVar(&flagISIS, "isis-query", "", "Espressione ISIS grezza (escape hatch).")

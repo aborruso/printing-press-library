@@ -15,32 +15,49 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 
 	"golang.org/x/net/html"
 )
 
-// bdSpec descrive come parlare a un archivio /bd/: il path e la mappa dei
-// filtri friendly (chiavi Params) verso i nomi campo POST del portale.
+// bdSpec descrive come parlare a un archivio /bd/: il path, la mappa dei filtri
+// friendly (chiavi Params) verso i nomi campo POST, e i campi statici sempre
+// impostati (i selettori di modalità `$S$...`, che valgono "all" = tutte le parole).
 type bdSpec struct {
 	path   string
 	fields map[string]string // friendly key -> POST field name
-	hasOdg bool              // l'archivio ha il selettore $S$Todg
+	static map[string]string // campi sempre inviati (selettori modalità)
+	// speakerField, se valorizzato, è il campo <select multiple> degli oratori
+	// (es. "$Ispeakers"): il filtro --oratore viene risolto da nome a ID leggendo
+	// le <option> del form, poi inviato su questo campo con modalità "$S..."="or".
+	speakerField string
 }
 
 // bdArchives elenca gli archivi serviti dal backend /bd/. Gli altri restano su
 // Icaro. Si aggiunge un archivio alla volta man mano che è verificato end-to-end.
 var bdArchives = map[string]bdSpec{
 	"sommari": {
-		path:   "sommari",
-		hasOdg: true,
+		path: "sommari",
 		fields: map[string]string{
 			"legisl": "$Ilegislatura",
 			"anno":   "anno",
 			"numero": "$Iseduta_numero",
 			"testo":  "$TTEXT",
 		},
+		static: map[string]string{"$S$TTEXT": "all", "$S$Todg": "all"},
+	},
+	"resoconti": {
+		path: "resoconti",
+		fields: map[string]string{
+			"legisl": "$Ilegislatura",
+			"anno":   "anno",
+			"numero": "$Inrosed",
+			"testo":  "$TTEXT",
+		},
+		static:       map[string]string{"$S$TTEXT": "all"},
+		speakerField: "$Ispeakers", // --oratore risolto nome->ID dalle <option> del form
 	},
 }
 
@@ -48,6 +65,68 @@ var bdArchives = map[string]bdSpec{
 func isBDArchive(slug string) bool {
 	_, ok := bdArchives[slug]
 	return ok
+}
+
+// bdSpeaker è un oratore estratto dal <select> del form: id numerico, nome e le
+// legislature in cui è attivo (attributo data-legs, es. "18,17,16").
+type bdSpeaker struct {
+	ID   string
+	Name string
+	Legs string
+}
+
+// reSpeakerOption matcha le <option> del select oratori:
+// `<option  value="971" data-legs="18">Abbate Ignazio</option>` (due spazi dopo
+// <option nel markup del portale). Le option di legislatura/anno non hanno
+// data-legs, quindi restano escluse.
+var reSpeakerOption = regexp.MustCompile(`<option\s+value="(\d+)" data-legs="([^"]*)">([^<]+)</option>`)
+
+// parseBDSpeakers estrae l'elenco oratori dal form (nome->ID + legislature).
+func parseBDSpeakers(body string) []bdSpeaker {
+	ms := reSpeakerOption.FindAllStringSubmatch(body, -1)
+	out := make([]bdSpeaker, 0, len(ms))
+	for _, m := range ms {
+		out = append(out, bdSpeaker{ID: m[1], Legs: m[2], Name: unescapeMini(strings.TrimSpace(m[3]))})
+	}
+	return out
+}
+
+// resolveSpeakerIDs cerca gli oratori il cui nome contiene la query (case-insensitive)
+// e, se legisl è dato, sono attivi in quella legislatura. Ritorna i loro ID.
+func resolveSpeakerIDs(speakers []bdSpeaker, query, legisl string) []string {
+	q := strings.ToLower(strings.TrimSpace(query))
+	if q == "" {
+		return nil
+	}
+	var ids []string
+	for _, s := range speakers {
+		if !strings.Contains(strings.ToLower(s.Name), q) {
+			continue
+		}
+		if legisl != "" && !legsContains(s.Legs, legisl) {
+			continue
+		}
+		ids = append(ids, s.ID)
+	}
+	return ids
+}
+
+// legsContains riporta se legs ("18,17,16") include la legislatura leg.
+func legsContains(legs, leg string) bool {
+	for _, l := range strings.Split(legs, ",") {
+		if strings.TrimSpace(l) == leg {
+			return true
+		}
+	}
+	return false
+}
+
+// unescapeMini decodifica le poche entità che compaiono nei nomi (apostrofo, &).
+func unescapeMini(s string) string {
+	s = strings.ReplaceAll(s, "&#39;", "'")
+	s = strings.ReplaceAll(s, "&apos;", "'")
+	s = strings.ReplaceAll(s, "&amp;", "&")
+	return s
 }
 
 // searchBD esegue una ricerca sul backend /bd/: GET di sessione, poi POST
@@ -58,15 +137,16 @@ func (c *Client) searchBD(ctx context.Context, arc Archive, opts SearchOptions) 
 	spec := bdArchives[arc.Slug]
 	bdURL := c.BaseURL + "/bd/" + spec.path
 
-	// Sessione (cookie JSESSIONID nel jar del Client).
-	if _, err := c.get(ctx, bdURL); err != nil {
+	// Sessione (cookie JSESSIONID nel jar del Client). La risposta contiene anche
+	// il form, incluso il <select> degli oratori: la teniamo per risolvere --oratore.
+	sessionHTML, err := c.get(ctx, bdURL)
+	if err != nil {
 		return nil, fmt.Errorf("bd session (%s): %w", arc.Slug, err)
 	}
 
 	form := url.Values{}
-	form.Set("$S$TTEXT", "all")
-	if spec.hasOdg {
-		form.Set("$S$Todg", "all")
+	for k, v := range spec.static {
+		form.Set(k, v)
 	}
 	var keepDate func(rowDate string) bool
 	for k, v := range opts.Params {
@@ -82,8 +162,24 @@ func (c *Client) searchBD(ctx context.Context, arc Archive, opts SearchOptions) 
 			keepDate = keep
 			continue
 		}
+		if k == "oratore" && spec.speakerField != "" {
+			continue // risolto sotto, serve l'HTML del form
+		}
 		if field, ok := spec.fields[k]; ok {
 			form.Set(field, v)
+		}
+	}
+
+	// Filtro --oratore: risolve il nome negli ID del <select> oratori del form
+	// (con le legislature in cui l'oratore è attivo) e li invia in modalità "or".
+	if spec.speakerField != "" {
+		if orat := strings.TrimSpace(opts.Params["oratore"]); orat != "" {
+			ids := resolveSpeakerIDs(parseBDSpeakers(sessionHTML), orat, strings.TrimSpace(opts.Params["legisl"]))
+			if len(ids) == 0 {
+				return nil, nil // nessun oratore corrisponde: risultato vuoto
+			}
+			form[spec.speakerField] = ids
+			form.Set("$S"+spec.speakerField, "or")
 		}
 	}
 

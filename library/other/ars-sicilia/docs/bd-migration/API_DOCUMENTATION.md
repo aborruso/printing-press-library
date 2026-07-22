@@ -85,7 +85,7 @@ La riga richiama `openRisultati('<legisl>','<commis_id>','<seduta>')`, definito 
 
 ## Scoperte rilevanti per la CLI
 
-- **resoconti ha `$Ispeakers`** (filtro oratori) + `$S$Ispeakers`: potenzialmente sblocca `analytics --group-by oratore`, finora ritenuto impossibile (gli oratori NON sono nella lista Icaro). Da verificare che il valore filtri e che la lista/scheda esponga i nomi.
+- **Filtro oratore (resoconti) — CONFERMATO e implementato.** `$Ispeakers` è un `<select multiple>` con l'anagrafica completa degli oratori embeddata: `<option value="971" data-legs="18">Abbate Ignazio</option>` (value=ID, data-legs=legislature). Si filtra con `$Ispeakers=<ID>` + `$S$Ispeakers=or` — serve l'**ID**, non il nome (verificato: 971→11 sedute, 32/Cracolici→20). La CLI risolve `--oratore "Cracolici"` cercando il nome fra le `<option>` della risposta di sessione (nessuna richiesta extra) e filtrando per legislatura via `data-legs`. Vedi `parseBDSpeakers`/`resolveSpeakerIDs` in `bd.go`. Sblocca potenzialmente `analytics --group-by oratore` (anagrafica ≈1046 oratori enumerabile).
 - `sommari` espone `$Icommissione_id` e `$Iseduta_numero` → filtri commissione/numero seduta nativi.
 - `205`/`205mm` (biblioteca) hanno filtri ricchi (autore, titolo, soggetto, dewey, isbn, tipografia, full-text).
 
