@@ -101,6 +101,43 @@ type bdOption struct {
 var reBDOption = regexp.MustCompile(`<option\s+value="([^"]*)"([^>]*)>([^<]+)</option>`)
 var reDataLegs = regexp.MustCompile(`data-legs?="([^"]*)"`)
 var reBDCount = regexp.MustCompile(`Trovati\s+(\d+)\s+risultati`)
+var reOpenRisultati = regexp.MustCompile(`openRisultati\(([^)]*)\)`)
+
+// bdSchedaURL costruisce l'URL della scheda per-record dagli argomenti della
+// funzione JS openRisultati(...) presente nel link della riga. I pattern (dalla
+// definizione inline di openRisultati nelle pagine /bd/):
+//   - resoconti:    openRisultati(legis, nro)        -> /bd/resoconti/scheda/<legis>/<nro>
+//   - sommari:      openRisultati(legis, comm, nro)  -> /bd/sommari/scheda/<legis>/<comm>/<nro>
+//   - convocazioni: openRisultati(id)                -> /bd/convocazioni/results/<id>
+//
+// Ritorna "" se l'href non contiene una chiamata riconoscibile.
+func bdSchedaURL(baseURL, slug, href string) string {
+	m := reOpenRisultati.FindStringSubmatch(href)
+	if m == nil {
+		return ""
+	}
+	var args []string
+	for _, a := range strings.Split(m[1], ",") {
+		if a = strings.Trim(strings.TrimSpace(a), "'\""); a != "" {
+			args = append(args, a)
+		}
+	}
+	switch slug {
+	case "resoconti":
+		if len(args) >= 2 {
+			return baseURL + "/bd/resoconti/scheda/" + args[0] + "/" + args[1]
+		}
+	case "sommari":
+		if len(args) >= 3 {
+			return baseURL + "/bd/sommari/scheda/" + args[0] + "/" + args[1] + "/" + args[2]
+		}
+	case "convocazioni":
+		if len(args) >= 1 {
+			return baseURL + "/bd/convocazioni/results/" + args[0]
+		}
+	}
+	return ""
+}
 
 // parseSelectOptions estrae le <option> del solo <select id="selectID">. Lo scoping
 // al select giusto evita di mescolare select diversi presenti nello stesso form
@@ -305,15 +342,16 @@ func (c *Client) searchBD(ctx context.Context, arc Archive, opts SearchOptions) 
 		if err != nil {
 			return all, err
 		}
-		rows, total, err := parseBDList(body, arc)
+		rows, total, err := parseBDList(body, arc, c.BaseURL)
 		if err != nil {
 			return all, err
 		}
-		// URL di sorgente: la scheda per-record (openRisultati) non è un deep-link
-		// risolvibile, quindi puntiamo alla pagina della banca dati /bd/, così il
-		// campo url non è vuoto e resta cliccabile.
+		// parseBDRow imposta l'URL della scheda per-record da openRisultati(...);
+		// se non ricavabile, fallback alla pagina della banca dati /bd/.
 		for i := range rows {
-			rows[i].URL = bdURL
+			if rows[i].URL == "" {
+				rows[i].URL = bdURL
+			}
 		}
 		if keepDate != nil {
 			kept := rows[:0]
@@ -432,7 +470,7 @@ func ddmmyyyyToISO(s string) string {
 // Struttura: <ul class="tabella"> con <li class="intestazione"> (header, saltato)
 // e <li> per riga; ogni colonna è <div class="intesta"> con <span class="simobile">
 // etichetta + <p> valore; l'ultima colonna ha <h3><a>denominazione</a></h3><p>testo</p>.
-func parseBDList(body string, arc Archive) ([]Record, int, error) {
+func parseBDList(body string, arc Archive, baseURL string) ([]Record, int, error) {
 	root, err := html.Parse(strings.NewReader(body))
 	if err != nil {
 		return nil, 0, fmt.Errorf("parsing /bd/ HTML: %w", err)
@@ -456,7 +494,7 @@ func parseBDList(body string, arc Archive) ([]Record, int, error) {
 		if hasClass(li, "intestazione") {
 			continue
 		}
-		rec := parseBDRow(li)
+		rec := parseBDRow(li, arc.Slug, baseURL)
 		if rec.Title != "" || len(rec.Fields) > 0 {
 			rows = append(rows, rec)
 		}
@@ -467,7 +505,7 @@ func parseBDList(body string, arc Archive) ([]Record, int, error) {
 // parseBDRow legge una singola <li> di risultato in un Record. Le etichette
 // "N. Seduta"/"N. Foglio" vengono normalizzate anche su "Numero" così il resto
 // della CLI (flatten/emit/sync) trova la chiave attesa.
-func parseBDRow(li *html.Node) Record {
+func parseBDRow(li *html.Node, slug, baseURL string) Record {
 	rec := Record{Fields: map[string]string{}}
 	for div := li.FirstChild; div != nil; div = div.NextSibling {
 		if div.Type != html.ElementNode || div.Data != "div" || !hasClass(div, "intesta") {
@@ -479,6 +517,17 @@ func parseBDRow(li *html.Node) Record {
 			rec.Title = collapseSpaces(h3)
 			if p := nthPText(div, 0); strings.TrimSpace(p) != "" {
 				rec.Excerpt = collapseSpaces(p)
+			}
+			// L'<a> della denominazione richiama openRisultati(...): da lì si
+			// costruisce l'URL della scheda per-record.
+			var href string
+			walk(div, func(n *html.Node) {
+				if href == "" && n.Type == html.ElementNode && n.Data == "a" {
+					href = attr(n, "href")
+				}
+			})
+			if u := bdSchedaURL(baseURL, slug, href); u != "" {
+				rec.URL = u
 			}
 			continue
 		}

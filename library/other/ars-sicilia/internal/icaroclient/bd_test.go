@@ -24,7 +24,7 @@ const bdSommariFixture = `
 </body></html>`
 
 func TestParseBDList(t *testing.T) {
-	rows, pages, err := parseBDList(bdSommariFixture, Archive{Slug: "sommari"})
+	rows, pages, err := parseBDList(bdSommariFixture, Archive{Slug: "sommari"}, "https://dati.ars.sicilia.it")
 	if err != nil {
 		t.Fatalf("parseBDList: %v", err)
 	}
@@ -50,6 +50,9 @@ func TestParseBDList(t *testing.T) {
 	if r.Excerpt != `1) Esame del DEFR "2027-2029"` { // entità &quot; decodificata
 		t.Errorf("Excerpt = %q", r.Excerpt)
 	}
+	if r.URL != "https://dati.ars.sicilia.it/bd/sommari/scheda/18/116/271" { // openRisultati('18','116','271')
+		t.Errorf("URL = %q", r.URL)
+	}
 }
 
 // TestParseBDList_Resoconti copre la forma resoconti: colonna "Numero" (non
@@ -65,7 +68,7 @@ func TestParseBDList_Resoconti(t *testing.T) {
       <h3><a href="javascript: openRisultati('18','264')"> Resoconto d'Aula della Seduta n. 264 </a></h3></div>
   </li>
 </ul><span class="pagina_di">Pagina 1 di 5</span>`
-	rows, pages, err := parseBDList(fixture, Archive{Slug: "resoconti"})
+	rows, pages, err := parseBDList(fixture, Archive{Slug: "resoconti"}, "https://dati.ars.sicilia.it")
 	if err != nil {
 		t.Fatalf("parseBDList: %v", err)
 	}
@@ -85,6 +88,9 @@ func TestParseBDList_Resoconti(t *testing.T) {
 	if r.Excerpt != "" {
 		t.Errorf("Excerpt = %q, want empty (nessun <p>)", r.Excerpt)
 	}
+	if r.URL != "https://dati.ars.sicilia.it/bd/resoconti/scheda/18/264" { // openRisultati('18','264')
+		t.Errorf("URL = %q", r.URL)
+	}
 }
 
 // TestParseBDList_Convocazioni copre la forma a 5 colonne: "Commissione" è una
@@ -101,7 +107,7 @@ func TestParseBDList_Convocazioni(t *testing.T) {
       <h3><a href="javascript: openRisultati('uuid')"> 1) Esame del ddl 779 </a></h3></div>
   </li>
 </ul><span class="pagina_di">Pagina 1 di 28</span>`
-	rows, pages, err := parseBDList(fixture, Archive{Slug: "convocazioni"})
+	rows, pages, err := parseBDList(fixture, Archive{Slug: "convocazioni"}, "https://dati.ars.sicilia.it")
 	if err != nil {
 		t.Fatalf("parseBDList: %v", err)
 	}
@@ -117,6 +123,9 @@ func TestParseBDList_Convocazioni(t *testing.T) {
 	}
 	if r.Title != "1) Esame del ddl 779" {
 		t.Errorf("Title = %q", r.Title)
+	}
+	if r.URL != "https://dati.ars.sicilia.it/bd/convocazioni/results/uuid" { // openRisultati('uuid')
+		t.Errorf("URL = %q", r.URL)
 	}
 }
 
