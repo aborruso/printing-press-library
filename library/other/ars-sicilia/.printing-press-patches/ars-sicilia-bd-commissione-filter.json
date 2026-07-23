@@ -1,0 +1,15 @@
+{
+  "schema_version": 2,
+  "id": "ars-sicilia-bd-commissione-filter",
+  "applied_at": "2026-07-23",
+  "base_run_id": "20260528-181840",
+  "base_printing_press_version": "4.18.0",
+  "summary": "Filtro --commissione/--codcom su sommari e convocazioni via backend /bd/. parseSelectOptions(body, selectID) estrae le <option> del <select> commissioni; resolveCommissioneIDs risolve il nome (substring) o il codcom (1-6 -> numero romano I..VI) negli id, filtrando per legislatura perche' gli id commissione sono per-legislatura (es. 'I - Affari Istituzionali' = 116 in leg 18, 1 in leg 13). runCerca NON applica normalizeParams (specifico di Icaro) agli archivi /bd/, cosi' i parametri arrivano grezzi a searchBD.",
+  "reason": "Su /bd/ il filtro commissione richiede un id numerico per-legislatura, non un nome/ordinale: senza risoluzione, --commissione/--codcom sarebbero ignorati. La generalizzazione riusa il meccanismo dei <select> (comune a oratori e commissioni).",
+  "files": [
+    "internal/icaroclient/bd.go",
+    "internal/cli/icaro_helpers.go",
+    "internal/cli/commissioni_convocazioni.go"
+  ],
+  "validated_outcome": "convocazioni --codcom 1 --legisl 18 --anno 2026 -> 41 (I - Affari Istituzionali); sommari --commissione Bilancio --legisl 18 -> 25 (II - Bilancio); commissione inesistente -> 0."
+}
