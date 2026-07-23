@@ -181,6 +181,10 @@ func runGetExtra(cmd *cobra.Command, flags *rootFlags, archiveSlug string, legis
 	recs, err := c.Search(ctx, *arc, icaro.SearchOptions{
 		Params: normalizeParams(*arc, params),
 		Limit:  1,
+		// Il dettaglio (GetDoc) richiede il DocID Icaro; le righe /bd/ non lo
+		// hanno e la scheda /bd/ non è implementata. ForceIcaro tiene `get` sul
+		// flusso Icaro (trova i record nell'indice Icaro; not-found sui recenti).
+		ForceIcaro: true,
 	})
 	if err != nil {
 		if rlErr := new(icaro.HTTPRateLimitError); errors.As(err, &rlErr) {

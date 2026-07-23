@@ -92,6 +92,12 @@ type SearchOptions struct {
 	// commissione dossier) use this to flag undercounts instead of silently
 	// presenting a capped count as complete.
 	Truncated *bool
+	// ForceIcaro pins the search to the legacy Icaro engine even for archives
+	// migrated to /bd/. The `get` path needs it: /bd/ rows carry no Icaro DocID
+	// and the /bd/ per-document detail is not implemented, so GetDoc must run on
+	// the Icaro DocID. On /bd/ archives this only finds records still present in
+	// Icaro's (frozen) index; recent records return not-found, which is correct.
+	ForceIcaro bool
 }
 
 // New constructs a Client with a fresh cookie jar and a 30 s default timeout.
@@ -125,8 +131,10 @@ func (c *Client) Search(ctx context.Context, arc Archive, opts SearchOptions) ([
 	}
 	// Gli archivi delle sedute migrati al backend /bd/ (sommari, resoconti,
 	// convocazioni) hanno l'indice Icaro congelato: instradiamo qui, dove i dati
-	// sono correnti. Gli altri archivi restano sul flusso Icaro sotto.
-	if IsBDArchive(arc.Slug) {
+	// sono correnti. Gli altri archivi restano sul flusso Icaro sotto. Il path
+	// `get` passa ForceIcaro perché il dettaglio per-documento su /bd/ non esiste
+	// e serve il DocID Icaro (vedi SearchOptions.ForceIcaro).
+	if IsBDArchive(arc.Slug) && !opts.ForceIcaro {
 		return c.searchBD(ctx, arc, opts)
 	}
 	expr := BuildQuery(arc, opts.Params, opts.ISISRaw)

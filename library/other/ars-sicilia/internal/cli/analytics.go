@@ -80,6 +80,9 @@ func runAnalytics(cmd *cobra.Command, flags *rootFlags, typ, groupBy string, lim
 	// nello store locale (né lo era su Icaro); la classifica si costruisce contando
 	// le sedute per ciascun oratore della legislatura direttamente dal portale.
 	if groupBy == "oratore" || groupBy == "oratori" {
+		if typ != "resoconti" {
+			return fmt.Errorf("--group-by oratore vale solo con --type resoconti (la classifica è sugli oratori delle sedute d'Aula); ricevuto --type %q", typ)
+		}
 		return runOratoreAnalyticsLive(cmd, flags, legisl, limit)
 	}
 
