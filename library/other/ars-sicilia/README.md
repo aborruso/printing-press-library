@@ -232,6 +232,15 @@ ars-sicilia-pp-cli analytics --type ddl --group-by cofirmatari --limit 30 --csv
 
 Produce un CSV con le coppie di deputati che firmano DDL insieme — pronto per import in `duckdb` o gephi.
 
+### Classifica DDL per proponente o gruppo (1 richiesta, senza sync)
+
+```bash
+ars-sicilia-pp-cli analytics --type ddl --group-by proponente --limit 20
+ars-sicilia-pp-cli analytics --type ddl --group-by gruppo --json
+```
+
+Legge le viste già aggregate dal portale (`/edem/`): la classifica dei disegni di legge per deputato **proponente** (primo firmatario) o per **gruppo** parlamentare, con una sola richiesta e senza sincronizzazione. Copre la legislatura corrente; `--legisl` non filtra queste classifiche (viene ignorato con un avviso).
+
 ### Drift settimanale dei DDL
 
 ```bash

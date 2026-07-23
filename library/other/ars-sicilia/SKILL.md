@@ -93,6 +93,14 @@ These capabilities aren't available in any other tool for this API.
   ```bash
   ars-sicilia-pp-cli analytics --type resoconti --group-by oratore --legisl 18 --limit 30 --csv
   ```
+- **`analytics`** — Classifica i disegni di legge per deputato **proponente** (primo firmatario) o per **gruppo** parlamentare, leggendo le viste già aggregate dal portale con **una sola richiesta** (nessuna sync). Copre la legislatura corrente (le classifiche non sono filtrabili per legislatura).
+
+  _Per rispondere subito a 'chi presenta più DDL' / 'quale gruppo è più prolifico' senza deep sync._
+
+  ```bash
+  ars-sicilia-pp-cli analytics --type ddl --group-by proponente --limit 20
+  ars-sicilia-pp-cli analytics --type ddl --group-by gruppo --json
+  ```
 
 ### Stato e monitoraggio
 - **`ddl drift`** — Confronta lo stato dell'iter dei DDL nella sync corrente con la precedente e segnala i disegni di legge che si sono mossi nel periodo (passati da commissione ad aula, approvati, ritirati). Richiede due **deep sync** (`sync --resources ddl --deep`) a distanza di tempo: solo la deep sync scrive il campo `iter` confrontato.

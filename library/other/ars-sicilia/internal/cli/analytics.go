@@ -35,7 +35,11 @@ Esempi:
   ars-sicilia-pp-cli analytics --type ddl --group-by cofirmatari --limit 50
 
   # I 30 oratori più attivi in aula nella XVIII legislatura (in diretta, richiede --legisl)
-  ars-sicilia-pp-cli analytics --type resoconti --group-by oratore --legisl 18 --limit 30`,
+  ars-sicilia-pp-cli analytics --type resoconti --group-by oratore --legisl 18 --limit 30
+
+  # Classifica DDL per deputato proponente / per gruppo (1 richiesta, legislatura corrente)
+  ars-sicilia-pp-cli analytics --type ddl --group-by proponente --limit 20
+  ars-sicilia-pp-cli analytics --type ddl --group-by gruppo`,
 		Example: "  ars-sicilia-pp-cli analytics --type ddl --group-by cofirmatari --limit 50 --json",
 		Annotations: map[string]string{
 			"mcp:read-only": "true",
@@ -48,7 +52,7 @@ Esempi:
 		},
 	}
 	cmd.Flags().StringVar(&flagType, "type", "", "Archivio sorgente (ddl, interrogazioni, mozioni, resoconti).")
-	cmd.Flags().StringVar(&flagGroupBy, "group-by", "", "Campo di aggregazione (cofirmatari, oratore, anno).")
+	cmd.Flags().StringVar(&flagGroupBy, "group-by", "", "Campo di aggregazione (cofirmatari, oratore, proponente, gruppo, anno).")
 	cmd.Flags().IntVar(&flagLimit, "limit", 30, "Max righe in output.")
 	cmd.Flags().IntVar(&flagLegisl, "legisl", 0, "Filtra per legislatura (0 = tutte).")
 	cmd.Flags().StringVar(&flagDB, "db", "", "Percorso del database SQLite.")
@@ -86,6 +90,16 @@ func runAnalytics(cmd *cobra.Command, flags *rootFlags, typ, groupBy string, lim
 		return runOratoreAnalyticsLive(cmd, flags, legisl, limit)
 	}
 
+	// group-by proponente/gruppo: percorso LIVE sulle viste pre-aggregate /edem/
+	// (una sola richiesta). Sono classifiche dei DDL già calcolate dal portale
+	// (proponente = primo firmatario; gruppo = gruppo parlamentare).
+	if groupBy == "proponente" || groupBy == "gruppo" {
+		if typ != "ddl" {
+			return fmt.Errorf("--group-by %s vale solo con --type ddl (classifica dei disegni di legge); ricevuto --type %q", groupBy, typ)
+		}
+		return runDDLRankingLive(cmd, flags, groupBy, legisl, limit)
+	}
+
 	db, err := store.OpenWithContext(ctx, dbPath)
 	if err != nil {
 		return fmt.Errorf("apertura database (%s): %w. Esegui prima `ars-sicilia-pp-cli sync --resources %s`.", dbPath, err, typ)
@@ -101,7 +115,7 @@ func runAnalytics(cmd *cobra.Command, flags *rootFlags, typ, groupBy string, lim
 	case "anno":
 		rows, err = groupByAnno(ctx, db.DB(), typ, legisl, limit)
 	default:
-		return fmt.Errorf("group-by %q non supportato. Disponibili: cofirmatari, oratore, anno", groupBy)
+		return fmt.Errorf("group-by %q non supportato. Disponibili: cofirmatari, oratore, proponente, gruppo, anno", groupBy)
 	}
 	if err != nil {
 		return err
@@ -161,6 +175,48 @@ func runOratoreAnalyticsLive(cmd *cobra.Command, flags *rootFlags, legisl, limit
 			continue // oratore senza sedute nella legislatura
 		}
 		rows = append(rows, analyticsRow{Chiave: sc.Name, Conteggio: sc.Count})
+	}
+	if limit > 0 && len(rows) > limit {
+		rows = rows[:limit]
+	}
+	return emitAnalytics(cmd.OutOrStdout(), flags, rows)
+}
+
+// runDDLRankingLive costruisce la classifica dei DDL per proponente (canale 6) o
+// per gruppo (canale 7) leggendo le viste pre-aggregate /edem/ in diretta: una
+// sola richiesta, il portale ha già calcolato i conteggi (primo firmatario).
+//
+// Le viste /edem/ NON sono parametrizzabili per legislatura: aggregano solo la
+// legislatura corrente. Per questo --legisl non viene validato contro un numero
+// (sarebbe una bomba a orologeria alla prossima legislatura); se passato, si
+// avvisa su stderr che il flag non filtra questa classifica.
+func runDDLRankingLive(cmd *cobra.Command, flags *rootFlags, groupBy string, legisl, limit int) error {
+	ctx := cmd.Context()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	channel := icaro.EdemChannelProponente
+	if groupBy == "gruppo" {
+		channel = icaro.EdemChannelGruppo
+	}
+	// Caveat di correttezza (non rumore di progress): sempre su stderr, così non
+	// inquina lo stdout JSON/CSV ma avvisa che --legisl è stato ignorato.
+	if legisl > 0 {
+		fmt.Fprintf(os.Stderr,
+			"nota: --group-by %s copre solo la legislatura corrente (le classifiche /edem/ non sono filtrabili per legislatura); --legisl %d ignorato.\n",
+			groupBy, legisl)
+	}
+	c, err := icaro.New(nil)
+	if err != nil {
+		return err
+	}
+	items, err := c.DDLRanking(ctx, channel)
+	if err != nil {
+		return err
+	}
+	rows := make([]analyticsRow, 0, len(items))
+	for _, it := range items {
+		rows = append(rows, analyticsRow{Chiave: it.Name, Conteggio: it.Count})
 	}
 	if limit > 0 && len(rows) > limit {
 		rows = rows[:limit]
