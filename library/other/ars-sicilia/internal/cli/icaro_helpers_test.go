@@ -120,3 +120,21 @@ func TestBuildQuery_DataOnAttiIspettivi(t *testing.T) {
 		}
 	}
 }
+
+// L'avviso di troncamento esiste perché una lista corta è indistinguibile da
+// un archivio che non contiene il documento: deve tacere solo quando i
+// risultati sono completi.
+func TestTruncatedHint(t *testing.T) {
+	if got := truncatedHint(false, 10, "leggi"); got != "" {
+		t.Errorf("risultati completi: atteso nessun avviso, ottenuto %q", got)
+	}
+	got := truncatedHint(true, 10, "leggi")
+	if got == "" {
+		t.Fatal("risultati troncati: atteso un avviso, ottenuta stringa vuota")
+	}
+	for _, want := range []string{"troncati", "10", "leggi", "--limit"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("avviso %q: manca %q (conteggio, archivio e rimedio devono esserci)", got, want)
+		}
+	}
+}

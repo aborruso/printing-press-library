@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 
@@ -76,11 +77,13 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 	if !icaro.IsBDArchive(arc.Slug) {
 		searchParams = normalizeParams(*arc, p.Params)
 	}
+	var truncated bool
 	recs, err := c.Search(ctx, *arc, icaro.SearchOptions{
-		Params:   searchParams,
-		ISISRaw:  p.ISISRaw,
-		Limit:    p.Limit,
-		MaxPages: maxPages,
+		Params:    searchParams,
+		ISISRaw:   p.ISISRaw,
+		Limit:     p.Limit,
+		MaxPages:  maxPages,
+		Truncated: &truncated,
 	})
 	if err != nil {
 		if rlErr := new(icaro.HTTPRateLimitError); errors.As(err, &rlErr) {
@@ -94,7 +97,35 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 			firm = firmatariByDoc(ctx, c, *arc, recs)
 		}
 	}
-	return emitRecords(cmd, flags, *arc, recs, firm)
+	if err := emitRecords(cmd, flags, *arc, recs, firm); err != nil {
+		return err
+	}
+	warnTruncated(truncated, len(recs), arc.Slug)
+	return nil
+}
+
+// warnTruncated avvisa su stderr quando la ricerca ha restituito solo una
+// finestra dei risultati disponibili. Senza questo avviso l'assenza di un
+// documento dalla lista è indistinguibile dalla sua assenza dall'archivio: è
+// l'equivoco che ha fatto dare per "non ancora indicizzata" una legge che era
+// regolarmente presente, ma oltre i primi 10 risultati.
+// L'ordinamento del portale non è per pertinenza, quindi la finestra non
+// contiene necessariamente i documenti più attinenti alla ricerca.
+func warnTruncated(truncated bool, shown int, slug string) {
+	if msg := truncatedHint(truncated, shown, slug); msg != "" {
+		fmt.Fprintln(os.Stderr, msg)
+	}
+}
+
+// truncatedHint torna il testo dell'avviso, o "" quando non c'è nulla da dire.
+// Separato da warnTruncated per poterlo verificare senza catturare stderr.
+func truncatedHint(truncated bool, shown int, slug string) string {
+	if !truncated {
+		return ""
+	}
+	return fmt.Sprintf(
+		"hint: risultati troncati: mostrati %d, l'archivio %s ne ha altri. L'ordinamento non è per pertinenza, quindi un documento che stai cercando può stare oltre questa finestra: alza --limit (es. --limit 50) o restringi la ricerca prima di concludere che non esiste.",
+		shown, slug)
 }
 
 // conFirmatariRequested reports whether --con-firmatari was set. Like
