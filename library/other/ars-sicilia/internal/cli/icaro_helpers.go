@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	"github.com/mvanhorn/printing-press-library/library/other/ars-sicilia/internal/cliutil"
@@ -378,10 +379,15 @@ func emitRecords(cmd *cobra.Command, flags *rootFlags, arc icaro.Archive, recs [
 		flat := make([]map[string]any, 0, len(recs))
 		for _, r := range recs {
 			row := map[string]any{
-				"doc_id":  r.DocID,
 				"title":   r.Title,
 				"excerpt": r.Excerpt,
 				"url":     r.URL,
+			}
+			// Le righe del backend /bd/ non hanno un DocID Icaro (vedi
+			// parseBDRow): esporre lo zero come identificativo farebbe
+			// credere che ogni record sia il documento #0. Meglio assente.
+			if r.DocID > 0 {
+				row["doc_id"] = r.DocID
 			}
 			for k, v := range r.Fields {
 				row[strings.ToLower(strings.TrimSuffix(k, "."))] = v
@@ -405,7 +411,12 @@ func emitRecords(cmd *cobra.Command, flags *rootFlags, arc icaro.Archive, recs [
 		return nil
 	}
 	for _, r := range recs {
-		fmt.Fprintf(out, "#%d  %s\n", r.DocID, r.Title)
+		if r.DocID > 0 {
+			fmt.Fprintf(out, "#%d  %s\n", r.DocID, r.Title)
+		} else {
+			// Righe /bd/: nessun DocID Icaro da mostrare (vedi emitRecords).
+			fmt.Fprintf(out, "%s\n", r.Title)
+		}
 		for i, col := range arc.Columns {
 			if i == len(arc.Columns)-1 {
 				continue // last col is the title block, already printed
@@ -463,7 +474,11 @@ func writeRecordsCSV(out io.Writer, arc icaro.Archive, recs []icaro.Record, firm
 	}
 	fmt.Fprintln(out)
 	for _, r := range recs {
-		row := []string{fmt.Sprintf("%d", r.DocID), r.Title, r.Excerpt, r.URL}
+		docID := ""
+		if r.DocID > 0 { // righe /bd/: colonna vuota, non uno zero fittizio
+			docID = strconv.Itoa(r.DocID)
+		}
+		row := []string{docID, r.Title, r.Excerpt, r.URL}
 		for _, c := range cols {
 			row = append(row, r.Fields[c])
 		}

@@ -1,6 +1,9 @@
 package icaroclient
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 const bdSommariFixture = `
 <html><body>
@@ -131,22 +134,30 @@ func TestParseBDList_Convocazioni(t *testing.T) {
 
 func TestBDDateFilter(t *testing.T) {
 	cases := []struct {
-		in       string
-		wantAnno string
-		date     string // riga dd/mm/yyyy da testare
-		keep     bool
+		in        string
+		wantYears []string
+		date      string // riga dd/mm/yyyy da testare
+		keep      bool
 	}{
-		{"260714", "2026", "14/07/2026", true},                // AAMMGG esatto
-		{"260714", "2026", "13/07/2026", false},               // altra data stesso anno
-		{"2026-07-14", "2026", "14/07/2026", true},            // ISO esatto
-		{"260701/260731", "2026", "14/07/2026", true},         // range AAMMGG, dentro
-		{"260701/260731", "2026", "01/08/2026", false},        // range AAMMGG, fuori
-		{"2026-07-01:2026-07-31", "2026", "14/07/2026", true}, // range ISO, dentro
+		{"260714", []string{"2026"}, "14/07/2026", true},                // AAMMGG esatto
+		{"260714", []string{"2026"}, "13/07/2026", false},               // altra data stesso anno
+		{"2026-07-14", []string{"2026"}, "14/07/2026", true},            // ISO esatto
+		{"260701/260731", []string{"2026"}, "14/07/2026", true},         // range AAMMGG, dentro
+		{"260701/260731", []string{"2026"}, "01/08/2026", false},        // range AAMMGG, fuori
+		{"2026-07-01:2026-07-31", []string{"2026"}, "14/07/2026", true}, // range ISO, dentro
+		// range a cavallo di più anni: tutti gli anni vanno interrogati, dal
+		// più recente. Con il solo anno del bound inferiore i record del 2026
+		// sparivano dai risultati.
+		{"2024-11-01:2026-02-28", []string{"2026", "2025", "2024"}, "15/01/2026", true},
+		{"2024-11-01:2026-02-28", []string{"2026", "2025", "2024"}, "20/06/2025", true},
+		{"2024-11-01:2026-02-28", []string{"2026", "2025", "2024"}, "10/10/2024", false}, // prima del bound
+		{"2024-11-01:2026-02-28", []string{"2026", "2025", "2024"}, "01/03/2026", false}, // dopo il bound
+		{"241101/260228", []string{"2026", "2025", "2024"}, "15/01/2026", true},          // stesso range in AAMMGG
 	}
 	for _, c := range cases {
-		anno, keep := bdDateFilter(c.in)
-		if anno != c.wantAnno {
-			t.Errorf("bdDateFilter(%q) anno = %q, want %q", c.in, anno, c.wantAnno)
+		years, keep := bdDateFilter(c.in)
+		if strings.Join(years, ",") != strings.Join(c.wantYears, ",") {
+			t.Errorf("bdDateFilter(%q) years = %v, want %v", c.in, years, c.wantYears)
 		}
 		if keep == nil {
 			t.Fatalf("bdDateFilter(%q) keep = nil", c.in)
@@ -156,8 +167,45 @@ func TestBDDateFilter(t *testing.T) {
 		}
 	}
 	// valore non interpretabile -> nessun filtro
-	if _, keep := bdDateFilter("garbage"); keep != nil {
-		t.Errorf("bdDateFilter(garbage) keep should be nil")
+	if years, keep := bdDateFilter("garbage"); keep != nil || years != nil {
+		t.Errorf("bdDateFilter(garbage) = %v, keep should be nil", years)
+	}
+}
+
+// I filtri senza equivalente sul backend /bd/ devono far fallire il comando:
+// applicarne solo una parte restituirebbe più record di quanti ne siano chiesti.
+func TestBDUnsupported(t *testing.T) {
+	cases := []struct {
+		name    string
+		slug    string
+		opts    SearchOptions
+		wantErr string // sottostringa attesa nel messaggio; "" = nessun errore
+	}{
+		{"escludi su resoconti", "resoconti", SearchOptions{Params: map[string]string{"escludi": "bilancio"}}, "--escludi"},
+		{"isis-query su sommari", "sommari", SearchOptions{ISISRaw: "Cracolici.FIRMAT"}, "--isis-query"},
+		{"argomento su resoconti", "resoconti", SearchOptions{Params: map[string]string{"argomento": "sanità"}}, "--argomento"},
+		{"presidente su sommari", "sommari", SearchOptions{Params: map[string]string{"presidente": "Galvagno"}}, "--presidente"},
+		{"oratore su convocazioni", "convocazioni", SearchOptions{Params: map[string]string{"oratore": "Abbate"}}, "--oratore"},
+		{"commissione su resoconti", "resoconti", SearchOptions{Params: map[string]string{"commissione": "PRIMA"}}, "--commissione"},
+		{"param vuoto non conta", "resoconti", SearchOptions{Params: map[string]string{"escludi": "  "}}, ""},
+		{"filtri supportati", "resoconti", SearchOptions{Params: map[string]string{"legisl": "18", "anno": "2026", "data": "260714", "oratore": "Abbate", "testo": "bilancio"}}, ""},
+		{"commissione su sommari", "sommari", SearchOptions{Params: map[string]string{"commissione": "PRIMA", "codcom": "1"}}, ""},
+	}
+	for _, c := range cases {
+		err := bdUnsupported(c.slug, bdArchives[c.slug], c.opts)
+		if c.wantErr == "" {
+			if err != nil {
+				t.Errorf("%s: err = %v, want nil", c.name, err)
+			}
+			continue
+		}
+		if err == nil {
+			t.Errorf("%s: err = nil, want error mentioning %s", c.name, c.wantErr)
+			continue
+		}
+		if !strings.Contains(err.Error(), c.wantErr) {
+			t.Errorf("%s: err = %q, want mention of %s", c.name, err, c.wantErr)
+		}
 	}
 }
 

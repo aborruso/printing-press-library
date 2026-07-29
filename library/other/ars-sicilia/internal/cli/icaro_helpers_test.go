@@ -29,9 +29,9 @@ func TestYearToISISRange(t *testing.T) {
 	cases := []struct{ in, want string }{
 		{"2024", "240101/241231"},
 		{"1999", "990101/991231"},
-		{"24", "24"},           // not 4 digits → unchanged
-		{"20245", "20245"},     // not 4 digits → unchanged
-		{"abcd", "abcd"},       // non-numeric → unchanged
+		{"24", "24"},                       // not 4 digits → unchanged
+		{"20245", "20245"},                 // not 4 digits → unchanged
+		{"abcd", "abcd"},                   // non-numeric → unchanged
 		{"240101/241231", "240101/241231"}, // already a range → unchanged
 	}
 	for _, c := range cases {

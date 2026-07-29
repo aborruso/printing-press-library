@@ -270,22 +270,28 @@ func (c *Client) searchBD(ctx context.Context, arc Archive, opts SearchOptions) 
 		return nil, fmt.Errorf("bd session (%s): %w", arc.Slug, err)
 	}
 
+	// Un filtro che il backend /bd/ non sa applicare deve fallire, non essere
+	// ignorato: silenziosamente avrebbe restituito un set più largo di quello
+	// che la riga di comando chiede (vedi bdUnsupported).
+	if err := bdUnsupported(arc.Slug, spec, opts); err != nil {
+		return nil, err
+	}
+
 	form := url.Values{}
 	for k, v := range spec.static {
 		form.Set(k, v)
 	}
 	var keepDate func(rowDate string) bool
+	var years []string
 	for k, v := range opts.Params {
 		v = strings.TrimSpace(v)
 		if v == "" {
 			continue
 		}
+		// L'anno server per --data lo imposta il loop sugli anni più sotto:
+		// qui si ricava solo l'intervallo (anni coinvolti + filtro client-side).
 		if k == "data" {
-			anno, keep := bdDateFilter(v)
-			if anno != "" {
-				form.Set("anno", anno)
-			}
-			keepDate = keep
+			years, keepDate = bdDateFilter(v)
 			continue
 		}
 		// oratore, codcom e commissione sono risolti sotto (servono le <option>).
@@ -294,6 +300,22 @@ func (c *Client) searchBD(ctx context.Context, arc Archive, opts SearchOptions) 
 		}
 		if field, ok := spec.fields[k]; ok {
 			form.Set(field, v)
+		}
+	}
+
+	// --anno e --data scrivono lo stesso campo server `anno`: si intersecano in
+	// modo esplicito (l'anno deve cadere nell'intervallo della data), invece di
+	// lasciare che vinca l'ordine — casuale — di iterazione della mappa Params.
+	if anno := strings.TrimSpace(opts.Params["anno"]); anno != "" && len(years) > 0 {
+		keep := years[:0]
+		for _, y := range years {
+			if y == anno {
+				keep = append(keep, y)
+			}
+		}
+		years = keep
+		if len(years) == 0 {
+			return nil, nil // --anno fuori dall'intervallo di --data: nessun risultato
 		}
 	}
 
@@ -333,70 +355,138 @@ func (c *Client) searchBD(ctx context.Context, arc Archive, opts SearchOptions) 
 		maxPages = 1
 	}
 
+	// Il campo server `anno` accetta un solo anno: un --data a cavallo di più
+	// anni si serve interrogandoli uno per uno. Ordine discendente (bdDateFilter
+	// li produce così) perché con --limit piccolo l'utente si aspetta i record
+	// più recenti dell'intervallo, come nel resto della CLI.
+	// years vuoto = nessun filtro data: un solo giro, con l'eventuale `anno`
+	// già impostato sopra dal param omonimo.
+	loops := years
+	if len(loops) == 0 {
+		loops = []string{""}
+	}
+
 	var all []Record
-	lastPage, lastTotal := 0, 0
-	droppedByLimit := false
-	for page := 1; ; page++ {
-		form.Set("page", strconv.Itoa(page))
-		body, err := c.post(ctx, bdURL, form)
-		if err != nil {
-			return all, err
+	truncated := false
+years:
+	for yi, y := range loops {
+		if y != "" {
+			form.Set("anno", y)
 		}
-		rows, total, err := parseBDList(body, arc, c.BaseURL)
-		if err != nil {
-			return all, err
-		}
-		// parseBDRow imposta l'URL della scheda per-record da openRisultati(...);
-		// se non ricavabile, fallback alla pagina della banca dati /bd/.
-		for i := range rows {
-			if rows[i].URL == "" {
-				rows[i].URL = bdURL
+		for page := 1; ; page++ {
+			form.Set("page", strconv.Itoa(page))
+			body, err := c.post(ctx, bdURL, form)
+			if err != nil {
+				return all, err
 			}
-		}
-		if keepDate != nil {
-			kept := rows[:0]
-			for _, r := range rows {
-				if keepDate(r.Fields["Data"]) {
-					kept = append(kept, r)
+			rows, total, err := parseBDList(body, arc, c.BaseURL)
+			if err != nil {
+				return all, err
+			}
+			// parseBDRow imposta l'URL della scheda per-record da openRisultati(...);
+			// se non ricavabile, fallback alla pagina della banca dati /bd/.
+			for i := range rows {
+				if rows[i].URL == "" {
+					rows[i].URL = bdURL
 				}
 			}
-			rows = kept
-		}
-		all = append(all, rows...)
-		lastPage, lastTotal = page, total
+			if keepDate != nil {
+				kept := rows[:0]
+				for _, r := range rows {
+					if keepDate(r.Fields["Data"]) {
+						kept = append(kept, r)
+					}
+				}
+				rows = kept
+			}
+			all = append(all, rows...)
 
-		if opts.Limit > 0 && len(all) >= opts.Limit {
-			droppedByLimit = len(all) > opts.Limit
-			all = all[:opts.Limit]
-			break
-		}
-		if page >= total {
-			break
-		}
-		// Con un filtro data attivo scorriamo tutte le pagine dell'anno (bounded),
-		// così il filtro client-side vede l'intero anno; altrimenti rispettiamo
-		// MaxPages come nel flusso Icaro.
-		if keepDate == nil && page >= maxPages {
-			break
+			if opts.Limit > 0 && len(all) >= opts.Limit {
+				// Resta fuori qualcosa se il taglio scarta righe già lette, se
+				// l'anno corrente ha altre pagine o se ci sono anni non ancora
+				// interrogati: in tutti e tre i casi il set è incompleto.
+				truncated = len(all) > opts.Limit || page < total || yi < len(loops)-1
+				all = all[:opts.Limit]
+				break years
+			}
+			if page >= total {
+				break
+			}
+			// Con un filtro data attivo scorriamo tutte le pagine dell'anno (bounded),
+			// così il filtro client-side vede l'intero anno; altrimenti rispettiamo
+			// MaxPages come nel flusso Icaro.
+			if keepDate == nil && page >= maxPages {
+				truncated = true
+				break
+			}
 		}
 	}
 	if opts.Truncated != nil {
-		*opts.Truncated = droppedByLimit || (keepDate == nil && lastPage < lastTotal)
+		*opts.Truncated = truncated
 	}
 	return all, nil
 }
 
+// bdUnsupported riporta un errore se opts porta filtri che il backend /bd/ non
+// sa applicare per questo archivio. Il motore Icaro li traduce in espressione
+// ISIS; su /bd/ non hanno equivalente e vanno rifiutati invece che ignorati,
+// perché un filtro caduto restituisce più record di quanti la riga di comando
+// ne chieda — un errore silenzioso, e quindi peggiore di un comando che fallisce.
+func bdUnsupported(slug string, spec bdSpec, opts SearchOptions) error {
+	unsupported := func(flag string) error {
+		return fmt.Errorf("l'archivio %s è servito dal backend /bd/ del portale, che non supporta --%s: rimuovi il filtro (gli altri filtri restano validi)", slug, flag)
+	}
+	if strings.TrimSpace(opts.ISISRaw) != "" {
+		return unsupported("isis-query")
+	}
+	// Ordine stabile: le mappe Go iterano a caso e il messaggio d'errore non
+	// deve dipendere dal giro.
+	keys := make([]string, 0, len(opts.Params))
+	for k := range opts.Params {
+		if strings.TrimSpace(opts.Params[k]) != "" {
+			keys = append(keys, k)
+		}
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		switch k {
+		case "data": // tradotto in anno + filtro client-side
+		case "oratore":
+			if spec.speakerField == "" {
+				return unsupported(k)
+			}
+		case "codcom", "commissione":
+			if spec.commissioneField == "" {
+				return unsupported(k)
+			}
+		default:
+			if _, ok := spec.fields[k]; !ok {
+				return unsupported(k)
+			}
+		}
+	}
+	return nil
+}
+
 // bdDateFilter traduce un valore --data (già normalizzato da normalizeParams in
-// AAMMGG, oppure ancora in YYYY-MM-DD) in: l'anno per il filtro server e una
+// AAMMGG, oppure ancora in YYYY-MM-DD) in: gli anni per il filtro server e una
 // funzione che tiene solo le righe la cui data (dd/mm/yyyy) cade nell'intervallo.
-// Ritorna keep=nil se il valore non è interpretabile (nessun filtro client).
-func bdDateFilter(v string) (anno string, keep func(rowDate string) bool) {
+// Ritorna years=nil, keep=nil se il valore non è interpretabile (nessun filtro).
+//
+// Il campo `anno` del form /bd/ vale per un anno solo: un intervallo a cavallo
+// di più anni produce più anni da interrogare in sequenza, dal più recente al
+// più vecchio (chi passa --limit si aspetta i record più recenti).
+func bdDateFilter(v string) (years []string, keep func(rowDate string) bool) {
 	lo, hi, ok := parseDateBounds(v)
 	if !ok {
-		return "", nil
+		return nil, nil
 	}
-	anno = lo[:4]
-	return anno, func(rowDate string) bool {
+	loY, _ := strconv.Atoi(lo[:4])
+	hiY, _ := strconv.Atoi(hi[:4])
+	for y := hiY; y >= loY; y-- {
+		years = append(years, strconv.Itoa(y))
+	}
+	return years, func(rowDate string) bool {
 		d := ddmmyyyyToISO(rowDate)
 		return d != "" && d >= lo && d <= hi
 	}

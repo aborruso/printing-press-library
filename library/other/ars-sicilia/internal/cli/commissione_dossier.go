@@ -108,14 +108,20 @@ func runCommissioneDossier(cmd *cobra.Command, flags *rootFlags, arg string, leg
 		}
 		s := dossierSection{Tipo: label, Archivio: arc.ID}
 		for _, r := range recs {
-			s.Risultati = append(s.Risultati, map[string]any{
-				"doc_id":  r.DocID,
+			row := map[string]any{
 				"data":    r.Fields["Data"],
 				"numero":  r.Fields["Numero"],
 				"titolo":  r.Title,
 				"excerpt": r.Excerpt,
 				"url":     r.URL,
-			})
+			}
+			// convocazioni e sommari arrivano dal backend /bd/, che non
+			// espone un DocID Icaro: la chiave resta fuori invece di
+			// riportare uno zero buono per nulla (vedi emitRecords).
+			if r.DocID > 0 {
+				row["doc_id"] = r.DocID
+			}
+			s.Risultati = append(s.Risultati, row)
 		}
 		report.Sezioni = append(report.Sezioni, s)
 		report.Conteggio[label] = len(s.Risultati)
@@ -162,7 +168,11 @@ func runCommissioneDossier(cmd *cobra.Command, flags *rootFlags, arg string, leg
 		}
 		fmt.Fprintf(out, "[%s] %d risultati%s\n", s.Tipo, len(s.Risultati), suffix)
 		for _, r := range s.Risultati {
-			fmt.Fprintf(out, "  #%v  %v  %v\n", r["doc_id"], r["data"], r["titolo"])
+			if id, ok := r["doc_id"]; ok {
+				fmt.Fprintf(out, "  #%v  %v  %v\n", id, r["data"], r["titolo"])
+				continue
+			}
+			fmt.Fprintf(out, "  %v  %v\n", r["data"], r["titolo"])
 		}
 		fmt.Fprintln(out)
 	}
