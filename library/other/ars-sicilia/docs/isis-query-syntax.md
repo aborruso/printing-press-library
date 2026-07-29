@@ -32,7 +32,7 @@ con le sigle di campo verificate su questa CLI.
 | `--numero` | interrogazioni/… | `NUMORD` | |
 | `--numero` | resoconti | `NUMSED` | |
 | `--data` | resoconti, convocazioni, sommari | `DATSED` | formato `AAMMGG`; range `AAMMGG/AAMMGG` |
-| `--data` | ddl, interrogazioni, interpellanze, mozioni, odg, risoluzioni | `DATPRE` | presentazione, `AAMMGG`; range `AAMMGG/AAMMGG`. Esposto come flag su `deputato profilo`; sugli altri comandi `*/cerca` va passato via `--isis-query`. Su ddl `--anno` (sopra) resta la via comoda per l'anno intero |
+| `--data` | ddl, interrogazioni, interpellanze, mozioni, odg, risoluzioni | `DATPRE` | presentazione, `AAMMGG`; range `AAMMGG/AAMMGG`. Esposto come flag nativo su `interrogazioni/interpellanze/mozioni/odg/risoluzioni cerca` e su `deputato profilo`; su `ddl cerca` va ancora via `--isis-query`, dove però `--anno` (sopra) copre già l'anno intero |
 | `--commissione` | convocazioni, sommari, pareri, risoluzioni | `COMMIS` | nome: `SESTA.COMMIS` |
 | `--presidente` | sommari | `PRESID` | |
 | `--autore` | biblioteca | `AUTORE` | |
@@ -115,6 +115,7 @@ Molte query non richiedono `--isis-query`: la CLI le costruisce dai flag.
 | DDL per materia | `--materia Sanità` | `18.LEGISL E Sanità.SETTOR` |
 | Resoconti per data | `--data 2026-02-25` | `260225.DATSED E 18.LEGISL` |
 | Resoconti per intervallo | `--data 2026-02-24:2026-02-25` | `260224/260225.DATSED E 18.LEGISL` |
+| Mozioni presentate in un mese | `--data 2020-02-01:2020-02-29` | `200201/200229.DATPRE E 17.LEGISL` |
 | Commissione per codice | `--codcom 6` | `SESTA.COMMIS E 18.LEGISL` |
 | Escludere un termine | `--escludi ospedale` | `(…) NOT (ospedale)` |
 

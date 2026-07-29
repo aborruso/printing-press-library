@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"strings"
 	"testing"
 
 	icaro "github.com/mvanhorn/printing-press-library/library/other/ars-sicilia/internal/icaroclient"
@@ -93,5 +94,29 @@ func TestNormalizeParams_DataAndCodcom(t *testing.T) {
 	}
 	if out["commissione"] != "SESTA" {
 		t.Errorf("commissione = %q, want SESTA", out["commissione"])
+	}
+}
+
+// TestBuildQuery_DataOnAttiIspettivi pins that --data is qualified on DATPRE
+// (presentation date) for the five acts archives that gained the flag, and
+// that a range still becomes ISIS interval syntax. These archives are pure
+// Icaro (bdArchives covers only sommari/resoconti/convocazioni), so the flag
+// travels this path and no other.
+func TestBuildQuery_DataOnAttiIspettivi(t *testing.T) {
+	for _, slug := range []string{"mozioni", "interrogazioni", "interpellanze", "odg", "risoluzioni"} {
+		arc := *icaro.BySlug(slug)
+		if got := arc.FieldMap["data"]; got != "DATPRE" {
+			t.Errorf("%s: FieldMap[data] = %q, want DATPRE", slug, got)
+		}
+		out := normalizeParams(arc, map[string]string{"data": "2020-02-01:2020-02-29"})
+		if out["data"] != "200201/200229" {
+			t.Errorf("%s: data = %q, want 200201/200229", slug, out["data"])
+		}
+		q := icaro.BuildQuery(arc, normalizeParams(arc, map[string]string{
+			"legisl": "17", "data": "2020-01-28",
+		}), "")
+		if !strings.Contains(q, "200128.DATPRE") {
+			t.Errorf("%s: query = %q, want it to qualify 200128 on DATPRE", slug, q)
+		}
 	}
 }

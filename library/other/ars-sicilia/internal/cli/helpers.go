@@ -550,6 +550,117 @@ func filterFieldsRec(data json.RawMessage, paths [][]string) json.RawMessage {
 	return data
 }
 
+// warnUnknownSelectFields avverte su stderr quando un nome passato a --select
+// non esiste in nessun record: senza questo, il campo sbagliato sparisce in
+// silenzio e sembra un bug del comando (è successo con `--select oggetto`, che
+// in questi archivi si chiama `titolo`). Avverte solo per i nomi che non
+// matchano NULLA, così un --select parzialmente valido resta silenzioso.
+// Guarda solo il primo segmento dei path puntati e il primo elemento di una
+// lista: basta a riconoscere un nome inventato, senza ispezionare tutto.
+func warnUnknownSelectFields(data json.RawMessage, fields string) {
+	unknown := unknownSelectNames(data, fields)
+	if len(unknown) == 0 {
+		return
+	}
+	avail := topLevelKeys(data)
+	sort.Strings(avail)
+	esiste, ignorato := "non esiste in questi record e verrà ignorato", "Campo disponibile"
+	if len(unknown) > 1 {
+		esiste = "non esistono in questi record e verranno ignorati"
+	}
+	if len(avail) > 1 {
+		ignorato = "Campi disponibili"
+	}
+	fmt.Fprintf(os.Stderr, "hint: --select: %s %s. %s: %s.\n",
+		strings.Join(unknown, ", "), esiste, ignorato, strings.Join(avail, ", "))
+}
+
+// unknownSelectNames torna i nomi richiesti a --select che non corrispondono a
+// nessun campo del payload, nell'ordine in cui l'utente li ha scritti. Torna
+// nil quando il payload non è ispezionabile (lista vuota, scalare): in dubbio
+// non si avvisa. Il confronto ricalca quello di matchSelectSegment (match
+// case-insensitive più conversione camelCase→kebab-case), così un nome che
+// filterFields saprebbe risolvere non viene mai dato per sconosciuto.
+func unknownSelectNames(data json.RawMessage, fields string) []string {
+	avail := topLevelKeys(data)
+	if len(avail) == 0 {
+		return nil
+	}
+	availSet := map[string]bool{}
+	for _, k := range avail {
+		availSet[strings.ToLower(k)] = true
+		availSet[camelToKebab(k)] = true
+	}
+	var unknown []string
+	for _, f := range strings.Split(fields, ",") {
+		f = strings.TrimSpace(f)
+		if f == "" {
+			continue
+		}
+		head := strings.ToLower(strings.SplitN(f, ".", 2)[0])
+		if !availSet[head] {
+			unknown = append(unknown, head)
+		}
+	}
+	return unknown
+}
+
+// topLevelKeys estrae i nomi di campo selezionabili di un payload: le chiavi
+// del primo elemento se è una lista, le proprie se è un oggetto. Su un oggetto
+// aggiunge anche le chiavi delle righe di ogni array figlio, perché su un
+// envelope (`{"items":[...]}`) filterFieldsRec applica il selettore là dentro.
+// L'insieme è deliberatamente ADDITIVO e mai sostitutivo: serve a decidere se
+// tacere, quindi un nome di troppo fa solo perdere un avviso, mentre un nome
+// mancante produrrebbe un avviso falso su un campo che invece esce.
+// Torna nil su payload non ispezionabili.
+func topLevelKeys(data json.RawMessage) []string {
+	var arr []json.RawMessage
+	if err := json.Unmarshal(data, &arr); err == nil {
+		if len(arr) == 0 {
+			return nil
+		}
+		return objectKeys(arr[0])
+	}
+	keys := objectKeys(data)
+	if keys == nil {
+		return nil
+	}
+	var obj map[string]json.RawMessage
+	if json.Unmarshal(data, &obj) != nil {
+		return keys
+	}
+	seen := map[string]bool{}
+	for _, k := range keys {
+		seen[k] = true
+	}
+	for _, v := range obj {
+		var inner []json.RawMessage
+		if json.Unmarshal(v, &inner) != nil || len(inner) == 0 {
+			continue
+		}
+		for _, k := range objectKeys(inner[0]) {
+			if !seen[k] {
+				seen[k] = true
+				keys = append(keys, k)
+			}
+		}
+	}
+	return keys
+}
+
+// objectKeys torna le chiavi di un oggetto JSON, o nil se non è un oggetto.
+func objectKeys(data json.RawMessage) []string {
+	var obj map[string]json.RawMessage
+	if err := json.Unmarshal(data, &obj); err != nil {
+		return nil
+	}
+	keys := make([]string, 0, len(obj))
+	for k := range obj {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
 // matchSelectSegment returns the matching lowercase segment, or "" if no match.
 // Supports direct case-insensitive match and camelCase→kebab-case conversion.
 func matchSelectSegment(fieldName string, keepWhole map[string]bool, subPaths map[string][][]string) string {
@@ -586,6 +697,7 @@ func printOutputWithFlags(w io.Writer, data json.RawMessage, flags *rootFlags) e
 	// only --compact is set (e.g., --agent without --select), the allow-list
 	// still runs.
 	if flags.selectFields != "" {
+		warnUnknownSelectFields(data, flags.selectFields)
 		data = filterFields(data, flags.selectFields)
 	} else if flags.compact {
 		data = compactFields(data)

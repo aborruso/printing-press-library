@@ -130,9 +130,20 @@ func runAnalytics(cmd *cobra.Command, flags *rootFlags, typ, groupBy string, lim
 			fmt.Fprintf(os.Stderr,
 				"hint: --group-by cofirmatari richiede i firmatari estratti dalle schede di dettaglio dei ddl. Esegui `ars-sicilia-pp-cli sync --resources ddl --deep` (più lento) e riprova; una sync normale non li popola.\n")
 		default:
-			fmt.Fprintf(os.Stderr,
-				"hint: nessun dato per --type %s --group-by %s. Lo store locale potrebbe non essere sincronizzato: esegui `ars-sicilia-pp-cli sync --resources %s` e riprova.\n",
-				typ, groupBy, typ)
+			// Distinguere "store vuoto" da "store popolato ma senza record per
+			// questa legislatura": la sync di default scarica le prime pagine
+			// (ordinate per recenza), quindi su una legislatura passata trova
+			// zero record pur essendo fresca. Suggerire un semplice `sync` in
+			// quel caso manda l'utente a rifare esattamente la sync che ha già.
+			if n := countResources(ctx, db.DB(), typ); n > 0 && legisl > 0 {
+				fmt.Fprintf(os.Stderr,
+					"hint: nessun dato per --type %s --group-by %s con --legisl %d. Lo store ha %d record di tipo %s, ma nessuno di quella legislatura: la sync di default scarica solo le prime pagine (le più recenti). Esegui `ars-sicilia-pp-cli sync --resources %s --legisl %d --full` e riprova.\n",
+					typ, groupBy, legisl, n, typ, typ, legisl)
+			} else {
+				fmt.Fprintf(os.Stderr,
+					"hint: nessun dato per --type %s --group-by %s. Lo store locale potrebbe non essere sincronizzato: esegui `ars-sicilia-pp-cli sync --resources %s` e riprova.\n",
+					typ, groupBy, typ)
+			}
 		}
 	}
 	return emitAnalytics(out, flags, rows)
@@ -289,6 +300,18 @@ func pairCofirmatari(ctx context.Context, db *sql.DB, typ string, legisl, limit 
 // hanno larghezza variabile — "D.M.YY" per ddl, "DD.MM.YYYY" per leggi — e un
 // substr(-4) mescola mese e anno sulle date a una cifra (es. "5.3.26" ->
 // "3.26", non l'anno).
+// countResources conta i record di un tipo nello store, senza filtro di
+// legislatura. Serve solo a scegliere il messaggio di hint su risultato vuoto:
+// un errore qui non deve rompere il comando, quindi torna 0 e tace.
+func countResources(ctx context.Context, db *sql.DB, typ string) int {
+	var n int
+	if err := db.QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM resources WHERE resource_type = ?`, typ).Scan(&n); err != nil {
+		return 0
+	}
+	return n
+}
+
 func groupByAnno(ctx context.Context, db *sql.DB, typ string, legisl, limit int) ([]analyticsRow, error) {
 	whereLegisl := ""
 	args := []any{typ}

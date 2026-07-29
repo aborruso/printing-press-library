@@ -10,6 +10,7 @@ func newMozioniCercaCmd(flags *rootFlags) *cobra.Command {
 		flagLegisl     int
 		flagFirmatario string
 		flagRubrica    string
+		flagData       string
 		flagTesto      string
 		flagISIS       string
 		flagLimit      int
@@ -35,6 +36,9 @@ func newMozioniCercaCmd(flags *rootFlags) *cobra.Command {
 			if flagRubrica != "" {
 				params["rubrica"] = flagRubrica
 			}
+			if flagData != "" {
+				params["data"] = flagData
+			}
 			if flagTesto != "" {
 				params["testo"] = flagTesto
 			}
@@ -47,6 +51,7 @@ func newMozioniCercaCmd(flags *rootFlags) *cobra.Command {
 	cmd.Flags().IntVar(&flagLegisl, "legisl", 0, "Legislatura.")
 	cmd.Flags().StringVar(&flagFirmatario, "firmatario", "", "Firmatario.")
 	cmd.Flags().StringVar(&flagRubrica, "rubrica", "", "Rubrica/materia.")
+	cmd.Flags().StringVar(&flagData, "data", "", "Data di presentazione (YYYY-MM-DD; range con YYYY-MM-DD:YYYY-MM-DD).")
 	cmd.Flags().StringVar(&flagTesto, "testo", "", "Ricerca testuale.")
 	cmd.Flags().StringVar(&flagISIS, "isis-query", "", "Espressione ISIS grezza (escape hatch).")
 	cmd.Flags().IntVar(&flagLimit, "limit", 10, "Max risultati da scaricare.")
