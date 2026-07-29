@@ -19,6 +19,7 @@ func newCommissioniSommariCmd(flags *rootFlags) *cobra.Command {
 	)
 	cmd := &cobra.Command{
 		Use:         "sommari",
+		Args:        rejectPositionalArgs,
 		Short:       "Sommari dei lavori delle Commissioni.",
 		Example:     "  ars-sicilia-pp-cli commissioni sommari --legisl 18 --commissione \"Bilancio\" --json",
 		Annotations: map[string]string{"pp:endpoint": "commissioni.sommari", "mcp:read-only": "true"},

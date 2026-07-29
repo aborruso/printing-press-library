@@ -21,6 +21,7 @@ func newDdlCercaCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "cerca",
+		Args:    rejectPositionalArgs,
 		Short:   "Cerca disegni di legge per legislatura, anno, firmatario o materia.",
 		Example: "  ars-sicilia-pp-cli ddl cerca --legisl 18 --anno 2024 --json",
 		Annotations: map[string]string{

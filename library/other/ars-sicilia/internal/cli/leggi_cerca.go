@@ -20,6 +20,7 @@ func newLeggiCercaCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "cerca",
+		Args:    rejectPositionalArgs,
 		Short:   "Cerca leggi regionali per legislatura, anno, numero o testo.",
 		Example: "  ars-sicilia-pp-cli leggi cerca --legisl 18 --anno 2024 --json",
 		Annotations: map[string]string{

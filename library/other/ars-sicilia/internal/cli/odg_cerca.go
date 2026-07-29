@@ -19,6 +19,7 @@ func newOdgCercaCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "cerca",
+		Args:    rejectPositionalArgs,
 		Short:   "Cerca ordini del giorno.",
 		Example: "  ars-sicilia-pp-cli odg cerca --legisl 18 --json",
 		Annotations: map[string]string{

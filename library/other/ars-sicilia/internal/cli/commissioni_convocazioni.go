@@ -16,6 +16,7 @@ func newCommissioniConvocazioniCmd(flags *rootFlags) *cobra.Command {
 	)
 	cmd := &cobra.Command{
 		Use:         "convocazioni",
+		Args:        rejectPositionalArgs,
 		Short:       "Convocazioni delle Commissioni.",
 		Example:     "  ars-sicilia-pp-cli commissioni convocazioni --legisl 18 --codcom 5 --json",
 		Annotations: map[string]string{"pp:endpoint": "commissioni.convocazioni", "mcp:read-only": "true"},

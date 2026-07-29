@@ -203,6 +203,20 @@ func bdSchedaFallback(ctx context.Context, c *icaro.Client, arc icaro.Archive, p
 	return out, nil
 }
 
+// rejectPositionalArgs rifiuta gli argomenti posizionali sui comandi di ricerca,
+// che prendono ogni criterio da un flag. Senza, cobra li accetta e li scarta in
+// silenzio: `commissioni sommari cerca --commissione X` restituisce lo stesso
+// risultato di `commissioni sommari --commissione X`, e chi lo scrive crede di
+// aver invocato un sottocomando che non esiste. È così che una gap analysis ha
+// concluso che due comandi si comportassero diversamente: era lo stesso comando.
+func rejectPositionalArgs(cmd *cobra.Command, args []string) error {
+	if len(args) == 0 {
+		return nil
+	}
+	return usageErr(fmt.Errorf("argomento inatteso %q: %s non prende argomenti posizionali, i criteri di ricerca sono flag (vedi --help)",
+		args[0], cmd.CommandPath()))
+}
+
 func runGet(cmd *cobra.Command, flags *rootFlags, archiveSlug string, legisl, numero int) error {
 	return runGetExtra(cmd, flags, archiveSlug, legisl, numero, nil)
 }

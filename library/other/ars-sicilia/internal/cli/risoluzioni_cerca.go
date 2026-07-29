@@ -19,6 +19,7 @@ func newRisoluzioniCercaCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "cerca",
+		Args:    rejectPositionalArgs,
 		Short:   "Cerca risoluzioni parlamentari.",
 		Example: "  ars-sicilia-pp-cli risoluzioni cerca --legisl 18 --json",
 		Annotations: map[string]string{

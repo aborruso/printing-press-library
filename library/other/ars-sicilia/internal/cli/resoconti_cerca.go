@@ -21,6 +21,7 @@ func newResocontiCercaCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "cerca",
+		Args:    rejectPositionalArgs,
 		Short:   "Cerca resoconti delle sedute d'aula per data, oratore o argomento.",
 		Example: "  ars-sicilia-pp-cli resoconti cerca --legisl 18 --json",
 		Annotations: map[string]string{

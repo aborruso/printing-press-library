@@ -184,6 +184,10 @@ These capabilities aren't available in any other tool for this API.
 - `ars-sicilia-pp-cli risoluzioni get` — Scarica una singola risoluzione.
 
 
+### Nessun argomento posizionale sui comandi di ricerca
+
+Ogni criterio si passa come **flag**. I comandi `*/cerca`, `commissioni convocazioni|sommari` e `biblioteca multimediali` non prendono argomenti posizionali e li rifiutano con un errore: `commissioni sommari cerca --commissione X` è sbagliato (`cerca` non è un sottocomando lì), la forma giusta è `commissioni sommari --commissione X`. Prima venivano accettati e scartati in silenzio, il che faceva credere di aver invocato un comando diverso da quello realmente eseguito.
+
 ### Finding the right command
 
 When you know what you want to do but not which command does it, ask the CLI directly:
