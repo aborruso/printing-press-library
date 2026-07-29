@@ -704,6 +704,39 @@ type SpeakerCount struct {
 	Count int    `json:"sedute"`
 }
 
+// CommissioniDisponibili elenca le denominazioni delle commissioni indicizzate dal
+// backend /bd/, per la legislatura data (vuoto = tutte, comprese quelle storiche).
+// Le denominazioni sono la forma che i filtri /bd/ riconoscono per nome ("VI -
+// Salute, Servizi Sociali e Sanitari"), includono le commissioni speciali e
+// **cambiano da una legislatura all'altra**: vanno enumerate al volo, mai
+// memorizzate in una tabella statica.
+func (c *Client) CommissioniDisponibili(ctx context.Context, legisl string) ([]string, error) {
+	spec, ok := bdArchives["convocazioni"]
+	if !ok {
+		return nil, fmt.Errorf("archivio convocazioni non configurato per /bd/")
+	}
+	bdURL := c.BaseURL + "/bd/" + spec.path
+	sessionHTML, err := c.get(ctx, bdURL)
+	if err != nil {
+		return nil, fmt.Errorf("bd session (convocazioni): %w", err)
+	}
+	legisl = strings.TrimSpace(legisl)
+	seen := map[string]bool{}
+	var out []string
+	for _, o := range parseSelectOptions(sessionHTML, spec.commissioneField) {
+		name := strings.TrimSpace(o.Name)
+		if name == "" || seen[name] {
+			continue
+		}
+		if legisl != "" && o.Legs != "" && !legsContains(o.Legs, legisl) {
+			continue
+		}
+		seen[name] = true
+		out = append(out, name)
+	}
+	return out, nil
+}
+
 // SpeakerSessionCounts costruisce la classifica degli oratori per numero di sedute
 // (archivio /bd/resoconti). Enumera gli oratori del <select> attivi nella
 // legislatura data e, per ciascuno, conta le sedute (una POST per oratore). anno
