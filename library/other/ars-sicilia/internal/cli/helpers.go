@@ -501,12 +501,14 @@ func filterFieldsRec(data json.RawMessage, paths [][]string) json.RawMessage {
 		}
 		filtered := map[string]json.RawMessage{}
 		matchedAny := false
+		resolved := map[string]bool{}
 		for k, v := range obj {
 			matched := matchSelectSegment(k, keepWhole, subPaths)
 			if matched == "" {
 				continue
 			}
 			matchedAny = true
+			resolved[matched] = true
 			if keepWhole[matched] {
 				filtered[k] = v
 				continue
@@ -542,12 +544,70 @@ func filterFieldsRec(data json.RawMessage, paths [][]string) json.RawMessage {
 					filtered[k] = v
 				}
 			}
+		} else if unresolved := unresolvedSelectPaths(paths, resolved); len(unresolved) > 0 {
+			// Mixed selector: some names matched at top level, others didn't.
+			// The unmatched ones usually live inside a sibling array — e.g.
+			// `legge cronologia` returns {legisl, numero, titolo, eventi:[…]}
+			// and `--select data,fase,titolo` means "titolo of the law, plus
+			// data/fase of each event". Before this branch the single root hit
+			// on `titolo` set matchedAny and disabled the envelope fallback
+			// above, so `eventi` was dropped whole and 27 events vanished with
+			// no error. Unlike that fallback this adds ONLY arrays: unrequested
+			// scalar siblings stay out, since here the caller did name the
+			// fields they wanted. An array is kept only when the names that
+			// went unresolved are the ones it answers: a typo can't graft
+			// `"eventi":[…]` onto the output just because some *other*,
+			// already-resolved name happens to exist in those rows too.
+			for k, v := range obj {
+				if _, done := filtered[k]; done {
+					continue
+				}
+				var arr []json.RawMessage
+				if json.Unmarshal(v, &arr) != nil || arr == nil {
+					continue
+				}
+				if !yieldsFields(filterFieldsRec(v, unresolved)) {
+					continue
+				}
+				filtered[k] = filterFieldsRec(v, paths)
+			}
 		}
 		result, _ := json.Marshal(filtered)
 		return result
 	}
 
 	return data
+}
+
+// unresolvedSelectPaths torna i path chiesti a --select che non hanno trovato
+// una chiave a questo livello (`resolved` è popolato dal giro sulle chiavi
+// dell'oggetto). Servono a decidere se un array figlio va aperto: si apre solo
+// se risponde proprio a questi, non a nomi già soddisfatti altrove.
+func unresolvedSelectPaths(paths [][]string, resolved map[string]bool) [][]string {
+	var out [][]string
+	for _, p := range paths {
+		if len(p) > 0 && !resolved[p[0]] {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
+// yieldsFields dice se un array filtrato contiene ancora almeno un campo. Un
+// array di soli oggetti vuoti significa che nessun nome chiesto esiste in quelle
+// righe: aggiungerlo all'output sarebbe solo rumore.
+func yieldsFields(data json.RawMessage) bool {
+	var arr []json.RawMessage
+	if json.Unmarshal(data, &arr) != nil {
+		return false
+	}
+	for _, el := range arr {
+		var obj map[string]json.RawMessage
+		if json.Unmarshal(el, &obj) == nil && len(obj) > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 // warnUnknownSelectFields avverte su stderr quando un nome passato a --select

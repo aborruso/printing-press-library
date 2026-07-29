@@ -69,12 +69,12 @@ These capabilities aren't available in any other tool for this API.
   ```bash
   ars-sicilia-pp-cli commissione dossier "SESTA" --legisl 18 --json
   ```
-- **`legge cronologia`** — Partendo da una legge regionale promulgata (archivio 201), risale al DDL originario, agli emendamenti citati nei resoconti d'aula e ai pareri di commissione: l'inverso temporale di ddl iter.
+- **`legge cronologia`** — Partendo da una legge regionale promulgata (archivio 201), risale al DDL originario, agli emendamenti citati nei resoconti d'aula e ai pareri di commissione: l'inverso temporale di ddl iter. Aggiungi sempre **`--anno`**: lo stesso numero di legge si ripete in anni diversi della stessa legislatura (nella XVIII ci sono due L.R. 26, ottobre 2024 e giugno 2025) e senza `--anno` l'archivio ne restituisce una sola — la cronologia esce coerente e riferita all'atto sbagliato. Un avviso su stderr dice quale legge è stata presa.
 
   _Per ricercatori e giornalisti che partono dalla legge promulgata e vogliono raccontare come ci si è arrivati._
 
   ```bash
-  ars-sicilia-pp-cli legge cronologia 18 1 --json
+  ars-sicilia-pp-cli legge cronologia 18 26 --anno 2025 --json
   ```
 
 ### Analytics su campi strutturati
@@ -242,7 +242,7 @@ Run `ars-sicilia-pp-cli doctor` to verify setup.
 Add `--agent` to any command. Expands to: `--json --compact --no-input --no-color --yes`.
 
 - **Pipeable** — JSON on stdout, errors on stderr
-- **Filterable** — `--select` keeps a subset of fields. Dotted paths descend into nested structures; arrays traverse element-wise. Critical for keeping context small on verbose APIs:
+- **Filterable** — `--select` keeps a subset of fields. Dotted paths descend into nested structures; arrays traverse element-wise. On the aggregate commands (`legge cronologia`, `ddl iter`, `deputato profilo`, `commissione dossier`) the payload is an object wrapping an array, so name the fields at the level where they live: `--select data,fase` filters the events, `--select titolo` keeps the act's own title, and mixing both returns both. A name that exists nowhere is reported on stderr with the list of available fields. Critical for keeping context small on verbose APIs:
 
   ```bash
   ars-sicilia-pp-cli ddl get mock-value mock-value --agent --select id,name,status

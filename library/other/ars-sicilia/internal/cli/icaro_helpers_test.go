@@ -138,3 +138,25 @@ func TestTruncatedHint(t *testing.T) {
 		}
 	}
 }
+
+// Senza --anno la cronologia esce coerente ma può riferirsi all'atto sbagliato:
+// nella XVIII ci sono due L.R. 26 (7.10.2024 e 10.06.2025) e l'archivio ne
+// restituisce una sola. L'avviso deve dire QUALE è stata presa — è la data che
+// permette di accorgersene — e tacere quando --anno è stato indicato.
+func TestAnnoNonPinnatoHint(t *testing.T) {
+	if got := annoNonPinnatoHint(2025, 26, "10.06.2025"); got != "" {
+		t.Errorf("--anno indicato: atteso nessun avviso, ottenuto %q", got)
+	}
+	if got := annoNonPinnatoHint(0, 26, "  "); got != "" {
+		t.Errorf("data assente: atteso nessun avviso, ottenuto %q", got)
+	}
+	got := annoNonPinnatoHint(0, 26, "7.10.2024")
+	if got == "" {
+		t.Fatal("--anno non indicato: atteso un avviso, ottenuta stringa vuota")
+	}
+	for _, want := range []string{"26", "7.10.2024", "--anno"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("avviso %q: manca %q (numero, data scelta e rimedio devono esserci)", got, want)
+		}
+	}
+}

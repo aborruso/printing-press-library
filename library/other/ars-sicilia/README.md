@@ -135,6 +135,7 @@ ars-sicilia-pp-cli deputato profilo "Abbate Ignazio" --json --select tipo,data,t
 ## Known Gaps
 
 - **HTTP error exit codes**: Non-429 HTTP errors from the Icaro portal (404, 5xx) exit with code 1 rather than typed exit codes (e.g. exit 3 for not-found, exit 5 for server error). Rate-limit responses (HTTP 429) correctly return exit 7. Scripts that branch on specific exit codes should use `ars-sicilia-pp-cli doctor` to check connectivity first.
+- **`legge cronologia` needs `--anno` when the number repeats** ⚠️: the same law number recurs in different years of one legislature — the XVIII has two L.R. 26 (7 Oct 2024, 10 Jun 2025). The archive returns one row and the command takes it, so without `--anno` you can get a perfectly coherent timeline for the wrong act. A stderr hint names the law it picked (`uso la L.R. 26 promulgata il 7.10.2024`): check that date, or pin `--anno`.
 - **`legge cronologia` date filtering**: The sommari search finds committee meetings that mention the law number in free text without a date ceiling. A committee meeting held after the law's promulgation date may appear in the timeline if it references the same number. Filter results by the `data` field when you need only pre-promulgation events.
 - **`--csv` on empty results**: when a command (e.g. `analytics --csv`) produces an empty result set, the CSV output is the JSON literal `[]` instead of an empty/header-only CSV. Piping that to a `.csv` file yields malformed content. Use `--json` for empty/unsynced data until this is fixed upstream.
 - **`search` JSON shape**: `search --json` returns an object `{ "meta": {...}, "results": [...] }`, not a top-level array. When piping to `jq`, select `.results` (e.g. `search "x" --json | jq '.results[]'`). Status lines ("no search endpoint…", sync hints) go to stderr, so `2>/dev/null` keeps stdout clean.
@@ -180,7 +181,7 @@ These capabilities aren't available in any other tool for this API.
   _Per ricercatori e giornalisti che partono dalla legge promulgata e vogliono raccontare come ci si è arrivati._
 
   ```bash
-  ars-sicilia-pp-cli legge cronologia 18 1 --json
+  ars-sicilia-pp-cli legge cronologia 18 26 --anno 2025 --json
   ```
 
 ### Analytics su campi strutturati
