@@ -166,6 +166,43 @@ func firmatariByDoc(ctx context.Context, c *icaro.Client, arc icaro.Archive, rec
 // the returned docID. For the typical case where the caller passes legisl
 // and numero, the query is `<legisl>.LEGISL E <numero>.<KEY>` where KEY is
 // the archive-specific id field.
+// bdSchedaFallback cerca il record sul backend /bd/ e ne restituisce la scheda
+// con l'URL del documento allegato. Ritorna (nil, nil) se nemmeno /bd/ ce l'ha,
+// così il chiamante può emettere il not-found consueto.
+//
+// Il PDF non viene scaricato né convertito: pesa qualche MB (una seduta d'Aula
+// sfiora i 5) e il testo estratto supera i 200.000 caratteri, che non ha senso
+// far transitare per default. L'URL è stabile e citabile, quindi chi vuole il
+// testo lo prende con lo strumento che preferisce.
+func bdSchedaFallback(ctx context.Context, c *icaro.Client, arc icaro.Archive, params map[string]string, legisl, numero int) (map[string]any, error) {
+	recs, err := c.Search(ctx, arc, icaro.SearchOptions{
+		Params: params, // grezzi: gli archivi /bd/ non passano da normalizeParams
+		Limit:  1,
+	})
+	if err != nil || len(recs) == 0 {
+		return nil, err
+	}
+	r := recs[0]
+	out := map[string]any{
+		"legisl": legisl,
+		"numero": numero,
+		"titolo": r.Title,
+		"url":    r.URL,
+		"fonte":  "bd",
+	}
+	if d := strings.TrimSpace(r.Fields["Data"]); d != "" {
+		out["data"] = d
+	}
+	pdf, err := c.SchedaAllegatoURL(ctx, r.URL)
+	if err != nil {
+		return out, nil // la scheda non si è aperta: meglio i metadati che niente
+	}
+	if pdf != "" {
+		out["pdf_url"] = pdf
+	}
+	return out, nil
+}
+
 func runGet(cmd *cobra.Command, flags *rootFlags, archiveSlug string, legisl, numero int) error {
 	return runGetExtra(cmd, flags, archiveSlug, legisl, numero, nil)
 }
@@ -225,6 +262,17 @@ func runGetExtra(cmd *cobra.Command, flags *rootFlags, archiveSlug string, legis
 		return fmt.Errorf("locating document: %w", err)
 	}
 	if len(recs) == 0 {
+		// Icaro non ha il record. Per i tre archivi migrati a /bd/ non significa
+		// che il documento non esista: l'indice Icaro è fermo indietro nel tempo
+		// (sui resoconti, alla seduta 232 del 25.02.2026) mentre /bd/ è corrente.
+		// Prima di dichiarare il not-found si guarda lì, e si restituisce la
+		// scheda con l'URL del PDF: è il testo integrale, che Icaro non dà
+		// nemmeno quando il record ce l'ha.
+		if icaro.IsBDArchive(arc.Slug) {
+			if out, err := bdSchedaFallback(ctx, c, *arc, params, legisl, numero); err == nil && out != nil {
+				return printJSONFiltered(cmd.OutOrStdout(), out, flags)
+			}
+		}
 		return fmt.Errorf("nessun documento trovato per legisl=%d numero=%d in %s", legisl, numero, arc.Slug)
 	}
 	doc, err := c.GetDoc(ctx, *arc, recs[0].DocID)

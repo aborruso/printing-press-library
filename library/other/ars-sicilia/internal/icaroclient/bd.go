@@ -325,9 +325,13 @@ func (c *Client) searchBD(ctx context.Context, arc Archive, opts SearchOptions) 
 	// (con le legislature in cui l'oratore è attivo) e li invia in modalità "or".
 	if spec.speakerField != "" {
 		if orat := strings.TrimSpace(opts.Params["oratore"]); orat != "" {
-			ids := resolveOptionIDs(parseSelectOptions(sessionHTML, spec.speakerField), orat, legisl)
+			opts := parseSelectOptions(sessionHTML, spec.speakerField)
+			ids := resolveOptionIDs(opts, orat, legisl)
 			if len(ids) == 0 {
-				return nil, nil // nessun oratore corrisponde: risultato vuoto
+				// Un risultato vuoto direbbe "non è mai intervenuto", che è
+				// un'altra affermazione: qui il nome non esiste in anagrafica.
+				return nil, &UnresolvedFilterError{Filtro: "--oratore", Valore: orat, Legisl: legisl,
+					Disponibili: suggestOptionNames(opts, orat, legisl)}
 			}
 			form[spec.speakerField] = ids
 			form.Set("$S"+spec.speakerField, "or")
@@ -702,6 +706,94 @@ type SpeakerCount struct {
 	Name  string `json:"nome"`
 	ID    string `json:"id"`
 	Count int    `json:"sedute"`
+}
+
+// UnresolvedFilterError segnala che un filtro risolto su un <select> di /bd/
+// (--oratore, --commissione) non corrisponde a nessuna voce. È un errore e non
+// una lista vuota perché le due cose dicono cose diverse: "non è mai
+// intervenuto" contro "questo nome non esiste in anagrafica". Confonderle ha già
+// prodotto gap analysis sbagliate.
+type UnresolvedFilterError struct {
+	Filtro      string
+	Valore      string
+	Legisl      string
+	Disponibili []string // candidati vicini, non l'anagrafica intera
+}
+
+func (e *UnresolvedFilterError) Error() string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "%s %q non corrisponde a nessuna voce", e.Filtro, e.Valore)
+	if e.Legisl != "" {
+		fmt.Fprintf(&b, " nella legislatura %s", e.Legisl)
+	}
+	if len(e.Disponibili) > 0 {
+		b.WriteString(". Forse cercavi:")
+		for _, n := range e.Disponibili {
+			b.WriteString("\n  - " + n)
+		}
+		return b.String()
+	}
+	b.WriteString(". Prova con il solo cognome, o con una porzione del nome.")
+	return b.String()
+}
+
+// suggestOptionNames propone le voci che condividono almeno una parola con il
+// termine cercato: con "Gallo Afflitto" fa emergere il "Gallo" dell'anagrafica.
+// Restituisce al massimo 10 nomi, e nessuno se non c'è affinità (elencare
+// centinaia di deputati non aiuterebbe).
+func suggestOptionNames(opts []bdOption, term, legisl string) []string {
+	words := strings.Fields(strings.ToLower(term))
+	seen := map[string]bool{}
+	var out []string
+	for _, o := range opts {
+		if legisl != "" && o.Legs != "" && !legsContains(o.Legs, legisl) {
+			continue
+		}
+		low := strings.ToLower(o.Name)
+		for _, w := range words {
+			if len(w) < 3 || !strings.Contains(low, w) {
+				continue
+			}
+			if name := strings.TrimSpace(o.Name); name != "" && !seen[name] {
+				seen[name] = true
+				out = append(out, name)
+			}
+			break
+		}
+		if len(out) >= 10 {
+			break
+		}
+	}
+	return out
+}
+
+// reBDFileHref cattura l'href del documento allegato a una scheda /bd/. Il token
+// `?id=<uuid>` è obbligatorio — senza, il server risponde 500 — ma è stabile:
+// identifica il documento, non la sessione, quindi l'URL che ne esce si può
+// citare e riusare.
+var reBDFileHref = regexp.MustCompile(`href="(/bd/[a-z]+/file/[^"]+\.pdf\?id=[^"]+)"`)
+
+// SchedaAllegatoURL risolve la scheda /bd/ di un record e ne estrae l'URL del PDF
+// (il resoconto stenografico integrale, per l'archivio resoconti). Ritorna ""
+// senza errore se la scheda non espone un allegato.
+//
+// Serve perché il testo integrale non è nell'indice: l'archivio Icaro ne tiene
+// solo frammenti per punto dell'ordine del giorno, e per le sedute recenti non
+// ha nulla.
+func (c *Client) SchedaAllegatoURL(ctx context.Context, schedaURL string) (string, error) {
+	schedaURL = strings.TrimSpace(schedaURL)
+	if schedaURL == "" {
+		return "", nil
+	}
+	body, err := c.get(ctx, schedaURL)
+	if err != nil {
+		return "", fmt.Errorf("scheda %s: %w", schedaURL, err)
+	}
+	m := reBDFileHref.FindStringSubmatch(body)
+	if m == nil {
+		return "", nil
+	}
+	return c.BaseURL + m[1], nil
 }
 
 // CommissioniDisponibili elenca le denominazioni delle commissioni indicizzate dal
