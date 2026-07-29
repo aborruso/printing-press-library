@@ -51,11 +51,13 @@ func newNovelDeputatoProfiloCmd(flags *rootFlags) *cobra.Command {
 type profileItem struct {
 	Tipo     string `json:"tipo"`
 	Archivio string `json:"archivio"`
-	DocID    int    `json:"doc_id"`
-	Numero   string `json:"numero,omitempty"`
-	Data     string `json:"data,omitempty"`
-	Titolo   string `json:"titolo"`
-	URL      string `json:"url,omitempty"`
+	// omitempty perché i record del backend /bd/ (resoconti) non hanno un
+	// DocID Icaro: meglio assente che un fuorviante doc_id: 0 (vedi emitRecords).
+	DocID  int    `json:"doc_id,omitempty"`
+	Numero string `json:"numero,omitempty"`
+	Data   string `json:"data,omitempty"`
+	Titolo string `json:"titolo"`
+	URL    string `json:"url,omitempty"`
 }
 
 type profileReport struct {
