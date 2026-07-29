@@ -398,7 +398,7 @@ Pareri richiesti dal Governo regionale alle Commissioni (archivio 226).
 Resoconti delle Sedute d'Aula (archivio 217).
 
 - **`ars-sicilia-pp-cli resoconti cerca`** - Cerca resoconti per data, oratore o argomento.
-- **`ars-sicilia-pp-cli resoconti get`** - Scarica un singolo resoconto.
+- **`ars-sicilia-pp-cli resoconti get`** - Scarica un singolo resoconto. Non restituisce la trascrizione integrale: l'archivio Icaro ne conserva solo frammenti per punto dell'ordine del giorno e si ferma alla seduta n. 232 del 25.02.2026. Quando Icaro non ha la seduta, `get` ripiega sulla scheda del backend corrente e restituisce `pdf_url`, dove sta il resoconto stenografico completo (il PDF non viene scaricato; l'URL è stabile e citabile).
 
 ### risoluzioni
 

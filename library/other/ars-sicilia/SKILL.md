@@ -170,8 +170,13 @@ These capabilities aren't available in any other tool for this API.
 
 **resoconti** — Resoconti delle Sedute d'Aula (archivio 217).
 
-- `ars-sicilia-pp-cli resoconti cerca` — Cerca resoconti per data, oratore o argomento.
-- `ars-sicilia-pp-cli resoconti get` — Scarica un singolo resoconto.
+- `ars-sicilia-pp-cli resoconti cerca` — Cerca resoconti per data, oratore o argomento. `--oratore` risolve il nome sull'anagrafica del portale: se non corrisponde a nessuna voce **esce con errore e propone i nomi vicini**, invece di restituire una lista vuota che si leggerebbe come "non è mai intervenuto". Usa il solo cognome se il nome completo non aggancia.
+- `ars-sicilia-pp-cli resoconti get` — Scarica un singolo resoconto. **Non restituisce la trascrizione integrale**: l'archivio Icaro ne conserva solo frammenti per punto dell'ordine del giorno, e per le sedute recenti non ha nulla (si ferma alla n. 232 del 25.02.2026, mentre `cerca` arriva a luglio 2026). Quando Icaro non ha la seduta, `get` ripiega sulla scheda del backend corrente e restituisce `pdf_url`: **è lì il resoconto stenografico completo**. Il PDF non viene scaricato — pesa alcuni MB e supera i 200.000 caratteri di testo — ma l'URL è stabile e citabile.
+
+  ```bash
+  ars-sicilia-pp-cli resoconti get 18 263 --agent --select pdf_url
+  # poi, se serve il testo: curl -sL "<pdf_url>" -o seduta.pdf
+  ```
 
 **risoluzioni** — Risoluzioni parlamentari (archivio 238).
 
