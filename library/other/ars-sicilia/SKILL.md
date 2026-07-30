@@ -133,6 +133,8 @@ These capabilities aren't available in any other tool for this API.
 - `ars-sicilia-pp-cli commissioni convocazioni` — Convocazioni delle Commissioni.
 - `ars-sicilia-pp-cli commissioni sommari` — Sommari dei lavori di commissione.
 
+`--commissione` accetta l'ordinale (`PRIMA`..`SESTA`), un frammento della denominazione (`Bilancio`) o, in alternativa, `--codcom 1`-`6`. Un termine che non corrisponde a nessuna commissione **esce con errore** e propone i nomi vicini: non restituisce una lista vuota, che si leggerebbe come "questa commissione non ha lavori".
+
 **ddl** — Disegni di Legge (archivio 221): proposte di legge presentate all'ARS.
 
 - `ars-sicilia-pp-cli ddl cerca` — Cerca disegni di legge per legislatura, anno, firmatario, materia o testo.

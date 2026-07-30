@@ -209,6 +209,23 @@ func resolveCommissioneIDs(opts []bdOption, codcom, commissione, legisl string) 
 		return ids
 	}
 	if com := strings.TrimSpace(commissione); com != "" {
+		// L'ordinale a lettere ("SESTA") non è un frammento della denominazione
+		// d'archivio ("VI - Salute, Servizi Sociali e Sanitari"): senza questa
+		// traduzione --commissione SESTA non matcha nulla su /bd/, e il comando
+		// restituisce zero record come se la commissione non avesse lavori.
+		if roman := romanFromOrdinalName(com); roman != "" {
+			ids := []string{}
+			for _, o := range opts {
+				if !strings.HasPrefix(o.Name, roman+" ") {
+					continue
+				}
+				if legisl != "" && o.Legs != "" && !legsContains(o.Legs, legisl) {
+					continue
+				}
+				ids = append(ids, o.ID)
+			}
+			return ids
+		}
 		ids := resolveOptionIDs(opts, com, legisl)
 		if ids == nil {
 			return []string{}
@@ -216,6 +233,26 @@ func resolveCommissioneIDs(opts []bdOption, codcom, commissione, legisl string) 
 		return ids
 	}
 	return nil
+}
+
+// romanFromOrdinalName traduce l'ordinale a lettere nel numero romano con cui il
+// <select> di /bd/ prefissa la denominazione: "SESTA" -> "VI".
+func romanFromOrdinalName(name string) string {
+	switch strings.ToUpper(strings.TrimSpace(name)) {
+	case "PRIMA":
+		return "I"
+	case "SECONDA":
+		return "II"
+	case "TERZA":
+		return "III"
+	case "QUARTA":
+		return "IV"
+	case "QUINTA":
+		return "V"
+	case "SESTA":
+		return "VI"
+	}
+	return ""
 }
 
 // romanOrdinal converte il codice commissione 1-6 nel numero romano I..VI ("" altrimenti).
@@ -343,9 +380,17 @@ func (c *Client) searchBD(ctx context.Context, arc Archive, opts SearchOptions) 
 		cod := strings.TrimSpace(opts.Params["codcom"])
 		com := strings.TrimSpace(opts.Params["commissione"])
 		if cod != "" || com != "" {
-			ids := resolveCommissioneIDs(parseSelectOptions(sessionHTML, spec.commissioneField), cod, com, legisl)
+			selOpts := parseSelectOptions(sessionHTML, spec.commissioneField)
+			ids := resolveCommissioneIDs(selOpts, cod, com, legisl)
 			if len(ids) == 0 {
-				return nil, nil // nessuna commissione corrisponde: risultato vuoto
+				// Come per --oratore: zero record direbbe "questa commissione non
+				// ha lavori", che è un'altra affermazione.
+				val, filtro := com, "--commissione"
+				if val == "" {
+					val, filtro = cod, "--codcom"
+				}
+				return nil, &UnresolvedFilterError{Filtro: filtro, Valore: val, Legisl: legisl,
+					Disponibili: suggestOptionNames(selOpts, val, legisl)}
 			}
 			form[spec.commissioneField] = ids
 			if spec.commissioneMode != "" {
