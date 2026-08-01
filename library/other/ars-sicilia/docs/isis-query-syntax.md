@@ -43,6 +43,51 @@ con le sigle di campo verificate su questa CLI.
 Nota: la **commissione** si cerca per nome ordinale (`PRIMA`…`SESTA`) sul campo `COMMIS`; il
 codice numerico `CODCOM` non è indicizzato. La CLI mappa automaticamente `--codcom 6` → `SESTA`.
 
+### Locuzioni: `--frase` (operatore `adj`)
+
+`--testo "aree idonee"` genera `(aree E idonee)`: le due parole devono esserci **entrambe nel
+documento**, non necessariamente vicine. Su testi lunghi come un disegno di legge questo aggancia
+atti che hanno una parola in un articolo e l'altra in un altro.
+
+`--frase "aree idonee"` genera `(aree adj idonee)`: le parole devono essere **adiacenti e
+nell'ordine dato**.
+
+```bash
+ars-sicilia-pp-cli ddl cerca --legisl 18 --testo "aree idonee"   # include peschicoltura, coworking
+ars-sicilia-pp-cli ddl cerca --legisl 18 --frase "aree idonee"   # ddl 803, 726: la locuzione c'è
+```
+
+`adj` è il comportamento nativo di ISIS per le parole separate da spazio; `--testo` lo converte
+deliberatamente in AND perché una ricerca di frase implicita sorprende. `--frase` restituisce
+l'accesso esplicito a quel comportamento. Una parola sola passa invariata (non c'è adiacenza da
+esprimere), e un valore che contiene già parentesi o operatori viene passato intatto.
+
+**Non disponibile su `resoconti`, `sommari` e `convocazioni`** (backend `/bd/`, che non prende
+espressioni ISIS): lì il comando fallisce con un errore esplicito invece di ignorare il filtro.
+
+### Dal DDL base ai suoi stralci (free-text sul numero)
+
+Gli stralci non hanno un campo proprio: il legame sta nel **riferimento testuale** che ogni
+stralcio porta (`ddl n. 1030/A Stralcio IV`), indicizzato nel testo libero. Quindi il numero
+base cercato come testo recupera l'intera famiglia:
+
+```bash
+# I ddl che citano il 1030: i suoi stralci (3030…8030) più il ddl base stesso
+ars-sicilia-pp-cli ddl cerca --legisl 18 --testo "1030"
+```
+
+**Trappola:** cercare la forma completa con la barra restituisce **zero** — la `/` rompe la
+query ISIS.
+
+```bash
+ars-sicilia-pp-cli ddl cerca --legisl 18 --testo "1030/A"   # → 0 risultati
+```
+
+Il free-text aggancia anche righe che citano quel numero per altri motivi, quindi va filtrato
+sul marcatore `stralcio`. `ddl stralci <legisl> <numero>` fa già tutto questo — usa il comando,
+non la query grezza: applica anche la deduplica (il portale ripete righe, alcune con excerpt
+vuoto) e distingue le basi dichiarate da quelle che il portale non dichiara.
+
 ### Dalla legge al DDL d'origine (`P010`/`P012`)
 
 Un DDL confluito in legge registra la legge di destinazione nei campi `P010`/`P012`, nella

@@ -55,6 +55,15 @@ These capabilities aren't available in any other tool for this API.
   ```bash
   ars-sicilia-pp-cli ddl iter 18 1153 --json
   ```
+- **`ddl stralci`** — Elenca i disegni di legge ricavati per stralcio da un ddl base; il verso opposto è il campo `stralcio` di `ddl get` e `ddl iter`.
+
+  _La finanziaria viene spacchettata in stralci che proseguono da soli, e la loro numerazione non segue una regola: gli stralci del ddl 1030 sono 3030…8030, quelli del 738 sono 7381/7382. Il legame lo dichiara il portale, non si calcola._
+
+  ```bash
+  ars-sicilia-pp-cli ddl stralci 18 1030 --json
+  ```
+
+  Nell'output, `base_dichiarata: false` con `di: []` significa che il documento **è** uno stralcio ma il portale non dice di quale ddl (succede su parte della XVII legislatura, dove al posto del numero base è scritto l'id interno). Non dedurre la base dalla numerazione. Uno stralcio può inoltre nascere da più ddl abbinati: `di` ha allora più voci.
 - **`deputato profilo`** — Aggrega in un'unica vista tutti gli atti firmati o pronunciati da un deputato: DDL, interrogazioni, interpellanze, mozioni, ordini del giorno, risoluzioni e interventi in resoconti d'aula. `--data` (range `YYYY-MM-DD:YYYY-MM-DD`) filtra per data su tutti i sotto-archivi.
 
   _Sostituisce un workflow di 7 click manuali con un'unica chiamata strutturata: pensata per agenti che rispondono a 'che ha fatto il deputato X?'._
@@ -152,7 +161,7 @@ These capabilities aren't available in any other tool for this API.
 
 **leggi** — Leggi della Regione Siciliana (archivio 201): testo storico delle leggi regionali.
 
-- `ars-sicilia-pp-cli leggi cerca` — Cerca leggi regionali per legislatura, anno, numero o testo.
+- `ars-sicilia-pp-cli leggi cerca` — Cerca leggi regionali per legislatura, anno, numero o testo. Restituisce **una riga per legge**, non per articolo: l'archivio è indicizzato per articolo e senza aggregazione il `--limit` lo consumavano gli articoli della prima legge (alla domanda «quali leggi nel 2025?» rispondeva con una sola legge). `articoli_trovati` conta gli articoli agganciati **da questa ricerca**, non quelli della legge. Con `--articoli` tornano le righe per articolo: servono con `--testo`, per sapere in quale articolo ricorre il termine. Se la finestra di righe finisce prima di completare le leggi chieste, un avviso su stderr lo dice — **leggilo**, altrimenti un elenco corto sembra completo.
 - `ars-sicilia-pp-cli leggi get` — Scarica una singola legge regionale.
 
 **mozioni** — Mozioni parlamentari (archivio 235).
@@ -190,6 +199,28 @@ These capabilities aren't available in any other tool for this API.
 
 Ogni criterio si passa come **flag**. I comandi `*/cerca`, `commissioni convocazioni|sommari` e `biblioteca multimediali` non prendono argomenti posizionali e li rifiutano con un errore: `commissioni sommari cerca --commissione X` è sbagliato (`cerca` non è un sottocomando lì), la forma giusta è `commissioni sommari --commissione X`. Prima venivano accettati e scartati in silenzio, il che faceva credere di aver invocato un comando diverso da quello realmente eseguito.
 
+### Un atto per numero: `--numero`, mai `--testo`
+
+Se la notizia dà il numero dell'atto, `--numero` lo aggancia sul campo (`NUMORD` per interrogazioni, interpellanze, mozioni, odg, risoluzioni; `NUMDDL` per i ddl; `LEGNUM` per le leggi) e restituisce quell'atto.
+
+Passare il numero come testo libero aggancia invece **ogni documento che lo cita**, in ordine dal più recente: l'atto cercato può finire oltre il `--limit`. `mozioni cerca --testo "143"` mette la mozione 143 in diciassettesima posizione su diciannove — col limite di default non si vede, e sembra che non esista.
+
+```bash
+ars-sicilia-pp-cli mozioni cerca --legisl 18 --numero 143 --json
+```
+
+### `--testo` cerca le parole, `--frase` cerca la locuzione
+
+`--testo "aree idonee"` costruisce `(aree E idonee)`: entrambe le parole devono comparire **da qualche parte** nel documento. Su un disegno di legge lungo questo aggancia anche atti che hanno una parola all'articolo 3 e l'altra all'articolo 40 — con «aree idonee» escono peschicoltura e coworking accanto agli atti pertinenti.
+
+`--frase "aree idonee"` costruisce `(aree adj idonee)`: parole **adiacenti, nell'ordine dato**, e restano solo gli atti che contengono davvero la locuzione (ddl 803 «Norme in materia di aree idonee e non idonee», ddl 726).
+
+```bash
+ars-sicilia-pp-cli ddl cerca --legisl 18 --frase "aree idonee" --json
+```
+
+Una parola sola passa invariata. Non esiste su `resoconti`, `sommari` e `convocazioni` (backend `/bd/`): lì il comando **fallisce con un errore esplicito** invece di ignorare il filtro. Se una ricerca a due parole restituisce troppi risultati poco pertinenti, prova `--frase` prima di concludere che l'atto non c'è.
+
 ### Finding the right command
 
 When you know what you want to do but not which command does it, ask the CLI directly:
@@ -221,10 +252,11 @@ Timeline del DDL 1153, mostrando solo i campi essenziali — riduce il payload p
 ### Network di co-firmatari su DDL
 
 ```bash
+ars-sicilia-pp-cli sync --resources ddl --deep
 ars-sicilia-pp-cli analytics --type ddl --group-by cofirmatari --limit 30 --csv
 ```
 
-Produce un CSV con le coppie di deputati che firmano DDL insieme — pronto per import in `duckdb` o gephi.
+Produce un CSV con le coppie di deputati che firmano DDL insieme — pronto per import in `duckdb` o gephi. **La deep sync è obbligatoria**: i firmatari stanno solo nelle schede di dettaglio, quindi senza di essa il comando restituisce `[]` (con un hint su stderr) — risultato vuoto per mancanza di dati locali, non per assenza di co-firme.
 
 ### Drift settimanale dei DDL
 

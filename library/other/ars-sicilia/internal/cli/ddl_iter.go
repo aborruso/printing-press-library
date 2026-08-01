@@ -62,11 +62,12 @@ type iterEvent struct {
 }
 
 type iterReport struct {
-	Legisl int         `json:"legisl"`
-	Numero int         `json:"numero"`
-	Titolo string      `json:"titolo,omitempty"`
-	Eventi []iterEvent `json:"eventi"`
-	Note   string      `json:"note,omitempty"`
+	Legisl   int          `json:"legisl"`
+	Numero   int          `json:"numero"`
+	Titolo   string       `json:"titolo,omitempty"`
+	Stralcio *stralcioOut `json:"stralcio,omitempty"`
+	Eventi   []iterEvent  `json:"eventi"`
+	Note     string       `json:"note,omitempty"`
 }
 
 func runDdlIter(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error {
@@ -99,6 +100,10 @@ func runDdlIter(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error 
 		return emitIter(cmd, flags, report)
 	}
 	report.Titolo = recs[0].Title
+	// Se il ddl è uno stralcio, dirlo prima della cronologia: l'iter di uno
+	// stralcio comincia a metà storia, e senza il rimando al ddl base si legge
+	// come un atto nato dal nulla.
+	report.Stralcio = stralcioDaTesti(numero, recs[0].Excerpt)
 	report.Eventi = append(report.Eventi, iterEvent{
 		Fase:      "presentazione",
 		Data:      recs[0].Fields["Data"],
@@ -114,6 +119,11 @@ func runDdlIter(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error 
 	// con fallback sul corpo del documento solo se quel campo manca. Vedi
 	// docIterEvents.
 	if doc, derr := c.GetDoc(ctx, *arc, recs[0].DocID); derr == nil {
+		// La scheda porta "Riferimenti", più affidabile dell'excerpt della
+		// short-list (che il portale a volte restituisce vuoto).
+		if s := stralcioDaTesti(numero, doc.Fields["Riferimenti"]); s != nil {
+			report.Stralcio = s
+		}
 		for _, ev := range docIterEvents(doc) {
 			ev.URL = recs[0].URL
 			ev.ArchiveID = arc.ID

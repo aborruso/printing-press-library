@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "applied_at": "2026-08-01",
+  "base_run_id": "20260528-181840",
+  "base_printing_press_version": "4.18.0",
+  "id": "ars-sicilia-leggi-per-legge",
+  "summary": "`leggi cerca` restituisce una riga per legge invece di una per articolo: le righe dell'archivio 201 vengono aggregate per legislatura+atto+data, con `articoli_trovati` e l'elenco degli articoli agganciati dalla ricerca, e `--limit` conta leggi. Il nuovo flag `--articoli` riporta le righe grezze per articolo.",
+  "reason": "L'archivio 201 e' indicizzato per articolo, quindi una legge di 22 articoli occupava 22 righe e il --limit lo consumavano gli articoli della prima legge: `leggi cerca --legisl 18 --anno 2025 --limit 10` rispondeva con la sola L.R. 1, mentre nel 2025 le leggi sono almeno quattro. Non era un problema di leggibilita' ma una sotto-numerazione silenziosa, indistinguibile da 'nel 2025 c'e' una legge sola': una gap analysis l'aveva infatti letta come 'righe duplicate dal sync'. La chiave di aggregazione include la data perche' 'L.R. 1' si ripete ogni anno e con il solo atto due leggi omonime di anni diversi collasserebbero in una. Quando la finestra di righe si esaurisce prima di raccogliere le leggi chieste, un avviso su stderr lo dichiara invece di restituire un elenco corto in silenzio.",
+  "files": [
+    "internal/cli/leggi_collapse.go",
+    "internal/cli/leggi_collapse_test.go",
+    "internal/cli/leggi_cerca.go",
+    "internal/cli/icaro_helpers.go"
+  ],
+  "validated_outcome": "`leggi cerca --legisl 18 --anno 2025` (limit default): 4 leggi (L.R. 1/2/3/4) invece di 1; --anno 2026 -> 9 leggi; --limit 25 -> 25 leggi senza avviso; `--testo rifiuti` -> L.R. 9 con i suoi 4 articoli (15,18,26,36) in una riga; `--articoli` invariato rispetto a prima (una riga per articolo). Altri archivi non toccati."
+}

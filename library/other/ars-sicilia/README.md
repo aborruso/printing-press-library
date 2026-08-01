@@ -144,6 +144,9 @@ ars-sicilia-pp-cli deputato profilo "Abbate Ignazio" --json --select tipo,data,t
 - **`analytics --group-by oratore` runs live (no sync)** ℹ️: the speaker ranking is built by querying the `/bd/resoconti` backend once per speaker of the legislature (≈90 requests, ~1 min), so it needs `--legisl` (without it the ~1000 all-time speakers would be too many requests) and does not read the local store. Example: `analytics --type resoconti --group-by oratore --legisl 18`.
 - **ISIS-only filters are rejected on the migrated archives** ⚠️: `sommari`, `resoconti` and `convocazioni` are served by the portal's `/bd/` backend, which has a fixed form instead of an ISIS query string. `--isis-query` and `--escludi` (plus `--argomento` on `resoconti` and `--presidente` on `commissioni sommari`) have no equivalent there, so those commands fail with an explicit error rather than silently returning a wider result set. Every other filter (`--legisl`, `--anno`, `--data`, `--numero`, `--testo`, `--oratore` on resoconti, `--commissione`/`--codcom` on sommari and convocazioni) works. ISIS filters remain available on all the other archives (`ddl`, `leggi`, `interrogazioni`, …).
 - **`--data` across calendar years costs one request per year** ℹ️: the `/bd/` form filters by a single year, so `--data 2024-11-01:2026-02-28` queries 2026, 2025 and 2024 in turn (most recent first) and filters the exact days client-side. With a small `--limit` you get the most recent records of the range and `troncato`/truncation flags report that earlier years were left unread.
+- **`leggi cerca` returns one row per law, not per article** ℹ️: archive 201 is indexed **per article**, so a twenty-article law used to fill twenty rows — and `--limit 10` was spent on the articles of the first law, answering "which laws passed in 2025?" with a single law while there were dozens. The command now aggregates by law (`articoli_trovati` counts the articles this search matched, not the law's total) and `--limit` counts laws. Use `--articoli` for the raw per-article rows, which is what you want with `--testo` when you need to know *which* article mentions a term. The cost of the aggregate is that it reads ~10 rows per law requested (about half a second each, the portal allows 2 requests/second); when the row window runs out before the requested laws are collected, the CLI says so on stderr instead of returning a short list silently.
+- **Look an act up by its number with `--numero`, never with `--testo`** ⚠️: `--numero` is field-qualified (`NUMORD`/`NUMDDL`/`LEGNUM`) and returns the act itself; it is available on every `cerca` (`ddl`, `leggi`, `odg`, `interrogazioni`, `interpellanze`, `mozioni`, `risoluzioni`). Passing the number as free text instead matches every document that *mentions* it, newest first, so the act you want can sink past the default `--limit`: `mozioni cerca --testo "143"` buries mozione 143 at position 17 of 19, while `--numero 143` returns it alone.
+- **`--testo` is AND over the whole document; `--frase` matches a phrase** ℹ️: `--testo "aree idonee"` builds `(aree E idonee)`, so both words must appear *somewhere* in the document — on a text as long as a bill that also matches acts with one word in article 3 and the other in article 40 (peschicoltura, coworking). `--frase "aree idonee"` builds `(aree adj idonee)`: adjacent, in the given order, which surfaces the acts that actually legislate on the topic (ddl 803, 726). A single word passes through unchanged, and a value already containing operators or parentheses is left verbatim. Not available on `resoconti`, `sommari` and `convocazioni` (the `/bd/` backend takes no ISIS expression) — there the command fails with an explicit error instead of dropping the filter.
 - **Full-text results are not ranked by relevance, and a short list is not proof of absence** ⚠️: the portal returns matches in its own order (roughly newest first), not by how well they match `--testo`. A one-word search for a common term can leave the document you want past the sixtieth row: `leggi cerca --anno 2025 --testo "variazioni"` at the default `--limit 10` returns five laws with no "variazioni" in their titles, while `--limit 50` surfaces L.R. 26, 29 and 31. Whenever the result set is cut short, `*/cerca` now says so on stderr — treat that hint as "widen or narrow before concluding it does not exist". Adding a second word (`--testo "variazioni urgenti"`) narrows the match set and is usually the fastest fix.
 - **`--data` on the acts archives filters the *presentation* date, not the approval one** ℹ️: on `interrogazioni`, `interpellanze`, `mozioni`, `odg` and `risoluzioni`, `--data` is qualified on `DATPRE`, the date the act was filed. Press coverage usually reports the date an act was *approved in the chamber*, which is later — a motion approved on 2020-02-04 may well have been presented on 2020-01-28, and searching the approval date returns nothing. When a known date yields no result, widen the range backwards (`--data 2020-01-01:2020-02-04`) or combine it with `--firmatario`. The approval step itself is in the act's iter, visible with `get`.
 - **`--data` is not a native flag on `ddl cerca`** ℹ️: the other acts archives expose it, but `ddl cerca` still needs `--isis-query "(18.LEGISL E 250701/250807.DATPRE)"` for an arbitrary date range. For a whole year use `--anno`, which the CLI already expands into a `DATPRE` Jan-1..Dec-31 range.
@@ -161,6 +164,15 @@ These capabilities aren't available in any other tool for this API.
   ```bash
   ars-sicilia-pp-cli ddl iter 18 1153 --json
   ```
+- **`ddl stralci`** — Elenca i disegni di legge ricavati per stralcio da un ddl base. Il verso opposto è nel campo `stralcio` di `ddl get` e `ddl iter`, che dice da quale ddl lo stralcio proviene.
+
+  _Durante la sessione di bilancio la finanziaria viene spacchettata in stralci che proseguono da soli: senza questo comando bisogna indovinarne i numeri, e non c'è una regola da indovinare (gli stralci del ddl 1030 sono 3030…8030, quelli del 738 sono 7381/7382)._
+
+  ```bash
+  ars-sicilia-pp-cli ddl stralci 18 1030 --json
+  ```
+
+  Il legame è **dichiarato dal portale**, non calcolato: ogni stralcio porta con sé il riferimento al ddl base (`ddl n. 1030/A Stralcio IV`). Due casi che l'output rende espliciti invece di nascondere: uno stralcio può nascere da **più ddl abbinati** (`di` con due voci), e per una parte degli atti della XVII legislatura il portale scrive l'id interno al posto del numero base — lì `base_dichiarata` è `false` e `di` resta vuoto, perché dedurre la base dalla numerazione sarebbe un'invenzione.
 - **`deputato profilo`** — Aggrega in un'unica vista tutti gli atti firmati o pronunciati da un deputato: DDL, interrogazioni, interpellanze, mozioni, ordini del giorno, risoluzioni e interventi in resoconti d'aula. `--data` (range `YYYY-MM-DD:YYYY-MM-DD`) filtra per data di presentazione/seduta su tutti i sotto-archivi, per query storiche mirate senza dover alzare `--limit`.
 
   _Sostituisce un workflow di 7 click manuali con un'unica chiamata strutturata: pensata per agenti che rispondono a 'che ha fatto il deputato X?'._
@@ -234,10 +246,11 @@ Timeline del DDL 1153, mostrando solo i campi essenziali — riduce il payload p
 ### Network di co-firmatari su DDL
 
 ```bash
+ars-sicilia-pp-cli sync --resources ddl --deep
 ars-sicilia-pp-cli analytics --type ddl --group-by cofirmatari --limit 30 --csv
 ```
 
-Produce un CSV con le coppie di deputati che firmano DDL insieme — pronto per import in `duckdb` o gephi.
+Produce un CSV con le coppie di deputati che firmano DDL insieme — pronto per import in `duckdb` o gephi. **La deep sync è obbligatoria**: senza, il comando restituisce `[]` (con un hint su stderr), perché i firmatari stanno solo nelle schede di dettaglio.
 
 ### Classifica DDL per proponente o gruppo (1 richiesta, senza sync)
 
@@ -259,10 +272,11 @@ Confronta lo stato dell'iter rispetto a una settimana fa — i DDL che si sono m
 ### Analytics sui cofirmatari
 
 ```bash
+ars-sicilia-pp-cli sync --resources ddl --legisl 18 --deep
 ars-sicilia-pp-cli analytics --type ddl --group-by cofirmatari --limit 20 --legisl 18 --json
 ```
 
-Top 20 coppie di deputati che firmano insieme DDL nella XVIII legislatura — aggregazione locale sul DB sincronizzato.
+Top 20 coppie di deputati che firmano insieme DDL nella XVIII legislatura — aggregazione locale sul DB sincronizzato, che va popolato con una **deep sync**: senza, il risultato è `[]`.
 
 ### Ricerca per tema (vocabolario materie)
 

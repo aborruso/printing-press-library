@@ -368,6 +368,7 @@ func (c *Client) searchBD(ctx context.Context, arc Archive, opts SearchOptions) 
 				// Un risultato vuoto direbbe "non è mai intervenuto", che è
 				// un'altra affermazione: qui il nome non esiste in anagrafica.
 				return nil, &UnresolvedFilterError{Filtro: "--oratore", Valore: orat, Legisl: legisl,
+					Rimedio: "Prova con il solo cognome, o con una porzione del nome.",
 					Disponibili: suggestOptionNames(opts, orat, legisl)}
 			}
 			form[spec.speakerField] = ids
@@ -386,11 +387,13 @@ func (c *Client) searchBD(ctx context.Context, arc Archive, opts SearchOptions) 
 				// Come per --oratore: zero record direbbe "questa commissione non
 				// ha lavori", che è un'altra affermazione.
 				val, filtro := com, "--commissione"
+				rimedio := "Usa il nome ordinale della commissione: PRIMA, SECONDA, TERZA, QUARTA, QUINTA, SESTA."
 				if val == "" {
 					val, filtro = cod, "--codcom"
+					rimedio = "Il codice commissione va da 1 a 6 (1=PRIMA, 2=SECONDA, ... 6=SESTA); per cercarla per nome usa --commissione."
 				}
 				return nil, &UnresolvedFilterError{Filtro: filtro, Valore: val, Legisl: legisl,
-					Disponibili: suggestOptionNames(selOpts, val, legisl)}
+					Disponibili: suggestOptionNames(selOpts, val, legisl), Rimedio: rimedio}
 			}
 			form[spec.commissioneField] = ids
 			if spec.commissioneMode != "" {
@@ -763,6 +766,10 @@ type UnresolvedFilterError struct {
 	Valore      string
 	Legisl      string
 	Disponibili []string // candidati vicini, non l'anagrafica intera
+	// Rimedio dice come si scrive un valore valido per QUESTO filtro. Serve
+	// perché il rimedio giusto dipende dal filtro: un cognome parziale aiuta su
+	// --oratore, ma su --codcom (codice 1-6) manda fuori strada.
+	Rimedio string
 }
 
 func (e *UnresolvedFilterError) Error() string {
@@ -778,7 +785,9 @@ func (e *UnresolvedFilterError) Error() string {
 		}
 		return b.String()
 	}
-	b.WriteString(". Prova con il solo cognome, o con una porzione del nome.")
+	if e.Rimedio != "" {
+		b.WriteString(". " + e.Rimedio)
+	}
 	return b.String()
 }
 

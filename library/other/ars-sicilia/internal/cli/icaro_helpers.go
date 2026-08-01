@@ -26,6 +26,11 @@ type cercaParams struct {
 	ISISRaw  string
 	Limit    int
 	MaxPages int
+	// AggregaLeggi aggrega le righe-articolo dell'archivio 201 per legge, così
+	// che Limit conti leggi e non articoli (vedi leggi_collapse.go). LimitLeggi
+	// è il limite chiesto dall'utente, mentre Limit porta le righe da scaricare.
+	AggregaLeggi bool
+	LimitLeggi   int
 }
 
 // runCerca executes a search against an archive and emits JSON or table-shaped
@@ -90,6 +95,30 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 			return rateLimitErr(fmt.Errorf("ricerca %s: %w", arc.Slug, err))
 		}
 		return fmt.Errorf("ricerca %s: %w", arc.Slug, err)
+	}
+	if p.AggregaLeggi {
+		leggi := collapseLeggi(recs)
+		// Il troncamento va detto qui e non dopo: se la finestra scaricata si è
+		// esaurita sugli articoli delle prime leggi, le successive non sono
+		// "assenti", sono "non lette" — ed è la differenza fra una risposta
+		// giusta e quella sbagliata che questo aggregato esiste per evitare.
+		mancanti := p.LimitLeggi > 0 && len(leggi) < p.LimitLeggi
+		if p.LimitLeggi > 0 && len(leggi) > p.LimitLeggi {
+			leggi = leggi[:p.LimitLeggi]
+		}
+		if err := printJSONFiltered(cmd.OutOrStdout(), leggi, flags); err != nil {
+			return err
+		}
+		// Si avvisa solo quando la finestra di righe si è esaurita PRIMA di
+		// raccogliere le leggi chieste: lì l'elenco è incompleto e non si vede.
+		// Se le leggi chieste sono arrivate tutte, il troncamento delle righe è
+		// il normale effetto del limite, non una risposta monca.
+		if truncated && mancanti {
+			fmt.Fprintf(cmd.ErrOrStderr(),
+				"hint: lette %d righe-articolo e trovate solo %d delle %d leggi chieste: l'elenco può essere incompleto. Alza --limit, oppure restringi con --anno/--numero.\n",
+				len(recs), len(leggi), p.LimitLeggi)
+		}
+		return nil
 	}
 	var firm map[int][]firmatario
 	if conFirmatariRequested(cmd) {
@@ -309,13 +338,23 @@ func runGetExtra(cmd *cobra.Command, flags *rootFlags, archiveSlug string, legis
 	// caller to parse fields.Firmatari by hand. Was ddl-only: interrogazioni
 	// get et al. left the raw string in place, forcing a second parsing path
 	// for any consumer iterating across atto types.
+	var firm []firmatario
 	if _, ok := arc.FieldMap["firmatario"]; ok {
-		if firm := docFirmatari(doc); len(firm) > 0 {
-			return printJSONFiltered(cmd.OutOrStdout(), struct {
-				icaro.Doc
-				Firmatari []firmatario `json:"firmatari"`
-			}{doc, firm}, flags)
-		}
+		firm = docFirmatari(doc)
+	}
+	// Sui ddl il portale dichiara nel campo "Riferimenti" se il documento è lo
+	// stralcio di un altro ddl, e di quale: si espone come dato strutturato
+	// invece di lasciarlo dentro una stringa (vedi ddl_stralci.go).
+	var stralcio *stralcioOut
+	if arc.Slug == "ddl" {
+		stralcio = stralcioDaTesti(numero, doc.Fields["Riferimenti"], recs[0].Excerpt)
+	}
+	if len(firm) > 0 || stralcio != nil {
+		return printJSONFiltered(cmd.OutOrStdout(), struct {
+			icaro.Doc
+			Firmatari []firmatario `json:"firmatari,omitempty"`
+			Stralcio  *stralcioOut `json:"stralcio,omitempty"`
+		}{doc, firm, stralcio}, flags)
 	}
 	// printJSONFiltered (not the bare writeJSON) so --select/--compact/--csv
 	// behave the same as on generator-emitted commands — writeJSON always
