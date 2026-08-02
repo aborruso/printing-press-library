@@ -447,11 +447,11 @@ func makeCLIHandler(cmdPath []string, bindings []mcpParamBinding, positionalPara
 		// motivo, così l'agente distingue "non c'è" da "non l'ho letto
 		// tutto". Gli altri comandi accettano il flag e lo ignorano.
 		args = append(args, "--envelope")
-		out, err := cobratree.RunCLICommand(ctx, bin, args)
+		out, diag, err := cobratree.RunCLICommandWithDiagnostics(ctx, bin, args)
 		if err != nil {
 			return mcplib.NewToolResultError(err.Error()), nil
 		}
-		return mcplib.NewToolResultText(out), nil
+		return mcplib.NewToolResultText(cobratree.MergeDiagnostics(out, diag)), nil
 	}
 }
 
