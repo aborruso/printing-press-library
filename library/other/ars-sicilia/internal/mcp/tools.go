@@ -438,6 +438,15 @@ func makeCLIHandler(cmdPath []string, bindings []mcpParamBinding, positionalPara
 		}
 		// --agent: JSON compatto e nessun prompt, la resa che un client MCP vuole.
 		args = append(args, "--agent")
+		// --envelope: RunCLICommand legge stderr solo quando il comando
+		// fallisce (shellout.go), quindi su un comando riuscito ogni hint
+		// della CLI viene scartato prima di arrivare al client. È il caso
+		// peggiore: qui il consumatore è sempre una macchina, che non può
+		// leggere un avviso a schermo e correggere il tiro. Sulle ricerche
+		// l'envelope riporta dentro il JSON il flag di troncamento e il
+		// motivo, così l'agente distingue "non c'è" da "non l'ho letto
+		// tutto". Gli altri comandi accettano il flag e lo ignorano.
+		args = append(args, "--envelope")
 		out, err := cobratree.RunCLICommand(ctx, bin, args)
 		if err != nil {
 			return mcplib.NewToolResultError(err.Error()), nil
