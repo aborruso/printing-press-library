@@ -217,7 +217,8 @@ func TestParseIterSeduta(t *testing.T) {
 // Il numero di seduta È l'id della scheda del resoconto: verificato su leg.
 // XVII (114 → 07/05/2019, 150 → 06/11/2019) e XVIII (267 → 28/07/2026). Una
 // seduta inesistente risponde 404, quindi un URL costruito o risolve o fallisce
-// in modo visibile — mai una pagina vuota spacciata per buona.
+// in modo visibile — mai una pagina vuota spacciata per buona. È l'URL che
+// finisce nel campo `url` degli eventi d'aula, al posto della scheda del ddl.
 func TestResocontoSchedaURL(t *testing.T) {
 	if got := resocontoSchedaURL(17, 150); !strings.HasSuffix(got, "/bd/resoconti/scheda/17/150") {
 		t.Errorf("url = %q, want .../bd/resoconti/scheda/17/150", got)
@@ -232,19 +233,31 @@ func TestResocontoSchedaURL(t *testing.T) {
 	}
 }
 
+// Le due numerazioni — sedute d'Aula e sedute di commissione — sono
+// indipendenti, e solo il marcatore che segue il numero dice a quale serie
+// appartiene. Sbagliarlo produce un link che risolve e mostra il documento
+// sbagliato, che è peggio di un link rotto.
 func TestSedutaDaAzione(t *testing.T) {
 	cases := []struct {
-		in   string
-		want int
+		in       string
+		want     int
+		wantAula bool
 	}{
-		{"Esaminato in Aula Seduta n. 267 AULA", 267},
-		{"Esaminato in Aula seduta n.114 AULA", 114},
-		{"Esaminato in Aula seduta  n.  9", 9},
-		{"Assegnato per esame Commissione PRIMA", 0},
+		{"Esaminato in Aula Seduta n. 267 AULA", 267, true},
+		{"Esaminato in Aula seduta n.114 AULA", 114, true},
+		{"Annunziato Seduta n. 52 AULA", 52, true},
+		// Fase "aula" per il testo, ma la seduta citata è di commissione:
+		// è il caso che generava il link sbagliato.
+		{"Esitato per Aula (epa) Seduta n. 260 0400 Commissione QUARTA", 260, false},
+		{"Esaminato in commissione Seduta n. 35 0400 Commissione QUARTA", 35, false},
+		// Il portale emette davvero questa riga, virgolette comprese.
+		{`Abbinamento con ddl 49 Seduta"""""""""""""" n. 35 0400 Commissione QUARTA`, 35, false},
+		{"Assegnato per esame Commissione PRIMA", 0, false},
 	}
 	for _, c := range cases {
-		if got := sedutaDaAzione(c.in); got != c.want {
-			t.Errorf("sedutaDaAzione(%q) = %d, want %d", c.in, got, c.want)
+		got, gotAula := sedutaDaAzione(c.in)
+		if got != c.want || gotAula != c.wantAula {
+			t.Errorf("sedutaDaAzione(%q) = (%d, %v), want (%d, %v)", c.in, got, gotAula, c.want, c.wantAula)
 		}
 	}
 }

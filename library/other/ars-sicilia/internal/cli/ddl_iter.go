@@ -62,23 +62,36 @@ type iterEvent struct {
 	// seduta in cui un ddl è stato votato, che è la domanda più frequente su
 	// un atto — e la data dell'evento da sola si confonde con la data in cui
 	// la notizia è stata scritta, che è quasi sempre il giorno dopo.
-	Seduta int `json:"seduta,omitempty"`
-	// ResocontoURL punta alla scheda del resoconto d'Aula della seduta. Il
-	// numero di seduta è l'id della scheda (verificato su leg. XVII e XVIII;
-	// una seduta inesistente risponde 404, non una pagina vuota), quindi
-	// l'URL si costruisce senza una richiesta in più. Valorizzato solo per gli
-	// eventi d'aula: i lavori di commissione hanno sommari, non resoconti.
-	ResocontoURL string `json:"resoconto_url,omitempty"`
-	Oratori      string `json:"oratori,omitempty"`
-	URL          string `json:"url,omitempty"`
-	ArchiveID    string `json:"archive_id,omitempty"`
-	DocID        int    `json:"doc_id,omitempty"`
+	Seduta  int    `json:"seduta,omitempty"`
+	Oratori string `json:"oratori,omitempty"`
+	// URL è la fonte PIÙ SPECIFICA che si conosce per questo evento: per un
+	// passaggio in Aula di cui si sa la seduta, la scheda del resoconto; per
+	// tutti gli altri, la scheda dell'atto da cui l'evento è stato letto.
+	// `legge cronologia` popola già questo campo per-evento; `ddl iter`
+	// ripeteva la stessa scheda su ogni riga perché è da lì che li parsa.
+	// Il numero di seduta è l'id della scheda del resoconto (verificato su
+	// leg. XVII e XVIII; una seduta inesistente risponde 404, non una pagina
+	// vuota), quindi l'URL si costruisce senza una richiesta in più.
+	URL       string `json:"url,omitempty"`
+	ArchiveID string `json:"archive_id,omitempty"`
+	DocID     int    `json:"doc_id,omitempty"`
+	// sedutaAula distingue la seduta d'Aula da quella di commissione: le due
+	// numerazioni sono indipendenti, quindi solo il marcatore del portale dice
+	// a quale serie appartiene il numero. Non esce nel JSON — serve al
+	// chiamante per decidere se esiste un resoconto da linkare, e chi legge
+	// l'output lo deduce dalla presenza dell'URL.
+	sedutaAula bool
 }
 
 type iterReport struct {
-	Legisl   int          `json:"legisl"`
-	Numero   int          `json:"numero"`
-	Titolo   string       `json:"titolo,omitempty"`
+	Legisl int    `json:"legisl"`
+	Numero int    `json:"numero"`
+	Titolo string `json:"titolo,omitempty"`
+	// URL è la scheda dell'atto di cui si racconta la storia: il ddl per
+	// `ddl iter`, la legge per `legge cronologia`. Stava solo dentro ogni
+	// evento, ripetuta identica, e nella radice del report — dove uno la
+	// cerca — non c'era.
+	URL      string       `json:"url,omitempty"`
 	Stralcio *stralcioOut `json:"stralcio,omitempty"`
 	Eventi   []iterEvent  `json:"eventi"`
 	Note     string       `json:"note,omitempty"`
@@ -114,6 +127,7 @@ func runDdlIter(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error 
 		return emitIter(cmd, flags, report)
 	}
 	report.Titolo = recs[0].Title
+	report.URL = recs[0].URL
 	// Se il ddl è uno stralcio, dirlo prima della cronologia: l'iter di uno
 	// stralcio comincia a metà storia, e senza il rimando al ddl base si legge
 	// come un atto nato dal nulla.
@@ -142,10 +156,21 @@ func runDdlIter(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error 
 			ev.URL = recs[0].URL
 			ev.ArchiveID = arc.ID
 			ev.DocID = recs[0].DocID
-			// Solo l'aula ha resoconti: i lavori di commissione producono
+			// Solo l'Aula ha resoconti: i lavori di commissione producono
 			// sommari, che stanno su un altro archivio e non su questa rotta.
-			if ev.Fase == "aula" {
-				ev.ResocontoURL = resocontoSchedaURL(legisl, ev.Seduta)
+			// La discriminante è il marcatore del portale (sedutaAula), NON la
+			// fase dell'evento: "Esitato per Aula (epa) Seduta n. 260 0400
+			// Commissione QUARTA" è un evento di fase aula che cita una seduta
+			// di commissione, e linkarne il resoconto porterebbe alla seduta
+			// d'Aula n. 260, che è un'altra cosa.
+			// Dove il resoconto esiste è la fonte giusta dell'evento e prende
+			// il posto della scheda del ddl, che resta nella radice del report.
+			if ev.sedutaAula {
+				if u := resocontoSchedaURL(legisl, ev.Seduta); u != "" {
+					ev.URL = u
+					ev.ArchiveID = ""
+					ev.DocID = 0
+				}
 			}
 			report.Eventi = append(report.Eventi, ev)
 		}
@@ -261,7 +286,7 @@ func parseIterFromBody(body string) []iterEvent {
 		action := region[loc[1]:actEnd]
 		// Il numero di seduta si legge PRIMA di tagliare: è l'unico posto in
 		// cui il portale lo dichiara, e prima finiva nel pezzo scartato.
-		seduta := sedutaDaAzione(action)
+		seduta, sedutaAula := sedutaDaAzione(action)
 		if s := indiceSeduta(action); s >= 0 {
 			action = action[:s]
 		}
@@ -273,21 +298,36 @@ func parseIterFromBody(body string) []iterEvent {
 			action = fmt.Sprintf("Promulgata legge regionale n. %s/%s", m[2], m[1])
 		}
 		events = append(events, iterEvent{
-			Fase:   classifyIterFase(action),
-			Data:   fmt.Sprintf("%s %s %s", dd, mon, yyyy),
-			Sede:   iterSede(action),
-			Titolo: action,
-			Seduta: seduta,
+			Fase:       classifyIterFase(action),
+			Data:       fmt.Sprintf("%s %s %s", dd, mon, yyyy),
+			Sede:       iterSede(action),
+			Titolo:     action,
+			Seduta:     seduta,
+			sedutaAula: sedutaAula,
 		})
 	}
 	return events
 }
 
-// reSeduta matches the portal's sitting reference inside an iter step. The
-// case-insensitive flag is deliberate: the portal writes both "Seduta n. 64"
-// and "seduta n. 114", and the old fixed-case cut left the lowercase form
-// inside the event title — same data, two renderings, depending on chance.
-var reSeduta = regexp.MustCompile(`(?i)\bseduta\s+n\.?\s*(\d+)`)
+// reSeduta matches the portal's sitting reference inside an iter step, plus
+// the marker that follows it. The case-insensitive flag is deliberate: the
+// portal writes both "Seduta n. 64" and "seduta n. 114", and the old
+// fixed-case cut left the lowercase form inside the event title — same data,
+// two renderings, depending on chance. The quote run in the character class
+// is not decorative: the portal really does emit
+// `Seduta"""""""""""""" n. 35` on some rows.
+//
+// The trailing group is what tells an Aula sitting from a committee one:
+//
+//	Seduta n. 261 AULA                      -> Aula
+//	Seduta n. 260 0400 Commissione QUARTA   -> IV Committee
+//
+// The two numbering series are independent, so the marker cannot be guessed
+// from the event phase: "Esitato per Aula (epa) Seduta n. 260 0400 Commissione
+// QUARTA" classifies as an aula event but cites a COMMITTEE sitting, and
+// building a resoconto URL from it lands on the unrelated Aula sitting n. 260
+// — a link that resolves and shows the wrong document.
+var reSeduta = regexp.MustCompile(`(?i)\bseduta"*\s+n\.?\s*(\d+)\s*([a-z0-9]*)`)
 
 // indiceSeduta returns where the sitting metadata starts in an iter action, or
 // -1. Case-insensitive counterpart of the old strings.Index(action, "Seduta").
@@ -298,18 +338,19 @@ func indiceSeduta(action string) int {
 	return -1
 }
 
-// sedutaDaAzione extracts the sitting number from an iter action, 0 when the
-// portal did not declare one.
-func sedutaDaAzione(action string) int {
+// sedutaDaAzione extracts the sitting number from an iter action and reports
+// whether it was an Aula sitting (as opposed to a committee one). Returns
+// (0, false) when the portal declared no sitting.
+func sedutaDaAzione(action string) (int, bool) {
 	m := reSeduta.FindStringSubmatch(action)
 	if m == nil {
-		return 0
+		return 0, false
 	}
 	n, err := strconv.Atoi(m[1])
 	if err != nil {
-		return 0
+		return 0, false
 	}
-	return n
+	return n, strings.EqualFold(m[2], "AULA")
 }
 
 // resocontoSchedaURL builds the /bd/ sitting-record URL from legislature and

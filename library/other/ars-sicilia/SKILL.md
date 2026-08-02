@@ -52,11 +52,11 @@ These capabilities aren't available in any other tool for this API.
 
   _Quando un agente deve raccontare 'a che punto sta il DDL X', questa è l'unica chiamata che restituisce la timeline completa senza incollare 5 ricerche manuali._
 
-  Gli eventi di fase `aula` portano **`seduta`** (il numero della seduta) e **`resoconto_url`** (la scheda del resoconto). Usali sempre quando parti da una notizia: la data dell'articolo è quasi sempre il giorno **dopo** la seduta, e confonderle fa concludere che manchi un resoconto che invece c'è.
+  Gli eventi portano **`seduta`** e, per le sedute d'Aula, un **`url`** che punta alla scheda del resoconto (la scheda dell'atto è nel campo `url` della radice). Usali sempre quando parti da una notizia: la data dell'articolo è quasi sempre il giorno **dopo** la seduta, e confonderle fa concludere che manchi un resoconto che invece c'è.
 
   ```bash
   ars-sicilia-pp-cli ddl iter 18 1153 --json
-  ars-sicilia-pp-cli ddl iter 17 290 --json --select data,fase,seduta,resoconto_url
+  ars-sicilia-pp-cli ddl iter 17 290 --json --select data,fase,seduta,url
   ```
 - **`ddl stralci`** — Elenca i disegni di legge ricavati per stralcio da un ddl base; il verso opposto è il campo `stralcio` di `ddl get` e `ddl iter`.
 

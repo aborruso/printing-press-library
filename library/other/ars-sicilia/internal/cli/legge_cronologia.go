@@ -93,6 +93,9 @@ func runLeggeCronologia(cmd *cobra.Command, flags *rootFlags, legisl, numero, an
 	law := recs[0]
 	warnAnnoNonPinnato(anno, numero, law.Fields["Data"])
 	report.Titolo = law.Title
+	// iterReport è condiviso con `ddl iter`: qui l'atto di cui si racconta la
+	// storia è la legge, quindi la radice porta la sua scheda.
+	report.URL = law.URL
 	report.Eventi = append(report.Eventi, iterEvent{
 		Fase:      "promulgazione",
 		Data:      law.Fields["Data"],
