@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	icaro "github.com/mvanhorn/printing-press-library/library/other/ars-sicilia/internal/icaroclient"
@@ -51,14 +52,27 @@ func newNovelDdlIterCmd(flags *rootFlags) *cobra.Command {
 }
 
 type iterEvent struct {
-	Fase      string `json:"fase"`
-	Data      string `json:"data,omitempty"`
-	Sede      string `json:"sede,omitempty"`
-	Titolo    string `json:"titolo,omitempty"`
-	Oratori   string `json:"oratori,omitempty"`
-	URL       string `json:"url,omitempty"`
-	ArchiveID string `json:"archive_id,omitempty"`
-	DocID     int    `json:"doc_id,omitempty"`
+	Fase   string `json:"fase"`
+	Data   string `json:"data,omitempty"`
+	Sede   string `json:"sede,omitempty"`
+	Titolo string `json:"titolo,omitempty"`
+	// Seduta è il numero della seduta in cui l'evento è avvenuto, quando il
+	// portale lo dichiara. Prima veniva tagliato via insieme al resto della
+	// riga (vedi parseIterFromBody): senza, dall'iter non si può risalire alla
+	// seduta in cui un ddl è stato votato, che è la domanda più frequente su
+	// un atto — e la data dell'evento da sola si confonde con la data in cui
+	// la notizia è stata scritta, che è quasi sempre il giorno dopo.
+	Seduta int `json:"seduta,omitempty"`
+	// ResocontoURL punta alla scheda del resoconto d'Aula della seduta. Il
+	// numero di seduta è l'id della scheda (verificato su leg. XVII e XVIII;
+	// una seduta inesistente risponde 404, non una pagina vuota), quindi
+	// l'URL si costruisce senza una richiesta in più. Valorizzato solo per gli
+	// eventi d'aula: i lavori di commissione hanno sommari, non resoconti.
+	ResocontoURL string `json:"resoconto_url,omitempty"`
+	Oratori      string `json:"oratori,omitempty"`
+	URL          string `json:"url,omitempty"`
+	ArchiveID    string `json:"archive_id,omitempty"`
+	DocID        int    `json:"doc_id,omitempty"`
 }
 
 type iterReport struct {
@@ -128,6 +142,11 @@ func runDdlIter(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error 
 			ev.URL = recs[0].URL
 			ev.ArchiveID = arc.ID
 			ev.DocID = recs[0].DocID
+			// Solo l'aula ha resoconti: i lavori di commissione producono
+			// sommari, che stanno su un altro archivio e non su questa rotta.
+			if ev.Fase == "aula" {
+				ev.ResocontoURL = resocontoSchedaURL(legisl, ev.Seduta)
+			}
 			report.Eventi = append(report.Eventi, ev)
 		}
 	}
@@ -240,7 +259,10 @@ func parseIterFromBody(body string) []iterEvent {
 			actEnd = locs[i+1][0]
 		}
 		action := region[loc[1]:actEnd]
-		if s := strings.Index(action, "Seduta"); s >= 0 {
+		// Il numero di seduta si legge PRIMA di tagliare: è l'unico posto in
+		// cui il portale lo dichiara, e prima finiva nel pezzo scartato.
+		seduta := sedutaDaAzione(action)
+		if s := indiceSeduta(action); s >= 0 {
 			action = action[:s]
 		}
 		action = strings.Join(strings.Fields(action), " ")
@@ -255,9 +277,51 @@ func parseIterFromBody(body string) []iterEvent {
 			Data:   fmt.Sprintf("%s %s %s", dd, mon, yyyy),
 			Sede:   iterSede(action),
 			Titolo: action,
+			Seduta: seduta,
 		})
 	}
 	return events
+}
+
+// reSeduta matches the portal's sitting reference inside an iter step. The
+// case-insensitive flag is deliberate: the portal writes both "Seduta n. 64"
+// and "seduta n. 114", and the old fixed-case cut left the lowercase form
+// inside the event title — same data, two renderings, depending on chance.
+var reSeduta = regexp.MustCompile(`(?i)\bseduta\s+n\.?\s*(\d+)`)
+
+// indiceSeduta returns where the sitting metadata starts in an iter action, or
+// -1. Case-insensitive counterpart of the old strings.Index(action, "Seduta").
+func indiceSeduta(action string) int {
+	if loc := reSeduta.FindStringIndex(action); loc != nil {
+		return loc[0]
+	}
+	return -1
+}
+
+// sedutaDaAzione extracts the sitting number from an iter action, 0 when the
+// portal did not declare one.
+func sedutaDaAzione(action string) int {
+	m := reSeduta.FindStringSubmatch(action)
+	if m == nil {
+		return 0
+	}
+	n, err := strconv.Atoi(m[1])
+	if err != nil {
+		return 0
+	}
+	return n
+}
+
+// resocontoSchedaURL builds the /bd/ sitting-record URL from legislature and
+// sitting number. The sitting number IS the scheda id: verified on leg. XVII
+// (n. 114 → 07/05/2019, n. 149/150 → 05-06/11/2019) and leg. XVIII (n. 267 →
+// 28/07/2026); a non-existent sitting returns 404 rather than an empty page,
+// so a constructed URL either resolves or fails visibly.
+func resocontoSchedaURL(legisl, seduta int) string {
+	if legisl <= 0 || seduta <= 0 {
+		return ""
+	}
+	return fmt.Sprintf("%s/bd/resoconti/scheda/%d/%d", icaro.DefaultBaseURL, legisl, seduta)
 }
 
 // docIterEvents reads a DDL's iter timeline. It prefers the page's labeled

@@ -185,3 +185,66 @@ func TestParseIterFromBody_NoNumeroHeader(t *testing.T) {
 		}
 	}
 }
+
+// Il numero di seduta veniva tagliato via insieme al resto della riga: è il
+// solo posto in cui il portale dichiara in quale seduta un ddl è stato votato,
+// e senza di esso la data dell'evento si confonde con la data in cui la
+// notizia è stata scritta — che è quasi sempre il giorno dopo.
+func TestParseIterSeduta(t *testing.T) {
+	// Casi reali: "Seduta" maiuscolo (leg. XVIII) e minuscolo (leg. XVII, ddl
+	// 290). Il vecchio taglio a case fisso lasciava il secondo dentro al titolo.
+	body := "x Attuale 11 mar 2026 Respinto dall' Aula Seduta n. 236 AULA " +
+		"Storico 07 mag 2019 Esaminato in Aula seduta n. 114 AULA " +
+		"24 set 2018 Assegnato per esame Commissione PRIMA"
+	ev := parseIterFromBody(body)
+	if len(ev) != 3 {
+		t.Fatalf("eventi = %d, want 3: %+v", len(ev), ev)
+	}
+	if ev[0].Seduta != 236 {
+		t.Errorf("seduta maiuscola: got %d, want 236", ev[0].Seduta)
+	}
+	if ev[1].Seduta != 114 {
+		t.Errorf("seduta minuscola: got %d, want 114 (il taglio era case-sensitive)", ev[1].Seduta)
+	}
+	if strings.Contains(ev[1].Titolo, "114") || strings.Contains(ev[1].Titolo, "seduta") {
+		t.Errorf("titolo %q: i metadati di seduta vanno nel campo, non nel testo", ev[1].Titolo)
+	}
+	if ev[2].Seduta != 0 {
+		t.Errorf("evento senza seduta dichiarata: got %d, want 0", ev[2].Seduta)
+	}
+}
+
+// Il numero di seduta È l'id della scheda del resoconto: verificato su leg.
+// XVII (114 → 07/05/2019, 150 → 06/11/2019) e XVIII (267 → 28/07/2026). Una
+// seduta inesistente risponde 404, quindi un URL costruito o risolve o fallisce
+// in modo visibile — mai una pagina vuota spacciata per buona.
+func TestResocontoSchedaURL(t *testing.T) {
+	if got := resocontoSchedaURL(17, 150); !strings.HasSuffix(got, "/bd/resoconti/scheda/17/150") {
+		t.Errorf("url = %q, want .../bd/resoconti/scheda/17/150", got)
+	}
+	// Senza numero di seduta non si inventa un link: meglio nessun URL che uno
+	// che porta altrove.
+	if got := resocontoSchedaURL(17, 0); got != "" {
+		t.Errorf("seduta ignota: url = %q, want stringa vuota", got)
+	}
+	if got := resocontoSchedaURL(0, 150); got != "" {
+		t.Errorf("legislatura ignota: url = %q, want stringa vuota", got)
+	}
+}
+
+func TestSedutaDaAzione(t *testing.T) {
+	cases := []struct {
+		in   string
+		want int
+	}{
+		{"Esaminato in Aula Seduta n. 267 AULA", 267},
+		{"Esaminato in Aula seduta n.114 AULA", 114},
+		{"Esaminato in Aula seduta  n.  9", 9},
+		{"Assegnato per esame Commissione PRIMA", 0},
+	}
+	for _, c := range cases {
+		if got := sedutaDaAzione(c.in); got != c.want {
+			t.Errorf("sedutaDaAzione(%q) = %d, want %d", c.in, got, c.want)
+		}
+	}
+}

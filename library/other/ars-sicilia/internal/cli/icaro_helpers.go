@@ -106,17 +106,27 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 		if p.LimitLeggi > 0 && len(leggi) > p.LimitLeggi {
 			leggi = leggi[:p.LimitLeggi]
 		}
-		if err := printJSONFiltered(cmd.OutOrStdout(), leggi, flags); err != nil {
-			return err
-		}
 		// Si avvisa solo quando la finestra di righe si è esaurita PRIMA di
 		// raccogliere le leggi chieste: lì l'elenco è incompleto e non si vede.
 		// Se le leggi chieste sono arrivate tutte, il troncamento delle righe è
 		// il normale effetto del limite, non una risposta monca.
+		var hint string
 		if truncated && mancanti {
-			fmt.Fprintf(cmd.ErrOrStderr(),
-				"hint: lette %d righe-articolo e trovate solo %d delle %d leggi chieste: l'elenco può essere incompleto. Alza --limit, oppure restringi con --anno/--numero.\n",
+			hint = fmt.Sprintf(
+				"lette %d righe-articolo e trovate solo %d delle %d leggi chieste: l'elenco può essere incompleto. Alza --limit, oppure restringi con --anno/--numero.",
 				len(recs), len(leggi), p.LimitLeggi)
+		}
+		// Questo ramo ha un hint tutto suo e ritorna prima di warnTruncated:
+		// senza il caso esplicito, `leggi cerca --envelope` sarebbe l'unica
+		// ricerca a non avere la busta, e in silenzio.
+		if envelopeWanted(cmd.OutOrStdout(), flags) {
+			return emitEnvelope(cmd.OutOrStdout(), leggi, truncated && mancanti, hint, flags)
+		}
+		if err := printJSONFiltered(cmd.OutOrStdout(), leggi, flags); err != nil {
+			return err
+		}
+		if hint != "" {
+			fmt.Fprintf(cmd.ErrOrStderr(), "hint: %s\n", hint)
 		}
 		return nil
 	}
@@ -126,11 +136,141 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 			firm = firmatariByDoc(ctx, c, *arc, recs)
 		}
 	}
+	// Pertinenza: il portale ordina per data, non per attinenza, quindi una
+	// ricerca testuale può mettere in cima documenti che citano i termini di
+	// sfuggita e relegare in fondo quello che li ha nel titolo.
+	termini := terminiRicerca(p.Params)
+	recs = ordinaPerPertinenza(recs, termini)
+	pertHint := pertinenzaHint(recs, termini)
+
+	if envelopeWanted(cmd.OutOrStdout(), flags) {
+		// L'avviso resta anche su stderr: la busta serve a chi legge il JSON,
+		// non a togliere l'informazione a chi usa la CLI a mano.
+		warnTruncated(truncated, len(recs), arc.Slug)
+		warnPertinenza(pertHint)
+		return emitEnvelope(cmd.OutOrStdout(), flatRecords(recs, firm), truncated,
+			uniscoHint(truncatedHint(truncated, len(recs), arc.Slug), pertHint), flags)
+	}
 	if err := emitRecords(cmd, flags, *arc, recs, firm); err != nil {
 		return err
 	}
 	warnTruncated(truncated, len(recs), arc.Slug)
+	warnPertinenza(pertHint)
 	return nil
+}
+
+// uniscoHint concatena gli avvisi non vuoti in un unico campo `hint`: la busta
+// ne espone uno solo, e due frasi separate da spazio si leggono meglio di una
+// struttura annidata che ogni consumatore dovrebbe imparare.
+func uniscoHint(parts ...string) string {
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if p = strings.TrimSpace(strings.TrimPrefix(p, "hint: ")); p != "" {
+			out = append(out, p)
+		}
+	}
+	return strings.Join(out, " ")
+}
+
+func warnPertinenza(hint string) {
+	if hint != "" {
+		fmt.Fprintln(os.Stderr, hint)
+	}
+}
+
+// terminiRicerca estrae le parole cercate a testo libero (--testo, --frase).
+// Gli operatori ISIS espliciti passati con --isis-query non entrano: lì
+// l'utente ha costruito la query e non vogliamo riordinargliela sotto i piedi.
+func terminiRicerca(params map[string]string) []string {
+	var out []string
+	for _, k := range []string{"testo", "frase"} {
+		v := strings.TrimSpace(params[k])
+		if v == "" {
+			continue
+		}
+		// Una query con parentesi o operatori è roba costruita a mano: si
+		// riordina solo il testo libero.
+		if strings.ContainsAny(v, "()*$") {
+			continue
+		}
+		for _, w := range strings.Fields(strings.ToLower(v)) {
+			if len(w) > 2 && !isOperatoreISIS(w) {
+				out = append(out, w)
+			}
+		}
+	}
+	return out
+}
+
+func isOperatoreISIS(w string) bool {
+	switch w {
+	case "e", "o", "non", "and", "or", "not", "adj":
+		return true
+	}
+	return false
+}
+
+// ordinaPerPertinenza porta davanti i record che hanno TUTTI i termini nel
+// titolo, lasciando invariato l'ordine relativo dentro ciascun gruppo (il
+// portale ordina per data, e dentro il gruppo quell'ordine resta leggibile).
+//
+// Limite dichiarato: agisce sulla finestra già scaricata. Se il documento
+// pertinente sta oltre --limit, nessun riordino lo fa comparire — per quello
+// c'è pertinenzaHint, che dice di alzare il limite invece di lasciar
+// concludere che il documento non esista.
+func ordinaPerPertinenza(recs []icaro.Record, termini []string) []icaro.Record {
+	if len(termini) == 0 || len(recs) < 2 {
+		return recs
+	}
+	testa := make([]icaro.Record, 0, len(recs))
+	coda := make([]icaro.Record, 0, len(recs))
+	for _, r := range recs {
+		if titoloMatcha(r.Title, termini) {
+			testa = append(testa, r)
+			continue
+		}
+		coda = append(coda, r)
+	}
+	return append(testa, coda...)
+}
+
+// titoloMatcha riporta se il titolo contiene tutti i termini cercati.
+func titoloMatcha(titolo string, termini []string) bool {
+	t := strings.ToLower(titolo)
+	for _, w := range termini {
+		if !strings.Contains(t, w) {
+			return false
+		}
+	}
+	return true
+}
+
+// pertinenzaHint avvisa quando una ricerca testuale ha prodotto risultati in
+// cui NESSUN titolo contiene i termini: è il sintomo che il documento cercato
+// sta oltre la finestra. Su `--testo "gestione rifiuti"` i primi dieci sono
+// debiti fuori bilancio e leggi di stabilità, mentre il ddl con quelle parole
+// nel titolo è il 75° — e chi si ferma al limite di default conclude che non
+// esista.
+func pertinenzaHint(recs []icaro.Record, termini []string) string {
+	if len(termini) == 0 || len(recs) == 0 {
+		return ""
+	}
+	for _, r := range recs {
+		if titoloMatcha(r.Title, termini) {
+			return ""
+		}
+	}
+	return fmt.Sprintf(
+		"hint: nessuno dei %d risultati mostrati ha %s nel titolo: la ricerca a testo libero aggancia anche i documenti che citano i termini nel corpo, e il portale ordina per data, non per pertinenza. L'atto che cerchi può stare più in basso: alza --limit, oppure usa --frase per la locuzione esatta.",
+		len(recs), strings.Join(virgolette(termini), " e "))
+}
+
+func virgolette(termini []string) []string {
+	out := make([]string, 0, len(termini))
+	for _, t := range termini {
+		out = append(out, "«"+t+"»")
+	}
+	return out
 }
 
 // warnTruncated avvisa su stderr quando la ricerca ha restituito solo una
@@ -140,10 +280,57 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 // regolarmente presente, ma oltre i primi 10 risultati.
 // L'ordinamento del portale non è per pertinenza, quindi la finestra non
 // contiene necessariamente i documenti più attinenti alla ricerca.
+//
+// Con --envelope l'avviso viaggia anche dentro il JSON (vedi emitEnvelope):
+// su stderr resta comunque, perché è lì che lo legge chi usa la CLI a mano.
 func warnTruncated(truncated bool, shown int, slug string) {
 	if msg := truncatedHint(truncated, shown, slug); msg != "" {
 		fmt.Fprintln(os.Stderr, msg)
 	}
+}
+
+// emitEnvelope stampa i risultati avvolti in {risultati, troncato, hint}.
+//
+// Esiste perché l'avviso di troncamento nasceva su stderr e basta: in --agent
+// il payload è un array puro, quindi chi consuma JSON non lo vedeva mai e
+// leggeva una finestra troncata come "il documento non esiste". L'hint c'era,
+// stampato accanto, e restava fuori dal dato.
+//
+// --select viene applicato DENTRO risultati, non alla busta: filtrare il
+// livello esterno cancellerebbe i risultati (nessun record ha un campo
+// "risultati") e lascerebbe le chiavi di servizio, cioè l'opposto di ciò che
+// chiede chi scrive --select data,titolo. Le chiavi della busta restano
+// sempre, che è il motivo per cui la busta esiste.
+func emitEnvelope(w io.Writer, payload any, troncato bool, hint string, flags *rootFlags) error {
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	if flags.selectFields != "" {
+		warnUnknownSelectFields(raw, flags.selectFields)
+		raw = filterFields(raw, flags.selectFields)
+	} else if flags.compact {
+		raw = compactFields(raw)
+	}
+	env := struct {
+		Risultati json.RawMessage `json:"risultati"`
+		Troncato  bool            `json:"troncato"`
+		Hint      string          `json:"hint,omitempty"`
+	}{Risultati: raw, Troncato: troncato, Hint: hint}
+	if flags.quiet {
+		return nil
+	}
+	return writeJSON(w, env)
+}
+
+// envelopeWanted riporta se l'output va avvolto. La busta è JSON: con --csv
+// (che rende una tabella) e nelle viste a terminale non ha significato, quindi
+// il flag viene ignorato invece di produrre un ibrido.
+func envelopeWanted(w io.Writer, flags *rootFlags) bool {
+	if !flags.envelope || flags.csv {
+		return false
+	}
+	return flags.asJSON || !isTerminal(w)
 }
 
 // truncatedHint torna il testo dell'avviso, o "" quando non c'è nulla da dire.
@@ -507,32 +694,10 @@ func emitRecords(cmd *cobra.Command, flags *rootFlags, arc icaro.Archive, recs [
 	out := cmd.OutOrStdout()
 	asJSON := flags.asJSON || (!isTerminal(out) && !flags.csv && !flags.quiet && !flags.plain)
 	if asJSON {
-		// Convert to a flat shape: {doc_id, title, excerpt, url, <fields...>}.
-		flat := make([]map[string]any, 0, len(recs))
-		for _, r := range recs {
-			row := map[string]any{
-				"title":   r.Title,
-				"excerpt": r.Excerpt,
-				"url":     r.URL,
-			}
-			// Le righe del backend /bd/ non hanno un DocID Icaro (vedi
-			// parseBDRow): esporre lo zero come identificativo farebbe
-			// credere che ogni record sia il documento #0. Meglio assente.
-			if r.DocID > 0 {
-				row["doc_id"] = r.DocID
-			}
-			for k, v := range r.Fields {
-				row[strings.ToLower(strings.TrimSuffix(k, "."))] = v
-			}
-			if f, ok := firmatari[r.DocID]; ok {
-				row["firmatari"] = f
-			}
-			flat = append(flat, row)
-		}
 		// printJSONFiltered (not the bare writeJSON) so --select/--compact
 		// behave the same as on generator-emitted commands — writeJSON
 		// always dumped the full array regardless of --select.
-		return printJSONFiltered(out, flat, flags)
+		return printJSONFiltered(out, flatRecords(recs, firmatari), flags)
 	}
 	if flags.csv {
 		return writeRecordsCSV(out, arc, recs, firmatari)
@@ -566,6 +731,35 @@ func emitRecords(cmd *cobra.Command, flags *rootFlags, arc icaro.Archive, recs [
 		fmt.Fprintln(out)
 	}
 	return nil
+}
+
+// flatRecords converts records to the flat JSON shape
+// {doc_id, title, excerpt, url, <fields...>}. Estratta da emitRecords perché
+// la serve anche il percorso --envelope, che deve filtrare i risultati dentro
+// la busta invece di stamparli direttamente.
+func flatRecords(recs []icaro.Record, firmatari map[int][]firmatario) []map[string]any {
+	flat := make([]map[string]any, 0, len(recs))
+	for _, r := range recs {
+		row := map[string]any{
+			"title":   r.Title,
+			"excerpt": r.Excerpt,
+			"url":     r.URL,
+		}
+		// Le righe del backend /bd/ non hanno un DocID Icaro (vedi
+		// parseBDRow): esporre lo zero come identificativo farebbe
+		// credere che ogni record sia il documento #0. Meglio assente.
+		if r.DocID > 0 {
+			row["doc_id"] = r.DocID
+		}
+		for k, v := range r.Fields {
+			row[strings.ToLower(strings.TrimSuffix(k, "."))] = v
+		}
+		if f, ok := firmatari[r.DocID]; ok {
+			row["firmatari"] = f
+		}
+		flat = append(flat, row)
+	}
+	return flat
 }
 
 // firmatariLine renders a signatory list as "Nome (Gruppo); Nome (Gruppo)"

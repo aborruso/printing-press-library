@@ -52,8 +52,11 @@ These capabilities aren't available in any other tool for this API.
 
   _Quando un agente deve raccontare 'a che punto sta il DDL X', questa è l'unica chiamata che restituisce la timeline completa senza incollare 5 ricerche manuali._
 
+  Gli eventi di fase `aula` portano **`seduta`** (il numero della seduta) e **`resoconto_url`** (la scheda del resoconto). Usali sempre quando parti da una notizia: la data dell'articolo è quasi sempre il giorno **dopo** la seduta, e confonderle fa concludere che manchi un resoconto che invece c'è.
+
   ```bash
   ars-sicilia-pp-cli ddl iter 18 1153 --json
+  ars-sicilia-pp-cli ddl iter 17 290 --json --select data,fase,seduta,resoconto_url
   ```
 - **`ddl stralci`** — Elenca i disegni di legge ricavati per stralcio da un ddl base; il verso opposto è il campo `stralcio` di `ddl get` e `ddl iter`.
 
@@ -286,6 +289,11 @@ Run `ars-sicilia-pp-cli doctor` to verify setup.
 Add `--agent` to any command. Expands to: `--json --compact --no-input --no-color --yes`.
 
 - **Pipeable** — JSON on stdout, errors on stderr
+- **`--envelope` on searches: read the truncation flag, do not infer absence** ⚠️ — by default `*/cerca` prints a bare array and the warnings ("results truncated", "no result has your terms in its title") go to **stderr**, so an agent parsing stdout never sees them. That is not hypothetical: a truncated 3-month search was read as "this sitting record is not indexed", and the record was there. Add `--envelope` and you get `{"risultati": [...], "troncato": true, "hint": "..."}`; `--select` still filters inside `risultati`. **A short list is never proof of absence** — check `troncato` before concluding anything does not exist.
+
+  ```bash
+  ars-sicilia-pp-cli resoconti cerca --legisl 17 --data 2019-10-01:2019-12-31 --agent --envelope --limit 10
+  ```
 - **Filterable** — `--select` keeps a subset of fields. Dotted paths descend into nested structures; arrays traverse element-wise. On the aggregate commands (`legge cronologia`, `ddl iter`, `deputato profilo`, `commissione dossier`) the payload is an object wrapping an array, so name the fields at the level where they live: `--select data,fase` filters the events, `--select titolo` keeps the act's own title, and mixing both returns both. A name that exists nowhere is reported on stderr with the list of available fields. Critical for keeping context small on verbose APIs:
 
   ```bash

@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"bytes"
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -157,6 +159,155 @@ func TestAnnoNonPinnatoHint(t *testing.T) {
 	for _, want := range []string{"26", "7.10.2024", "--anno"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("avviso %q: manca %q (numero, data scelta e rimedio devono esserci)", got, want)
+		}
+	}
+}
+
+// La busta esiste per un motivo solo: in --agent il payload è un array e
+// l'avviso di troncamento nasceva su stderr, dove un consumatore JSON non lo
+// legge. Se le chiavi di servizio non ci sono, la busta non serve a niente.
+func TestEmitEnvelope(t *testing.T) {
+	var buf bytes.Buffer
+	payload := []map[string]any{{"data": "06/11/2019", "title": "Seduta n. 150"}}
+	if err := emitEnvelope(&buf, payload, true, "hint: risultati troncati", &rootFlags{asJSON: true}); err != nil {
+		t.Fatalf("emitEnvelope: %v", err)
+	}
+	var env struct {
+		Risultati []map[string]any `json:"risultati"`
+		Troncato  bool             `json:"troncato"`
+		Hint      string           `json:"hint"`
+	}
+	if err := json.Unmarshal(buf.Bytes(), &env); err != nil {
+		t.Fatalf("output non è un oggetto JSON: %v — %s", err, buf.String())
+	}
+	if !env.Troncato {
+		t.Error("troncato: atteso true, il chiamante l'ha dichiarato")
+	}
+	if env.Hint == "" {
+		t.Error("hint: atteso non vuoto, è l'informazione che stderr non consegnava")
+	}
+	if len(env.Risultati) != 1 || env.Risultati[0]["data"] != "06/11/2019" {
+		t.Errorf("risultati = %v, want la riga passata intatta", env.Risultati)
+	}
+}
+
+// --select deve filtrare DENTRO risultati: applicato alla busta cancellerebbe
+// i record (nessuno ha un campo "risultati") e lascerebbe le sole chiavi di
+// servizio, cioè l'opposto di quel che chiede chi scrive --select data.
+func TestEmitEnvelopeConSelect(t *testing.T) {
+	var buf bytes.Buffer
+	payload := []map[string]any{{"data": "06/11/2019", "title": "Seduta n. 150", "url": "https://x"}}
+	flags := &rootFlags{asJSON: true, selectFields: "data"}
+	if err := emitEnvelope(&buf, payload, false, "", flags); err != nil {
+		t.Fatalf("emitEnvelope: %v", err)
+	}
+	var env struct {
+		Risultati []map[string]any `json:"risultati"`
+		Troncato  bool             `json:"troncato"`
+	}
+	if err := json.Unmarshal(buf.Bytes(), &env); err != nil {
+		t.Fatalf("output non è un oggetto JSON: %v — %s", err, buf.String())
+	}
+	if len(env.Risultati) != 1 {
+		t.Fatalf("risultati = %v, want una riga (il filtro non deve svuotare la busta)", env.Risultati)
+	}
+	if _, ok := env.Risultati[0]["data"]; !ok {
+		t.Error("il campo selezionato «data» è sparito dai risultati")
+	}
+	if _, ok := env.Risultati[0]["url"]; ok {
+		t.Error("«url» non era selezionato e non deve uscire")
+	}
+	if !strings.Contains(buf.String(), "\"troncato\"") {
+		t.Error("--select ha mangiato le chiavi della busta: sono di servizio, restano sempre")
+	}
+}
+
+// La busta è JSON. Con --csv l'output è una tabella e avvolgerla produrrebbe
+// un ibrido che nessuno dei due consumatori sa leggere.
+func TestEnvelopeWanted(t *testing.T) {
+	var buf bytes.Buffer // non è un terminale: il default è JSON
+	cases := []struct {
+		nome  string
+		flags rootFlags
+		want  bool
+	}{
+		{"flag assente", rootFlags{}, false},
+		{"envelope su json", rootFlags{envelope: true, asJSON: true}, true},
+		{"envelope su pipe", rootFlags{envelope: true}, true},
+		{"envelope con csv", rootFlags{envelope: true, csv: true}, false},
+	}
+	for _, c := range cases {
+		if got := envelopeWanted(&buf, &c.flags); got != c.want {
+			t.Errorf("%s: envelopeWanted = %v, want %v", c.nome, got, c.want)
+		}
+	}
+}
+
+// Il portale ordina per data, non per pertinenza: chi ha i termini nel titolo
+// va davanti, e dentro i due gruppi l'ordine di partenza resta leggibile.
+func TestOrdinaPerPertinenza(t *testing.T) {
+	recs := []icaro.Record{
+		{Title: "Riconoscimento debiti fuori bilancio"},
+		{Title: "Riforma degli ambiti territoriali e gestione integrata dei rifiuti"},
+		{Title: "Legge di stabilità regionale"},
+		{Title: "Norme sulla gestione dei rifiuti speciali"},
+	}
+	got := ordinaPerPertinenza(recs, []string{"gestione", "rifiuti"})
+	if !strings.Contains(got[0].Title, "Riforma") || !strings.Contains(got[1].Title, "Norme") {
+		t.Errorf("i due titoli pertinenti devono venire davanti, nell'ordine originale; got %q, %q", got[0].Title, got[1].Title)
+	}
+	if !strings.Contains(got[2].Title, "debiti") {
+		t.Errorf("la coda deve restare nell'ordine del portale; got %q", got[2].Title)
+	}
+	if len(got) != len(recs) {
+		t.Errorf("record persi nel riordino: %d, want %d", len(got), len(recs))
+	}
+	// Senza termini non si tocca nulla: --isis-query è una query costruita a
+	// mano e riordinarla sarebbe una sorpresa.
+	if got := ordinaPerPertinenza(recs, nil); got[0].Title != recs[0].Title {
+		t.Error("nessun termine: l'ordine del portale deve restare intatto")
+	}
+}
+
+// L'hint scatta quando NESSUN titolo matcha: è il sintomo che il documento
+// cercato sta oltre la finestra, non che non esista.
+func TestPertinenzaHint(t *testing.T) {
+	fuoriTema := []icaro.Record{{Title: "Riconoscimento debiti fuori bilancio"}, {Title: "Legge di stabilità"}}
+	got := pertinenzaHint(fuoriTema, []string{"gestione", "rifiuti"})
+	if got == "" {
+		t.Fatal("nessun titolo pertinente: atteso un avviso")
+	}
+	for _, want := range []string{"gestione", "rifiuti", "--limit", "--frase"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("avviso %q: manca %q (termini e rimedi devono esserci)", got, want)
+		}
+	}
+	conMatch := append(fuoriTema, icaro.Record{Title: "Norme sulla gestione dei rifiuti"})
+	if got := pertinenzaHint(conMatch, []string{"gestione", "rifiuti"}); got != "" {
+		t.Errorf("c'è un titolo pertinente: atteso silenzio, ottenuto %q", got)
+	}
+	if got := pertinenzaHint(fuoriTema, nil); got != "" {
+		t.Errorf("ricerca non testuale: atteso silenzio, ottenuto %q", got)
+	}
+}
+
+// Solo il testo libero viene riordinato. Le parole corte e gli operatori ISIS
+// non sono termini di ricerca, e una query con parentesi è roba costruita a
+// mano da chi sa cosa sta facendo.
+func TestTerminiRicerca(t *testing.T) {
+	cases := []struct {
+		in   map[string]string
+		want int
+	}{
+		{map[string]string{"testo": "gestione rifiuti"}, 2},
+		{map[string]string{"frase": "aree idonee"}, 2},
+		{map[string]string{"testo": "la e di gestione"}, 1}, // parole corte e operatori fuori
+		{map[string]string{"testo": "(aree E idonee)"}, 0},  // query esplicita: non si tocca
+		{map[string]string{"legisl": "18"}, 0},
+	}
+	for _, c := range cases {
+		if got := terminiRicerca(c.in); len(got) != c.want {
+			t.Errorf("terminiRicerca(%v) = %v (%d termini), want %d", c.in, got, len(got), c.want)
 		}
 	}
 }
