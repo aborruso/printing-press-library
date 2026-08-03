@@ -13,6 +13,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/mvanhorn/printing-press-library/library/other/ars-sicilia/internal/cliutil"
 	icaro "github.com/mvanhorn/printing-press-library/library/other/ars-sicilia/internal/icaroclient"
@@ -210,9 +211,40 @@ func isOperatoreISIS(w string) bool {
 	return false
 }
 
+// titoloCapFonte è il numero di caratteri a cui la lista dei risultati del
+// portale tronca i titoli: oltre non si va in nessun archivio (ddl, mozioni,
+// interrogazioni, leggi).
+const titoloCapFonte = 256
+
+// titoloSospetto è la lunghezza da cui un titolo va considerato tagliato. È il
+// cap meno uno perché quando il taglio cade su uno spazio la coda viene
+// ripulita: in `mozioni cerca --legisl 18` convivono titoli da 256 e da 255,
+// entrambi interrotti a metà frase. Alzarla a titoloCapFonte rimetterebbe i
+// secondi fra i fuori tema.
+const titoloSospetto = titoloCapFonte - 1
+
+// titoloTroncato riporta se il titolo è arrivato al tetto della fonte, cioè se
+// quello che vediamo può non essere il titolo intero.
+//
+// Perché conta: il ddl 199 della XVII si intitola «…riconoscimento degli
+// svantaggi derivanti dalla condizione di insularità», ma la lista lo taglia su
+// «…svantaggi deriva». Cercando `--frase "condizione di insularità"` il titolo
+// visibile non matcha, e senza questo controllo l'atto finiva in coda con
+// l'avviso «nessun risultato ha i termini nel titolo»: un falso negativo
+// proprio sui titoli lunghi (schemi di progetto di legge, disegni di legge
+// voto), che sono i più difficili da trovare.
+func titoloTroncato(titolo string) bool {
+	return utf8.RuneCountInString(titolo) >= titoloSospetto
+}
+
 // ordinaPerPertinenza porta davanti i record che hanno TUTTI i termini nel
 // titolo, lasciando invariato l'ordine relativo dentro ciascun gruppo (il
 // portale ordina per data, e dentro il gruppo quell'ordine resta leggibile).
+//
+// I gruppi sono tre, non due: in mezzo stanno i titoli troncati dalla fonte,
+// dove il termine può esserci nella parte non mostrata. Non sono un match
+// dimostrato, ma nemmeno un no: metterli in coda insieme ai fuori tema
+// nasconderebbe l'atto giusto sotto quelli sbagliati.
 //
 // Limite dichiarato: agisce sulla finestra già scaricata. Se il documento
 // pertinente sta oltre --limit, nessun riordino lo fa comparire — per quello
@@ -223,15 +255,19 @@ func ordinaPerPertinenza(recs []icaro.Record, termini []string) []icaro.Record {
 		return recs
 	}
 	testa := make([]icaro.Record, 0, len(recs))
+	incerti := make([]icaro.Record, 0, len(recs))
 	coda := make([]icaro.Record, 0, len(recs))
 	for _, r := range recs {
-		if titoloMatcha(r.Title, termini) {
+		switch {
+		case titoloMatcha(r.Title, termini):
 			testa = append(testa, r)
-			continue
+		case titoloTroncato(r.Title):
+			incerti = append(incerti, r)
+		default:
+			coda = append(coda, r)
 		}
-		coda = append(coda, r)
 	}
-	return append(testa, coda...)
+	return append(append(testa, incerti...), coda...)
 }
 
 // titoloMatcha riporta se il titolo contiene tutti i termini cercati.
@@ -251,18 +287,42 @@ func titoloMatcha(titolo string, termini []string) bool {
 // debiti fuori bilancio e leggi di stabilità, mentre il ddl con quelle parole
 // nel titolo è il 75° — e chi si ferma al limite di default conclude che non
 // esista.
+//
+// Se però fra i risultati ci sono titoli troncati dalla fonte, «nessuno ha i
+// termini nel titolo» sarebbe una bugia: il termine può stare nei caratteri
+// tagliati. In quel caso l'avviso cambia e dice dove guardare, invece di
+// mandare a cercare più in basso un atto che è già sotto gli occhi.
 func pertinenzaHint(recs []icaro.Record, termini []string) string {
 	if len(termini) == 0 || len(recs) == 0 {
 		return ""
 	}
+	troncati := 0
 	for _, r := range recs {
 		if titoloMatcha(r.Title, termini) {
 			return ""
 		}
+		if titoloTroncato(r.Title) {
+			troncati++
+		}
+	}
+	quali := strings.Join(virgolette(termini), " e ")
+	if troncati > 0 {
+		return fmt.Sprintf(
+			"hint: nessuno dei %d risultati mostrati ha %s nel titolo visibile, ma %s al limite di %d caratteri della lista del portale: il termine può stare nella parte non mostrata, quindi l'assenza dal titolo non prova nulla. Quei risultati sono stati portati in cima: apri il documento per il titolo intero. Altrimenti alza --limit, oppure usa --frase per la locuzione esatta.",
+			len(recs), quali, plurale(troncati, "1 titolo è tagliato", "%d titoli sono tagliati"), titoloCapFonte)
 	}
 	return fmt.Sprintf(
 		"hint: nessuno dei %d risultati mostrati ha %s nel titolo: la ricerca a testo libero aggancia anche i documenti che citano i termini nel corpo, e il portale ordina per data, non per pertinenza. L'atto che cerchi può stare più in basso: alza --limit, oppure usa --frase per la locuzione esatta.",
-		len(recs), strings.Join(virgolette(termini), " e "))
+		len(recs), quali)
+}
+
+// plurale sceglie fra le due forme e formatta il conteggio: un avviso che dice
+// «1 titoli» si legge come un bug e toglie credito al resto del messaggio.
+func plurale(n int, uno, molti string) string {
+	if n == 1 {
+		return uno
+	}
+	return fmt.Sprintf(molti, n)
 }
 
 func virgolette(termini []string) []string {

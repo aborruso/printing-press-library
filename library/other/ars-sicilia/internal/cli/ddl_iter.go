@@ -152,7 +152,13 @@ func runDdlIter(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error 
 		if s := stralcioDaTesti(numero, doc.Fields["Riferimenti"]); s != nil {
 			report.Stralcio = s
 		}
-		for _, ev := range docIterEvents(doc) {
+		evs := docIterEvents(doc)
+		// L'Aula tiene una seduta per data, quindi due eventi che dichiarano
+		// la stessa data con numeri di seduta diversi non possono avere
+		// entrambi il numero giusto: vedi sedutePerDataIncoerenti.
+		incoerenti := sedutePerDataIncoerenti(evs)
+		avvisaSedutaIncoerente(cmd, legisl, incoerenti)
+		for _, ev := range evs {
 			ev.URL = recs[0].URL
 			ev.ArchiveID = arc.ID
 			ev.DocID = recs[0].DocID
@@ -165,7 +171,7 @@ func runDdlIter(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error 
 			// d'Aula n. 260, che è un'altra cosa.
 			// Dove il resoconto esiste è la fonte giusta dell'evento e prende
 			// il posto della scheda del ddl, che resta nella radice del report.
-			if ev.sedutaAula {
+			if ev.sedutaAula && !incoerenti[ev.Data] {
 				if u := resocontoSchedaURL(legisl, ev.Seduta); u != "" {
 					ev.URL = u
 					ev.ArchiveID = ""
@@ -363,6 +369,59 @@ func resocontoSchedaURL(legisl, seduta int) string {
 		return ""
 	}
 	return fmt.Sprintf("%s/bd/resoconti/scheda/%d/%d", icaro.DefaultBaseURL, legisl, seduta)
+}
+
+// sedutePerDataIncoerenti riporta le date in cui gli eventi d'Aula di questo
+// iter dichiarano numeri di seduta diversi, con i numeri in gioco.
+//
+// L'Aula tiene una sola seduta per data — l'archivio resoconti ne indicizza una
+// per giorno — quindi due numeri sulla stessa data non possono essere entrambi
+// giusti, e la fonte non dice quale lo sia. Succede davvero: l'iter del ddl 199
+// della XVII dà la votazione finale come «19 feb 2020 — Approvato
+// dall'Assemblea — Seduta n. 179», ma la 179 è del 26 febbraio; il voto sta nel
+// resoconto della 178, che è quella del 19 (verificato sul resoconto stesso,
+// «XVII LEGISLATURA 178a SEDUTA 19 febbraio 2020 … L'Assemblea approva»).
+//
+// Su quelle date il link al resoconto non si costruisce: un URL che risolve
+// mostrando il documento sbagliato è peggio dell'assenza del link, ed è la
+// stessa ragione per cui non si linka la seduta di commissione citata da un
+// evento di fase aula. La data resta nell'evento, ed è quella la chiave con cui
+// trovare la seduta vera.
+func sedutePerDataIncoerenti(evs []iterEvent) map[string]bool {
+	numeriPerData := map[string]map[int]bool{}
+	for _, ev := range evs {
+		if !ev.sedutaAula || ev.Seduta <= 0 {
+			continue
+		}
+		if numeriPerData[ev.Data] == nil {
+			numeriPerData[ev.Data] = map[int]bool{}
+		}
+		numeriPerData[ev.Data][ev.Seduta] = true
+	}
+	out := map[string]bool{}
+	for data, numeri := range numeriPerData {
+		if len(numeri) > 1 {
+			out[data] = true
+		}
+	}
+	return out
+}
+
+// avvisaSedutaIncoerente dice su stderr perché il link manca e come arrivare
+// comunque alla seduta: senza l'avviso l'assenza dell'URL su alcuni eventi e
+// non su altri sembra un bug della CLI invece di un dato incoerente a monte.
+func avvisaSedutaIncoerente(cmd *cobra.Command, legisl int, incoerenti map[string]bool) {
+	if len(incoerenti) == 0 {
+		return
+	}
+	date := make([]string, 0, len(incoerenti))
+	for d := range incoerenti {
+		date = append(date, d)
+	}
+	sort.Strings(date)
+	fmt.Fprintf(cmd.ErrOrStderr(),
+		"hint: la fonte dichiara numeri di seduta d'Aula diversi per la stessa data (%s), e l'Aula ne tiene una sola al giorno: almeno uno dei numeri è sbagliato. Su quegli eventi il link al resoconto è omesso invece di puntare al giorno sbagliato — trova la seduta vera con `resoconti cerca --legisl %d --data <data>`.\n",
+		strings.Join(date, ", "), legisl)
 }
 
 // docIterEvents reads a DDL's iter timeline. It prefers the page's labeled

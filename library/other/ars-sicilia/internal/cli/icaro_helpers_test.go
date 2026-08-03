@@ -269,6 +269,38 @@ func TestOrdinaPerPertinenza(t *testing.T) {
 	}
 }
 
+// titoloAlCap restituisce il prefisso allungato fino al taglio della fonte: è
+// quello che la lista del portale mostra di un titolo più lungo di 256
+// caratteri, con la coda — dove stanno i termini cercati — già persa.
+func titoloAlCap(prefisso string) string {
+	r := []rune(prefisso)
+	if len(r) >= titoloCapFonte {
+		return string(r[:titoloCapFonte])
+	}
+	return prefisso + strings.Repeat("x", titoloCapFonte-len(r))
+}
+
+// Il portale taglia i titoli a 256 caratteri: un titolo troncato che non matcha
+// non è un fuori tema, è un forse. Va davanti ai fuori tema, dietro ai match
+// dimostrati — è il caso del ddl 199 sull'insularità.
+func TestOrdinaPerPertinenzaTitoliTroncati(t *testing.T) {
+	recs := []icaro.Record{
+		{Title: "Legge di stabilità regionale"},
+		{Title: titoloAlCap("Disegno di legge voto ")},
+		{Title: "Norme sulla condizione di insularità delle isole minori"},
+	}
+	got := ordinaPerPertinenza(recs, []string{"condizione", "insularità"})
+	if !strings.Contains(got[0].Title, "Norme sulla") {
+		t.Errorf("il match dimostrato deve restare primo; got %q", got[0].Title)
+	}
+	if !strings.HasPrefix(got[1].Title, "Disegno di legge voto") {
+		t.Errorf("il titolo troncato va davanti ai fuori tema; got %q", got[1].Title)
+	}
+	if !strings.Contains(got[2].Title, "stabilità") {
+		t.Errorf("il fuori tema col titolo intero va in coda; got %q", got[2].Title)
+	}
+}
+
 // L'hint scatta quando NESSUN titolo matcha: è il sintomo che il documento
 // cercato sta oltre la finestra, non che non esista.
 func TestPertinenzaHint(t *testing.T) {
@@ -288,6 +320,35 @@ func TestPertinenzaHint(t *testing.T) {
 	}
 	if got := pertinenzaHint(fuoriTema, nil); got != "" {
 		t.Errorf("ricerca non testuale: atteso silenzio, ottenuto %q", got)
+	}
+}
+
+// Con un titolo troncato dalla fonte l'avviso non può dire «nessuno ha i
+// termini nel titolo»: sarebbe falso, il termine può stare nei caratteri
+// tagliati. Deve dirlo, e mandare ad aprire il documento.
+func TestPertinenzaHintTitoliTroncati(t *testing.T) {
+	recs := []icaro.Record{
+		{Title: "Riconoscimento debiti fuori bilancio"},
+		{Title: titoloAlCap("Disegno di legge voto ")},
+	}
+	got := pertinenzaHint(recs, []string{"condizione", "insularità"})
+	if got == "" {
+		t.Fatal("nessun titolo pertinente: atteso un avviso")
+	}
+	for _, want := range []string{"1 titolo è tagliato", "256", "titolo visibile", "apri il documento"} {
+		if !strings.Contains(strings.ToLower(got), strings.ToLower(want)) {
+			t.Errorf("avviso %q: manca %q", got, want)
+		}
+	}
+	// Due troncati: il conteggio si accorda, «1 titoli» è un bug che si legge.
+	due := append(recs, icaro.Record{Title: titoloAlCap("Schema di progetto di legge ")})
+	if got := pertinenzaHint(due, []string{"condizione", "insularità"}); !strings.Contains(got, "2 titoli sono tagliati") {
+		t.Errorf("avviso %q: atteso il plurale accordato", got)
+	}
+	// Senza troncati resta l'avviso di prima, che non parla di taglio.
+	interi := []icaro.Record{{Title: "Riconoscimento debiti fuori bilancio"}}
+	if got := pertinenzaHint(interi, []string{"gestione", "rifiuti"}); strings.Contains(got, "tagliat") {
+		t.Errorf("nessun titolo troncato: l'avviso non deve parlare di taglio; got %q", got)
 	}
 }
 

@@ -54,6 +54,8 @@ These capabilities aren't available in any other tool for this API.
 
   Gli eventi portano **`seduta`** e, per le sedute d'Aula, un **`url`** che punta alla scheda del resoconto (la scheda dell'atto è nel campo `url` della radice). Usali sempre quando parti da una notizia: la data dell'articolo è quasi sempre il giorno **dopo** la seduta, e confonderle fa concludere che manchi un resoconto che invece c'è.
 
+  Se due eventi d'Aula danno alla **stessa data** numeri di seduta diversi, il link viene omesso su entrambi e un hint lo dice: l'Aula tiene una seduta al giorno, quindi almeno un numero è sbagliato nella fonte (`ddl iter 17 199` dà il voto del 19 feb 2020 in «Seduta n. 179», ma la 179 è del 26 febbraio). In quel caso la chiave affidabile è la data: `resoconti cerca --legisl 17 --data 2020-02-19`.
+
   ```bash
   ars-sicilia-pp-cli ddl iter 18 1153 --json
   ars-sicilia-pp-cli ddl iter 17 290 --json --select data,fase,seduta,url
@@ -293,6 +295,11 @@ Add `--agent` to any command. Expands to: `--json --compact --no-input --no-colo
 
   ```bash
   ars-sicilia-pp-cli resoconti cerca --legisl 17 --data 2019-10-01:2019-12-31 --agent --envelope --limit 10
+  ```
+- **List titles are cut at 256 characters: never conclude an act is off-topic from its title alone** ⚠️ — the acts with the longest titles (`Schema di progetto di legge costituzionale…`, `Disegno di legge voto…`) are the ones whose subject falls past the cut. XVII-legislature bill 199 is titled "…riconoscimento degli svantaggi derivanti dalla **condizione di insularità**", but the list shows "…svantaggi deriva". Search results whose title hits the cap without matching are ranked between the proven matches and the off-topic rows, and the "no relevant title" hint reports how many titles were cut — when it does, open the document (`ddl get`) for the full title instead of raising `--limit`.
+
+  ```bash
+  ars-sicilia-pp-cli ddl cerca --legisl 17 --testo "insularità" --agent --envelope   # ddl 199 first, hint: 1 title cut
   ```
 - **Filterable** — `--select` keeps a subset of fields. Dotted paths descend into nested structures; arrays traverse element-wise. On the aggregate commands (`legge cronologia`, `ddl iter`, `deputato profilo`, `commissione dossier`) the payload is an object wrapping an array, so name the fields at the level where they live: `--select data,fase` filters the events, `--select titolo` keeps the act's own title, and mixing both returns both. A name that exists nowhere is reported on stderr with the list of available fields. Critical for keeping context small on verbose APIs:
 

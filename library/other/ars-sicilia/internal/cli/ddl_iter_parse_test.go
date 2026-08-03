@@ -233,6 +233,44 @@ func TestResocontoSchedaURL(t *testing.T) {
 	}
 }
 
+// L'Aula tiene una seduta per data: due numeri diversi sulla stessa data
+// vogliono dire che almeno uno è sbagliato, e la fonte non dice quale. È il
+// caso reale del ddl 199 della XVII, dove la votazione finale del 19 feb 2020
+// è data in «Seduta n. 179» mentre la 179 è del 26 febbraio.
+func TestSedutePerDataIncoerenti(t *testing.T) {
+	evs := []iterEvent{
+		{Data: "04 feb 2020", Seduta: 173, sedutaAula: true},
+		{Data: "19 feb 2020", Seduta: 179, sedutaAula: true},
+		{Data: "19 feb 2020", Seduta: 178, sedutaAula: true},
+	}
+	got := sedutePerDataIncoerenti(evs)
+	if !got["19 feb 2020"] {
+		t.Error("due sedute d'Aula sulla stessa data: la data va segnalata")
+	}
+	if got["04 feb 2020"] {
+		t.Error("data con una sola seduta: nessuna incoerenza da segnalare")
+	}
+	// Lo stesso numero ripetuto sulla stessa data non è un conflitto: due
+	// passaggi dell'iter nella medesima seduta sono la norma.
+	ripetuta := []iterEvent{
+		{Data: "22 lug 2026", Seduta: 266, sedutaAula: true},
+		{Data: "22 lug 2026", Seduta: 266, sedutaAula: true},
+	}
+	if len(sedutePerDataIncoerenti(ripetuta)) != 0 {
+		t.Error("stessa seduta due volte: nessuna incoerenza")
+	}
+	// Le sedute di commissione hanno una numerazione propria e non entrano nel
+	// confronto: una commissione n. 25 e un'Aula n. 178 nello stesso giorno
+	// sono due cose diverse, non un conflitto.
+	miste := []iterEvent{
+		{Data: "19 feb 2020", Seduta: 178, sedutaAula: true},
+		{Data: "19 feb 2020", Seduta: 25},
+	}
+	if len(sedutePerDataIncoerenti(miste)) != 0 {
+		t.Error("seduta di commissione: numerazione indipendente, nessun conflitto")
+	}
+}
+
 // Le due numerazioni — sedute d'Aula e sedute di commissione — sono
 // indipendenti, e solo il marcatore che segue il numero dice a quale serie
 // appartiene. Sbagliarlo produce un link che risolve e mostra il documento
