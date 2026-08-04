@@ -65,12 +65,18 @@ func TestCollapseLeggiConservaOrdine(t *testing.T) {
 }
 
 // Il limite è espresso in leggi: le righe da scaricare sono molte di più,
-// perché ogni legge ne occupa una per articolo.
+// perché ogni legge ne occupa una per articolo. Qui è solo il tetto — quando
+// fermarsi lo decide StopWhen contando le leggi raccolte.
 func TestLeggiRawLimit(t *testing.T) {
-	casi := map[int]int{0: 100, 1: 10, 10: 100, 25: 250, 1000: 500}
+	casi := map[int]int{0: 300, 1: 30, 10: 300, 25: 500, 1000: 500}
 	for in, vuole := range casi {
 		if got := leggiRawLimit(in); got != vuole {
 			t.Errorf("leggiRawLimit(%d) = %d, atteso %d", in, got, vuole)
 		}
+	}
+	// Il tetto deve restare sopra la finestra che serviva alle finanziarie:
+	// con ~25 righe-articolo l'una, 100 righe rendevano 4 leggi su 10 chieste.
+	if leggiRawLimit(10) <= 100 {
+		t.Errorf("tetto per 10 leggi = %d: troppo basso, è il caso che il fix esiste per risolvere", leggiRawLimit(10))
 	}
 }

@@ -71,21 +71,28 @@ func collapseLeggi(recs []icaro.Record) []leggeAggregata {
 	return out
 }
 
-// leggiRawLimit traduce un limite espresso in leggi nel numero di righe da
+// leggiRawLimit traduce un limite espresso in leggi nel massimo di righe da
 // scaricare. Una legge occupa una riga per articolo, quindi servono molte più
-// righe di quante leggi si vogliano: il fattore è generoso perché una
-// finanziaria da sola vale decine di articoli.
+// righe di quante leggi si vogliano.
 //
-// Il tetto è solo una rete di sicurezza contro un --limit assurdo, non un
-// freno: deve restare alto abbastanza da non rendere inefficace l'unico rimedio
-// che l'utente ha quando l'output è troncato, cioè alzare --limit. Il portale è
-// limitato a 2 richieste al secondo e Icaro pagina a 10 righe, quindi il costo
-// è circa mezzo secondo per legge chiesta.
+// Questo numero non decide più quando fermarsi: lo decide il predicato
+// StopWhen passato a Search, che conta le leggi già raccolte. Qui resta solo il
+// tetto, e il fattore è salito da 10 a 30 perché come stima era sbagliato —
+// `--anno 2025` rispondeva 4 leggi su 31, dato che le prime dell'anno sono le
+// finanziarie e valgono ~25 righe-articolo l'una. Alzarlo ora non costa: la
+// paginazione si ferma appena le leggi chieste ci sono, quindi le righe in più
+// si scaricano solo quando servono davvero.
+//
+// Il tetto è una rete di sicurezza contro un --limit assurdo, non un freno:
+// deve restare alto abbastanza da non rendere inefficace l'unico rimedio che
+// l'utente ha quando l'output è troncato, cioè alzare --limit. Il portale è
+// limitato a 2 richieste al secondo e Icaro pagina a 10 righe: 500 righe sono
+// 50 pagine, circa mezzo minuto nel caso peggiore.
 func leggiRawLimit(limitLeggi int) int {
 	if limitLeggi <= 0 {
 		limitLeggi = 10
 	}
-	raw := limitLeggi * 10
+	raw := limitLeggi * 30
 	if raw > 500 {
 		raw = 500
 	}

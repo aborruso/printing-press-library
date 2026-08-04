@@ -98,6 +98,19 @@ type SearchOptions struct {
 	// the Icaro DocID. On /bd/ archives this only finds records still present in
 	// Icaro's (frozen) index; recent records return not-found, which is correct.
 	ForceIcaro bool
+	// StopWhen, when non-nil, is consulted after each page with everything
+	// collected so far: returning true ends pagination. It exists because Limit
+	// counts ROWS, and in the leggi archive (indexed per article) the unit the
+	// caller wants is the law — a count knowable only after collapsing the rows
+	// fetched so far, never in advance. Estimating "10 laws ≈ 100 rows" up front
+	// is what made `leggi cerca --anno 2025` answer 4 laws out of 31: the year's
+	// first laws are the budget ones, ~25 article-rows each, and they ate the
+	// window. With the predicate the window stops on the unit that was asked for,
+	// so it also ends EARLIER than the estimate when the laws are short.
+	//
+	// Only the Icaro loop below honors it: /bd/ archives return from searchBD
+	// before it, and none of them is indexed per article.
+	StopWhen func([]Record) bool
 }
 
 // New constructs a Client with a fresh cookie jar and a 30 s default timeout.
@@ -164,6 +177,11 @@ func (c *Client) Search(ctx context.Context, arc Archive, opts SearchOptions) ([
 		if opts.Limit > 0 && len(all) >= opts.Limit {
 			droppedByLimit = len(all) > opts.Limit
 			all = all[:opts.Limit]
+			break
+		}
+		// Dopo il taglio per Limit, non prima: il predicato deve giudicare le
+		// righe che il chiamante riceverà davvero.
+		if opts.StopWhen != nil && opts.StopWhen(all) {
 			break
 		}
 		if page >= totalPages {

@@ -84,12 +84,22 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 		searchParams = normalizeParams(*arc, p.Params)
 	}
 	var truncated bool
+	// Con l'aggregazione per legge il limite dell'utente è in leggi, non in
+	// righe: la paginazione si ferma quando le leggi chieste ci sono tutte,
+	// invece di consumare una finestra di righe stimata a priori.
+	var stopWhen func([]icaro.Record) bool
+	if p.AggregaLeggi && p.LimitLeggi > 0 {
+		stopWhen = func(all []icaro.Record) bool {
+			return len(collapseLeggi(all)) >= p.LimitLeggi
+		}
+	}
 	recs, err := c.Search(ctx, *arc, icaro.SearchOptions{
 		Params:    searchParams,
 		ISISRaw:   p.ISISRaw,
 		Limit:     p.Limit,
 		MaxPages:  maxPages,
 		Truncated: &truncated,
+		StopWhen:  stopWhen,
 	})
 	if err != nil {
 		if rlErr := new(icaro.HTTPRateLimitError); errors.As(err, &rlErr) {
@@ -142,7 +152,7 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 	// sfuggita e relegare in fondo quello che li ha nel titolo.
 	termini := terminiRicerca(p.Params)
 	recs = ordinaPerPertinenza(recs, termini)
-	pertHint := pertinenzaHint(recs, termini)
+	pertHint := pertinenzaHint(recs, termini, arc.Slug)
 
 	if envelopeWanted(cmd.OutOrStdout(), flags) {
 		// L'avviso resta anche su stderr: la busta serve a chi legge il JSON,
@@ -292,9 +302,18 @@ func titoloMatcha(titolo string, termini []string) bool {
 // termini nel titolo» sarebbe una bugia: il termine può stare nei caratteri
 // tagliati. In quel caso l'avviso cambia e dice dove guardare, invece di
 // mandare a cercare più in basso un atto che è già sotto gli occhi.
-func pertinenzaHint(recs []icaro.Record, termini []string) string {
+//
+// Il rimedio suggerito dipende dall'archivio: `--frase` esiste solo sul flusso
+// Icaro, e sui tre serviti da /bd/ (resoconti, sommari, convocazioni) viene
+// rifiutato con un errore. Consigliarlo lì manderebbe in un vicolo cieco chi
+// segue l'avviso alla lettera, che è esattamente chi l'avviso deve aiutare.
+func pertinenzaHint(recs []icaro.Record, termini []string, slug string) string {
 	if len(termini) == 0 || len(recs) == 0 {
 		return ""
+	}
+	rimedio := "alza --limit, oppure usa --frase per la locuzione esatta"
+	if icaro.IsBDArchive(slug) {
+		rimedio = "alza --limit"
 	}
 	troncati := 0
 	for _, r := range recs {
@@ -308,12 +327,12 @@ func pertinenzaHint(recs []icaro.Record, termini []string) string {
 	quali := strings.Join(virgolette(termini), " e ")
 	if troncati > 0 {
 		return fmt.Sprintf(
-			"hint: nessuno dei %d risultati mostrati ha %s nel titolo visibile, ma %s al limite di %d caratteri della lista del portale: il termine può stare nella parte non mostrata, quindi l'assenza dal titolo non prova nulla. Quei risultati sono stati portati in cima: apri il documento per il titolo intero. Altrimenti alza --limit, oppure usa --frase per la locuzione esatta.",
-			len(recs), quali, plurale(troncati, "1 titolo è tagliato", "%d titoli sono tagliati"), titoloCapFonte)
+			"hint: nessuno dei %d risultati mostrati ha %s nel titolo visibile, ma %s al limite di %d caratteri della lista del portale: il termine può stare nella parte non mostrata, quindi l'assenza dal titolo non prova nulla. Quei risultati sono stati portati in cima: apri il documento per il titolo intero. Altrimenti %s.",
+			len(recs), quali, plurale(troncati, "1 titolo è tagliato", "%d titoli sono tagliati"), titoloCapFonte, rimedio)
 	}
 	return fmt.Sprintf(
-		"hint: nessuno dei %d risultati mostrati ha %s nel titolo: la ricerca a testo libero aggancia anche i documenti che citano i termini nel corpo, e il portale ordina per data, non per pertinenza. L'atto che cerchi può stare più in basso: alza --limit, oppure usa --frase per la locuzione esatta.",
-		len(recs), quali)
+		"hint: nessuno dei %d risultati mostrati ha %s nel titolo: la ricerca a testo libero aggancia anche i documenti che citano i termini nel corpo, e il portale ordina per data, non per pertinenza. L'atto che cerchi può stare più in basso: %s.",
+		len(recs), quali, rimedio)
 }
 
 // plurale sceglie fra le due forme e formatta il conteggio: un avviso che dice
