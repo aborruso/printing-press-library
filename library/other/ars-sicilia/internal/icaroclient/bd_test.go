@@ -378,3 +378,43 @@ func TestBDDateFilter_ValoriAccettati(t *testing.T) {
 		t.Error("estremi invertiti: l'intervallo va normalizzato, non rifiutato")
 	}
 }
+
+// AAMMGG non porta il secolo, e prefissare "20" senza guardare l'anno spediva
+// nel futuro tutto l'archivio storico: `--data 510412` cercava il 2051 e
+// rispondeva `[]` sulla seduta del 12/04/1951, che esiste. La finestra è
+// fondata sull'archivio — il documento più antico servito da /bd/ è il
+// resoconto della seduta inaugurale del 25/05/1947, e nel 1946 non c'è nulla.
+func TestParseDateBounds_SecoloAAMMGG(t *testing.T) {
+	cases := []struct{ in, lo, hi string }{
+		{"510412", "19510412", "19510412"}, // il caso del rilievo
+		{"470525", "19470525", "19470525"}, // seduta inaugurale: il confine basso
+		{"991231", "19991231", "19991231"}, // ultimo giorno del Novecento
+		{"000101", "20000101", "20000101"}, // primo del Duemila
+		{"260722", "20260722", "20260722"}, // date correnti invariate
+		{"460101", "20460101", "20460101"}, // sopra il confine: Duemila
+		// Range a cavallo del secolo: gli estremi si risolvono ciascuno per sé.
+		{"991201/000131", "19991201", "20000131"},
+	}
+	for _, c := range cases {
+		lo, hi, ok := parseDateBounds(c.in)
+		if !ok {
+			t.Errorf("parseDateBounds(%q): rifiutata, doveva essere accettata", c.in)
+			continue
+		}
+		if lo != c.lo || hi != c.hi {
+			t.Errorf("parseDateBounds(%q) = (%s, %s), want (%s, %s)", c.in, lo, hi, c.lo, c.hi)
+		}
+	}
+	// Il filtro client-side deve tenere la riga storica, non solo l'anno giusto.
+	if _, keep := bdDateFilter("510412"); keep == nil || !keep("12/04/1951") {
+		t.Error("510412: la seduta del 12/04/1951 deve passare il filtro")
+	}
+	if _, keep := bdDateFilter("510412"); keep != nil && keep("12/04/2051") {
+		t.Error("510412: il 2051 non deve passare, è il bug che si sta correggendo")
+	}
+	// L'anno interrogato sul form segue il secolo scelto, o la richiesta parte
+	// verso l'anno sbagliato e nessun filtro client-side può recuperarla.
+	if years, _ := bdDateFilter("510412"); strings.Join(years, ",") != "1951" {
+		t.Errorf("510412: years = %v, want [1951]", years)
+	}
+}

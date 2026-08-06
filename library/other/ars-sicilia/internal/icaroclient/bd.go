@@ -594,7 +594,22 @@ func parseDateBounds(v string) (lo, hi string, ok bool) {
 		}
 		// AAMMGG
 		if len(s) == 6 && isDigits(s) {
-			return valida("20" + s)
+			// Il secolo qui non c'è e va scelto. La finestra è fondata
+			// sull'archivio, non su una convenzione generica: il documento più
+			// antico servito da /bd/ è il resoconto della seduta inaugurale del
+			// 25/05/1947 — nel 1946 non c'è nulla, l'ARS nasce lì — quindi da
+			// 47 in su è Novecento e sotto è Duemila. Col prefisso "20" fisso
+			// `--data 510412` andava a cercare il 2051 e rispondeva `[]` su una
+			// seduta che esiste, quella del 12/04/1951, e con essa su tutte le
+			// date fra il 1947 e il 1999 scritte in questa forma.
+			//
+			// Il prezzo è che AAMMGG non arriva al 2047: lì si scrive la data
+			// per esteso, che non è ambigua.
+			secolo := "20"
+			if s[:2] >= "47" {
+				secolo = "19"
+			}
+			return valida(secolo + s)
 		}
 		return ""
 	}
