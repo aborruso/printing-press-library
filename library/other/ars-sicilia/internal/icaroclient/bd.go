@@ -54,7 +54,15 @@ var bdArchives = map[string]bdSpec{
 			"testo":  "$TTEXT",
 		},
 		static:           map[string]string{"$S$TTEXT": "all", "$S$Todg": "all"},
-		commissioneField: "$Icommissione_id", // single-select: nessun $S
+		commissioneField: "$Icommissione_id",
+		// Il <select> è renderizzato senza attributo `multiple`, ma il backend
+		// accetta lo stesso una lista di id se glielo si dichiara con "$S…=or".
+		// Senza, `commissioni sommari --commissione QUARTA` risponde 500: le
+		// commissioni hanno un id per legislatura — la IV ne ha nove, dalla
+		// "IV - Ambiente e Territorio" alla "IV - Ambiente, territorio e
+		// mobilità" — e senza --legisl si risolvono tutti, cioè si manda una
+		// lista a un campo che il form dichiara singolo.
+		commissioneMode: "or",
 	},
 	"resoconti": {
 		path: "resoconti",

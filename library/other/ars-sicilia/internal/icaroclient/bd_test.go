@@ -306,3 +306,19 @@ func TestIsBDArchive(t *testing.T) {
 		t.Error("ddl NON deve essere /bd/ (resta su Icaro)")
 	}
 }
+
+// Ogni archivio /bd/ con un filtro commissione deve dichiarare il modo "$S…":
+// senza --legisl la commissione risolve a un id per legislatura (la IV ne ha
+// nove) e il form riceve una lista. Su sommari, il cui <select> è renderizzato
+// senza `multiple`, mandarla senza il selettore di modo fa rispondere 500 al
+// backend — non zero risultati, proprio un errore.
+func TestBDSpec_CommissioneModeDichiarato(t *testing.T) {
+	for slug, spec := range bdArchives {
+		if spec.commissioneField == "" {
+			continue
+		}
+		if spec.commissioneMode == "" {
+			t.Errorf("%s: commissioneField %q senza commissioneMode: una lista di id su un campo senza $S… fa 500", slug, spec.commissioneField)
+		}
+	}
+}
