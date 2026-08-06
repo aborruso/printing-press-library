@@ -218,13 +218,17 @@ Un numero però non sempre aggancia **un** documento: il portale ne tiene di dis
 
 ### `docno` e `permalink`: l'unico URL che si può conservare
 
-Nei risultati di ricerca `doc_id` e `url` **non identificano il documento**: `icaDocId` è la posizione nella short list della sessione corrente, quindi con un'altra query lo stesso valore apre un altro atto, e fuori sessione l'URL risponde 302. Non citarli e non salvarli.
+Sugli archivi Icaro — tutti tranne `resoconti`, `sommari` e `convocazioni` — `doc_id` e `url` **non identificano il documento**: `icaDocId` è la posizione nella short list della sessione corrente, quindi con un'altra query lo stesso valore apre un altro atto, e fuori sessione l'URL risponde 302. Non citarli e non salvarli.
 
 `get` restituisce anche `docno` — il numero di documento interno del portale, stabile — e `permalink`, che riapre quel documento in una sessione nuova. Sono quelli da conservare in una nota o in un articolo.
 
 ```bash
 ars-sicilia-pp-cli ddl get 18 6030 --agent --select docno,permalink
 ```
+
+Gli `url` dei tre archivi serviti dal backend `/bd/` sono invece già citabili (`bd/resoconti/scheda/18/269` risponde 200 senza sessione), e lì `doc_id` non compare affatto.
+
+Il campo `nota` non va messo in `--select`: c'è solo quando serve, e chiederlo dove non c'è fa comparire l'avviso «nota non esiste in questi record». Lo stesso testo arriva comunque su stderr.
 
 ### `--testo` cerca le parole, `--frase` cerca la locuzione
 

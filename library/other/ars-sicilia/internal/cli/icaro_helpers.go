@@ -400,6 +400,12 @@ func campoRecord(r icaro.Record, chiave string) string {
 // 9390, la sola scheda ferma a due settimane prima. Nei campi della lista sono
 // identici in tutto, titolo e data comprese, quindi senza questo avviso chi
 // legge crede di vedere la stessa riga due volte e ne scarta una a caso.
+//
+// Limite dichiarato, come per pertinenzaHint: conta dentro la finestra già
+// scaricata. Con `--limit 1` sul 6030 la seconda riga non c'è e l'avviso tace —
+// lì a dire che manca qualcosa è `troncato`/truncatedHint, che in quel caso
+// parla sempre. Il silenzio di questo avviso non è la prova che il numero
+// agganci un documento solo.
 func omonimiHint(recs []icaro.Record, slug string) string {
 	if !unDocPerNumero(slug) || len(recs) < 2 {
 		return ""
