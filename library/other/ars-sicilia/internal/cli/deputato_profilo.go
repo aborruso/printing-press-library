@@ -7,6 +7,7 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -117,6 +118,13 @@ func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legis
 			Truncated: &truncated,
 		})
 		if err != nil {
+			// Un archivio che non risponde non deve far cadere il report, ma un
+			// valore che l'utente ha scritto male non e' un archivio giu': se lo
+			// si scarta come gli altri, il report finisce in «nessun atto trovato
+			// … verifica il nome», che accusa la cosa sbagliata.
+			if invalido := new(icaro.InvalidParamError); errors.As(err, &invalido) {
+				return usageErr(err)
+			}
 			continue
 		}
 		archivesContacted++
@@ -156,6 +164,9 @@ func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legis
 				MaxPages:  maxInt(1, (perArchive+9)/10),
 				Truncated: &truncated,
 			})
+			if invalido := new(icaro.InvalidParamError); errors.As(err, &invalido) {
+				return usageErr(err)
+			}
 			if err == nil {
 				archivesContacted++
 				for _, r := range recs {

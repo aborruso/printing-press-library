@@ -19,6 +19,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/net/html"
 )
@@ -337,6 +338,16 @@ func (c *Client) searchBD(ctx context.Context, arc Archive, opts SearchOptions) 
 		// qui si ricava solo l'intervallo (anni coinvolti + filtro client-side).
 		if k == "data" {
 			years, keepDate = bdDateFilter(v)
+			// Un valore che non si parsa lasciava entrambi a nil, e la ricerca
+			// proseguiva senza vincolo d'anno sul form e senza filtro
+			// client-side: `--data 2025-01-01:garbage` non restituiva «niente in
+			// quell'intervallo», restituiva l'archivio intero dall'inizio —
+			// resoconti fino al 12/04/1951 — presentandolo come esito buono. Il
+			// filtro che sparisce in silenzio e' peggio del filtro che fallisce.
+			if years == nil || keepDate == nil {
+				return nil, &InvalidParamError{Filtro: "--data", Valore: v,
+					Rimedio: "usa YYYY-MM-DD, AAMMGG, o un intervallo YYYY-MM-DD:YYYY-MM-DD (AAMMGG/AAMMGG)"}
+			}
 			continue
 		}
 		// oratore, codcom e commissione sono risolti sotto (servono le <option>).
@@ -561,18 +572,29 @@ func parseDateBounds(v string) (lo, hi string, ok bool) {
 		}
 		return s, s, false
 	}
+	// Una data va anche esistita: la sola forma non basta. "2025-13-45" ha la
+	// forma giusta e otto cifre, ma come estremo di intervallo non seleziona
+	// nulla — `--data 2025-13-45` rispondeva `[]`, cioè «in quel giorno non c'è
+	// niente», che di un giorno inesistente è un'affermazione senza senso.
+	// time.Parse chiude il buco: se non torna indietro identica, non è una data.
+	valida := func(iso string) string {
+		if t, err := time.Parse("20060102", iso); err == nil && t.Format("20060102") == iso {
+			return iso
+		}
+		return ""
+	}
 	toISO := func(s string) string {
 		s = strings.TrimSpace(s)
 		// YYYY-MM-DD
 		if len(s) == 10 && s[4] == '-' && s[7] == '-' {
 			iso := s[:4] + s[5:7] + s[8:10]
 			if isDigits(iso) {
-				return iso
+				return valida(iso)
 			}
 		}
 		// AAMMGG
 		if len(s) == 6 && isDigits(s) {
-			return "20" + s
+			return valida("20" + s)
 		}
 		return ""
 	}
@@ -769,6 +791,30 @@ type SpeakerCount struct {
 // una lista vuota perché le due cose dicono cose diverse: "non è mai
 // intervenuto" contro "questo nome non esiste in anagrafica". Confonderle ha già
 // prodotto gap analysis sbagliate.
+// InvalidParamError dice che un valore passato dall'utente non è scrivibile in
+// quel filtro: non che la ricerca non abbia trovato nulla.
+//
+// È un tipo a sé perché i comandi che aggregano più archivi — deputato profilo,
+// commissione dossier — scartano gli errori di Search per non far cadere l'intero
+// report quando un archivio non risponde. Con un errore anonimo, `deputato
+// profilo --data <malformata>` finiva in «nessun atto trovato per il deputato
+// "Cracolici" (verifica il nome)»: il nome era giusto, sbagliata era la data, e
+// l'avviso mandava a cercare dalla parte opposta. Riconoscendo il tipo, quei
+// comandi possono propagarlo invece di ingoiarlo.
+type InvalidParamError struct {
+	Filtro  string
+	Valore  string
+	Rimedio string
+}
+
+func (e *InvalidParamError) Error() string {
+	msg := fmt.Sprintf("%s %q non è un valore valido", e.Filtro, e.Valore)
+	if e.Rimedio != "" {
+		msg += ": " + e.Rimedio
+	}
+	return msg
+}
+
 type UnresolvedFilterError struct {
 	Filtro      string
 	Valore      string

@@ -105,6 +105,12 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 		if rlErr := new(icaro.HTTPRateLimitError); errors.As(err, &rlErr) {
 			return rateLimitErr(fmt.Errorf("ricerca %s: %w", arc.Slug, err))
 		}
+		// Un valore scritto male è un errore d'uso (exit 2), non un guasto
+		// generico (exit 1): chi ha uno script che distingue i codici deve poter
+		// capire che è il comando da correggere, non il servizio da riprovare.
+		if invalido := new(icaro.InvalidParamError); errors.As(err, &invalido) {
+			return usageErr(err)
+		}
 		return fmt.Errorf("ricerca %s: %w", arc.Slug, err)
 	}
 	if p.AggregaLeggi {

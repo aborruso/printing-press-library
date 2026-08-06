@@ -322,3 +322,59 @@ func TestBDSpec_CommissioneModeDichiarato(t *testing.T) {
 		}
 	}
 }
+
+// Un --data che non si parsa lasciava years e keep a nil, e searchBD proseguiva
+// senza vincolo d'anno sul form e senza filtro client-side: la ricerca tornava
+// l'archivio intero dall'inizio spacciandolo per l'intervallo chiesto. Qui si
+// pinna il contratto su cui searchBD decide se fallire.
+func TestBDDateFilter_ValoriRifiutati(t *testing.T) {
+	rifiutati := []string{
+		"garbage",
+		"2025-01-01:garbage",
+		"garbage:2025-01-01",
+		"",
+		"2025-13-45", // forma giusta, mese e giorno inesistenti
+		"2025-02-30", // febbraio non arriva a 30
+		"251345",     // stesso, in AAMMGG
+	}
+	for _, v := range rifiutati {
+		years, keep := bdDateFilter(v)
+		if years != nil || keep != nil {
+			t.Errorf("bdDateFilter(%q) = (%v, keep!=nil:%v), want (nil, nil): un filtro che sparisce restituisce tutto l'archivio", v, years, keep != nil)
+		}
+	}
+}
+
+// Le forme accettate restano accettate, e l'intervallo copre tutti gli anni
+// coinvolti: il campo `anno` del form ne prende uno solo, quindi years è la
+// lista su cui searchBD cicla.
+func TestBDDateFilter_ValoriAccettati(t *testing.T) {
+	cases := []struct {
+		in    string
+		years []string
+		tiene string // una data ddmmyyyy che deve passare il filtro
+	}{
+		{"2026-07-29", []string{"2026"}, "29/07/2026"},
+		{"260729", []string{"2026"}, "29/07/2026"},
+		{"2025-12-01:2026-01-31", []string{"2026", "2025"}, "15/12/2025"},
+		{"251201/260131", []string{"2026", "2025"}, "31/01/2026"},
+		{"2024-02-29", []string{"2024"}, "29/02/2024"}, // bisestile: esiste
+	}
+	for _, c := range cases {
+		years, keep := bdDateFilter(c.in)
+		if keep == nil {
+			t.Errorf("bdDateFilter(%q): rifiutata, doveva essere accettata", c.in)
+			continue
+		}
+		if strings.Join(years, ",") != strings.Join(c.years, ",") {
+			t.Errorf("bdDateFilter(%q) years = %v, want %v", c.in, years, c.years)
+		}
+		if !keep(c.tiene) {
+			t.Errorf("bdDateFilter(%q): la data %s doveva passare il filtro", c.in, c.tiene)
+		}
+	}
+	// Estremi invertiti: si normalizzano, non si rifiutano.
+	if _, keep := bdDateFilter("2026-01-31:2025-12-01"); keep == nil || !keep("15/12/2025") {
+		t.Error("estremi invertiti: l'intervallo va normalizzato, non rifiutato")
+	}
+}
