@@ -135,6 +135,8 @@ ars-sicilia-pp-cli deputato profilo "Abbate Ignazio" --json --select tipo,data,t
 ## Known Gaps
 
 - **HTTP error exit codes**: Non-429 HTTP errors from the Icaro portal (404, 5xx) exit with code 1 rather than typed exit codes (e.g. exit 3 for not-found, exit 5 for server error). Rate-limit responses (HTTP 429) correctly return exit 7. Scripts that branch on specific exit codes should use `ars-sicilia-pp-cli doctor` to check connectivity first.
+- **Result `url` and `doc_id` are session-scoped, not citable** ⚠️: on the Icaro archives `icaDocId` is the row's position in the *current session's* short list, not the document's identity. Run a different query and the same `icaDocId` opens a different act (`(18.LEGISL E 738.NUMDDL)` → `icaDocId=1` is `docno(9037)`, not the one you saw before); outside a session the URL answers 302. Do not store or cite them. `get` also returns `docno` — the portal's own stable document number — and `permalink`, which reopens exactly that document in a fresh session: those are the ones to keep. The short list does not carry `docno` (its markup only has `showDoc(N)`), so search rows cannot expose it without one detail fetch per row.
+- **One number can match more than one document** ℹ️: the portal keeps distinct documents under the same legislature+number, usually successive versions of the same file. Ddl 6030 has two — `docno(9513)` with the bill text and the iter up to 4 Aug 2026, and `docno(9390)`, scheda-only and stuck at 14 Jul — identical in every list field, title and date included. `cerca` flags it with a hint and `get` says which one it opened (with its `docno`) instead of silently taking the first. Not flagged on `leggi` (indexed per article) and `resoconti` (indexed per agenda item), where repeated numbers are the norm.
 - **`legge cronologia` needs `--anno` when the number repeats** ⚠️: the same law number recurs in different years of one legislature — the XVIII has two L.R. 26 (7 Oct 2024, 10 Jun 2025). The archive returns one row and the command takes it, so without `--anno` you can get a perfectly coherent timeline for the wrong act. A stderr hint names the law it picked (`uso la L.R. 26 promulgata il 7.10.2024`): check that date, or pin `--anno`.
 - **`legge cronologia` date filtering**: The sommari search finds committee meetings that mention the law number in free text without a date ceiling. A committee meeting held after the law's promulgation date may appear in the timeline if it references the same number. Filter results by the `data` field when you need only pre-promulgation events.
 - **`--csv` on empty results**: when a command (e.g. `analytics --csv`) produces an empty result set, the CSV output is the JSON literal `[]` instead of an empty/header-only CSV. Piping that to a `.csv` file yields malformed content. Use `--json` for empty/unsynced data until this is fixed upstream.
@@ -172,7 +174,7 @@ These capabilities aren't available in any other tool for this API.
   ```
 - **`ddl stralci`** — Elenca i disegni di legge ricavati per stralcio da un ddl base. Il verso opposto è nel campo `stralcio` di `ddl get` e `ddl iter`, che dice da quale ddl lo stralcio proviene.
 
-  _Durante la sessione di bilancio la finanziaria viene spacchettata in stralci che proseguono da soli: senza questo comando bisogna indovinarne i numeri, e non c'è una regola da indovinare (gli stralci del ddl 1030 sono 3030…8030, quelli del 738 sono 7381/7382)._
+  _Durante la sessione di bilancio la finanziaria viene spacchettata in stralci che proseguono da soli: senza questo comando bisogna indovinarne i numeri, e non c'è una regola da indovinare (gli stralci del ddl 1030 sono 3030…8030, quelli del 738 sono una ventina fra 7381 e 73864)._
 
   ```bash
   ars-sicilia-pp-cli ddl stralci 18 1030 --json
@@ -418,7 +420,7 @@ Pareri richiesti dal Governo regionale alle Commissioni (archivio 226).
 Resoconti delle Sedute d'Aula (archivio 217).
 
 - **`ars-sicilia-pp-cli resoconti cerca`** - Cerca resoconti per data, oratore o argomento.
-- **`ars-sicilia-pp-cli resoconti get`** - Scarica un singolo resoconto. Non restituisce la trascrizione integrale: l'archivio Icaro ne conserva solo frammenti per punto dell'ordine del giorno e si ferma alla seduta n. 232 del 25.02.2026. Quando Icaro non ha la seduta, `get` ripiega sulla scheda del backend corrente e restituisce `pdf_url`, dove sta il resoconto stenografico completo (il PDF non viene scaricato; l'URL è stabile e citabile).
+- **`ars-sicilia-pp-cli resoconti get`** - Scarica un singolo resoconto. Non restituisce la trascrizione integrale: l'archivio Icaro ne conserva solo frammenti per punto dell'ordine del giorno e si ferma alla seduta n. 232 del 25.02.2026. Quando Icaro non ha la seduta, `get` ripiega sulla scheda del backend corrente e restituisce `pdf_url`, dove sta il resoconto stenografico completo (il PDF non viene scaricato; l'URL è stabile e citabile). La scheda non ha il campo `body` — che invece c'è sui record serviti da Icaro — e porta un campo `nota` che spiega perché: l'assenza di `body` non è «testo non disponibile».
 
 ### risoluzioni
 

@@ -62,7 +62,7 @@ These capabilities aren't available in any other tool for this API.
   ```
 - **`ddl stralci`** — Elenca i disegni di legge ricavati per stralcio da un ddl base; il verso opposto è il campo `stralcio` di `ddl get` e `ddl iter`.
 
-  _La finanziaria viene spacchettata in stralci che proseguono da soli, e la loro numerazione non segue una regola: gli stralci del ddl 1030 sono 3030…8030, quelli del 738 sono 7381/7382. Il legame lo dichiara il portale, non si calcola._
+  _La finanziaria viene spacchettata in stralci che proseguono da soli, e la loro numerazione non segue una regola: gli stralci del ddl 1030 sono 3030…8030, quelli del 738 sono una ventina fra 7381 e 73864. Il legame lo dichiara il portale, non si calcola._
 
   ```bash
   ars-sicilia-pp-cli ddl stralci 18 1030 --json
@@ -187,7 +187,7 @@ These capabilities aren't available in any other tool for this API.
 **resoconti** — Resoconti delle Sedute d'Aula (archivio 217).
 
 - `ars-sicilia-pp-cli resoconti cerca` — Cerca resoconti per data, oratore o argomento. `--oratore` risolve il nome sull'anagrafica del portale: se non corrisponde a nessuna voce **esce con errore e propone i nomi vicini**, invece di restituire una lista vuota che si leggerebbe come "non è mai intervenuto". Usa il solo cognome se il nome completo non aggancia.
-- `ars-sicilia-pp-cli resoconti get` — Scarica un singolo resoconto. **Non restituisce la trascrizione integrale**: l'archivio Icaro ne conserva solo frammenti per punto dell'ordine del giorno, e per le sedute recenti non ha nulla (si ferma alla n. 232 del 25.02.2026, mentre `cerca` arriva a luglio 2026). Quando Icaro non ha la seduta, `get` ripiega sulla scheda del backend corrente e restituisce `pdf_url`: **è lì il resoconto stenografico completo**. Il PDF non viene scaricato — pesa alcuni MB e supera i 200.000 caratteri di testo — ma l'URL è stabile e citabile.
+- `ars-sicilia-pp-cli resoconti get` — Scarica un singolo resoconto. **Non restituisce la trascrizione integrale**: l'archivio Icaro ne conserva solo frammenti per punto dell'ordine del giorno, e per le sedute recenti non ha nulla (si ferma alla n. 232 del 25.02.2026, mentre `cerca` arriva a luglio 2026). Quando Icaro non ha la seduta, `get` ripiega sulla scheda del backend corrente e restituisce `pdf_url`: **è lì il resoconto stenografico completo**. Il PDF non viene scaricato — pesa alcuni MB e supera i 200.000 caratteri di testo — ma l'URL è stabile e citabile. In quel caso la risposta non ha il campo `body` (che invece c'è quando il record viene da Icaro) e porta un campo `nota` che lo dice: l'assenza di `body` non significa «testo non disponibile».
 
   ```bash
   ars-sicilia-pp-cli resoconti get 18 263 --agent --select pdf_url
@@ -212,6 +212,18 @@ Passare il numero come testo libero aggancia invece **ogni documento che lo cita
 
 ```bash
 ars-sicilia-pp-cli mozioni cerca --legisl 18 --numero 143 --json
+```
+
+Un numero però non sempre aggancia **un** documento: il portale ne tiene di distinti sotto lo stesso numero, di norma versioni diverse della stessa pratica. Sul ddl 6030 sono due — uno col testo del ddl e l'iter aggiornato, l'altro la sola scheda ferma a due settimane prima — identici in ogni campo della lista, titolo e data comprese. Quando succede, `cerca` e `get` lo dicono con un hint: `get` apre il primo e ne riporta il `docno`.
+
+### `docno` e `permalink`: l'unico URL che si può conservare
+
+Nei risultati di ricerca `doc_id` e `url` **non identificano il documento**: `icaDocId` è la posizione nella short list della sessione corrente, quindi con un'altra query lo stesso valore apre un altro atto, e fuori sessione l'URL risponde 302. Non citarli e non salvarli.
+
+`get` restituisce anche `docno` — il numero di documento interno del portale, stabile — e `permalink`, che riapre quel documento in una sessione nuova. Sono quelli da conservare in una nota o in un articolo.
+
+```bash
+ars-sicilia-pp-cli ddl get 18 6030 --agent --select docno,permalink
 ```
 
 ### `--testo` cerca le parole, `--frase` cerca la locuzione

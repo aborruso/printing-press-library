@@ -66,12 +66,24 @@ type Record struct {
 }
 
 // Doc is the parsed body of a single document page.
+//
+// DocID e URL non identificano il documento: `icaDocId` è la posizione nella
+// short list della sessione corrente, quindi lo stesso valore punta a un
+// documento diverso appena cambia la query, e fuori sessione l'URL risponde
+// 302. Il portale un identificatore stabile ce l'ha — è il `docno(N)` con cui
+// costruisce il proprio permalink — e sta in DocNo/Permalink: quelli si
+// possono citare, salvare e riaprire.
 type Doc struct {
-	DocID  int               `json:"doc_id"`
-	Title  string            `json:"title"`
-	Fields map[string]string `json:"fields"`
-	Body   string            `json:"body"`
-	URL    string            `json:"url"`
+	DocID int `json:"doc_id"`
+	// DocNo è il numero di documento interno del portale, stabile nel tempo.
+	DocNo int `json:"docno,omitempty"`
+	// Permalink riapre il documento in una sessione nuova. È l'unico URL di
+	// questo struct che ha senso conservare.
+	Permalink string            `json:"permalink,omitempty"`
+	Title     string            `json:"title"`
+	Fields    map[string]string `json:"fields"`
+	Body      string            `json:"body"`
+	URL       string            `json:"url"`
 }
 
 // SearchOptions tunes a single search run.
@@ -214,7 +226,20 @@ func (c *Client) GetDoc(ctx context.Context, arc Archive, docID int) (Doc, error
 		return Doc{}, err
 	}
 	doc.URL = docURL
+	if doc.DocNo > 0 {
+		doc.Permalink = PermalinkURL(c.BaseURL, arc.ID, doc.DocNo)
+	}
 	return doc, nil
+}
+
+// PermalinkURL costruisce il link stabile a un documento: è la stessa query
+// `docno(N)` che il portale mette dietro il proprio bottone «Link diretto al
+// documento», e riapre quel documento in una sessione nuova.
+func PermalinkURL(baseURL, archiveID string, docNo int) string {
+	q := url.Values{}
+	q.Set("icaDB", archiveID)
+	q.Set("icaQuery", fmt.Sprintf("docno(%d)", docNo))
+	return baseURL + "/icaro/default.jsp?" + q.Encode()
 }
 
 // bootstrapSession establishes a fresh server-side query state. icaQueryId is

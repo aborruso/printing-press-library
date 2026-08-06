@@ -153,20 +153,23 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 	termini := terminiRicerca(p.Params)
 	recs = ordinaPerPertinenza(recs, termini)
 	pertHint := pertinenzaHint(recs, termini, arc.Slug)
+	omonHint := omonimiHint(recs, arc.Slug)
 
 	if envelopeWanted(cmd.OutOrStdout(), flags) {
 		// L'avviso resta anche su stderr: la busta serve a chi legge il JSON,
 		// non a togliere l'informazione a chi usa la CLI a mano.
 		warnTruncated(truncated, len(recs), arc.Slug)
 		warnPertinenza(pertHint)
+		warnPertinenza(omonHint)
 		return emitEnvelope(cmd.OutOrStdout(), flatRecords(recs, firm), truncated,
-			uniscoHint(truncatedHint(truncated, len(recs), arc.Slug), pertHint), flags)
+			uniscoHint(truncatedHint(truncated, len(recs), arc.Slug), pertHint, omonHint), flags)
 	}
 	if err := emitRecords(cmd, flags, *arc, recs, firm); err != nil {
 		return err
 	}
 	warnTruncated(truncated, len(recs), arc.Slug)
 	warnPertinenza(pertHint)
+	warnPertinenza(omonHint)
 	return nil
 }
 
@@ -326,13 +329,104 @@ func pertinenzaHint(recs []icaro.Record, termini []string, slug string) string {
 	}
 	quali := strings.Join(virgolette(termini), " e ")
 	if troncati > 0 {
+		apri := "apri il documento per il titolo intero"
+		if g := comandoGet(slug); g != "" {
+			apri = fmt.Sprintf("apri il documento per il titolo intero (`%s`)", g)
+		}
 		return fmt.Sprintf(
-			"hint: nessuno dei %d risultati mostrati ha %s nel titolo visibile, ma %s al limite di %d caratteri della lista del portale: il termine può stare nella parte non mostrata, quindi l'assenza dal titolo non prova nulla. Quei risultati sono stati portati in cima: apri il documento per il titolo intero. Altrimenti %s.",
-			len(recs), quali, plurale(troncati, "1 titolo è tagliato", "%d titoli sono tagliati"), titoloCapFonte, rimedio)
+			"hint: nessuno dei %d risultati mostrati ha %s nel titolo visibile, ma %s al limite di %d caratteri della lista del portale: il termine può stare nella parte non mostrata, quindi l'assenza dal titolo non prova nulla. Quei risultati sono stati portati in cima: %s. Altrimenti %s.",
+			len(recs), quali, plurale(troncati, "1 titolo è tagliato", "%d titoli sono tagliati"), titoloCapFonte, apri, rimedio)
 	}
 	return fmt.Sprintf(
 		"hint: nessuno dei %d risultati mostrati ha %s nel titolo: la ricerca a testo libero aggancia anche i documenti che citano i termini nel corpo, e il portale ordina per data, non per pertinenza. L'atto che cerchi può stare più in basso: %s.",
 		len(recs), quali, rimedio)
+}
+
+// comandoGet è il sottocomando che apre il documento intero di un archivio, o
+// "" per i tre che non ne hanno (convocazioni, sommari, biblioteca).
+//
+// Serve agli avvisi. «Apri il documento» senza dire con quale comando lascia il
+// lavoro proprio a chi l'avviso deve aiutare: chi legge un hint sul titolo
+// tagliato di solito non sa che il titolo intero sta in `<archivio> get`, e non
+// c'è motivo di fargli cercare il comando.
+func comandoGet(slug string) string {
+	switch slug {
+	case "leggi":
+		// Le leggi riusano il numero ogni anno: senza --anno il comando apre la
+		// legge di un altro anno. È la stessa ragione per cui esiste
+		// runGetExtra, e un avviso che la ignora manda alla legge sbagliata.
+		return "leggi get <legisl> <numero> --anno <anno>"
+	case "ddl", "resoconti", "pareri", "interrogazioni", "interpellanze", "mozioni", "odg", "risoluzioni":
+		return slug + " get <legisl> <numero>"
+	}
+	return ""
+}
+
+// unDocPerNumero riporta se in quell'archivio legislatura+numero identificano
+// UN documento. Vale quasi ovunque, ma non su due archivi:
+//
+//   - leggi (201) è indicizzato per articolo: una legge di venti articoli sono
+//     venti righe con lo stesso numero (vedi leggi_collapse.go);
+//   - resoconti (217) su Icaro è indicizzato per punto dell'ordine del giorno,
+//     quindi una seduta sono più frammenti.
+//
+// Lì più righe con lo stesso numero sono la norma e segnalarle sarebbe rumore
+// a ogni ricerca. Altrove sono una cosa che chi legge deve sapere.
+func unDocPerNumero(slug string) bool {
+	switch slug {
+	case "leggi", "resoconti":
+		return false
+	}
+	return true
+}
+
+// campoRecord legge un campo della riga con la stessa normalizzazione che usa
+// flatRecords ("Legisl." → "legisl"), così l'avviso ragiona sulle chiavi che
+// chi legge l'output ha davanti.
+func campoRecord(r icaro.Record, chiave string) string {
+	for k, v := range r.Fields {
+		if strings.ToLower(strings.TrimSuffix(k, ".")) == chiave {
+			return strings.TrimSpace(v)
+		}
+	}
+	return ""
+}
+
+// omonimiHint avvisa che nella finestra ci sono più righe con lo stesso
+// legislatura+numero.
+//
+// Non sono duplicati da scartare: sul ddl 6030 il portale tiene due documenti
+// distinti — docno 9513, con il testo del ddl e l'iter aggiornato, e docno
+// 9390, la sola scheda ferma a due settimane prima. Nei campi della lista sono
+// identici in tutto, titolo e data comprese, quindi senza questo avviso chi
+// legge crede di vedere la stessa riga due volte e ne scarta una a caso.
+func omonimiHint(recs []icaro.Record, slug string) string {
+	if !unDocPerNumero(slug) || len(recs) < 2 {
+		return ""
+	}
+	visti := map[string]int{}
+	var doppi []string
+	for _, r := range recs {
+		n := campoRecord(r, "numero")
+		if n == "" {
+			continue
+		}
+		k := campoRecord(r, "legisl") + "/" + n
+		visti[k]++
+		if visti[k] == 2 {
+			doppi = append(doppi, n)
+		}
+	}
+	if len(doppi) == 0 {
+		return ""
+	}
+	apri := ""
+	if g := comandoGet(slug); g != "" {
+		apri = fmt.Sprintf(" `%s` apre il primo e ne riporta il `docno`, che è l'identificatore stabile del documento.", g)
+	}
+	return fmt.Sprintf(
+		"hint: %s con più di una riga (%s): il portale tiene documenti distinti sotto lo stesso numero — di norma versioni diverse della stessa pratica, non copie da scartare.%s",
+		plurale(len(doppi), "1 numero compare", "%d numeri compaiono"), strings.Join(doppi, ", "), apri)
 }
 
 // plurale sceglie fra le due forme e formatta il conteggio: un avviso che dice
@@ -488,13 +582,19 @@ func bdSchedaFallback(ctx context.Context, c *icaro.Client, arc icaro.Archive, p
 	if d := strings.TrimSpace(r.Fields["Data"]); d != "" {
 		out["data"] = d
 	}
+	// Senza questa nota il record /bd/ mente per omissione: `get` su un record
+	// servito da Icaro ha il campo `body`, qui il campo non c'è e basta. Chi
+	// legge il JSON — un agente, soprattutto — conclude «testo non disponibile»,
+	// mentre il testo c'è ed è nel PDF. È lo stesso principio dell'avviso su
+	// `--group-by cofirmatari`: quando il dato non si può dare, si dice dov'è.
+	nota := "l'indice testuale di questo archivio è fermo indietro nel tempo e questo record arriva dal backend /bd/: la scheda non ha il campo `body`. Il testo integrale non manca, sta nel PDF."
 	pdf, err := c.SchedaAllegatoURL(ctx, r.URL)
-	if err != nil {
+	if err != nil || pdf == "" {
+		out["nota"] = nota + " Questa volta però la scheda non ha restituito l'allegato: apri `url` a mano."
 		return out, nil // la scheda non si è aperta: meglio i metadati che niente
 	}
-	if pdf != "" {
-		out["pdf_url"] = pdf
-	}
+	out["pdf_url"] = pdf
+	out["nota"] = nota + " Scaricalo da `pdf_url`."
 	return out, nil
 }
 
@@ -558,7 +658,12 @@ func runGetExtra(cmd *cobra.Command, flags *rootFlags, archiveSlug string, legis
 	}
 	recs, err := c.Search(ctx, *arc, icaro.SearchOptions{
 		Params: normalizeParams(*arc, params),
-		Limit:  1,
+		// Due e non uno: serve solo a sapere se il numero ne aggancia più d'uno,
+		// e non costa una richiesta in più (Limit taglia la pagina già
+		// scaricata). Con uno solo `get` sceglieva in silenzio la prima riga, e
+		// sul ddl 6030 — dove il portale tiene due documenti diversi sotto lo
+		// stesso numero — chi leggeva non sapeva nemmeno che ci fosse una scelta.
+		Limit: 2,
 		// Il dettaglio (GetDoc) richiede il DocID Icaro; le righe /bd/ non lo
 		// hanno e la scheda /bd/ non è implementata. ForceIcaro tiene `get` sul
 		// flusso Icaro (trova i record nell'indice Icaro; not-found sui recenti).
@@ -579,6 +684,13 @@ func runGetExtra(cmd *cobra.Command, flags *rootFlags, archiveSlug string, legis
 		// nemmeno quando il record ce l'ha.
 		if icaro.IsBDArchive(arc.Slug) {
 			if out, err := bdSchedaFallback(ctx, c, *arc, params, legisl, numero); err == nil && out != nil {
+				// Anche su stderr, non solo nel campo `nota`: la ricetta
+				// documentata è `resoconti get ... --select pdf_url`, e --select
+				// il campo lo filtra via. L'avviso servirebbe a niente proprio
+				// nel comando che la documentazione suggerisce di scrivere.
+				if n, ok := out["nota"].(string); ok {
+					fmt.Fprintln(os.Stderr, "hint: "+n)
+				}
 				return printJSONFiltered(cmd.OutOrStdout(), out, flags)
 			}
 		}
@@ -615,12 +727,25 @@ func runGetExtra(cmd *cobra.Command, flags *rootFlags, archiveSlug string, legis
 	if arc.Slug == "ddl" {
 		stralcio = stralcioDaTesti(numero, doc.Fields["Riferimenti"], recs[0].Excerpt)
 	}
-	if len(firm) > 0 || stralcio != nil {
+	// Il numero aggancia più di un documento: si dice quale si è aperto invece
+	// di scegliere in silenzio. Su stderr oltre che nel campo, perché `get` non
+	// ha busta e --select il campo lo filtra via.
+	nota := ""
+	if len(recs) > 1 && unDocPerNumero(arc.Slug) {
+		nota = fmt.Sprintf("il portale ha più di un documento per legisl=%d numero=%d — di norma versioni diverse della stessa pratica. Questo è il primo", legisl, numero)
+		if doc.DocNo > 0 {
+			nota += fmt.Sprintf(" (docno %d)", doc.DocNo)
+		}
+		nota += fmt.Sprintf("; gli altri si vedono con `%s cerca --legisl %d --numero %d`.", arc.Slug, legisl, numero)
+		fmt.Fprintln(os.Stderr, "hint: "+nota)
+	}
+	if len(firm) > 0 || stralcio != nil || nota != "" {
 		return printJSONFiltered(cmd.OutOrStdout(), struct {
 			icaro.Doc
 			Firmatari []firmatario `json:"firmatari,omitempty"`
 			Stralcio  *stralcioOut `json:"stralcio,omitempty"`
-		}{doc, firm, stralcio}, flags)
+			Nota      string       `json:"nota,omitempty"`
+		}{doc, firm, stralcio, nota}, flags)
 	}
 	// printJSONFiltered (not the bare writeJSON) so --select/--compact/--csv
 	// behave the same as on generator-emitted commands — writeJSON always

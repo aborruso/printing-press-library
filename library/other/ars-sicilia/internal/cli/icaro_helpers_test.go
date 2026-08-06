@@ -366,6 +366,23 @@ func TestPertinenzaHintTitoliTroncati(t *testing.T) {
 			t.Errorf("avviso %q: manca %q", got, want)
 		}
 	}
+	// «Apri il documento» va detto col comando che lo apre: chi legge l'avviso è
+	// chi ha meno contesto, e cercarsi il sottocomando è lavoro evitabile.
+	if !strings.Contains(got, "ddl get <legisl> <numero>") {
+		t.Errorf("avviso %q: manca il comando che apre il documento", got)
+	}
+	// Sugli archivi senza `get` (sommari, convocazioni, biblioteca) non si
+	// inventa un comando che non esiste: resta il consiglio generico.
+	sommari := pertinenzaHint(recs, []string{"condizione", "insularità"}, "sommari")
+	if strings.Contains(sommari, " get <legisl>") {
+		t.Errorf("avviso %q: sommari non ha un sottocomando get", sommari)
+	}
+	// Sulle leggi il numero da solo non identifica l'atto: senza --anno il
+	// comando suggerito apre la legge di un altro anno.
+	leggi := pertinenzaHint(recs, []string{"condizione", "insularità"}, "leggi")
+	if !strings.Contains(leggi, "leggi get <legisl> <numero> --anno <anno>") {
+		t.Errorf("avviso %q: sulle leggi il comando va dato con --anno", leggi)
+	}
 	// Due troncati: il conteggio si accorda, «1 titoli» è un bug che si legge.
 	due := append(recs, icaro.Record{Title: titoloAlCap("Schema di progetto di legge ")})
 	if got := pertinenzaHint(due, []string{"condizione", "insularità"}, "ddl"); !strings.Contains(got, "2 titoli sono tagliati") {
@@ -395,6 +412,41 @@ func TestTerminiRicerca(t *testing.T) {
 	for _, c := range cases {
 		if got := terminiRicerca(c.in); len(got) != c.want {
 			t.Errorf("terminiRicerca(%v) = %v (%d termini), want %d", c.in, got, len(got), c.want)
+		}
+	}
+}
+
+// Due righe con lo stesso numero non sono un doppione da scartare: sul ddl 6030
+// il portale tiene due documenti diversi — uno con il testo e l'iter
+// aggiornato, l'altro la sola scheda ferma a due settimane prima — identici in
+// ogni campo della lista. Chi legge deve saperlo, o ne butta via uno a caso.
+func TestOmonimiHint(t *testing.T) {
+	riga := func(legisl, numero string) icaro.Record {
+		return icaro.Record{Fields: map[string]string{"Legisl.": legisl, "Numero": numero}}
+	}
+	due := []icaro.Record{riga("18", "6030"), riga("18", "6030")}
+	got := omonimiHint(due, "ddl")
+	for _, want := range []string{"1 numero compare", "6030", "ddl get <legisl> <numero>", "docno"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("avviso %q: manca %q", got, want)
+		}
+	}
+	// Numeri distinti: nessun avviso, o si presenterebbe a ogni ricerca.
+	distinti := []icaro.Record{riga("18", "6030"), riga("18", "6031")}
+	if got := omonimiHint(distinti, "ddl"); got != "" {
+		t.Errorf("numeri distinti: atteso nessun avviso; got %q", got)
+	}
+	// Stesso numero ma legislature diverse: sono due atti, non due versioni.
+	crossLeg := []icaro.Record{riga("17", "199"), riga("18", "199")}
+	if got := omonimiHint(crossLeg, "ddl"); got != "" {
+		t.Errorf("legislature diverse: atteso nessun avviso; got %q", got)
+	}
+	// leggi è indicizzato per articolo e resoconti per punto dell'ordine del
+	// giorno: lì le righe ripetute sono la norma e l'avviso sarebbe rumore a
+	// ogni ricerca.
+	for _, slug := range []string{"leggi", "resoconti"} {
+		if got := omonimiHint(due, slug); got != "" {
+			t.Errorf("%s: righe ripetute sono la norma, atteso nessun avviso; got %q", slug, got)
 		}
 	}
 }
