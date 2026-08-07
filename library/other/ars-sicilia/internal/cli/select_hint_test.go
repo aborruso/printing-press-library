@@ -17,9 +17,20 @@ func TestTopLevelKeys(t *testing.T) {
 		want  []string
 	}{
 		{
-			name:  "lista di oggetti: chiavi del primo elemento",
+			name:  "lista di oggetti: unione delle chiavi di tutti gli elementi",
 			input: `[{"doc_id":1,"titolo":"x"},{"doc_id":2,"titolo":"y"}]`,
 			want:  []string{"doc_id", "titolo"},
+		},
+		{
+			// Il caso reale (ddl iter, legge cronologia, deputato profilo):
+			// il primo elemento e' quello con meno metadati (presentazione,
+			// primo atto), e un campo che compare solo dal secondo in poi
+			// non deve leggersi come inesistente. Campionare solo arr[0]
+			// dava un falso avviso su "seduta"/"doc_id" pur essendo
+			// presenti in output.
+			name:  "lista di oggetti eterogenei: il campo del secondo elemento non si perde",
+			input: `[{"fase":"presentazione","data":"5.07.24"},{"fase":"commissione","data":"09 set 2024","seduta":132}]`,
+			want:  []string{"fase", "data", "seduta"},
 		},
 		{
 			name:  "oggetto singolo: le proprie chiavi",
@@ -32,6 +43,14 @@ func TestTopLevelKeys(t *testing.T) {
 			name:  "envelope: chiavi esterne E chiavi delle righe",
 			input: `{"a":1,"items":[{"id":"x"}]}`,
 			want:  []string{"a", "id", "items"},
+		},
+		{
+			// Stesso caso della lista eterogenea, ma dentro un envelope
+			// (ddl iter/legge cronologia sono {eventi:[...]}, non un array
+			// nudo): la stessa unione deve valere per l'array figlio.
+			name:  "envelope: array figlio eterogeneo, chiavi unite",
+			input: `{"eventi":[{"fase":"presentazione"},{"fase":"commissione","seduta":132}]}`,
+			want:  []string{"eventi", "fase", "seduta"},
 		},
 		{
 			name:  "lista vuota: nessun nome ispezionabile",

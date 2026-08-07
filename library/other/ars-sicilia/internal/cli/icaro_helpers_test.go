@@ -450,3 +450,36 @@ func TestOmonimiHint(t *testing.T) {
 		}
 	}
 }
+
+// Sugli archivi Icaro il campo ISIS "Titolo" arriva già dentro Fields e
+// coincide con Record.Title. Sui tre archivi /bd/ (resoconti, sommari,
+// convocazioni) quel campo non esiste nel parsing: senza fallback, "titolo"
+// resterebbe vuoto mentre "title" è popolato — vedi
+// docs/news-agent/2026-08-07_08-43.md.
+func TestTitoloAlias(t *testing.T) {
+	icaroRecord := icaro.Record{Title: "Legge di stabilità", Fields: map[string]string{"Titolo": "Legge di stabilità"}}
+	if got := titoloAlias(icaroRecord); got != "Legge di stabilità" {
+		t.Errorf("record Icaro: titoloAlias = %q, want %q", got, "Legge di stabilità")
+	}
+	bdRecord := icaro.Record{Title: "Resoconto d'Aula provvisorio della Seduta n. 270", Fields: map[string]string{"Legisl.": "18", "Numero": "270"}}
+	if got := titoloAlias(bdRecord); got != bdRecord.Title {
+		t.Errorf("record /bd/ senza Fields[Titolo]: titoloAlias = %q, want fallback a Title %q", got, bdRecord.Title)
+	}
+}
+
+func TestFlatRecordsTitoloSempreValorizzato(t *testing.T) {
+	recs := []icaro.Record{
+		{Title: "Atto Icaro", Fields: map[string]string{"Titolo": "Atto Icaro", "Legisl.": "18"}},
+		{Title: "Seduta /bd/", Fields: map[string]string{"Legisl.": "18", "Numero": "270"}},
+	}
+	flat := flatRecords(recs, nil)
+	for i, row := range flat {
+		titolo, _ := row["titolo"].(string)
+		if titolo == "" {
+			t.Errorf("riga %d (%q): titolo assente in output", i, recs[i].Title)
+		}
+		if titolo != recs[i].Title {
+			t.Errorf("riga %d: titolo = %q, want %q", i, titolo, recs[i].Title)
+		}
+	}
+}

@@ -949,10 +949,23 @@ func emitRecords(cmd *cobra.Command, flags *rootFlags, arc icaro.Archive, recs [
 	return nil
 }
 
+// titoloAlias torna il titolo del record nel nome con cui lo chiamano gli
+// altri archivi (`titolo`, non `title`). Sugli archivi Icaro il campo ISIS
+// "Titolo" arriva già dentro Fields e coincide con Record.Title; sui tre
+// archivi /bd/ (resoconti, sommari, convocazioni) quel campo non esiste nel
+// parsing e senza fallback la colonna/chiave "titolo" resterebbe vuota
+// mentre "title" è popolato — vedi docs/news-agent/2026-08-07_08-43.md.
+func titoloAlias(r icaro.Record) string {
+	if v := r.Fields["Titolo"]; v != "" {
+		return v
+	}
+	return r.Title
+}
+
 // flatRecords converts records to the flat JSON shape
-// {doc_id, title, excerpt, url, <fields...>}. Estratta da emitRecords perché
-// la serve anche il percorso --envelope, che deve filtrare i risultati dentro
-// la busta invece di stamparli direttamente.
+// {doc_id, title, titolo, excerpt, url, <fields...>}. Estratta da emitRecords
+// perché la serve anche il percorso --envelope, che deve filtrare i
+// risultati dentro la busta invece di stamparli direttamente.
 func flatRecords(recs []icaro.Record, firmatari map[int][]firmatario) []map[string]any {
 	flat := make([]map[string]any, 0, len(recs))
 	for _, r := range recs {
@@ -970,6 +983,7 @@ func flatRecords(recs []icaro.Record, firmatari map[int][]firmatario) []map[stri
 		for k, v := range r.Fields {
 			row[strings.ToLower(strings.TrimSuffix(k, "."))] = v
 		}
+		row["titolo"] = titoloAlias(r)
 		if f, ok := firmatari[r.DocID]; ok {
 			row["firmatari"] = f
 		}
@@ -1022,6 +1036,10 @@ func writeRecordsCSV(out io.Writer, arc icaro.Archive, recs []icaro.Record, firm
 		}
 		row := []string{docID, r.Title, r.Excerpt, r.URL}
 		for _, c := range cols {
+			if c == "Titolo" {
+				row = append(row, titoloAlias(r))
+				continue
+			}
 			row = append(row, r.Fields[c])
 		}
 		if firmatari != nil {

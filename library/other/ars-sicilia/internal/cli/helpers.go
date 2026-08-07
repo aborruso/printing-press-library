@@ -666,12 +666,13 @@ func unknownSelectNames(data json.RawMessage, fields string) []string {
 }
 
 // topLevelKeys estrae i nomi di campo selezionabili di un payload: le chiavi
-// del primo elemento se è una lista, le proprie se è un oggetto. Su un oggetto
-// aggiunge anche le chiavi delle righe di ogni array figlio, perché su un
-// envelope (`{"items":[...]}`) filterFieldsRec applica il selettore là dentro.
-// L'insieme è deliberatamente ADDITIVO e mai sostitutivo: serve a decidere se
-// tacere, quindi un nome di troppo fa solo perdere un avviso, mentre un nome
-// mancante produrrebbe un avviso falso su un campo che invece esce.
+// unite di tutti gli elementi se è una lista, le proprie se è un oggetto. Su
+// un oggetto aggiunge anche le chiavi delle righe di ogni array figlio,
+// perché su un envelope (`{"items":[...]}`) filterFieldsRec applica il
+// selettore là dentro. L'insieme è deliberatamente ADDITIVO e mai
+// sostitutivo: serve a decidere se tacere, quindi un nome di troppo fa solo
+// perdere un avviso, mentre un nome mancante produrrebbe un avviso falso su
+// un campo che invece esce.
 // Torna nil su payload non ispezionabili.
 func topLevelKeys(data json.RawMessage) []string {
 	var arr []json.RawMessage
@@ -679,7 +680,7 @@ func topLevelKeys(data json.RawMessage) []string {
 		if len(arr) == 0 {
 			return nil
 		}
-		return objectKeys(arr[0])
+		return unionObjectKeys(arr)
 	}
 	keys := objectKeys(data)
 	if keys == nil {
@@ -698,7 +699,27 @@ func topLevelKeys(data json.RawMessage) []string {
 		if json.Unmarshal(v, &inner) != nil || len(inner) == 0 {
 			continue
 		}
-		for _, k := range objectKeys(inner[0]) {
+		for _, k := range unionObjectKeys(inner) {
+			if !seen[k] {
+				seen[k] = true
+				keys = append(keys, k)
+			}
+		}
+	}
+	return keys
+}
+
+// unionObjectKeys torna le chiavi presenti in almeno uno degli oggetti di
+// arr, nell'ordine di prima comparsa. Campionare solo arr[0] farebbe perdere
+// le chiavi che compaiono a partire da un elemento successivo: capita nelle
+// liste cronologiche (`eventi` di `ddl iter`/`legge cronologia`, `atti` di
+// `deputato profilo`), dove le righe più vecchie hanno meno metadati delle
+// più recenti — vedi docs/news-agent/2026-08-07_08-43.md.
+func unionObjectKeys(arr []json.RawMessage) []string {
+	var keys []string
+	seen := map[string]bool{}
+	for _, el := range arr {
+		for _, k := range objectKeys(el) {
 			if !seen[k] {
 				seen[k] = true
 				keys = append(keys, k)
