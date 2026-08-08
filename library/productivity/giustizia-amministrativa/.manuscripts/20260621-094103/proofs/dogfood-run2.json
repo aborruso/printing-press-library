@@ -1,0 +1,870 @@
+{
+  "dir": "/home/aborruso/printing-press/.runstate/giustizia_amministrativa-9b2dd185/runs/20260621-094103/working/giustizia-amministrativa-pp-cli",
+  "binary": "/home/aborruso/printing-press/.runstate/giustizia_amministrativa-9b2dd185/runs/20260621-094103/working/giustizia-amministrativa-pp-cli/build/stage/bin/giustizia-amministrativa-pp-cli",
+  "level": "full",
+  "verdict": "FAIL",
+  "matrix_size": 50,
+  "passed": 43,
+  "failed": 7,
+  "skipped": 35,
+  "commands": [
+    "appeal-chain",
+    "corpus build",
+    "doctor",
+    "feedback list",
+    "get",
+    "grep",
+    "import",
+    "massime",
+    "profile delete",
+    "profile list",
+    "profile save",
+    "profile show",
+    "profile use",
+    "provvedimenti cerca",
+    "provvedimenti get",
+    "search",
+    "stats",
+    "sync",
+    "watch run",
+    "which",
+    "workflow status"
+  ],
+  "tests": [
+    {
+      "command": "appeal-chain",
+      "kind": "help",
+      "args": [
+        "appeal-chain",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Esegue una ricerca e per ogni provvedimento di primo grado interroga 'verifica appello'\ndel portale, riportando se e da quali atti è stato appellato.\n\nUsage:\n  giustizia-amministrativa-pp-cli appeal-chain [flags]\n\nExamples:\n  giustizia-amministrativa-pp-cli appeal-chain --testo \"project financing\" --tipo sentenza --limit 20\n  giustizia-amministrativa-pp-cli appeal-chain --testo appalto --sede roma --json\n\nFlags:\n      --all string      Ricerca avanzata: tutte queste parole (AND).\n      --anno int        Anno del provvedimento.\n      --anno-nrg int    Anno del registro generale (per la ricerca per NRG).\n      --any string      Ricerca avanzata: una qualsiasi di queste parole (OR).\n  -h, --help            help for appeal-chain\n      --limit int       Max risultati da scaricare (paginazione automatica). (default 10)\n      --not string      Ricerca avanzata: nessuna di queste parole (NOT).\n      --nrg int         Numero di registro generale (ricorso).\n      --numero int      Numero del provvedimento.\n      --phrase string   Ricerca avanzata: frase esatta.\n      --sede string     Sede: roma, milano, consiglio-di-stato, cgars, ... (28 TAR + CdS).\n      --testo string    Ricerca full-text libera (testo semplice).\n      --tipo string     Tipo: sentenza, ordinanza, decreto, parere, plenaria, generale.\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:\u003cpath\u003e, webhook:\u003curl\u003e\n      --dry-run              Show request without sending\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'giustizia-amministrativa-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable, default 2 for sniffed APIs) (default 2)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "appeal-chain",
+      "kind": "happy_path",
+      "args": [
+        "appeal-chain",
+        "--testo",
+        "project financing",
+        "--tipo",
+        "sentenza",
+        "--limit",
+        "20"
+      ],
+      "status": "pass",
+      "output_sample": "[\n  {\n    \"ecli\": \"ECLI:IT:TARLAZ:2026:10627SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"ROMA\",\n    \"nrg\": \"202503203\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=tar_rm\\u0026nrg=202503203\\u0026nomeFile=202610627_01.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:TARLAZ:2026:10514SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"ROMA\",\n    \"nrg\": \"202601673\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=tar_rm\\u0026nrg=202601673\\u0026nomeFile=202610514_01.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:TARLAZ:2026:7164SENB\",\n    \"tipo\": \"Sentenza Breve\",\n    \"sede\": \"ROMA\",\n    \"nrg\": \"202601592\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=tar_rm\\u0026nrg=202601592\\u0026nomeFile=202607164_20.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:CDS:2026:4883SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"CONSIGLIO DI STATO\",\n    \"nrg\": \"202403901\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=cds\\u0026nrg=202403901\\u0026nomeFile=202604883_11.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:CDS:2026:4855SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"CONSIGLIO DI STATO\",\n    \"nrg\": \"202508086\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=cds\\u0026nrg=202508086\\u0026nomeFile=202604855_11.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:CDS:2026:4516SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"CONSIGLIO DI STATO\",\n    \"nrg\": \"202509758\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=cds\\u0026nrg=202509758\\u0026nomeFile=202604516_11.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:CDS:2026:4514SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"CONSIGLIO DI STATO\",\n    \"nrg\": \"202506939\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=cds\\u0026nrg=202506939\\u0026nomeFile=202604514_11.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:CDS:2026:4359SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"CONSIGLIO DI STATO\",\n    \"nrg\": \"202601101\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=cds\\u0026nrg=202601101\\u0026nomeFile=202604359_11.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:CDS:2026:4071SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"CONSIGLIO DI STATO\",\n    \"nrg\": \"202509914\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=cds\\u0026nrg=202509914\\u0026nomeFile=202604071_11.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:CDS:2026:4018SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"CONSIGLIO DI STATO\",\n    \"nrg\": \"202600304\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=cds\\u0026nrg=202600304\\u0026nomeFile=202604018_11.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:CDS:2026:3982SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"CONSIGLIO DI STATO\",\n    \"nrg\": \"202502274\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=cds\\u0026nrg=202502274\\u0026nomeFile=202603982_11.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:CDS:2026:3657SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"CONSIGLIO DI STATO\",\n    \"nrg\": \"202409112\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=cds\\u0026nrg=202409112\\u0026nomeFile=202603657_11.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:TARNA:2026:3600SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"NAPOLI\",\n    \"nrg\": \"202601504\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=tar_na\\u0026nrg=20…[truncated]"
+    },
+    {
+      "command": "appeal-chain",
+      "kind": "json_fidelity",
+      "args": [
+        "appeal-chain",
+        "--testo",
+        "project financing",
+        "--tipo",
+        "sentenza",
+        "--limit",
+        "20",
+        "--json"
+      ],
+      "status": "pass",
+      "output_sample": "[\n  {\n    \"ecli\": \"ECLI:IT:TARLAZ:2026:10627SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"ROMA\",\n    \"nrg\": \"202503203\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=tar_rm\\u0026nrg=202503203\\u0026nomeFile=202610627_01.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:TARLAZ:2026:10514SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"ROMA\",\n    \"nrg\": \"202601673\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=tar_rm\\u0026nrg=202601673\\u0026nomeFile=202610514_01.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:TARLAZ:2026:7164SENB\",\n    \"tipo\": \"Sentenza Breve\",\n    \"sede\": \"ROMA\",\n    \"nrg\": \"202601592\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=tar_rm\\u0026nrg=202601592\\u0026nomeFile=202607164_20.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:CDS:2026:4883SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"CONSIGLIO DI STATO\",\n    \"nrg\": \"202403901\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=cds\\u0026nrg=202403901\\u0026nomeFile=202604883_11.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:CDS:2026:4855SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"CONSIGLIO DI STATO\",\n    \"nrg\": \"202508086\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=cds\\u0026nrg=202508086\\u0026nomeFile=202604855_11.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:CDS:2026:4516SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"CONSIGLIO DI STATO\",\n    \"nrg\": \"202509758\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=cds\\u0026nrg=202509758\\u0026nomeFile=202604516_11.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:CDS:2026:4514SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"CONSIGLIO DI STATO\",\n    \"nrg\": \"202506939\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=cds\\u0026nrg=202506939\\u0026nomeFile=202604514_11.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:CDS:2026:4359SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"CONSIGLIO DI STATO\",\n    \"nrg\": \"202601101\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=cds\\u0026nrg=202601101\\u0026nomeFile=202604359_11.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:CDS:2026:4071SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"CONSIGLIO DI STATO\",\n    \"nrg\": \"202509914\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=cds\\u0026nrg=202509914\\u0026nomeFile=202604071_11.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:CDS:2026:4018SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"CONSIGLIO DI STATO\",\n    \"nrg\": \"202600304\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=cds\\u0026nrg=202600304\\u0026nomeFile=202604018_11.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:CDS:2026:3982SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"CONSIGLIO DI STATO\",\n    \"nrg\": \"202502274\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=cds\\u0026nrg=202502274\\u0026nomeFile=202603982_11.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:CDS:2026:3657SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"CONSIGLIO DI STATO\",\n    \"nrg\": \"202409112\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=cds\\u0026nrg=202409112\\u0026nomeFile=202603657_11.html\\u0026subDir=Provvedimenti\",\n    \"appealed\": false\n  },\n  {\n    \"ecli\": \"ECLI:IT:TARNA:2026:3600SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"NAPOLI\",\n    \"nrg\": \"202601504\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=tar_na\\u0026nrg=20…[truncated]"
+    },
+    {
+      "command": "appeal-chain",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no positional argument"
+    },
+    {
+      "command": "corpus build",
+      "kind": "help",
+      "args": [
+        "corpus",
+        "build",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Esegue una ricerca, scarica il testo integrale di ogni provvedimento in Markdown e scrive\nuna cartella con un file .md per provvedimento più un manifest.csv (ECLI, tipo, sede, data, url).\n\nUsage:\n  giustizia-amministrativa-pp-cli corpus build [flags]\n\nExamples:\n  giustizia-amministrativa-pp-cli corpus build --testo \"soccorso istruttorio\" --tipo sentenza --limit 30 --out ./corpus\n  giustizia-amministrativa-pp-cli corpus build --all \"clausola sociale\" --sede roma --out ./clausola-sociale\n\nFlags:\n      --all string      Ricerca avanzata: tutte queste parole (AND).\n      --anno int        Anno del provvedimento.\n      --anno-nrg int    Anno del registro generale (per la ricerca per NRG).\n      --any string      Ricerca avanzata: una qualsiasi di queste parole (OR).\n  -h, --help            help for build\n      --limit int       Max risultati da scaricare (paginazione automatica). (default 10)\n      --not string      Ricerca avanzata: nessuna di queste parole (NOT).\n      --nrg int         Numero di registro generale (ricorso).\n      --numero int      Numero del provvedimento.\n      --out string      Cartella di destinazione del corpus (richiesto).\n      --phrase string   Ricerca avanzata: frase esatta.\n      --sede string     Sede: roma, milano, consiglio-di-stato, cgars, ... (28 TAR + CdS).\n      --testo string    Ricerca full-text libera (testo semplice).\n      --tipo string     Tipo: sentenza, ordinanza, decreto, parere, plenaria, generale.\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:\u003cpath\u003e, webhook:\u003curl\u003e\n      --dry-run              Show request without sending\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'giustizia-amministrativa-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable, default 2 for sniffed APIs) (default 2)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "corpus build",
+      "kind": "happy_path",
+      "args": [
+        "corpus",
+        "build",
+        "--testo",
+        "soccorso istruttorio",
+        "--tipo",
+        "sentenza",
+        "--limit",
+        "30",
+        "--out",
+        "./corpus"
+      ],
+      "status": "fail",
+      "exit_code": -1,
+      "reason": "exit -1"
+    },
+    {
+      "command": "corpus build",
+      "kind": "json_fidelity",
+      "args": [
+        "corpus",
+        "build",
+        "--testo",
+        "soccorso istruttorio",
+        "--tipo",
+        "sentenza",
+        "--limit",
+        "30",
+        "--out",
+        "./corpus",
+        "--json"
+      ],
+      "status": "fail",
+      "exit_code": -1,
+      "reason": "exit -1"
+    },
+    {
+      "command": "corpus build",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no positional argument"
+    },
+    {
+      "command": "doctor",
+      "kind": "help",
+      "args": [
+        "doctor",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Check CLI health\n\nUsage:\n  giustizia-amministrativa-pp-cli doctor [flags]\n\nExamples:\n  giustizia-amministrativa-pp-cli doctor\n  giustizia-amministrativa-pp-cli doctor --json\n  giustizia-amministrativa-pp-cli doctor --fail-on warn\n\nFlags:\n      --fail-on string   Exit non-zero when a health level is reached: stale, error. Default is never.\n  -h, --help             help for doctor\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:\u003cpath\u003e, webhook:\u003curl\u003e\n      --dry-run              Show request without sending\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'giustizia-amministrativa-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable, default 2 for sniffed APIs) (default 2)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "doctor",
+      "kind": "happy_path",
+      "args": [
+        "doctor"
+      ],
+      "status": "pass",
+      "output_sample": "  OK Config: ok\n  OK Auth: not required\n  OK Verify Mode: normal operation\n  OK API: reachable\n  config_path: /tmp/printing-press-subprocess-1210010628/.config/giustizia-amministrativa-pp-cli/config.toml\n  base_url: https://www.giustizia-amministrativa.it\n  version: 1.0.0\n  INFO Cache: unknown\n    db_path: /tmp/printing-press-subprocess-1210010628/.local/share/giustizia-amministrativa-pp-cli/data.db\n    schema_version: 4\n    db_bytes: 4349952\n    stale_after: 6h0m0s\n    hint: sync_state is empty; run 'giustizia-amministrativa-pp-cli sync' to hydrate.\n"
+    },
+    {
+      "command": "doctor",
+      "kind": "json_fidelity",
+      "args": [
+        "doctor",
+        "--json"
+      ],
+      "status": "pass",
+      "output_sample": "{\n  \"api\": \"reachable\",\n  \"auth\": \"not required\",\n  \"base_url\": \"https://www.giustizia-amministrativa.it\",\n  \"cache\": {\n    \"db_bytes\": 4349952,\n    \"db_path\": \"/tmp/printing-press-subprocess-1210010628/.local/share/giustizia-amministrativa-pp-cli/data.db\",\n    \"hint\": \"sync_state is empty; run 'giustizia-amministrativa-pp-cli sync' to hydrate.\",\n    \"resources\": null,\n    \"schema_version\": 4,\n    \"stale_after\": \"6h0m0s\",\n    \"status\": \"unknown\"\n  },\n  \"config\": \"ok\",\n  \"config_path\": \"/tmp/printing-press-subprocess-1210010628/.config/giustizia-amministrativa-pp-cli/config.toml\",\n  \"verify_mode\": \"normal operation\",\n  \"version\": \"1.0.0\"\n}\n"
+    },
+    {
+      "command": "doctor",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no positional argument"
+    },
+    {
+      "command": "feedback list",
+      "kind": "help",
+      "args": [
+        "feedback",
+        "list",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "List recent feedback entries\n\nUsage:\n  giustizia-amministrativa-pp-cli feedback list [flags]\n\nExamples:\n  giustizia-amministrativa-pp-cli feedback list\n  giustizia-amministrativa-pp-cli feedback list --limit 5\n  giustizia-amministrativa-pp-cli feedback list --json\n\nFlags:\n  -h, --help        help for list\n      --limit int   Maximum number of recent entries to return (default 20)\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:\u003cpath\u003e, webhook:\u003curl\u003e\n      --dry-run              Show request without sending\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'giustizia-amministrativa-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable, default 2 for sniffed APIs) (default 2)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "feedback list",
+      "kind": "happy_path",
+      "args": [
+        "feedback",
+        "list"
+      ],
+      "status": "pass"
+    },
+    {
+      "command": "feedback list",
+      "kind": "json_fidelity",
+      "args": [
+        "feedback",
+        "list",
+        "--json"
+      ],
+      "status": "pass",
+      "output_sample": "[]\n"
+    },
+    {
+      "command": "feedback list",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no positional argument"
+    },
+    {
+      "command": "get",
+      "kind": "help",
+      "args": [
+        "get",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Recupera il testo integrale di una sentenza/ordinanza/decreto/parere (per ECLI o idprovv,\nda una ricerca precedente) e lo restituisce in Markdown pulito. Usa --format per text/html/json,\noppure --sede/--nrg/--file per il fetch diretto senza ricerca.\n\nUsage:\n  giustizia-amministrativa-pp-cli get [id] [flags]\n\nExamples:\n  giustizia-amministrativa-pp-cli get IT:TARLAZ:2026:11307SENT --format md\n  giustizia-amministrativa-pp-cli get IT:TARLAZ:2026:11307SENT --json\n  giustizia-amministrativa-pp-cli get --sede tar_rm --nrg 202600422 --file 202611307_01.html\n\nFlags:\n      --file string     nomeFile per il fetch diretto (es. 202611307_01.html).\n      --format string   Formato di output: md, text, html, json. (default \"md\")\n  -h, --help            help for get\n      --nrg string      NRG per il fetch diretto.\n      --sede string     Schema sede (es. tar_rm) per il fetch diretto senza ricerca.\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:\u003cpath\u003e, webhook:\u003curl\u003e\n      --dry-run              Show request without sending\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'giustizia-amministrativa-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable, default 2 for sniffed APIs) (default 2)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "get",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "command path [get] has fewer segments than placeholders (1)"
+    },
+    {
+      "command": "get",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "command path [get] has fewer segments than placeholders (1)"
+    },
+    {
+      "command": "get",
+      "kind": "error_path",
+      "args": [
+        "get",
+        "__printing_press_invalid__"
+      ],
+      "status": "pass",
+      "exit_code": 1,
+      "output_sample": "Error: provvedimento \"__printing_press_invalid__\" non trovato nello store locale: esegui prima una ricerca (es. `giustizia-amministrativa-pp-cli search \"\u003ctermine\u003e\"`) oppure passa --sede/--nrg/--file\n"
+    },
+    {
+      "command": "grep",
+      "kind": "help",
+      "args": [
+        "grep",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Esegue una ricerca con espressione regolare sul testo integrale dei provvedimenti\npresenti nello store locale (scaricati con `get` o `corpus build`). Funziona offline.\n\nUsage:\n  giustizia-amministrativa-pp-cli grep \u003cregex\u003e [flags]\n\nExamples:\n  giustizia-amministrativa-pp-cli grep \"soccorso istruttorio\"\n  giustizia-amministrativa-pp-cli grep -i \"clausola\\s+sociale\" --json --select ecli,url\n\nFlags:\n  -h, --help          help for grep\n  -i, --ignore-case   Ricerca case-insensitive.\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:\u003cpath\u003e, webhook:\u003curl\u003e\n      --dry-run              Show request without sending\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'giustizia-amministrativa-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable, default 2 for sniffed APIs) (default 2)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "grep",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "command path [grep] has fewer segments than placeholders (1)"
+    },
+    {
+      "command": "grep",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "command path [grep] has fewer segments than placeholders (1)"
+    },
+    {
+      "command": "grep",
+      "kind": "error_path",
+      "args": [
+        "grep",
+        "__printing_press_invalid__"
+      ],
+      "status": "fail",
+      "reason": "expected non-zero exit for invalid argument",
+      "output_sample": "[]\n"
+    },
+    {
+      "command": "import",
+      "kind": "help",
+      "args": [
+        "import",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Import data from a JSONL file by issuing POST requests for each record.\nEach line must be a valid JSON object. Failed records are logged to stderr\nbut do not stop the import.\n\nUsage:\n  giustizia-amministrativa-pp-cli import \u003cresource\u003e [flags]\n\nExamples:\n  # Import from a JSONL file\n  giustizia-amministrativa-pp-cli import \u003cresource\u003e --input data.jsonl\n\n  # Dry-run to preview without sending\n  giustizia-amministrativa-pp-cli import \u003cresource\u003e --input data.jsonl --dry-run\n\n  # Import from stdin\n  cat data.jsonl | giustizia-amministrativa-pp-cli import \u003cresource\u003e --input -\n\nFlags:\n      --batch-size int   Records per batch (future: batch API support) (default 1)\n      --dry-run          Preview import without sending requests\n  -h, --help             help for import\n  -i, --input string     Input JSONL file path (use - for stdin)\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:\u003cpath\u003e, webhook:\u003curl\u003e\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'giustizia-amministrativa-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable, default 2 for sniffed APIs) (default 2)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "import",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "command path [import] has fewer segments than placeholders (1)"
+    },
+    {
+      "command": "import",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "command path [import] has fewer segments than placeholders (1)"
+    },
+    {
+      "command": "import",
+      "kind": "error_path",
+      "args": [
+        "import",
+        "__printing_press_invalid__"
+      ],
+      "status": "pass",
+      "exit_code": 2,
+      "output_sample": "Error: required flag(s) \"input\" not set\n"
+    },
+    {
+      "command": "massime",
+      "kind": "help",
+      "args": [
+        "massime",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Esegue una ricerca, scarica i testi integrali ed estrae i paragrafi che contengono i\nmarcatori dei principi di diritto/massime. È un'euristica: la resa dipende dalla struttura\ndel provvedimento.\n\nUsage:\n  giustizia-amministrativa-pp-cli massime [flags]\n\nExamples:\n  giustizia-amministrativa-pp-cli massime --testo \"clausola sociale\" --limit 20\n  giustizia-amministrativa-pp-cli massime --all \"soccorso istruttorio\" --tipo sentenza --json\n\nFlags:\n      --all string      Ricerca avanzata: tutte queste parole (AND).\n      --anno int        Anno del provvedimento.\n      --anno-nrg int    Anno del registro generale (per la ricerca per NRG).\n      --any string      Ricerca avanzata: una qualsiasi di queste parole (OR).\n  -h, --help            help for massime\n      --limit int       Max risultati da scaricare (paginazione automatica). (default 10)\n      --not string      Ricerca avanzata: nessuna di queste parole (NOT).\n      --nrg int         Numero di registro generale (ricorso).\n      --numero int      Numero del provvedimento.\n      --phrase string   Ricerca avanzata: frase esatta.\n      --sede string     Sede: roma, milano, consiglio-di-stato, cgars, ... (28 TAR + CdS).\n      --testo string    Ricerca full-text libera (testo semplice).\n      --tipo string     Tipo: sentenza, ordinanza, decreto, parere, plenaria, generale.\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:\u003cpath\u003e, webhook:\u003curl\u003e\n      --dry-run              Show request without sending\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'giustizia-amministrativa-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable, default 2 for sniffed APIs) (default 2)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "massime",
+      "kind": "happy_path",
+      "args": [
+        "massime",
+        "--testo",
+        "clausola sociale",
+        "--limit",
+        "20"
+      ],
+      "status": "pass",
+      "output_sample": "[\n  {\n    \"ecli\": \"ECLI:IT:TARLAZ:2026:10273SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"ROMA\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=tar_rm\\u0026nrg=202511894\\u0026nomeFile=202610273_01.html\\u0026subDir=Provvedimenti\",\n    \"massime\": [\n      \"1.- Con istanza di accesso civico generalizzato presentata il 23 giugno 2025 ai sensi dell’art. 5, comma 2, del d.lgs. n. 33/2013, la ricorrente in epigrafe, giornalista della redazione di un noto programma televisivo, ha chiesto, “*per finalità giornalistica*” e “*per garantire, nell’interesse pubblico, la massima trasparenza sulla gestione delle risorse pubbliche*”, l’ostensione di una pluralità di documenti e informazioni riguardanti:\",\n      \"Nel delineare il corretto perimetro dell’accesso, deve altresì richiamarsi l’orientamento giurisprudenziale – cui il Collegio intende dare continuità - secondo cui l’accesso civico generalizzato “*guadagna in estensione ciò che perde in intensità*” (Consiglio di Stato, sez. V, 20 marzo 2019, n. 1817), nel senso che, sotto il profilo oggettivo, esso realizza la massima estensione - potendo riguardare non solo documenti, ma anche dati ed elaborazioni informative detenute dall’amministrazione - mentre, sotto il profilo dell’intensità, si risolve in una pretesa conoscitiva meno incisiva (e, quindi, “*meno in profondità*”) rispetto a quella propria dell’accesso documentale previsto dagli artt. 22 e ss. della legge n. 241/1990.\"\n    ]\n  },\n  {\n    \"ecli\": \"ECLI:IT:TARLAZ:2026:9756SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"ROMA\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=tar_rm\\u0026nrg=202502803\\u0026nomeFile=202609756_01.html\\u0026subDir=Provvedimenti\",\n    \"massime\": [\n      \"- della determinazione dirigenziale n. QC/462/2025 del 14/02/2025, prot. QC/2025/14486 della direzione del dipartimento valorizzazione patrimonio e politiche abitative direzione rigenerazione litorale e grandi progetti di indizione dell’avviso pubblico per l’affidamento di n. 31 concessioni demaniali marittime del litorale di Roma Capitale per finalità turistiche e ricreative per una durata pari a n. 1 (una) annualità (per gli esercizi di ristorazione) o stagione balneare (per le altre tipologie), con facoltà di riassegnare la concessione demaniale al medesimo operatore economico a condizioni tecniche ed economiche non peggiorative di quelle pattuite all’esito della procedura e per una durata massima di ulteriori n. 2 (due) annualità (per gli esercizi di ristorazione) o stagioni balneari (per le altre tipologie);\",\n      \"- sul vincolo di partecipazione e aggiudicazione, si tratterebbe invero di un mezzo per raggiungere lo scopo della massima tutela del principio di concorrenza e la cui discrezionale adozione da parte dell’amministrazione, che non abbisognerebbe di particolare motivazione, non sarebbe sindacabile se non nel caso di abnormità;\",\n      \"*5. *Dalle considerazioni che precedono discende che, per la selezione dei titolari delle concessioni demaniali marittime con finalità turistico-ricreative, il legislatore statale ha stabilito un nuovo modulo procedimentale connotato in termini di specialità rispetto alle altre procedure evidenziali e di cogente esclusività, avendo esercitato la competenza legislativa a sé riservata, con l’espressa finalità di assicurare su tutto il territorio nazionale il rispetto dei *“principi di libertà di stabilimento, di pubblicità, di trasparenza, di massima partecipazione, di non discriminazione e di parità di trattamento”* (art. 4 l. 5 agosto 2022, n. 118, come sostituito dall’art. 1 d.l. 16 settembre 2024, n. 131, conv. con modif. dalla l. 14 novembre 2024, n. 166).\",\n      \"*16. *In tale peculiare contesto, assumono pregnanza i vincoli di partecipazione e aggiudicazione previsti dall’avviso. Il primo *“riducendo le possibilità di partecipazione degli operatori interessati, e in particolare dei grandi operatori, cioè di coloro che hanno la possibilità d…[truncated]"
+    },
+    {
+      "command": "massime",
+      "kind": "json_fidelity",
+      "args": [
+        "massime",
+        "--testo",
+        "clausola sociale",
+        "--limit",
+        "20",
+        "--json"
+      ],
+      "status": "pass",
+      "output_sample": "[\n  {\n    \"ecli\": \"ECLI:IT:TARLAZ:2026:10273SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"ROMA\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=tar_rm\\u0026nrg=202511894\\u0026nomeFile=202610273_01.html\\u0026subDir=Provvedimenti\",\n    \"massime\": [\n      \"1.- Con istanza di accesso civico generalizzato presentata il 23 giugno 2025 ai sensi dell’art. 5, comma 2, del d.lgs. n. 33/2013, la ricorrente in epigrafe, giornalista della redazione di un noto programma televisivo, ha chiesto, “*per finalità giornalistica*” e “*per garantire, nell’interesse pubblico, la massima trasparenza sulla gestione delle risorse pubbliche*”, l’ostensione di una pluralità di documenti e informazioni riguardanti:\",\n      \"Nel delineare il corretto perimetro dell’accesso, deve altresì richiamarsi l’orientamento giurisprudenziale – cui il Collegio intende dare continuità - secondo cui l’accesso civico generalizzato “*guadagna in estensione ciò che perde in intensità*” (Consiglio di Stato, sez. V, 20 marzo 2019, n. 1817), nel senso che, sotto il profilo oggettivo, esso realizza la massima estensione - potendo riguardare non solo documenti, ma anche dati ed elaborazioni informative detenute dall’amministrazione - mentre, sotto il profilo dell’intensità, si risolve in una pretesa conoscitiva meno incisiva (e, quindi, “*meno in profondità*”) rispetto a quella propria dell’accesso documentale previsto dagli artt. 22 e ss. della legge n. 241/1990.\"\n    ]\n  },\n  {\n    \"ecli\": \"ECLI:IT:TARLAZ:2026:9756SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"ROMA\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=tar_rm\\u0026nrg=202502803\\u0026nomeFile=202609756_01.html\\u0026subDir=Provvedimenti\",\n    \"massime\": [\n      \"- della determinazione dirigenziale n. QC/462/2025 del 14/02/2025, prot. QC/2025/14486 della direzione del dipartimento valorizzazione patrimonio e politiche abitative direzione rigenerazione litorale e grandi progetti di indizione dell’avviso pubblico per l’affidamento di n. 31 concessioni demaniali marittime del litorale di Roma Capitale per finalità turistiche e ricreative per una durata pari a n. 1 (una) annualità (per gli esercizi di ristorazione) o stagione balneare (per le altre tipologie), con facoltà di riassegnare la concessione demaniale al medesimo operatore economico a condizioni tecniche ed economiche non peggiorative di quelle pattuite all’esito della procedura e per una durata massima di ulteriori n. 2 (due) annualità (per gli esercizi di ristorazione) o stagioni balneari (per le altre tipologie);\",\n      \"- sul vincolo di partecipazione e aggiudicazione, si tratterebbe invero di un mezzo per raggiungere lo scopo della massima tutela del principio di concorrenza e la cui discrezionale adozione da parte dell’amministrazione, che non abbisognerebbe di particolare motivazione, non sarebbe sindacabile se non nel caso di abnormità;\",\n      \"*5. *Dalle considerazioni che precedono discende che, per la selezione dei titolari delle concessioni demaniali marittime con finalità turistico-ricreative, il legislatore statale ha stabilito un nuovo modulo procedimentale connotato in termini di specialità rispetto alle altre procedure evidenziali e di cogente esclusività, avendo esercitato la competenza legislativa a sé riservata, con l’espressa finalità di assicurare su tutto il territorio nazionale il rispetto dei *“principi di libertà di stabilimento, di pubblicità, di trasparenza, di massima partecipazione, di non discriminazione e di parità di trattamento”* (art. 4 l. 5 agosto 2022, n. 118, come sostituito dall’art. 1 d.l. 16 settembre 2024, n. 131, conv. con modif. dalla l. 14 novembre 2024, n. 166).\",\n      \"*16. *In tale peculiare contesto, assumono pregnanza i vincoli di partecipazione e aggiudicazione previsti dall’avviso. Il primo *“riducendo le possibilità di partecipazione degli operatori interessati, e in particolare dei grandi operatori, cioè di coloro che hanno la possibilità d…[truncated]"
+    },
+    {
+      "command": "massime",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no positional argument"
+    },
+    {
+      "command": "profile delete",
+      "kind": "help",
+      "args": [
+        "profile",
+        "delete",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Remove a profile\n\nUsage:\n  giustizia-amministrativa-pp-cli profile delete \u003cname\u003e [flags]\n\nExamples:\n  giustizia-amministrativa-pp-cli profile delete my-defaults --yes\n  giustizia-amministrativa-pp-cli profile delete old-profile --yes --json\n\nFlags:\n  -h, --help   help for delete\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:\u003cpath\u003e, webhook:\u003curl\u003e\n      --dry-run              Show request without sending\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'giustizia-amministrativa-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable, default 2 for sniffed APIs) (default 2)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "profile delete",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "profile delete",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "profile delete",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "mutating command; error_path would call live API without --dry-run"
+    },
+    {
+      "command": "profile delete",
+      "kind": "error_path_real",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "profile list",
+      "kind": "help",
+      "args": [
+        "profile",
+        "list",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "List saved profiles\n\nUsage:\n  giustizia-amministrativa-pp-cli profile list [flags]\n\nExamples:\n  giustizia-amministrativa-pp-cli profile list\n  giustizia-amministrativa-pp-cli profile list --json\n\nFlags:\n  -h, --help   help for list\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:\u003cpath\u003e, webhook:\u003curl\u003e\n      --dry-run              Show request without sending\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'giustizia-amministrativa-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable, default 2 for sniffed APIs) (default 2)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "profile list",
+      "kind": "happy_path",
+      "args": [
+        "profile",
+        "list"
+      ],
+      "status": "pass",
+      "output_sample": "NAME  FIELDS  DESCRIPTION\n"
+    },
+    {
+      "command": "profile list",
+      "kind": "json_fidelity",
+      "args": [
+        "profile",
+        "list",
+        "--json"
+      ],
+      "status": "pass",
+      "output_sample": "[]\n"
+    },
+    {
+      "command": "profile list",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no positional argument"
+    },
+    {
+      "command": "profile save",
+      "kind": "help",
+      "args": [
+        "profile",
+        "save",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Captures every flag explicitly set on the invocation and stores\nthem under \u003cname\u003e. To update an existing profile, run save again; the\nentry is replaced.\n\nTo avoid creating empty profiles, at least one non-default flag must be\npresent (other than --profile and --config).\n\nUsage:\n  giustizia-amministrativa-pp-cli profile save \u003cname\u003e [--\u003cflag\u003e \u003cvalue\u003e ...] [flags]\n\nExamples:\n  giustizia-amministrativa-pp-cli profile save my-defaults --json --compact\n  giustizia-amministrativa-pp-cli profile save tonight-defaults --region US\n\nFlags:\n      --description string   Short description shown in 'profile list'\n  -h, --help                 help for save\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:\u003cpath\u003e, webhook:\u003curl\u003e\n      --dry-run              Show request without sending\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'giustizia-amministrativa-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable, default 2 for sniffed APIs) (default 2)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "profile save",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "profile save",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "profile save",
+      "kind": "error_path",
+      "args": [
+        "profile",
+        "save",
+        "__printing_press_invalid__"
+      ],
+      "status": "pass",
+      "exit_code": 1,
+      "output_sample": "Error: no non-default flags set - pass at least one flag to save into \"__printing_press_invalid__\"\n"
+    },
+    {
+      "command": "profile show",
+      "kind": "help",
+      "args": [
+        "profile",
+        "show",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Show a profile's values as JSON\n\nUsage:\n  giustizia-amministrativa-pp-cli profile show \u003cname\u003e [flags]\n\nExamples:\n  giustizia-amministrativa-pp-cli profile show my-defaults\n  giustizia-amministrativa-pp-cli profile show tonight-defaults --json\n\nFlags:\n  -h, --help   help for show\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:\u003cpath\u003e, webhook:\u003curl\u003e\n      --dry-run              Show request without sending\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'giustizia-amministrativa-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable, default 2 for sniffed APIs) (default 2)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "profile show",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "profile show",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "profile show",
+      "kind": "error_path",
+      "args": [
+        "profile",
+        "show",
+        "__printing_press_invalid__"
+      ],
+      "status": "pass",
+      "exit_code": 1,
+      "output_sample": "Error: profile \"__printing_press_invalid__\" not found\n"
+    },
+    {
+      "command": "profile use",
+      "kind": "help",
+      "args": [
+        "profile",
+        "use",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Print the flag values a profile will apply (does not execute anything)\n\nUsage:\n  giustizia-amministrativa-pp-cli profile use \u003cname\u003e [flags]\n\nExamples:\n  giustizia-amministrativa-pp-cli profile use my-defaults\n  giustizia-amministrativa-pp-cli profile use tonight-defaults --json\n\nFlags:\n  -h, --help   help for use\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:\u003cpath\u003e, webhook:\u003curl\u003e\n      --dry-run              Show request without sending\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'giustizia-amministrativa-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable, default 2 for sniffed APIs) (default 2)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "profile use",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "profile use",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "profile use",
+      "kind": "error_path",
+      "args": [
+        "profile",
+        "use",
+        "__printing_press_invalid__"
+      ],
+      "status": "pass",
+      "exit_code": 1,
+      "output_sample": "Error: profile \"__printing_press_invalid__\" not found\n"
+    },
+    {
+      "command": "provvedimenti cerca",
+      "kind": "help",
+      "args": [
+        "provvedimenti",
+        "cerca",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Cerca provvedimenti per testo, tipo, sede, anno, numero o NRG.\n\nUsage:\n  giustizia-amministrativa-pp-cli provvedimenti cerca [testo] [flags]\n\nExamples:\n  giustizia-amministrativa-pp-cli provvedimenti cerca \"appalto\" --tipo sentenza --sede roma\n\nFlags:\n      --all string      Ricerca avanzata: tutte queste parole (AND).\n      --anno int        Anno del provvedimento.\n      --anno-nrg int    Anno del registro generale (per la ricerca per NRG).\n      --any string      Ricerca avanzata: una qualsiasi di queste parole (OR).\n  -h, --help            help for cerca\n      --limit int       Max risultati da scaricare (paginazione automatica). (default 10)\n      --not string      Ricerca avanzata: nessuna di queste parole (NOT).\n      --nrg int         Numero di registro generale (ricorso).\n      --numero int      Numero del provvedimento.\n      --phrase string   Ricerca avanzata: frase esatta.\n      --sede string     Sede: roma, milano, consiglio-di-stato, cgars, ... (28 TAR + CdS).\n      --testo string    Ricerca full-text libera (testo semplice).\n      --tipo string     Tipo: sentenza, ordinanza, decreto, parere, plenaria, generale.\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:\u003cpath\u003e, webhook:\u003curl\u003e\n      --dry-run              Show request without sending\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'giustizia-amministrativa-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable, default 2 for sniffed APIs) (default 2)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "provvedimenti cerca",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"testo\" at depth 0"
+    },
+    {
+      "command": "provvedimenti cerca",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"testo\" at depth 0"
+    },
+    {
+      "command": "provvedimenti cerca",
+      "kind": "error_path",
+      "args": [
+        "provvedimenti",
+        "cerca",
+        "__printing_press_invalid__"
+      ],
+      "status": "fail",
+      "reason": "expected non-zero exit for invalid argument",
+      "output_sample": "null\n"
+    },
+    {
+      "command": "provvedimenti get",
+      "kind": "help",
+      "args": [
+        "provvedimenti",
+        "get",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Scarica il testo integrale di un provvedimento (per ECLI o idprovv).\n\nUsage:\n  giustizia-amministrativa-pp-cli provvedimenti get [id] [flags]\n\nExamples:\n  giustizia-amministrativa-pp-cli provvedimenti get IT:TARLAZ:2026:11307SENT --format md\n\nFlags:\n      --file string     nomeFile per il fetch diretto (es. 202611307_01.html).\n      --format string   Formato di output: md, text, html, json. (default \"md\")\n  -h, --help            help for get\n      --nrg string      NRG per il fetch diretto.\n      --sede string     Schema sede (es. tar_rm) per il fetch diretto senza ricerca.\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:\u003cpath\u003e, webhook:\u003curl\u003e\n      --dry-run              Show request without sending\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'giustizia-amministrativa-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable, default 2 for sniffed APIs) (default 2)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "provvedimenti get",
+      "kind": "happy_path",
+      "args": [
+        "provvedimenti",
+        "get",
+        "ECLI:IT:TARLAZ:2026:9739SENT",
+        "--format",
+        "md"
+      ],
+      "status": "pass",
+      "fixture_source": "store",
+      "output_sample": "N. 09739/2026 REG.PROV.COLL.\n\nN. 02765/2025 REG.RIC.\n\nREPUBBLICA ITALIANA\n\nIN NOME DEL POPOLO ITALIANO\n\nIl Tribunale Amministrativo Regionale per il Lazio\n\n(Sezione Quinta Ter)\n\nha pronunciato la presente\n\nSENTENZA\n\nsul ricorso numero di registro generale 2765 del 2025, proposto da\nMigliore Salvatore e figli s.r.l., in persona del legale rappresentante *p.t.*, rappresentata e difesa dagli avv.ti prof. Angelo Clarizia, Marco Serra e Vincenzo Cellamare, con domicilio eletto presso lo studio del primo in Roma, via Principessa Clotilde, 2, e con domicilio digitale presso la pec come da registri di giustizia;\n\ncontro\n\nRoma Capitale, in persona del Sindaco *p.t.*, rappresentata e difesa dagli avv.ti Rita Caldarozzi, Andrea Camarda, Federica Graglia, Giorgio Pasquali e Manuela Scerpa, con domicilio digitale presso la pec come da registri di giustizia;\nAgenzia del demanio, in persona del legale rappresentante *p.t.*, rappresentata e difesa dall'Avvocatura generale dello Stato, domiciliataria *ex lege* in Roma, via dei Portoghesi, 12;\n\nnei confronti\n\ndi Progetti Ecosportivi s.r.l.s., Free Shoreline s.r.l.s., La Isla Bonita coop. soc., Bola Beach s.r.l.s., Lorenzo s.r.l., Grimor Pizza s.r.l., SG Mare s.r.l., BB Pannonia s.r.l., Più Blue s.r.l., BI.MA 2012 s.r.l., Wish s.r.l.s., Stabilimento Elmi s.r.l., Caffè Tre s.r.l., Margherita Appia s.r.l., Lido Beach di Quoiani Fabrizio e Quoiani Sabrina s.n.c., Reposea s.r.l., Cometa Service soc. coop., Sun Beach s.r.l., Meccanismo Appio s.r.l., Dory s.r.l.s., Roshotels s.r.l., Lavoro e legalità società cooperativa sociale, Delfino di Sinceri Susanna e C. s.a.s., 42 Parallelo s.n.c., Polisportiva Litorale a.s.d., Lanari Maurizio impresa individuale, Nuova Belsito s.r.l., Lauretta Beach s.r.l., Acsom cooperativa sociale, Società industrie commerci zone marittime s.r.l., Roma Levante s.r.l.s., Sailing 809 s.r.l.s., La Vela Stabilimento Balneare e Ristorante s.r.l, Stabilimenti balneari lido di Roma s.r.l., Anthea 19 s.r.l.s., Iris s.r.l.s., Cral Poste, Re 9 soc. coop., Egam s.r.l.s, Cral Eni Roma e.t.s., Tramontana s.r.l., Fdl s.r.l.s, Mamb s.r.l.s., S.Fra s.r.l.s., Vivam s.r.l.s., G.V. s.r.l.s., Arpa s.r.l., Magic Beach s.r.l.s., La Bonaccia s.r.l., Viva s.r.l.s., La capannina a mare s.r.l., Guerrino beach s.r.l., Il corsaro s.r.l., La corsara s.r.l.s., Cielo beach s.r.l., Benic s.r.l., Gambrinus s.r.l.s., Lido alma s.r.l.s., Kokai s.r.l.s., Caffè del porto s.r.l., Mavola s.r.l., Marea s.r.l., To be ship s.r.l., Evoluzioni ambientali soc. coop., Marea s.r.l.s., Rivida s.r.l., Frudish s.r.l., Nemo s.r.l., Mimi s.r.l.s., Fondazione Piccolo America e.t.s., Casagni Rita s.r.l.s., Honos s.r.l., Hydra s.r.l.s., Orizzonte s.r.l.s.;\n\ne con l'intervento di\n\nad adiuvandum:\nConfcommercio Roma, in persona del legale rappresentante *p.t.*, rappresentata e difesa dagli avv.ti prof. Angelo Clarizia e Marco Serra, con domicilio eletto presso lo studio del primo in Roma, via Principessa Clotilde, 2, e con domicilio digitale presso la pec come da registri di giustizia;\n\nper l’annullamento\n\ndei seguenti atti di Roma Capitale:\n\n- avviso pubblico del 14.2.2025 “per l’affidamento di n. 31 concessioni di beni demaniali marittimi del litorale di Roma Capitale per finalità turistiche e ricreative”;\n\n- determinazione dirigenziale n. QC/462/2025 del 14.2.2025, prot. QC/2025/14486, di indizione del menzionato avviso pubblico per l’affidamento di n. 31 concessioni demaniali marittimi del litorale di Roma Capitale per finalità turistiche e ricreative per una durata pari a n. 1 (una) annualità (per gli esercizi di ristorazione) o stagione balneare (per le altre tipologie), con facoltà di riassegnare la concessione demaniale al medesimo operatore economico a condizioni tecniche ed economiche non peggiorative di quelle pattuite all’esito della procedura e per una durata massima di ulteriori n. 2 (due) annualità (per gli esercizi di ristorazione) o stagioni balneari (per le altre tipologie);\n\n- deliberazioni della Giunta capitolina n. 136/2024 del 26.4.2024, recante “indirizzi e criteri general…[truncated]"
+    },
+    {
+      "command": "provvedimenti get",
+      "kind": "json_fidelity",
+      "args": [
+        "provvedimenti",
+        "get",
+        "ECLI:IT:TARLAZ:2026:9739SENT",
+        "--format",
+        "md",
+        "--json"
+      ],
+      "status": "pass",
+      "fixture_source": "store",
+      "output_sample": "{\n  \"idprovv\": \"5jWKZJ4BQx9Ald_WrYf4\",\n  \"ecli\": \"ECLI:IT:TARLAZ:2026:9739SENT\",\n  \"tipo\": \"Sentenza\",\n  \"sede\": \"ROMA\",\n  \"schema\": \"tar_rm\",\n  \"sezione\": \"SEZIONE 5T\",\n  \"numero\": 9739,\n  \"anno\": 2026,\n  \"nrg\": \"202502765\",\n  \"data_deposito\": \"26/05/2026\",\n  \"snippet\": \"...fatturato complessivamente realizzato nell’esercizio della concessione, in aumento rispetto alla royalty del 2,00 % (duepercento) a base d’asta”; tale clausola...\",\n  \"formato\": \"html\",\n  \"nome_file\": \"202609739_01.html\",\n  \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=tar_rm\\u0026nrg=202502765\\u0026nomeFile=202609739_01.html\\u0026subDir=Provvedimenti\",\n  \"full_text\": \"N. 09739/2026 REG.PROV.COLL.\\n\\nN. 02765/2025 REG.RIC.\\n\\nREPUBBLICA ITALIANA\\n\\nIN NOME DEL POPOLO ITALIANO\\n\\nIl Tribunale Amministrativo Regionale per il Lazio\\n\\n(Sezione Quinta Ter)\\n\\nha pronunciato la presente\\n\\nSENTENZA\\n\\nsul ricorso numero di registro generale 2765 del 2025, proposto da\\nMigliore Salvatore e figli s.r.l., in persona del legale rappresentante *p.t.*, rappresentata e difesa dagli avv.ti prof. Angelo Clarizia, Marco Serra e Vincenzo Cellamare, con domicilio eletto presso lo studio del primo in Roma, via Principessa Clotilde, 2, e con domicilio digitale presso la pec come da registri di giustizia;\\n\\ncontro\\n\\nRoma Capitale, in persona del Sindaco *p.t.*, rappresentata e difesa dagli avv.ti Rita Caldarozzi, Andrea Camarda, Federica Graglia, Giorgio Pasquali e Manuela Scerpa, con domicilio digitale presso la pec come da registri di giustizia;\\nAgenzia del demanio, in persona del legale rappresentante *p.t.*, rappresentata e difesa dall'Avvocatura generale dello Stato, domiciliataria *ex lege* in Roma, via dei Portoghesi, 12;\\n\\nnei confronti\\n\\ndi Progetti Ecosportivi s.r.l.s., Free Shoreline s.r.l.s., La Isla Bonita coop. soc., Bola Beach s.r.l.s., Lorenzo s.r.l., Grimor Pizza s.r.l., SG Mare s.r.l., BB Pannonia s.r.l., Più Blue s.r.l., BI.MA 2012 s.r.l., Wish s.r.l.s., Stabilimento Elmi s.r.l., Caffè Tre s.r.l., Margherita Appia s.r.l., Lido Beach di Quoiani Fabrizio e Quoiani Sabrina s.n.c., Reposea s.r.l., Cometa Service soc. coop., Sun Beach s.r.l., Meccanismo Appio s.r.l., Dory s.r.l.s., Roshotels s.r.l., Lavoro e legalità società cooperativa sociale, Delfino di Sinceri Susanna e C. s.a.s., 42 Parallelo s.n.c., Polisportiva Litorale a.s.d., Lanari Maurizio impresa individuale, Nuova Belsito s.r.l., Lauretta Beach s.r.l., Acsom cooperativa sociale, Società industrie commerci zone marittime s.r.l., Roma Levante s.r.l.s., Sailing 809 s.r.l.s., La Vela Stabilimento Balneare e Ristorante s.r.l, Stabilimenti balneari lido di Roma s.r.l., Anthea 19 s.r.l.s., Iris s.r.l.s., Cral Poste, Re 9 soc. coop., Egam s.r.l.s, Cral Eni Roma e.t.s., Tramontana s.r.l., Fdl s.r.l.s, Mamb s.r.l.s., S.Fra s.r.l.s., Vivam s.r.l.s., G.V. s.r.l.s., Arpa s.r.l., Magic Beach s.r.l.s., La Bonaccia s.r.l., Viva s.r.l.s., La capannina a mare s.r.l., Guerrino beach s.r.l., Il corsaro s.r.l., La corsara s.r.l.s., Cielo beach s.r.l., Benic s.r.l., Gambrinus s.r.l.s., Lido alma s.r.l.s., Kokai s.r.l.s., Caffè del porto s.r.l., Mavola s.r.l., Marea s.r.l., To be ship s.r.l., Evoluzioni ambientali soc. coop., Marea s.r.l.s., Rivida s.r.l., Frudish s.r.l., Nemo s.r.l., Mimi s.r.l.s., Fondazione Piccolo America e.t.s., Casagni Rita s.r.l.s., Honos s.r.l., Hydra s.r.l.s., Orizzonte s.r.l.s.;\\n\\ne con l'intervento di\\n\\nad adiuvandum:\\nConfcommercio Roma, in persona del legale rappresentante *p.t.*, rappresentata e difesa dagli avv.ti prof. Angelo Clarizia e Marco Serra, con domicilio eletto presso lo studio del primo in Roma, via Principessa Clotilde, 2, e con domicilio digitale presso la pec come da registri di giustizia;\\n\\nper l’annullamento\\n\\ndei seguenti atti di Roma Capitale:\\n\\n- avviso pubblico del 14.2.2025 “per l’affidamento di n. 31 concessioni di beni demaniali marittimi del litorale di Roma Capitale per finalità turistiche e ricreative”;\\n\\n- determinazione dirigenziale n. QC/462/2025 del 14.2.2025, prot. QC/2025/14486, …[truncated]"
+    },
+    {
+      "command": "provvedimenti get",
+      "kind": "error_path",
+      "args": [
+        "provvedimenti",
+        "get",
+        "__printing_press_invalid__"
+      ],
+      "status": "pass",
+      "exit_code": 1,
+      "output_sample": "Error: provvedimento \"__printing_press_invalid__\" non trovato nello store locale: esegui prima una ricerca (es. `giustizia-amministrativa-pp-cli search \"\u003ctermine\u003e\"`) oppure passa --sede/--nrg/--file\n"
+    },
+    {
+      "command": "search",
+      "kind": "help",
+      "args": [
+        "search",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Cerca provvedimenti della Giustizia Amministrativa (TAR, Consiglio di Stato, CGARS).\nOgni risultato porta ECLI e l'URL pubblico del testo integrale.\n\nUsage:\n  giustizia-amministrativa-pp-cli search [testo] [flags]\n\nExamples:\n  giustizia-amministrativa-pp-cli search \"appalto soccorso istruttorio\" --tipo sentenza --sede roma --limit 10\n  giustizia-amministrativa-pp-cli search --all \"clausola sociale\" --json --select ecli,tipo,sede,url\n  giustizia-amministrativa-pp-cli search --nrg 422 --anno-nrg 2026 --sede roma\n\nFlags:\n      --all string      Ricerca avanzata: tutte queste parole (AND).\n      --anno int        Anno del provvedimento.\n      --anno-nrg int    Anno del registro generale (per la ricerca per NRG).\n      --any string      Ricerca avanzata: una qualsiasi di queste parole (OR).\n  -h, --help            help for search\n      --limit int       Max risultati da scaricare (paginazione automatica). (default 10)\n      --not string      Ricerca avanzata: nessuna di queste parole (NOT).\n      --nrg int         Numero di registro generale (ricorso).\n      --numero int      Numero del provvedimento.\n      --phrase string   Ricerca avanzata: frase esatta.\n      --sede string     Sede: roma, milano, consiglio-di-stato, cgars, ... (28 TAR + CdS).\n      --testo string    Ricerca full-text libera (testo semplice).\n      --tipo string     Tipo: sentenza, ordinanza, decreto, parere, plenaria, generale.\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:\u003cpath\u003e, webhook:\u003curl\u003e\n      --dry-run              Show request without sending\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'giustizia-amministrativa-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable, default 2 for sniffed APIs) (default 2)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "search",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "command path [search] has fewer segments than placeholders (1)"
+    },
+    {
+      "command": "search",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "command path [search] has fewer segments than placeholders (1)"
+    },
+    {
+      "command": "search",
+      "kind": "error_path",
+      "args": [
+        "search",
+        "__printing_press_invalid__"
+      ],
+      "status": "fail",
+      "reason": "expected non-zero exit for invalid argument",
+      "output_sample": "null\n"
+    },
+    {
+      "command": "stats",
+      "kind": "help",
+      "args": [
+        "stats",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Esegue una ricerca e raggruppa i risultati per le dimensioni indicate in --by.\nL'aggregazione è calcolata sul campione scaricato (--limit); il totale complessivo\nriportato dal portale è mostrato a parte.\n\nUsage:\n  giustizia-amministrativa-pp-cli stats [flags]\n\nExamples:\n  giustizia-amministrativa-pp-cli stats --testo appalto --by sede,anno --limit 200\n  giustizia-amministrativa-pp-cli stats --testo \"soccorso istruttorio\" --by tipo --json\n\nFlags:\n      --all string      Ricerca avanzata: tutte queste parole (AND).\n      --anno int        Anno del provvedimento.\n      --anno-nrg int    Anno del registro generale (per la ricerca per NRG).\n      --any string      Ricerca avanzata: una qualsiasi di queste parole (OR).\n      --by string       Dimensioni di raggruppamento separate da virgola: sede, sezione, tipo, anno. (default \"tipo\")\n  -h, --help            help for stats\n      --limit int       Max risultati da scaricare (paginazione automatica). (default 10)\n      --not string      Ricerca avanzata: nessuna di queste parole (NOT).\n      --nrg int         Numero di registro generale (ricorso).\n      --numero int      Numero del provvedimento.\n      --phrase string   Ricerca avanzata: frase esatta.\n      --sede string     Sede: roma, milano, consiglio-di-stato, cgars, ... (28 TAR + CdS).\n      --testo string    Ricerca full-text libera (testo semplice).\n      --tipo string     Tipo: sentenza, ordinanza, decreto, parere, plenaria, generale.\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:\u003cpath\u003e, webhook:\u003curl\u003e\n      --dry-run              Show request without sending\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'giustizia-amministrativa-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable, default 2 for sniffed APIs) (default 2)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "stats",
+      "kind": "happy_path",
+      "args": [
+        "stats",
+        "--testo",
+        "appalto",
+        "--by",
+        "sede,anno",
+        "--limit",
+        "200"
+      ],
+      "status": "pass",
+      "output_sample": "{\n  \"by\": [\n    \"sede\",\n    \"anno\"\n  ],\n  \"distribution\": [\n    {\n      \"key\": \"ROMA | 2026\",\n      \"count\": 165\n    },\n    {\n      \"key\": \"CONSIGLIO DI STATO | 2026\",\n      \"count\": 35\n    }\n  ],\n  \"sample_size\": 200,\n  \"total_results\": 84845\n}\n"
+    },
+    {
+      "command": "stats",
+      "kind": "json_fidelity",
+      "args": [
+        "stats",
+        "--testo",
+        "appalto",
+        "--by",
+        "sede,anno",
+        "--limit",
+        "200",
+        "--json"
+      ],
+      "status": "pass",
+      "output_sample": "{\n  \"by\": [\n    \"sede\",\n    \"anno\"\n  ],\n  \"distribution\": [\n    {\n      \"key\": \"ROMA | 2026\",\n      \"count\": 165\n    },\n    {\n      \"key\": \"CONSIGLIO DI STATO | 2026\",\n      \"count\": 35\n    }\n  ],\n  \"sample_size\": 200,\n  \"total_results\": 84845\n}\n"
+    },
+    {
+      "command": "stats",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no positional argument"
+    },
+    {
+      "command": "sync",
+      "kind": "help",
+      "args": [
+        "sync",
+        "--help"
+      ],
+      "status": "fail",
+      "reason": "missing Examples section",
+      "output_sample": "Popola lo store locale con i provvedimenti recenti e aggiorna le ricerche salvate (watch).\n\nUsage:\n  giustizia-amministrativa-pp-cli sync [flags]\n\nFlags:\n      --full        Scarica più provvedimenti recenti (equivale a --limit 200).\n  -h, --help        help for sync\n      --limit int   Numero di provvedimenti recenti da scaricare. (default 50)\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:\u003cpath\u003e, webhook:\u003curl\u003e\n      --dry-run              Show request without sending\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'giustizia-amministrativa-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable, default 2 for sniffed APIs) (default 2)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "sync",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "help check failed"
+    },
+    {
+      "command": "sync",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "help check failed"
+    },
+    {
+      "command": "sync",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "help check failed"
+    },
+    {
+      "command": "watch run",
+      "kind": "help",
+      "args": [
+        "watch",
+        "run",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Alla prima esecuzione salva la query (dai flag) sotto \u003cnome\u003e e registra i risultati come 'visti'.\nAlle esecuzioni successive ripete la query e mostra solo i provvedimenti comparsi nel frattempo.\n\nUsage:\n  giustizia-amministrativa-pp-cli watch run \u003cnome\u003e [flags]\n\nExamples:\n  giustizia-amministrativa-pp-cli watch run appalti-lazio --testo appalto --sede roma --tipo sentenza --limit 50\n  giustizia-amministrativa-pp-cli watch run appalti-lazio --json\n\nFlags:\n      --all string      Ricerca avanzata: tutte queste parole (AND).\n      --anno int        Anno del provvedimento.\n      --anno-nrg int    Anno del registro generale (per la ricerca per NRG).\n      --any string      Ricerca avanzata: una qualsiasi di queste parole (OR).\n  -h, --help            help for run\n      --limit int       Max risultati da scaricare (paginazione automatica). (default 10)\n      --not string      Ricerca avanzata: nessuna di queste parole (NOT).\n      --nrg int         Numero di registro generale (ricorso).\n      --numero int      Numero del provvedimento.\n      --phrase string   Ricerca avanzata: frase esatta.\n      --sede string     Sede: roma, milano, consiglio-di-stato, cgars, ... (28 TAR + CdS).\n      --testo string    Ricerca full-text libera (testo semplice).\n      --tipo string     Tipo: sentenza, ordinanza, decreto, parere, plenaria, generale.\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:\u003cpath\u003e, webhook:\u003curl\u003e\n      --dry-run              Show request without sending\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'giustizia-amministrativa-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable, default 2 for sniffed APIs) (default 2)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "watch run",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"nome\" at depth 0"
+    },
+    {
+      "command": "watch run",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"nome\" at depth 0"
+    },
+    {
+      "command": "watch run",
+      "kind": "error_path",
+      "args": [
+        "watch",
+        "run",
+        "__printing_press_invalid__"
+      ],
+      "status": "fail",
+      "reason": "expected non-zero exit for invalid argument",
+      "output_sample": "[\n  {\n    \"idprovv\": \"3X9t5J4BarKJVh-_7hN1\",\n    \"ecli\": \"ECLI:IT:TARLAZ:2026:11355SENB\",\n    \"tipo\": \"Sentenza Breve\",\n    \"sede\": \"ROMA\",\n    \"schema\": \"tar_rm\",\n    \"sezione\": \"SEZIONE 1Q\",\n    \"numero\": 11355,\n    \"anno\": 2026,\n    \"nrg\": \"202410689\",\n    \"data_deposito\": \"\",\n    \"snippet\": \"\",\n    \"formato\": \"html\",\n    \"nome_file\": \"202611355_20.html\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=tar_rm\\u0026nrg=202410689\\u0026nomeFile=202611355_20.html\\u0026subDir=Provvedimenti\"\n  },\n  {\n    \"idprovv\": \"smXI4Z4BkcXQLO6sZD9-\",\n    \"ecli\": \"ECLI:IT:TARLAZ:2026:11354SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"ROMA\",\n    \"schema\": \"tar_rm\",\n    \"sezione\": \"SEZIONE 2T\",\n    \"numero\": 11354,\n    \"anno\": 2026,\n    \"nrg\": \"202307973\",\n    \"data_deposito\": \"\",\n    \"snippet\": \"\",\n    \"formato\": \"html\",\n    \"nome_file\": \"202611354_01.html\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=tar_rm\\u0026nrg=202307973\\u0026nomeFile=202611354_01.html\\u0026subDir=Provvedimenti\"\n  },\n  {\n    \"idprovv\": \"SF3I4Z4Bik1C5qLyYkxH\",\n    \"ecli\": \"ECLI:IT:TARLAZ:2026:11353SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"ROMA\",\n    \"schema\": \"tar_rm\",\n    \"sezione\": \"SEZIONE 2T\",\n    \"numero\": 11353,\n    \"anno\": 2026,\n    \"nrg\": \"202308682\",\n    \"data_deposito\": \"\",\n    \"snippet\": \"\",\n    \"formato\": \"html\",\n    \"nome_file\": \"202611353_01.html\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=tar_rm\\u0026nrg=202308682\\u0026nomeFile=202611353_01.html\\u0026subDir=Provvedimenti\"\n  },\n  {\n    \"idprovv\": \"o2VR4J4BkcXQLO6sEz_Z\",\n    \"ecli\": \"ECLI:IT:TARLAZ:2026:11345SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"ROMA\",\n    \"schema\": \"tar_rm\",\n    \"sezione\": \"SEZIONE 3B\",\n    \"numero\": 11345,\n    \"anno\": 2026,\n    \"nrg\": \"202510567\",\n    \"data_deposito\": \"\",\n    \"snippet\": \"\",\n    \"formato\": \"html\",\n    \"nome_file\": \"202611345_01.html\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=tar_rm\\u0026nrg=202510567\\u0026nomeFile=202611345_01.html\\u0026subDir=Provvedimenti\"\n  },\n  {\n    \"idprovv\": \"OV1R4J4Bik1C5qLyEUzt\",\n    \"ecli\": \"ECLI:IT:TARLAZ:2026:11342SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"ROMA\",\n    \"schema\": \"tar_rm\",\n    \"sezione\": \"SEZIONE 3B\",\n    \"numero\": 11342,\n    \"anno\": 2026,\n    \"nrg\": \"202510798\",\n    \"data_deposito\": \"\",\n    \"snippet\": \"\",\n    \"formato\": \"html\",\n    \"nome_file\": \"202611342_01.html\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=tar_rm\\u0026nrg=202510798\\u0026nomeFile=202611342_01.html\\u0026subDir=Provvedimenti\"\n  },\n  {\n    \"idprovv\": \"omVH4J4BkcXQLO6s5D9U\",\n    \"ecli\": \"ECLI:IT:TARLAZ:2026:11341SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"ROMA\",\n    \"schema\": \"tar_rm\",\n    \"sezione\": \"SEZIONE 3B\",\n    \"numero\": 11341,\n    \"anno\": 2026,\n    \"nrg\": \"202512900\",\n    \"data_deposito\": \"\",\n    \"snippet\": \"\",\n    \"formato\": \"html\",\n    \"nome_file\": \"202611341_01.html\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=tar_rm\\u0026nrg=202512900\\u0026nomeFile=202611341_01.html\\u0026subDir=Provvedimenti\"\n  },\n  {\n    \"idprovv\": \"OF1H4J4Bik1C5qLy4kx1\",\n    \"ecli\": \"ECLI:IT:TARLAZ:2026:11340OCOL\",\n    \"tipo\": \"Ordinanza Collegiale\",\n    \"sede\": \"ROMA\",\n    \"schema\": \"tar_rm\",\n    \"sezione\": \"SEZIONE 3B\",\n    \"numero\": 11340,\n    \"anno\": 2026,\n    \"nrg\": \"202513640\",\n    \"data_deposito\": \"\",\n    \"snippet\": \"\",\n    \"formato\": \"html\",\n    \"nome_file\": \"202611340_08.html\",\n    \"url\": \"https://mdp.giustizia-amministrativa.it/visualizzah2/?nodeRef=\\u0026schema=tar_rm\\u0026nrg=202513640\\u0026nomeFile=202611340_08.html\\u0026subDir=Provvedimenti\"\n  },\n  {\n    \"idprovv\": \"L10s4J4Bik1C5qLyb0w8\",\n    \"ecli\": \"ECLI:IT:TARLAZ:2026:11339SENT\",\n    \"tipo\": \"Sentenza\",\n    \"sede\": \"ROMA\",\n    \"schema\": \"tar_rm\",\n    \"sezione\": \"SEZIONE 1B\",\n    \"numero\": 11339,\n    \"anno\": 2026,\n    \"nrg\": \"202514024\",\n    \"data_deposito\": \"\",\n    \"snippet\": \"\",\n    \"formato\": \"html\",\n    \"nome_file\": \"202611339_01.html\",\n    \"url\": \"h…[truncated]"
+    },
+    {
+      "command": "which",
+      "kind": "help",
+      "args": [
+        "which",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "which resolves a natural-language capability query (for example, \"search messages\" or \"stale tickets\") to the best matching command from this CLI's curated feature index.\n\nExit codes:\n  0  at least one match found\n  2  no confident match - the query did not score against any indexed capability; fall back to '--help' or 'search' if this CLI has one\n\nUsage:\n  giustizia-amministrativa-pp-cli which [query] [flags]\n\nExamples:\n  giustizia-amministrativa-pp-cli which \"stale tickets\"\n  giustizia-amministrativa-pp-cli which \"bottleneck\"\n  giustizia-amministrativa-pp-cli which --limit 1 \"send message\"\n  giustizia-amministrativa-pp-cli which                                # list the full capability index\n\nFlags:\n  -h, --help        help for which\n      --limit int   Maximum number of matches to return (default 3)\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:\u003cpath\u003e, webhook:\u003curl\u003e\n      --dry-run              Show request without sending\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'giustizia-amministrativa-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable, default 2 for sniffed APIs) (default 2)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "which",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "command path [which] has fewer segments than placeholders (1)"
+    },
+    {
+      "command": "which",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "command path [which] has fewer segments than placeholders (1)"
+    },
+    {
+      "command": "which",
+      "kind": "error_path",
+      "args": [
+        "which",
+        "__printing_press_invalid__",
+        "--json"
+      ],
+      "status": "pass",
+      "output_sample": "{\n  \"matches\": []\n}\n"
+    },
+    {
+      "command": "workflow status",
+      "kind": "help",
+      "args": [
+        "workflow",
+        "status",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Show local archive status and sync state for all resources\n\nUsage:\n  giustizia-amministrativa-pp-cli workflow status [flags]\n\nExamples:\n  # Show archive status\n  giustizia-amministrativa-pp-cli workflow status\n\n  # Show status as JSON\n  giustizia-amministrativa-pp-cli workflow status --json\n\nFlags:\n      --db string   Database path\n  -h, --help        help for status\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:\u003cpath\u003e, webhook:\u003curl\u003e\n      --dry-run              Show request without sending\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'giustizia-amministrativa-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable, default 2 for sniffed APIs) (default 2)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "workflow status",
+      "kind": "happy_path",
+      "args": [
+        "workflow",
+        "status"
+      ],
+      "status": "pass",
+      "output_sample": "Archive Status:\n  provvedimenti                  90 items\n  watches                        1 items\n\n  Total: 91 items\n  Store: /tmp/printing-press-subprocess-1210010628/.local/share/giustizia-amministrativa-pp-cli/data.db\n"
+    },
+    {
+      "command": "workflow status",
+      "kind": "json_fidelity",
+      "args": [
+        "workflow",
+        "status",
+        "--json"
+      ],
+      "status": "pass",
+      "output_sample": "{\n  \"provvedimenti\": 90,\n  \"watches\": 1\n}\n"
+    },
+    {
+      "command": "workflow status",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no positional argument"
+    }
+  ],
+  "ran_at": "2026-06-21T08:49:10.1364323Z"
+}
+Error: live dogfood failed: 7/50 tests failed
+live dogfood failed: 7/50 tests failed

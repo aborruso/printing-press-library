@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "giustizia-amministrativa": {
+      "command": "/home/aborruso/printing-press/library/giustizia-amministrativa/bin/giustizia-amministrativa-pp-mcp",
+      "args": []
+    }
+  }
+}
