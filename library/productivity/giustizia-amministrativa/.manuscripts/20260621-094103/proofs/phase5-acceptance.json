@@ -11,7 +11,7 @@
   "auth_context": {
     "type": "none"
   },
-  "source_fingerprint": "74bbe7773a015c024589591fbc0e6d836673d19b9bf718012d8d3b19c378b9d2",
+  "source_fingerprint": "a0089c143c939bdfbd5ba79002555c9b1bd0004131c2f61b44441e12111b5176",
   "source_files": {
     "cmd/giustizia-amministrativa-pp-cli/main.go": "4ba51ca9a1bf95ef63d5866b7768b8c158da78ce84daed8639b0525aae879d9c",
     "cmd/giustizia-amministrativa-pp-mcp/main.go": "54f86b7b1f32652cab949e1b1757aece1efcbe1b61eb9084aa5e26b07d3b1477",
@@ -23,7 +23,7 @@
     "internal/cli/appeal_chain_test.go": "4ced60268795d99f090addafccbf607a6574571136c8986e3f01a70edbc8a19d",
     "internal/cli/channel_workflow.go": "9229992e96197299d874dedd6237f93dcc9f287e2839c01bdf640ff94853c046",
     "internal/cli/corpus.go": "95c9e2297cd76ddd33e7db62a255cb5af70eb7a8ed020db557533d42ddb29a06",
-    "internal/cli/corpus_build.go": "f89e6c545fb21e41f88e083e20061893fd21f83a64e7df7a483213c106a4f6d2",
+    "internal/cli/corpus_build.go": "4ee690a69fd8532858fa198ab30d1ab088efbf5ad9aecc529988f1df8c59c48f",
     "internal/cli/corpus_build_test.go": "e2725c9482c8fb31dfe5296ce3fd45f54d0969d3c00c3e926a686a06eb4276d5",
     "internal/cli/data_source.go": "c794954a2dff7727e9d892bad07fb4720a497c78d8313b70443e09797f96e796",
     "internal/cli/deliver.go": "e2bea92052472e508799be346685dfa57984787586d399356ed6a391446b2cac",

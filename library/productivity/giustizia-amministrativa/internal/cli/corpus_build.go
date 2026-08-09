@@ -279,8 +279,6 @@ func newNovelCorpusBuildCmd(flags *rootFlags) *cobra.Command {
 	return cmd
 }
 
-// splitIDs parses the comma-separated --ids list, tolerating spaces and
-// newlines so a list pasted from a previous result works as-is.
 // orphanFiles returns the .md files present in dir that this run did not list.
 func orphanFiles(dir string, listed map[string]bool) []string {
 	entries, err := os.ReadDir(dir)
@@ -298,6 +296,8 @@ func orphanFiles(dir string, listed map[string]bool) []string {
 	return out
 }
 
+// splitIDs parses the comma-separated --ids list, tolerating spaces and
+// newlines so a list pasted from a previous result works as-is.
 func splitIDs(raw string) []string {
 	var out []string
 	for _, part := range strings.FieldsFunc(raw, func(r rune) bool { return r == ',' || r == '\n' || r == '\r' }) {
