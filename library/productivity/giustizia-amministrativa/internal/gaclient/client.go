@@ -69,6 +69,12 @@ type SearchOptions struct {
 	Tipo      string // sentenza|ordinanza|decreto|parere|plenaria|generale
 	Sede      string // roma|milano|consiglio-di-stato|...
 	SedeSweep bool   // iterate every sede instead of accepting the portal's Roma-first order
+	// SedeQuota decides how a sede sweep spends Limit across the sedi.
+	// "" or SedeQuotaProporzionale weights each sede by the total the portal
+	// declares for it, so the sample mirrors where the case law actually is.
+	// SedeQuotaUguale gives every sede the same share, which answers the
+	// different question "does any sede have anything on this at all".
+	SedeQuota string
 	Anno      int
 	AnnoFrom  int // year-range sweep: first year (inclusive)
 	AnnoTo    int // year-range sweep: last year (inclusive)
@@ -266,6 +272,14 @@ func (c *Client) Search(ctx context.Context, opts SearchOptions) (*SearchResult,
 	if opts.SedeSweep && (opts.AnnoFrom != 0 || opts.AnnoTo != 0) {
 		return nil, fmt.Errorf("--sede-sweep e --anno-from/--anno-to non si combinano: sarebbero %d sedi per ogni anno. Restringi con --anno, oppure fai uno sweep per volta", len(sediSweepList))
 	}
+	// La quota si valida sempre, anche senza sweep: un valore scritto male non
+	// deve passare inosservato solo perche' il flag che lo usa e' assente.
+	if _, err := normalizeSedeQuota(opts.SedeQuota); err != nil {
+		return nil, err
+	}
+	if opts.SedeQuota != "" && !opts.SedeSweep {
+		return nil, fmt.Errorf("--sede-quota vale solo con --sede-sweep: senza sweep si interroga una sede sola e non c'e' nulla da ripartire")
+	}
 	if c.token() == "" {
 		if err := c.handshake(ctx); err != nil {
 			return nil, err
@@ -338,17 +352,34 @@ func withSedeCoverageWarning(res *SearchResult, opts SearchOptions) *SearchResul
 // sede is reported and skipped, a rate limit or cancelled context stops the
 // sweep but keeps what was collected.
 func (c *Client) searchSedeSweep(ctx context.Context, opts SearchOptions) (*SearchResult, error) {
+	quota, err := normalizeSedeQuota(opts.SedeQuota)
+	if err != nil {
+		return nil, err
+	}
+
+	// Prima passata: una pagina per sede. In quota uguale la fetta e' nota in
+	// partenza; in proporzionale non lo e' ancora - i totali si scoprono
+	// interrogando - quindi si prende una pagina piena e si decide dopo.
+	// Costa quanto prima: searchOnce scaricava comunque una pagina intera e ne
+	// buttava il resto.
 	perSede := (opts.Limit + len(sediSweepList) - 1) / len(sediSweepList)
 	if perSede < 1 {
 		perSede = 1
 	}
+	primaPassata := perSede
+	if quota == SedeQuotaProporzionale {
+		primaPassata = defaultPageSize
+	}
 	sedeOpts := opts
 	sedeOpts.SedeSweep = false
-	sedeOpts.Limit = perSede
+	sedeOpts.SedeQuota = ""
+	sedeOpts.Limit = primaPassata
 
 	// Items non-nil: a zero-result search must marshal as [] for machine
 	// callers, never null.
 	res := &SearchResult{Items: make([]Provvedimento, 0)}
+	raccolto := map[string][]Provvedimento{}
+	var conRisultati []string // sedi che hanno prodotto righe, nell'ordine del portale
 	var lists [][]Provvedimento
 	var skipped []string
 	var lastErr error
@@ -373,28 +404,76 @@ func (c *Client) searchSedeSweep(ctx context.Context, opts SearchOptions) (*Sear
 		}
 		res.TotalsBySede[sede] = part.Total
 		if len(part.Items) > 0 {
+			raccolto[sede] = part.Items
+			conRisultati = append(conRisultati, sede)
 			lists = append(lists, part.Items)
 		}
 	}
+
+	// Seconda passata, solo in proporzionale e solo dove serve: le sedi la cui
+	// quota supera la pagina gia' scaricata. Su --limit 100 sono le tre grandi.
+	var quote map[string]int
+	if quota == SedeQuotaProporzionale && len(conRisultati) > 0 {
+		quote = allocaProporzionale(res.TotalsBySede, conRisultati, opts.Limit)
+		for _, sede := range conRisultati {
+			n := quote[sede]
+			if n <= len(raccolto[sede]) {
+				continue
+			}
+			sedeOpts.Sede = sede
+			sedeOpts.Limit = n
+			part, err := c.searchOnce(ctx, sedeOpts)
+			if err != nil {
+				if fatalSweepError(ctx, err) {
+					res.Warnings = append(res.Warnings, fmt.Sprintf("approfondimento su %s interrotto: %v; per quella sede restano le righe della prima passata", sede, err))
+					break
+				}
+				// Non fatale: si tiene quanto gia' raccolto per quella sede.
+				lastErr = err
+				continue
+			}
+			if len(part.Items) > len(raccolto[sede]) {
+				raccolto[sede] = part.Items
+			}
+		}
+		// Le liste per il merge seguono l'ordine del portale, non quello della mappa.
+		lists = lists[:0]
+		for _, sede := range conRisultati {
+			lists = append(lists, raccolto[sede])
+		}
+	}
+
 	if len(lists) == 0 && lastErr != nil {
 		return nil, lastErr
 	}
-	// Round-robin across the sedi so trimming to Limit samples the country
-	// instead of exhausting whichever sede happens to come first.
+	// Round-robin fra le sedi, cosi' il taglio a Limit campiona il paese invece
+	// di esaurire la sede che capita per prima. In proporzionale il giro e'
+	// pesato: ogni sede smette quando ha dato la sua quota, quindi le prime
+	// righe restano varie ma il totale rispetta la distribuzione reale.
+	presi := map[string]int{}
 	seen := map[string]bool{}
 	for i := 0; len(res.Items) < opts.Limit; i++ {
 		advanced := false
-		for _, list := range lists {
+		for idx, list := range lists {
 			if i >= len(list) {
 				continue
 			}
 			advanced = true
+			if quote != nil {
+				sede := conRisultati[idx]
+				if presi[sede] >= quote[sede] {
+					continue
+				}
+			}
 			key := dedupKey(list[i])
 			if seen[key] {
 				continue
 			}
 			seen[key] = true
 			res.Items = append(res.Items, list[i])
+			if quote != nil {
+				presi[conRisultati[idx]]++
+			}
 			if len(res.Items) >= opts.Limit {
 				break
 			}
@@ -412,9 +491,19 @@ func (c *Client) searchSedeSweep(ctx context.Context, opts SearchOptions) (*Sear
 		for _, p := range res.Items {
 			represented[p.Sede] = true
 		}
-		res.Warnings = append(res.Warnings, fmt.Sprintf(
-			"--limit %d e' piu' basso del numero di sedi interrogate (%d): sono rappresentate solo %d sedi, le altre restano fuori. Alza --limit per una copertura nazionale piu' equilibrata",
-			opts.Limit, len(lists), len(represented)))
+		if quota == SedeQuotaProporzionale {
+			// Qui le sedi mancanti non sono una lacuna: sono quelle la cui fetta
+			// del totale nazionale non arriva a un posto. Dirlo, invece di
+			// suggerire una "copertura equilibrata" che questa modalita' non
+			// insegue.
+			res.Warnings = append(res.Warnings, fmt.Sprintf(
+				"--limit %d si ripartisce fra %d sedi in proporzione ai totali del portale: %d sedi entrano nel campione, le altre hanno una quota inferiore a un provvedimento. Alza --limit per farle emergere, oppure usa --sede-quota uguale per una riga da ogni sede",
+				opts.Limit, len(lists), len(represented)))
+		} else {
+			res.Warnings = append(res.Warnings, fmt.Sprintf(
+				"--limit %d e' piu' basso del numero di sedi interrogate (%d): sono rappresentate solo %d sedi, le altre restano fuori. Alza --limit per una copertura nazionale piu' equilibrata",
+				opts.Limit, len(lists), len(represented)))
+		}
 	}
 	res.Warnings = appendSkippedWarning(res.Warnings, skipped, "sedi", lastErr)
 	return res, nil

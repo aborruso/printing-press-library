@@ -17,3 +17,7 @@ Documenti presenti in `docs/` ma non versionati (esclusi da `.gitignore`, uso pe
 
 * `future-ideas.md` - Idee di sviluppo non ancora pianificate.
 * `evaluation*.md`, `gap-analysis-*/` - Valutazioni e analisi di lavoro.
+
+Documenti versionati qui ma **non** pubblicati nella libreria pubblica, perché sono processo e non prodotto (vedi `interno/README.md`):
+
+* `interno/aggiornare-una-cli-pubblicata.md` - L'ordine dei passi fra il codice corretto e la PR aperta, e i punti in cui la macchina va guidata.

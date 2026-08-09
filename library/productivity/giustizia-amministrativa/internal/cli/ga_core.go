@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -81,7 +82,11 @@ func runGASearch(cmd *cobra.Command, flags *rootFlags, opts gaclient.SearchOptio
 	if err != nil {
 		return classifyAPIError(err, flags)
 	}
+	// Gli avvisi si raccolgono oltre che stamparsi: su stdout in JSON finiscono
+	// nell'envelope, perche' un agente legge solo quello. Vedi emitRicerca.
+	var avvisi []string
 	for _, w := range res.Warnings {
+		avvisi = append(avvisi, w)
 		fmt.Fprintf(cmd.ErrOrStderr(), "Attenzione: %s\n", w)
 	}
 	// Best-effort persistence (offline search, watch, grep, stats build on this).
@@ -114,9 +119,13 @@ func runGASearch(cmd *cobra.Command, flags *rootFlags, opts gaclient.SearchOptio
 		if probe, perr := c.Search(cmd.Context(), bare); perr == nil {
 			switch {
 			case probe.Total == 0:
-				fmt.Fprintf(cmd.ErrOrStderr(), "Nota: nessun risultato, e nemmeno senza i filtri (%s): il portale non trova nulla per questi termini di ricerca.\n", activeFilters(opts))
+				nota := fmt.Sprintf("nessun risultato, e nemmeno senza i filtri (%s): il portale non trova nulla per questi termini di ricerca.", activeFilters(opts))
+				avvisi = append(avvisi, nota)
+				fmt.Fprintf(cmd.ErrOrStderr(), "Nota: %s\n", nota)
 			default:
-				fmt.Fprintf(cmd.ErrOrStderr(), "Nota: nessun risultato con i filtri applicati (%s), ma la stessa ricerca senza filtri ne dichiara %d. Il vuoto viene dai filtri, non dai termini di ricerca.\n", activeFilters(opts), probe.Total)
+				nota := fmt.Sprintf("nessun risultato con i filtri applicati (%s), ma la stessa ricerca senza filtri ne dichiara %d. Il vuoto viene dai filtri, non dai termini di ricerca.", activeFilters(opts), probe.Total)
+				avvisi = append(avvisi, nota)
+				fmt.Fprintf(cmd.ErrOrStderr(), "Nota: %s\n", nota)
 			}
 		}
 	}
@@ -133,14 +142,47 @@ func runGASearch(cmd *cobra.Command, flags *rootFlags, opts gaclient.SearchOptio
 			// request for "the most relevant N" cannot be calibrated by anyone:
 			// N out of how many is unknowable. Prefixed as a note so the MCP
 			// layer carries it into the result's `avvisi` field.
-			fmt.Fprintf(cmd.ErrOrStderr(), "Nota: il portale dichiara %d risultati per questa query, questi sono i primi %d. Il numero di elementi restituiti e' la dimensione del campione, non il totale.\n", res.Total, len(res.Items))
+			nota := fmt.Sprintf("il portale dichiara %d risultati per questa query, questi sono i primi %d. Il numero di elementi restituiti e' la dimensione del campione, non il totale.", res.Total, len(res.Items))
+			avvisi = append(avvisi, nota)
+			fmt.Fprintf(cmd.ErrOrStderr(), "Nota: %s\n", nota)
 		}
 	}
 	data, err := json.Marshal(res.Items)
 	if err != nil {
 		return err
 	}
-	return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
+	return emitRicerca(cmd.OutOrStdout(), data, avvisi, flags)
+}
+
+// emitRicerca scrive i risultati aggiungendo gli avvisi allo stdout JSON quando
+// ce ne sono.
+//
+// Il motivo: gli avvisi che spiegano un risultato parziale - i ricorsi gemelli
+// raggruppati, il totale dichiarato dal portale piu' alto del campione, i
+// filtri che hanno svuotato la ricerca - viaggiano su stderr, e un agente che
+// legge solo stdout non li vede. Chiede 100 righe, ne riceve 92, e non ha modo
+// di sapere perche'. Il livello MCP li inserisce gia' nel campo `avvisi`
+// (shellout.go); qui si fa lo stesso per chi chiama la CLI direttamente.
+//
+// Senza avvisi la forma resta l'array nudo di sempre, cosi' il caso ordinario
+// non cambia contratto. --select e --compact si applicano agli elementi prima
+// dell'incapsulamento, altrimenti filtrerebbero l'envelope invece dei
+// provvedimenti. CSV, --quiet e la tabella umana restano fuori: un CSV di un
+// envelope non vuole dire nulla, e a video gli avvisi sono gia' su stderr.
+func emitRicerca(w io.Writer, data json.RawMessage, avvisi []string, flags *rootFlags) error {
+	if len(avvisi) == 0 || flags == nil || !flags.asJSON || flags.csv || flags.quiet {
+		return printOutputWithFlags(w, data, flags)
+	}
+	if flags.selectFields != "" {
+		data = filterFields(data, flags.selectFields)
+	} else if flags.compact {
+		data = compactFields(data)
+	}
+	envelope, err := json.Marshal(map[string]any{"items": data, "avvisi": avvisi})
+	if err != nil {
+		return err
+	}
+	return printOutput(w, envelope, true)
 }
 
 // hasNarrowingFilter reports whether the query carries anything beyond the

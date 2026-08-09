@@ -1,6 +1,8 @@
 # Log degli aggiornamenti
 
 ## 2026-08-08
+* **Update**: Aggiunta a [Come cercare](come-cercare.md) la sezione "Come lo sweep ripartisce i risultati": `sede-quota` e la differenza fra proporzionale e uguale, con i numeri reali di *appalto* 2026. Documentato inoltre che con `--json` la risposta diventa `{items, avvisi}` quando ci sono avvisi, perché prima viaggiavano solo su stderr e chi leggeva stdout non li vedeva.
+* **Creation**: Redatto [Aggiornare una CLI già pubblicata](interno/aggiornare-una-cli-pubblicata.md), in `docs/interno/` perché è processo e non prodotto: l'ordine dei passi fra il codice corretto e la PR aperta (marker phase5 → promote → validate → package), i punti in cui la macchina va guidata, e come distinguere un difetto vero da un artefatto della misura. Ricavato sbattendo contro ognuno di quei punti durante l'aggiornamento che ha portato alla PR #1675.
 * **Update**: Precisato in [Come cercare](come-cercare.md) che l'id di `get` si passa indifferentemente come argomento o con `id`. Prima solo la forma posizionale funzionava, e chi usava il tool via MCP non aveva modo di scoprirlo: lo schema del tool non può dichiarare argomenti posizionali.
 
 ## 2026-08-07

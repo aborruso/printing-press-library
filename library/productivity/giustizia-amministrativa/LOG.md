@@ -7,16 +7,38 @@
 - Restano aperte le decisioni del 7 agosto: archivio open data OpenGA, semantica di `--sede-sweep`, issue #1 (Directory di Claude).
 - **Non sei bloccato dall'upstream: c'e' una via, verificata.** `lock promote` e' il comando sanzionato che scrive il manifest, e sotto 4.30.1 lo riscrive a `schema_version: 2` senza perdere nulla — `creator`, `run_id`, tutte e 7 le novel features, le 24 patch. Provato in un `PRINTING_PRESS_HOME` isolato: dopo il promote, il controllo `manifest` di `publish validate` **passa**. Resta solo `phase5`, che e' proprio cio' che lo Step 4.5 del publish scrive da se' rieseguendo il dogfood live. Niente reprint, niente attesa di #3425.
 - **Ma il promote in place cancella `.git`** — verificato: prima `commit=534df28`, dopo `.git=NO`, e il comando riporta `promoted: true` senza dire nulla. E' la forma che la skill stessa prescrive nel Path B della Fase 5.6, cioe' proprio per le CLI con piu' lavoro a mano. Segnalato come **#4038**. La ricetta sicura e' salvare `.git`, promuovere, rimetterlo a posto.
-- **La PR di aggiornamento non è partita: `publish validate` si ferma su `manifest — schema_version must be 2 (found 1)`.** Il manifest lo ha scritto la press 4.24.0; la 4.30.1 pretende lo schema 2 e nessun comando lo migra (`publish package` esegue `validate` per primo). Il delta è di tre campi, ma il manifest è la fonte di verità della provenienza per la libreria pubblica e non si edita a mano. Sbloccare vuol dire **reprint sotto 4.30.1**, con 26 file scritti a mano da riconciliare e 24 voci nel ledger delle patch: un lavoro a sé. Fermato allo Step 4, nessun clone, nessun branch, nessuna PR.
-- L'altro fallimento di `validate`, `phase5 — marker missing source_fingerprint`, **resta non verificato**. Il marker attuale è della generazione di giugno e non ha alcun fingerprint; lo Step 4.5 ne scriverebbe uno nuovo, ma solo rieseguendo il dogfood live completo (`--level full --timeout 120s`) contro il portale su un albero che nel frattempo ho modificato. È un cancello che può fallire, non una formalità, e non è stato eseguito. Il `--live-check` dello scorecard (6/7 a 60s) **non è la stessa prova**: altro runner, altra matrice, nessun fingerprint scritto.
+- ~~La PR non è partita, serve un reprint~~ — **superato**: `lock promote` ha riscritto il manifest a schema 2 e la PR #1675 è aperta e verde. Nessun reprint. Il blocco iniziale era `publish validate` su `manifest — schema_version must be 2 (found 1)`, scritto dalla press 4.24.0.
+- ~~phase5 resta non verificato~~ — **fatto**: dogfood live completo eseguito due volte, **49/49, zero fallimenti**, marker riscritto col `source_fingerprint` dell'albero spedito. Il `--live-check` dello scorecard non era la stessa prova: altro runner, altra matrice, nessun fingerprint.
 - **La voce già pubblicata è anch'essa `schema_version: 1`** (verificato via `gh api` sul manifest in `library/productivity/giustizia-amministrativa`). Il pavimento dello schema 2 lo impone `publish validate` del binario locale, non necessariamente la CI della libreria.
 - Il numero di release lo stampa il workflow della libreria al merge: non va toccato a mano (`AGENTS.md`, "Release Ledger").
+
+### PR #1675: aperta, review chiusa, verde
+
+https://github.com/mvanhorn/printing-press-library/pull/1675 — Greptile 5/5, sette check su sette, `mergeable`. Non posso fare merge ne' mettere etichette: sul repo pubblico ho accesso via fork.
+
+Porta tutto agosto, non solo oggi: il repo e' nato il 7 agosto, dopo il rilascio del 23 luglio. 68 file.
+
+**Due cose fermate prima del commit, entrambe grazie all'appunto di ars-sicilia (`docs/interno/greptile-review-workflow.md`).**
+
+- **60 file da non pubblicare** erano nel pacchetto: `tmp/` con harness e corpora di test, `tasks/todo.md`, `docs/future-ideas.md`, `docs/evaluation-mcp.md`, `.claude/settings.local.json`, i binari di `bin/`. E' l'issue #1381 gia' annotata nel `.gitignore` di questo repo: `publish package` copia l'intera directory ignorandolo. Tolti usando il `.gitignore` come specifica.
+- **Il diff a 13406 righe** guardato prima di committare (riga 238 dell'appunto): per questo il titolo descrive due settimane di lavoro invece delle correzioni di oggi.
+
+**Quattro rilievi in review: tre reali, uno respinto.**
+
+- **Token di sessione Liferay** (`p_auth`, 16 occorrenze) dentro il fixture HTML di `discovery/`. Reale, sanificato. **La mia scansione l'aveva mancato** perche' cercava prefissi vendor (`sk-`, `ghp_`, `xoxb-`, `AKIA`): un token di sessione applicativa non ha prefisso. Vale per ogni CLI nata da browser-sniff, perche' quei fixture sono catture reali.
+- **`.mcp.json` con path assoluto** sotto la home: non portabile, e pubblicava la struttura della home. Ora relativo.
+- **Commento di `splitIDs`** finito sopra `orphanFiles`. Rimesso a posto.
+- **Presunto bug byte->rune in `excerptsAround`**: respinto con la misura. In Go `for bi := range text` itera sulle posizioni di inizio rune, non sui byte — su testo italiano accentato: 51 byte, 46 rune, indice finale 46. Nessun indice puo' superare `len(runes)`, e due clamp piu' il controllo `ok1`/`ok2` rendono lo slice sicuro comunque.
+
+Emersi mentre verificavo: quattro JSON di scratch di giugno nei manuscript, malformati, superati dal marker di oggi, con dentro i path della home. Rimossi.
+
+**Regola resa automatica.** Gli errori "materiale locale in un repo pubblico" ora hanno un cancello, non un promemoria: `~/.claude/hooks/pp-publish-guard.sh` (PreToolUse su Bash) blocca `git commit` dentro un `.publish-repo-*` se trova path della home, token di sessione o file esclusi dal `.gitignore` del sorgente. Piu' una sezione in `~/.claude/CLAUDE.md`, caricata in ogni progetto, per cio' che l'hook non vede (la regola dell'inglese verso quel repo, la tabella del corpo PR generata dal manifest). Dettagli in MemPalace, `wing=printing-press room=howto`.
 
 ### Retro: due rilievi su tre erano gia' tracciati
 
 Filati su `mvanhorn/cli-printing-press` dopo scansione anti-duplicati:
 
-- **#3425** (commento) — il blocco del manifest schema 1 vs 2. L'issue esisteva con 6 CLI; ho aggiunto le 8 di questa libreria, il fatto che la voce gia' pubblicata sia anch'essa schema 1, e **una correzione**: #3425 sostiene che il manifest v1 rispetti gia' il contratto di campi v2 e sia stale solo il numero — qui mancano `auth_env_vars`, `auth_env_var_specs` e `spec_path`, quindi un restamp del solo intero produrrebbe un manifest che dichiara v2 senza averne i campi.
+- **#3425** (commento) — il blocco del manifest schema 1 vs 2. L'issue esisteva con 6 CLI; ho aggiunto le 8 di questa libreria, il fatto che la voce gia' pubblicata sia anch'essa schema 1, e una "correzione" che si e' rivelata **sbagliata**: sostenevo che mancassero `auth_env_vars`, `auth_env_var_specs` e `spec_path` e che il solo intero non bastasse. Misurato dopo: il promote li lascia assenti e `publish validate` passa lo stesso. #3425 aveva ragione. Corretto pubblicamente nel thread.
 - **#3459** (commento) — il falso `path_validity 0/10`. L'issue lo attribuisce ai CLI html-transport; `dogfood` sullo stesso file si basa invece su `spec_format: internal`. Questa CLI e' entrambe le cose, quindi le due cause non si separano: segnalato perche' i due rimedi hanno raggio diverso.
 - **#4037** (nuovo, P1) — `dogfood --research-dir` che riscrive `internal/mcp/tools.go` e annulla i fix successivi, senza dire cosa ha sostituito. Nessun issue lo copriva. Sette CLI di questa libreria sono esposte.
 

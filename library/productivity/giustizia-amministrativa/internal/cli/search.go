@@ -21,6 +21,7 @@ type searchFlags struct {
 	tipo      string
 	sede      string
 	sedeSweep bool
+	sedeQuota string
 	anno      int
 	annoFrom  int
 	annoTo    int
@@ -40,6 +41,7 @@ func addSearchFlags(cmd *cobra.Command, f *searchFlags) {
 	cmd.Flags().StringVar(&f.tipo, "tipo", "", "Tipo: sentenza, ordinanza, decreto, parere, plenaria, generale.")
 	cmd.Flags().StringVar(&f.sede, "sede", "", "Sede: roma, milano, consiglio-di-stato, cgars, ... (28 TAR + CdS).")
 	cmd.Flags().BoolVar(&f.sedeSweep, "sede-sweep", false, "Interroga tutte le sedi e unisci i risultati. Senza questo flag il portale ordina per sede e restituisce solo il TAR Lazio. --limit vale sul totale; non si combina con --sede ne' con --anno-from/--anno-to.")
+	cmd.Flags().StringVar(&f.sedeQuota, "sede-quota", "", "Come --sede-sweep spende --limit: proporzionale (predefinito, pesa ogni sede per il totale dichiarato dal portale) oppure uguale (stessa fetta a ogni sede, per sapere se esiste qualcosa ovunque).")
 	cmd.Flags().IntVar(&f.anno, "anno", 0, "Anno del provvedimento.")
 	cmd.Flags().IntVar(&f.annoFrom, "anno-from", 0, "Sweep storico: primo anno (incluso). Itera il filtro anno; --limit vale per anno.")
 	cmd.Flags().IntVar(&f.annoTo, "anno-to", 0, "Sweep storico: ultimo anno (incluso).")
@@ -56,7 +58,7 @@ func (f *searchFlags) opts(positional string) gaclient.SearchOptions {
 	}
 	return gaclient.SearchOptions{
 		Testo: testo, All: f.all, Any: f.any, Not: f.not, Phrase: f.phrase,
-		Tipo: f.tipo, Sede: f.sede, SedeSweep: f.sedeSweep, Anno: f.anno,
+		Tipo: f.tipo, Sede: f.sede, SedeSweep: f.sedeSweep, SedeQuota: f.sedeQuota, Anno: f.anno,
 		AnnoFrom: f.annoFrom, AnnoTo: f.annoTo, Numero: f.numero,
 		Nrg: f.nrg, AnnoNrg: f.annoNrg, Limit: f.limit,
 	}
