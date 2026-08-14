@@ -24,7 +24,7 @@ import (
 func RegisterTools(s *server.MCPServer) {
 	s.AddTool(
 		mcplib.NewTool("biblioteca_cerca",
-			mcplib.WithDescription("Cerca nel catalogo bibliografico per autore, titolo, soggetto o ISBN. Optional: autore, titolo, soggetto (plus 3 more). Returns array of VoceCatalogo."),
+			mcplib.WithDescription("Cerca nel catalogo bibliografico per autore, titolo, soggetto o ISBN. Optional: autore, titolo, soggetto (plus 4 more). Returns array of VoceCatalogo."),
 			mcplib.WithString("autore", mcplib.Description("Autore (cognome nome).")),
 			mcplib.WithString("titolo", mcplib.Description("Titolo.")),
 			mcplib.WithString("soggetto", mcplib.Description("Soggetto/materia.")),
@@ -52,7 +52,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("commissioni_convocazioni",
-			mcplib.WithDescription("Convocazioni delle Commissioni. Optional: legisl, anno, codcom (plus 3 more). Returns array of Convocazione."),
+			mcplib.WithDescription("Convocazioni delle Commissioni. Optional: legisl, anno, codcom (plus 4 more). Returns array of Convocazione."),
 			mcplib.WithNumber("legisl", mcplib.Description("Legislatura.")),
 			mcplib.WithNumber("anno", mcplib.Description("Anno della convocazione.")),
 			mcplib.WithString("codcom", mcplib.Description("Codice numerico commissione.")),
@@ -68,7 +68,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("commissioni_sommari",
-			mcplib.WithDescription("Sommari dei lavori di commissione. Optional: legisl, codcom, commissione (plus 4 more). Returns array of Sommario."),
+			mcplib.WithDescription("Sommari dei lavori di commissione. Optional: legisl, codcom, commissione (plus 5 more). Returns array of Sommario."),
 			mcplib.WithNumber("legisl", mcplib.Description("Legislatura.")),
 			mcplib.WithString("codcom", mcplib.Description("Codice commissione.")),
 			mcplib.WithString("commissione", mcplib.Description("Nome commissione.")),
@@ -85,7 +85,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("ddl_cerca",
-			mcplib.WithDescription("Cerca disegni di legge per legislatura, anno, firmatario, materia o testo. Optional: legisl, anno, firmatario (plus 4 more). Returns array of DDL."),
+			mcplib.WithDescription("Cerca disegni di legge per legislatura, anno, firmatario, materia o testo. Optional: legisl, anno, firmatario (plus 5 more). Returns array of DDL."),
 			mcplib.WithNumber("legisl", mcplib.Description("Legislatura (es. 18 per XVIII).")),
 			mcplib.WithNumber("anno", mcplib.Description("Anno di presentazione.")),
 			mcplib.WithString("firmatario", mcplib.Description("Nome o cognome del firmatario.")),
@@ -113,7 +113,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("interpellanze_cerca",
-			mcplib.WithDescription("Cerca interpellanze. Optional: legisl, firmatario, rubrica (plus 2 more). Returns array of Atto."),
+			mcplib.WithDescription("Cerca interpellanze. Optional: legisl, firmatario, rubrica (plus 4 more). Returns array of Atto."),
 			mcplib.WithNumber("legisl", mcplib.Description("Legislatura.")),
 			mcplib.WithString("firmatario", mcplib.Description("Firmatario.")),
 			mcplib.WithString("rubrica", mcplib.Description("Rubrica/materia.")),
@@ -140,7 +140,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("interrogazioni_cerca",
-			mcplib.WithDescription("Cerca interrogazioni per legislatura, firmatario o rubrica. Optional: legisl, firmatario, rubrica (plus 2 more). Returns array of Atto."),
+			mcplib.WithDescription("Cerca interrogazioni per legislatura, firmatario o rubrica. Optional: legisl, firmatario, rubrica (plus 4 more). Returns array of Atto."),
 			mcplib.WithNumber("legisl", mcplib.Description("Legislatura.")),
 			mcplib.WithString("firmatario", mcplib.Description("Firmatario.")),
 			mcplib.WithString("rubrica", mcplib.Description("Rubrica/materia.")),
@@ -167,7 +167,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("leggi_cerca",
-			mcplib.WithDescription("Cerca leggi regionali per legislatura, anno, numero o testo. Optional: legisl, anno, numero (plus 2 more). Returns array of Legge."),
+			mcplib.WithDescription("Cerca leggi regionali per legislatura, anno, numero o testo. Optional: legisl, anno, numero (plus 4 more). Returns array of Legge."),
 			mcplib.WithNumber("legisl", mcplib.Description("Legislatura (es. 18 per XVIII).")),
 			mcplib.WithNumber("anno", mcplib.Description("Anno della legge.")),
 			mcplib.WithNumber("numero", mcplib.Description("Numero della legge.")),
@@ -194,7 +194,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("mozioni_cerca",
-			mcplib.WithDescription("Cerca mozioni. Optional: legisl, firmatario, rubrica (plus 2 more). Returns array of Atto."),
+			mcplib.WithDescription("Cerca mozioni. Optional: legisl, firmatario, rubrica (plus 4 more). Returns array of Atto."),
 			mcplib.WithNumber("legisl", mcplib.Description("Legislatura.")),
 			mcplib.WithString("firmatario", mcplib.Description("Firmatario.")),
 			mcplib.WithString("rubrica", mcplib.Description("Rubrica/materia.")),
@@ -221,7 +221,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("odg_cerca",
-			mcplib.WithDescription("Cerca ordini del giorno. Optional: legisl, firmatario, rubrica (plus 2 more). Returns array of Atto."),
+			mcplib.WithDescription("Cerca ordini del giorno. Optional: legisl, firmatario, rubrica (plus 4 more). Returns array of Atto."),
 			mcplib.WithNumber("legisl", mcplib.Description("Legislatura.")),
 			mcplib.WithString("firmatario", mcplib.Description("Firmatario.")),
 			mcplib.WithString("rubrica", mcplib.Description("Rubrica.")),
@@ -248,7 +248,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("pareri_cerca",
-			mcplib.WithDescription("Cerca pareri richiesti dal Governo. Optional: legisl, commissione, oggetto (plus 1 more). Returns array of Parere."),
+			mcplib.WithDescription("Cerca pareri richiesti dal Governo. Optional: legisl, commissione, oggetto (plus 2 more). Returns array of Parere."),
 			mcplib.WithNumber("legisl", mcplib.Description("Legislatura.")),
 			mcplib.WithString("commissione", mcplib.Description("Commissione competente.")),
 			mcplib.WithString("oggetto", mcplib.Description("Oggetto del parere.")),
@@ -300,7 +300,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("risoluzioni_cerca",
-			mcplib.WithDescription("Cerca risoluzioni. Optional: legisl, firmatario, commissione (plus 2 more). Returns array of Atto."),
+			mcplib.WithDescription("Cerca risoluzioni. Optional: legisl, firmatario, commissione (plus 4 more). Returns array of Atto."),
 			mcplib.WithNumber("legisl", mcplib.Description("Legislatura.")),
 			mcplib.WithString("firmatario", mcplib.Description("Firmatario.")),
 			mcplib.WithString("commissione", mcplib.Description("Commissione.")),

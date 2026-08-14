@@ -27,6 +27,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -44,6 +45,26 @@ func cofirmaExpr(legisl int, nome string) string {
 	return fmt.Sprintf("(%d.LEGISL E ((%s.FIRMAT) NOT (1 ADJ %s).FIRMAT))", legisl, nome, nome)
 }
 
+// cofirmaNome tiene separate le due forme del nome: quella da mostrare in
+// classifica e quella con cui il portale lo indicizza davvero.
+type cofirmaNome struct {
+	Display string // «D'Acquisto Mario», come lo scrive l'anagrafica
+	Query   string // «D Acquisto Mario», come lo indicizza ISIS
+}
+
+// isisNome estrae dalla colonna isis_expr del seed la forma normalizzata del
+// nome: «1 ADJ2   D Acquisto Mario.firmat» -> «D Acquisto Mario». Restituisce
+// stringa vuota se l'espressione non ha quella forma.
+var isisNomeRe = regexp.MustCompile(`(?i)^\s*1\s+ADJ\d*\s+(.*)\.firmat\s*$`)
+
+func isisNome(expr string) string {
+	m := isisNomeRe.FindStringSubmatch(expr)
+	if m == nil {
+		return ""
+	}
+	return strings.TrimSpace(m[1])
+}
+
 // firmatariDiLegislatura legge dal seed locale i nomi dei firmatari nella forma
 // esatta con cui il portale li indicizza per QUELLA legislatura.
 //
@@ -51,7 +72,7 @@ func cofirmaExpr(legisl int, nome string) string {
 // detto Antonello», e il portale documentale indicizza *Antonino* — cercare il
 // nome con cui lo chiama la stampa non trova niente. Il seed ha già le due cose
 // che servono, nome e legislatura, per 1110 voci dalla X alla XVIII.
-func firmatariDiLegislatura(ctx context.Context, dbPath string, legisl int) ([]string, error) {
+func firmatariDiLegislatura(ctx context.Context, dbPath string, legisl int) ([]cofirmaNome, error) {
 	db, err := store.Open(dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("apertura database (%s): %w", dbPath, err)
@@ -64,20 +85,30 @@ func firmatariDiLegislatura(ctx context.Context, dbPath string, legisl int) ([]s
 		return nil, fmt.Errorf("seed firmatari: %w", err)
 	}
 	rows, err := db.DB().QueryContext(ctx,
-		`SELECT nome FROM firmatari WHERE legisl = ? ORDER BY nome`, itoa(legisl))
+		`SELECT nome, isis_expr FROM firmatari WHERE legisl = ? ORDER BY nome`, itoa(legisl))
 	if err != nil {
 		return nil, fmt.Errorf("query firmatari: %w", err)
 	}
 	defer rows.Close()
-	var out []string
+	var out []cofirmaNome
 	for rows.Next() {
-		var n string
-		if err := rows.Scan(&n); err != nil {
+		var n, expr string
+		if err := rows.Scan(&n, &expr); err != nil {
 			return nil, err
 		}
-		if n = strings.TrimSpace(n); n != "" {
-			out = append(out, n)
+		if n = strings.TrimSpace(n); n == "" {
+			continue
 		}
+		// Il display non è cercabile: il portale indicizza senza accenti e con
+		// la punteggiatura sciolta in spazi (Andò -> Ando, D'Acquisto ->
+		// D Acquisto, F.sco -> F sco). Sono 49 nomi su 864: interrogarli nella
+		// forma con cui li scrive l'anagrafica li farebbe risultare a zero
+		// cofirme o non misurati. La forma buona è già nel seed.
+		q := isisNome(expr)
+		if q == "" {
+			q = n
+		}
+		out = append(out, cofirmaNome{Display: n, Query: q})
 	}
 	return out, rows.Err()
 }
@@ -94,14 +125,14 @@ type contatore interface {
 // classificaCofirme interroga il portale una volta per nome e restituisce la
 // classifica insieme all'elenco di chi non è stato misurato. Chi non risponde
 // non vale zero: vale "non lo sappiamo", ed è il chiamante a doverlo dire.
-func classificaCofirme(ctx context.Context, c contatore, arc icaro.Archive, legisl int, nomi []string, avanzamento func(fatti, totale int)) ([]analyticsRow, []string, error) {
+func classificaCofirme(ctx context.Context, c contatore, arc icaro.Archive, legisl int, nomi []cofirmaNome, avanzamento func(fatti, totale int)) ([]analyticsRow, []string, error) {
 	rows := make([]analyticsRow, 0, len(nomi))
 	var persi []string
 	for i, nome := range nomi {
 		if avanzamento != nil {
 			avanzamento(i+1, len(nomi))
 		}
-		n, err := c.Count(ctx, arc, icaro.SearchOptions{ISISRaw: cofirmaExpr(legisl, nome)})
+		n, err := c.Count(ctx, arc, icaro.SearchOptions{ISISRaw: cofirmaExpr(legisl, nome.Query)})
 		if err != nil {
 			if ctx.Err() != nil {
 				return nil, persi, ctx.Err()
@@ -113,11 +144,11 @@ func classificaCofirme(ctx context.Context, c contatore, arc icaro.Archive, legi
 			if rlErr := new(icaro.HTTPRateLimitError); errors.As(err, &rlErr) {
 				return nil, persi, rateLimitErr(fmt.Errorf("classifica cofirme: %w", err))
 			}
-			persi = append(persi, nome)
+			persi = append(persi, nome.Display)
 			continue
 		}
 		if n > 0 {
-			rows = append(rows, analyticsRow{Chiave: nome, Conteggio: n})
+			rows = append(rows, analyticsRow{Chiave: nome.Display, Conteggio: n})
 		}
 	}
 	// Zero misurati non è una classifica vuota, è un comando fallito. Senza

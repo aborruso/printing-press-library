@@ -49,7 +49,47 @@ func (f *contatoreFinto) Count(ctx context.Context, arc icaro.Archive, opts icar
 	return 0, nil
 }
 
-var deputati = []string{"Rossi Anna", "Bianchi Mario", "Verdi Luisa"}
+var deputati = []cofirmaNome{
+	{Display: "Rossi Anna", Query: "Rossi Anna"},
+	{Display: "Bianchi Mario", Query: "Bianchi Mario"},
+	{Display: "Verdi Luisa", Query: "Verdi Luisa"},
+}
+
+// La forma con cui il portale indicizza il nome non e' quella dell'anagrafica:
+// accenti tolti e punteggiatura sciolta in spazi. Interrogare il display al suo
+// posto restituisce zero su 49 degli 864 firmatari del seed, e la classifica li
+// perde in silenzio.
+func TestIsisNomeEstraeLaFormaIndicizzata(t *testing.T) {
+	casi := map[string]string{
+		"1 ADJ2   Ando Oscar.firmat":         "Ando Oscar",
+		"1 ADJ2   D Acquisto Mario.firmat":   "D Acquisto Mario",
+		"1 ADJ2   Calanducci F sco.firmat":   "Calanducci F sco",
+		"1 ADJ    Cracolici Antonino.FIRMAT": "Cracolici Antonino",
+		"espressione che non e' un nome":     "",
+	}
+	for expr, want := range casi {
+		if got := isisNome(expr); got != want {
+			t.Errorf("isisNome(%q) = %q, atteso %q", expr, got, want)
+		}
+	}
+}
+
+// Il nome interrogato e' quello indicizzato, ma la classifica deve mostrare
+// quello leggibile: se si confondono, l'utente legge "D Acquisto Mario".
+func TestClassificaUsaQueryPerCercareEDisplayPerMostrare(t *testing.T) {
+	f := &contatoreFinto{esiti: map[string]int{"D Acquisto Mario": 7}}
+	rows, persi, err := classificaCofirme(context.Background(), f, *icaro.BySlug("ddl"), 18,
+		[]cofirmaNome{{Display: "D'Acquisto Mario", Query: "D Acquisto Mario"}}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(persi) != 0 {
+		t.Fatalf("nessuno doveva restare non misurato, persi=%v", persi)
+	}
+	if len(rows) != 1 || rows[0].Chiave != "D'Acquisto Mario" || rows[0].Conteggio != 7 {
+		t.Fatalf("atteso display D'Acquisto Mario con 7 cofirme, ottenuto %+v", rows)
+	}
+}
 
 // Una richiesta persa non deve portarsi via le altre: chi non risponde finisce
 // fra i non misurati e la classifica esce lo stesso, con il buco dichiarato.
