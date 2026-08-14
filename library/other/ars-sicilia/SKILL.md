@@ -120,6 +120,19 @@ These capabilities aren't available in any other tool for this API.
   ```
 
 ### Stato e monitoraggio
+- **`novita`** — Cosa è comparso negli archivi da una certa data in qua, tutti gli archivi datati in una chiamata, con accanto il **ritardo di pubblicazione della fonte** archivio per archivio.
+
+  _È la domanda di chi monitora, e finora costava una ricerca per archivio più un filtro a mano. Diversa da `ddl drift`, che dice cosa si è **mosso**: quello richiede uno stato dell'iter da confrontare, che esiste solo sui ddl. Qui la domanda è cosa è **nuovo**, che si legge dalla data dell'atto e vale ovunque._
+
+  ```bash
+  ars-sicilia-pp-cli novita --since 7d --agent
+  ars-sicilia-pp-cli novita --since 30d --archivi ddl,interrogazioni,resoconti --agent
+  ars-sicilia-pp-cli novita --dal 2026-07-01 --archivi resoconti --csv
+  ```
+
+  Il ritardo accanto a ogni archivio è la parte che rende leggibile lo zero: le mozioni sono pubblicate con ~45 giorni di ritardo, quindi «gli ultimi 7 giorni» sarà vuoto a lungo, e non perché l'Assemblea sia ferma. **Quando la finestra chiesta cade tutta dentro il ritardo, il comando lo dice** invece di lasciare un elenco vuoto senza spiegazione. `conteggio` è quanti ne ha trovati, `--limit` (default 30) è quanti ne mostra: il numero non dipende da quante righe hai chiesto di vedere. `pareri` e `biblioteca` non sono databili e vengono dichiarati tali, non riportati vuoti.
+
+  In `--since`, **`m` vale mesi, non minuti** (`7d`, `3w`, `2m`, `1y`, e `24h` per chi la scrive così).
 - **`ddl drift`** — Confronta lo stato dell'iter dei DDL nella sync corrente con la precedente e segnala i disegni di legge che si sono mossi nel periodo (passati da commissione ad aula, approvati, ritirati). Richiede due **deep sync** (`sync --resources ddl --deep`) a distanza di tempo: solo la deep sync scrive il campo `iter` confrontato.
 
   _L'RSS shell esistente segnala solo 'nuovi'; per 'mossi' non c'è alternativa. Questo è il segnale che cercavano i journalist che seguono iter politici._
@@ -279,7 +292,36 @@ ars-sicilia-pp-cli ddl get 18 6030 --agent --select docno,permalink
 
 Gli `url` dei tre archivi serviti dal backend `/bd/` sono invece già citabili (`bd/resoconti/scheda/18/269` risponde 200 senza sessione), e lì `doc_id` non compare affatto.
 
-Il campo `nota` non va messo in `--select`: c'è solo quando serve, e chiederlo dove non c'è fa comparire l'avviso «nota non esiste in questi record». Lo stesso testo arriva comunque su stderr.
+Il campo `nota` non va **chiesto** in `--select`: c'è solo quando serve, e chiederlo dove non c'è fa comparire l'avviso «nota non esiste in questi record». Non serve chiederlo: i campi che qualificano la risposta — `troncato`, `conteggio`, `nota`, `hint`, `meta` — **sopravvivono a `--select`** in radice, perché dicono se i dati sono tutti e non sono dati fra cui scegliere. Dentro le righe di un array restano invece campi come gli altri, e `--select` li filtra.
+
+### Le date: quattro grafie in arrivo, `data_iso` per lavorarci
+
+Il portale scrive le date in quattro forme diverse, e due convivono nello stesso payload di `ddl iter`:
+
+- `28.07.26` — archivi Icaro: ddl, interrogazioni, interpellanze, mozioni, odg, risoluzioni
+- `5.01.2026` — archivio `leggi`
+- `05/08/2026` — backend `/bd/`: resoconti, sommari, convocazioni
+- `17 giu 2026` — blocco di stato dentro il documento di un DDL, cioè gli eventi di `ddl iter` e `legge cronologia`
+
+Nessuna è ordinabile come stringa e nessuna è quella che i filtri vogliono in ingresso. Accanto a ogni data leggibile viaggia perciò **`data_iso`** (`YYYY-MM-DD`), nel JSON e come colonna nel CSV: è quello da usare per ordinare, confrontare, importare in `duckdb` o rimettere dentro un `--data`. `--csv` rende una tabella anche sui comandi aggregati, che avvolgono le righe in un oggetto: su `commissione dossier` le quattro sezioni escono concatenate, con una colonna `tipo` che dice da quale sezione viene ogni riga. Quando manca vuol dire che quel valore non è una data leggibile: il range echeggiato in radice da `deputato profilo` (`2026-06-01:2026-08-14`), che è un criterio e non una data, oppure una data che la fonte ha scritto monca. Sull'archivio `pareri` succede **riga per riga**, non per tutto l'archivio: nella stessa risposta convivono `30 gen 2026` (che dà `data_iso`) e `17 luglio 2` o `05 febbraio` (che non lo danno, perché l'anno non c'è). Quindi su `pareri` l'assenza di `data_iso` va letta come «questa riga non è databile», e le righe restano ordinabili solo in parte.
+
+```bash
+ars-sicilia-pp-cli deputato profilo "Chinnici Valentina" --legisl 18 --agent --select tipo,data_iso,titolo
+```
+
+**In ingresso i flag temporali non sono gli stessi su tutti gli archivi**, e nessun archivio li ha entrambi:
+
+- **`--data`** (giorno singolo o range `YYYY-MM-DD:YYYY-MM-DD`): `interrogazioni`, `interpellanze`, `mozioni`, `odg`, `risoluzioni`, `resoconti`, `commissioni sommari`, `commissioni convocazioni`, e `deputato profilo` (che lo applica a tutti i sotto-archivi).
+- **`--anno`**: `ddl`, `leggi`, `resoconti`, `commissioni sommari`, `commissioni convocazioni`.
+- **Nessuno dei due**: `pareri` e `biblioteca`.
+
+Su `ddl` e `leggi`, quindi, un intervallo più stretto dell'anno non ha una flag. La macchina del range però c'è lato server — `--anno` non fa altro che espandersi in un range su `DATPRE` — e la si raggiunge da `--isis-query`, con le date in `AAMMGG`:
+
+```bash
+ars-sicilia-pp-cli ddl cerca --legisl 18 --isis-query "(18.LEGISL E 260701/260814.DATPRE)" --agent
+```
+
+Senza questo, «quali ddl sono stati presentati questa settimana» si può solo chiedere per l'anno intero e filtrare a valle su `data_iso`.
 
 ### `--testo` cerca le parole, `--frase` cerca la locuzione
 
@@ -301,7 +343,11 @@ When you know what you want to do but not which command does it, ask the CLI dir
 ars-sicilia-pp-cli which "<capability in your own words>"
 ```
 
-`which` resolves a natural-language capability query to the best matching command from this CLI's curated feature index. Exit code `0` means at least one match; exit code `2` means no confident match — fall back to `--help` or use a narrower query.
+`which` resolves a natural-language capability query to the best matching command from this CLI's curated feature index. L'indice copre le 42 capacità della CLI — non solo i comandi di punta, anche le ricerche d'archivio, i `get`, i vocabolari dei filtri — e dove una capacità si distingue per una flag, la flag fa parte del nome restituito: la risposta è qualcosa da incollare.
+
+Exit code `0` means at least one match; exit code `2` means no confident match — fall back to `--help` or use a narrower query. **Sotto `--json` (quindi sotto `--agent`) il no-match esce 0 con `matches: []`**, per scelta: un agente ramifica su `matches.length`, non sul codice d'uscita.
+
+Alle domande su ciò che il portale **non pubblica** risponde con il motivo, non col silenzio: sotto `--json` arriva un campo `non_coperto`, altrove lo stesso testo su stderr. Sono i voti nominali, le presenze in aula, gli emendamenti come archivio, le spese dell'Assemblea e il gruppo di appartenenza come anagrafica interrogabile. Ogni voce dice anche la cosa più vicina che si può fare davvero — per esempio, l'esito delle votazioni esiste solo nella prosa dei resoconti d'aula.
 
 ## Recipes
 

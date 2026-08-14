@@ -199,9 +199,13 @@ func runDeputatoProfilo(cmd *cobra.Command, flags *rootFlags, name string, legis
 		return notFoundErr(fmt.Errorf("nessun atto trovato per il deputato %q (verifica il nome e l'eventuale --legisl)", name))
 	}
 
-	// Sort by date (reverse chronological).
+	// Sort by date (reverse chronological). La chiave passa da chiaveData, non
+	// dalla stringa grezza: gli atti dei tre archivi serviti dal backend /bd/
+	// scrivono la data come `05/08/2026` e nel confronto lessicografico
+	// battevano le date già normalizzate ("28" > "20"), finendo in testa a atti
+	// più recenti.
 	sort.SliceStable(report.Atti, func(i, j int) bool {
-		return parseICaroDate(report.Atti[i].Data) > parseICaroDate(report.Atti[j].Data)
+		return chiaveData(report.Atti[i].Data) > chiaveData(report.Atti[j].Data)
 	})
 
 	out := cmd.OutOrStdout()

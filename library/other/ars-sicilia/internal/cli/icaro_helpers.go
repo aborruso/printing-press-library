@@ -494,6 +494,11 @@ func emitEnvelope(w io.Writer, payload any, troncato bool, hint string, flags *r
 	if err != nil {
 		return err
 	}
+	// La busta ha un percorso di uscita suo (writeJSON, non
+	// printOutputWithFlags), quindi l'iniezione di data_iso va rifatta qui:
+	// senza, le stesse righe avevano data_iso senza --envelope e non l'avevano
+	// con --envelope.
+	raw = iniettaDataISO(raw)
 	if flags.selectFields != "" {
 		warnUnknownSelectFields(raw, flags.selectFields)
 		raw = filterFields(raw, flags.selectFields)
@@ -1086,7 +1091,14 @@ func writeRecordsCSV(out io.Writer, arc icaro.Archive, recs []icaro.Record, firm
 	}
 	hdr := []string{"doc_id", "title", "excerpt", "url"}
 	for _, c := range cols {
-		hdr = append(hdr, strings.ToLower(strings.TrimSuffix(c, ".")))
+		nome := strings.ToLower(strings.TrimSuffix(c, "."))
+		hdr = append(hdr, nome)
+		// Il CSV è la forma con cui questi dati finiscono in duckdb o in un
+		// foglio, ed è lì che le quattro grafie di data della fonte costano di
+		// più: la colonna normalizzata viaggia accanto all'originale.
+		if nome == "data" {
+			hdr = append(hdr, "data_iso")
+		}
 	}
 	if firmatari != nil {
 		hdr = append(hdr, "firmatari")
@@ -1110,6 +1122,9 @@ func writeRecordsCSV(out io.Writer, arc icaro.Archive, recs []icaro.Record, firm
 				continue
 			}
 			row = append(row, r.Fields[c])
+			if strings.ToLower(strings.TrimSuffix(c, ".")) == "data" {
+				row = append(row, dataISO(r.Fields[c]))
+			}
 		}
 		if firmatari != nil {
 			row = append(row, firmatariLine(firmatari[r.DocID]))

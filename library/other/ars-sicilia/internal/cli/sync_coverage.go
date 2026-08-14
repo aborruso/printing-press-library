@@ -289,7 +289,11 @@ func massimoDellAnno(ctx context.Context, s *sonda, arc icaro.Archive, anno int)
 	}
 	// L'ordine non scende: il record più recente può stare in fondo, quindi
 	// l'anno va letto tutto. È il caso di `leggi`, che esce dal più vecchio.
-	tutte, troncato, err := s.cerca(ctx, arc, params, coverageLimitAnno, 0)
+	// Sessione nuova: è la seconda volta che si fa questa identica ricerca, e
+	// ripeterla sulla stessa sessione la fa ricominciare più in basso (vedi
+	// sondaNuova). Qui il danno sarebbe silenzioso — un massimo calcolato su
+	// righe che non sono quelle che si crede di avere letto.
+	tutte, troncato, err := sondaNuova().cerca(ctx, arc, params, coverageLimitAnno, 0)
 	if err != nil {
 		return "", len(prime), false, err
 	}
@@ -374,6 +378,22 @@ func (s *sonda) cerca(ctx context.Context, arc icaro.Archive, params map[string]
 // vedi la nota in `cerca` sul perché una sessione nuova riesce dove il
 // ritentativo sulla stessa sessione no.
 type sonda struct{ c *icaro.Client }
+
+// sondaNuova apre una sessione pulita.
+//
+// Serve perché una sessione riusata non ripete la stessa ricerca: la continua.
+// Misurato sulle interrogazioni del 2026, tre chiamate identiche a 30 righe:
+// con lo stesso client la prima parte dal 3 agosto e le successive dal 28
+// luglio; con un client nuovo ogni volta partono tutte dal 3 agosto. I
+// documenti più recenti sparivano senza che niente lo segnalasse, ed è il caso
+// peggiore per un comando che misura fin dove arriva la fonte.
+func sondaNuova() *sonda {
+	c, err := icaro.New(nil)
+	if err != nil {
+		return &sonda{}
+	}
+	return &sonda{c: c}
+}
 
 func (s *sonda) rinnova() bool {
 	c, err := icaro.New(nil)

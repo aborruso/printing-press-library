@@ -656,21 +656,13 @@ func iterSede(action string) string {
 }
 
 // iterDateKey returns a sortable "YYYY-MM-DD" key for both the short-list date
-// form (DD.MM.YY) and the document status form ("DD mese YYYY").
+// form (DD.MM.YY) and the document status form ("DD mese YYYY"). Entrambe le
+// forme, e le altre due che il portale usa altrove, stanno in dataISO; qui
+// resta il ripiego sulla stringa grezza, che i chiamanti storici si aspettano.
 func iterDateKey(s string) string {
 	s = strings.TrimSpace(s)
-	if strings.Contains(s, ".") {
-		return parseICaroDate(s)
-	}
-	parts := strings.Fields(s)
-	if len(parts) == 3 {
-		if mm, ok := itaMonths[strings.ToLower(parts[1])[:min3(len(parts[1]))]]; ok {
-			dd := parts[0]
-			if len(dd) == 1 {
-				dd = "0" + dd
-			}
-			return parts[2] + "-" + mm + "-" + dd
-		}
+	if iso := dataISO(s); iso != "" {
+		return iso
 	}
 	return s
 }
@@ -684,28 +676,11 @@ func min3(n int) int {
 
 // parseICaroDate converts DD.MM.YYYY (or DD.MM.YY) into a sortable string
 // "YYYY-MM-DD"; returns the input as-is when the format isn't recognized.
+// Il riconoscimento sta tutto in dataISO, che copre anche le forme degli altri
+// due motori del portale; qui resta il ripiego sulla stringa grezza.
 func parseICaroDate(s string) string {
-	parts := strings.Split(strings.TrimSpace(s), ".")
-	if len(parts) != 3 {
-		return s
+	if iso := dataISO(s); iso != "" {
+		return iso
 	}
-	dd, mm, yy := parts[0], parts[1], parts[2]
-	if len(yy) == 2 {
-		// Crude century pivot — atti precedenti al 2000 sono rari nel sito.
-		if yy[0] >= '0' && yy[0] <= '4' {
-			yy = "20" + yy
-		} else {
-			yy = "19" + yy
-		}
-	}
-	if len(yy) != 4 || len(mm) > 2 || len(dd) > 2 {
-		return s
-	}
-	if len(mm) == 1 {
-		mm = "0" + mm
-	}
-	if len(dd) == 1 {
-		dd = "0" + dd
-	}
-	return yy + "-" + mm + "-" + dd
+	return strings.TrimSpace(s)
 }
