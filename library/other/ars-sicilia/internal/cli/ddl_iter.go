@@ -26,6 +26,7 @@ func newNovelDdlIterCmd(flags *rootFlags) *cobra.Command {
 		Args:    cobra.MaximumNArgs(2),
 		Annotations: map[string]string{
 			"mcp:read-only": "true",
+			"pp:happy-args": "legisl=18;numero=1153",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 2 {

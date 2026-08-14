@@ -18,20 +18,20 @@ metadata:
 
 This skill drives the `ars-sicilia-pp-cli` binary. **You must verify the CLI is installed before invoking any command from this skill.** If it is missing, install it first:
 
-1. Install via the Printing Press installer:
+1. Install via the Printing Press installer. It defaults binaries to `$HOME/.local/bin` on macOS/Linux and `%LOCALAPPDATA%\Programs\PrintingPress\bin` on Windows:
    ```bash
    npx -y @mvanhorn/printing-press-library install ars-sicilia --cli-only
    ```
 2. Verify: `ars-sicilia-pp-cli --version`
-3. Ensure `$GOPATH/bin` (or `$HOME/go/bin`) is on `$PATH`.
+3. Ensure the reported install directory is on `$PATH` for the agent/runtime that will invoke this skill.
 
-If the `npx` install fails (no Node, offline, etc.), fall back to a direct Go install (requires Go 1.26.5 or newer):
+If the `npx` install fails (no Node, offline, etc.), fall back to a direct Go install (requires Go 1.26.5 or newer). This installs into `$GOPATH/bin` (default `$HOME/go/bin`), so add that directory to `$PATH` instead:
 
 ```bash
 go install github.com/mvanhorn/printing-press-library/library/other/ars-sicilia/cmd/ars-sicilia-pp-cli@latest
 ```
 
-If `--version` reports "command not found" after install, the install step did not put the binary on `$PATH`. Do not proceed with skill commands until verification succeeds.
+If `--version` reports "command not found" after install, the runtime cannot see the binary directory on `$PATH`. Do not proceed with skill commands until verification succeeds.
 
 Sostituisce le 12 maschere JSP del portale ufficiale con una CLI agent-native. Sync in SQLite locale per query SQL, ricerca full-text cross-archivio, e novel commands come `ddl iter` (timeline completa di un disegno di legge) e `deputato profilo` (tutta l'attività di un parlamentare in un'unica chiamata).
 
@@ -108,6 +108,8 @@ These capabilities aren't available in any other tool for this API.
   ```bash
   ars-sicilia-pp-cli analytics --type resoconti --group-by oratore --legisl 18 --limit 30 --csv
   ```
+
+  È una richiesta per oratore (91 nella XVIII legislatura, ~40 secondi). Se il backend non risponde per qualcuno, la classifica esce lo stesso con gli altri e un `nota:` su stderr elenca i nomi non misurati: **quei nomi non sono "zero interventi", sono "non misurati"** — ripetere il comando di solito li recupera.
 - **`analytics`** — Classifica i disegni di legge per deputato **proponente** (primo firmatario) o per **gruppo** parlamentare, leggendo le viste già aggregate dal portale con **una sola richiesta** (nessuna sync). Copre la legislatura corrente (le classifiche non sono filtrabili per legislatura).
 
   _Per rispondere subito a 'chi presenta più DDL' / 'quale gruppo è più prolifico' senza deep sync._
@@ -133,6 +135,27 @@ These capabilities aren't available in any other tool for this API.
   ars-sicilia-pp-cli sync stale --json
   ```
 
+- **`analytics --group-by cofirme`** — Quante volte ciascun deputato ha **cofirmato**, chiesto al portale in diretta: niente sync, niente deep sync.
+
+  _Non è `--group-by cofirmatari`, che conta le **coppie** (chi firma insieme a chi) e quelle stanno solo dentro le schede di dettaglio, quindi richiede ancora `sync --resources ddl --deep`. Qui la domanda è «quanto cofirma ciascuno»._
+
+  ```bash
+  ars-sicilia-pp-cli analytics --type ddl --group-by cofirme --legisl 18 --limit 20 --agent
+  ```
+
+  Il conto lo fa il motore di ricerca, interrogato in ISIS: `(18.LEGISL E ((Nome.FIRMAT) NOT (1 ADJ Nome).FIRMAT))` — compare fra i firmatari ma non in prima posizione. Serve `--legisl` perché i nomi valgono per legislatura, ed è una richiesta per deputato (~66, ~80 s). Vale su tutti gli archivi con un campo firmatario: `ddl`, `interrogazioni`, `interpellanze`, `mozioni`, `odg`, `risoluzioni`. Verificato contro i contatori pubblicati su www.ars.sicilia.it: Cracolici 302 e Catanzaro 306 ddl cofirmati nella XVIII, uguali al singolo atto. Chi non risponde viene **nominato** su stderr, non contato zero.
+
+- **`sync coverage`** — Dice fin dove arriva **la fonte**, archivio per archivio: la data del documento più recente che il portale espone, il ritardo in giorni rispetto a oggi e, accanto, l'ultima sync locale.
+
+  _Serve a leggere un `[]` per quello che è. Se la notizia è del 12 agosto e l'archivio ddl è fermo al 28 luglio, la ricerca a vuoto è **latenza della fonte**, non un atto inesistente — e senza questa misura le due cose si somigliano._
+
+  ```bash
+  ars-sicilia-pp-cli sync coverage --resources ddl --json
+  ars-sicilia-pp-cli sync coverage --json   # tutti i 12 archivi, ~45 s
+  ```
+
+  Il comando **non assume l'ordinamento della fonte**, che non è uniforme: `ddl` consegna dal più recente, `leggi` dal più vecchio. Legge la prima pagina, guarda se le date scendono davvero, e solo quando non lo fa scarica l'anno intero per prendere il massimo. Tre risposte non sono un numero e vanno lette come tali: `pareri` scrive le date a parole e tagliate («17 luglio 2»), quindi non è misurabile; `biblioteca` non ha proprio una colonna data; sugli archivi `/bd/` può uscire l'errore di backend, che come sempre **non è assenza di dato** — si riprova. `convocazioni` porta normalmente una data futura, perché annuncia sedute ancora da tenere: il ritardo negativo è corretto e il comando lo annota.
+
   Nota: `sync stale --max-age` ha default `7d` (i dati ARS non cambiano su base oraria); `doctor`'s cache section usa invece una soglia fissa di 6h, non configurabile. Le due soglie divergono di proposito — uno store che `sync stale` giudica fresco può risultare `"status": "stale"` in `doctor`. Un agente che orchestra sync automatico non deve fidarsi solo di `sync stale`: controlla anche `doctor`'s `cache.status` se vuoi il segnale più conservativo.
 
 ## Command Reference
@@ -142,10 +165,16 @@ These capabilities aren't available in any other tool for this API.
 - `ars-sicilia-pp-cli biblioteca cerca` — Cerca nel catalogo bibliografico per autore, titolo, soggetto o ISBN.
 - `ars-sicilia-pp-cli biblioteca multimediali` — Cerca nelle opere multimediali.
 
-**commissioni** — Lavori delle Commissioni: convocazioni (229) e sommari (230).
+**commissioni** — Lavori delle commissioni: convocazioni (229) e sommari (230).
 
 - `ars-sicilia-pp-cli commissioni convocazioni` — Convocazioni delle Commissioni.
 - `ars-sicilia-pp-cli commissioni sommari` — Sommari dei lavori di commissione.
+
+**Restringi la ricerca, su questo archivio non è un vezzo.** Il backend `/bd/` consegna intere le risposte piccole e tronca a metà quelle grandi: misurato, `--numero 270` è arrivato 10 volte su 10, la stessa ricerca senza filtri 2 volte su 8. Se sai il numero della seduta usa `--numero`; altrimenti `--anno`, poi `--commissione`. Quando una ricerca fallisce per troncatura, la CLI suggerisce quale filtro manca.
+
+```bash
+ars-sicilia-pp-cli commissioni sommari --legisl 18 --numero 270 --agent
+```
 
 `--commissione` accetta l'ordinale (`PRIMA`..`SESTA`), un frammento della denominazione (`Bilancio`) o, in alternativa, `--codcom 1`-`6`. Un termine che non corrisponde a nessuna commissione **esce con errore** e propone i nomi vicini: non restituisce una lista vuota, che si leggerebbe come "questa commissione non ha lavori".
 
@@ -153,6 +182,16 @@ These capabilities aren't available in any other tool for this API.
 
 - `ars-sicilia-pp-cli ddl cerca` — Cerca disegni di legge per legislatura, anno, firmatario, materia o testo.
 - `ars-sicilia-pp-cli ddl get` — Scarica un singolo disegno di legge.
+
+**I valori giusti per i filtri non si indovinano, si chiedono.** `--materia` e `--firmatario` vogliono il valore come lo scrive il portale, e un valore inventato non dà errore: dà zero risultati, che si legge come «non esiste». Tre comandi elencano i valori validi, tutti istantanei e senza sync:
+
+```bash
+ars-sicilia-pp-cli ddl materie --agent      # 123 settori, da "Abrogazione di norme" a "Zootecnia"
+ars-sicilia-pp-cli ddl firmatari --legisl 18 --agent   # 66 deputati della XVIII; --search "Cracolici" per cercarne uno
+ars-sicilia-pp-cli ddl iniziative --agent   # Governativa, Parlamentare, Iniziativa Popolare, Consigli comunali/provinciali, Fatto proprio dalla Commissione
+```
+
+Attenzione a `ddl iniziative`: **non esiste un flag `--iniziativa`**. Il portale scrive il tipo di iniziativa nello stesso campo dei firmatari, quindi il valore si passa a `--firmatario`: `ddl cerca --legisl 18 --firmatario Governativa` restituisce i ddl del Governo (verificato: il ddl 1188 così trovato è firmato dal presidente Schifani).
 
 **interpellanze** — Interpellanze parlamentari (archivio 234).
 
@@ -164,7 +203,7 @@ These capabilities aren't available in any other tool for this API.
 - `ars-sicilia-pp-cli interrogazioni cerca` — Cerca interrogazioni per legislatura, firmatario o rubrica.
 - `ars-sicilia-pp-cli interrogazioni get` — Scarica una singola interrogazione.
 
-**leggi** — Leggi della Regione Siciliana (archivio 201): testo storico delle leggi regionali.
+**leggi** — Leggi della Regione Siciliana (archivio 201): cerca e scarica le leggi regionali.
 
 - `ars-sicilia-pp-cli leggi cerca` — Cerca leggi regionali per legislatura, anno, numero o testo. Restituisce **una riga per legge**, non per articolo: l'archivio è indicizzato per articolo e senza aggregazione il `--limit` lo consumavano gli articoli della prima legge (alla domanda «quali leggi nel 2025?» rispondeva con una sola legge). `articoli_trovati` conta gli articoli agganciati **da questa ricerca**, non quelli della legge. Con `--articoli` tornano le righe per articolo: servono con `--testo`, per sapere in quale articolo ricorre il termine. La paginazione si ferma sulle **leggi** chieste, non su un budget di righe stimato prima: le leggi lunghe (finanziarie, ~25 articoli) costano più richieste, le corte meno. Resta un tetto di sicurezza sulle righe lette; se scatta prima di completare le leggi chieste, un avviso su stderr lo dice — **leggilo**, altrimenti un elenco corto sembra completo.
 - `ars-sicilia-pp-cli leggi get` — Scarica una singola legge regionale.
@@ -186,8 +225,8 @@ These capabilities aren't available in any other tool for this API.
 
 **resoconti** — Resoconti delle Sedute d'Aula (archivio 217).
 
-- `ars-sicilia-pp-cli resoconti cerca` — Cerca resoconti per data, oratore o argomento. `--oratore` risolve il nome sull'anagrafica del portale: se non corrisponde a nessuna voce **esce con errore e propone i nomi vicini**, invece di restituire una lista vuota che si leggerebbe come "non è mai intervenuto". Usa il solo cognome se il nome completo non aggancia.
-- `ars-sicilia-pp-cli resoconti get` — Scarica un singolo resoconto. **Non restituisce la trascrizione integrale**: l'archivio Icaro ne conserva solo frammenti per punto dell'ordine del giorno, e per le sedute recenti non ha nulla (si ferma alla n. 232 del 25.02.2026, mentre `cerca` arriva a luglio 2026). Quando Icaro non ha la seduta, `get` ripiega sulla scheda del backend corrente e restituisce `pdf_url`: **è lì il resoconto stenografico completo**. Il PDF non viene scaricato — pesa alcuni MB e supera i 200.000 caratteri di testo — ma l'URL è stabile e citabile. In quel caso la risposta non ha il campo `body` (che invece c'è quando il record viene da Icaro) e porta un campo `nota` che lo dice: l'assenza di `body` non significa «testo non disponibile».
+- `ars-sicilia-pp-cli resoconti cerca` — Cerca resoconti per data, numero, oratore o testo. `--oratore` risolve il nome sull'anagrafica del portale: se non corrisponde a nessuna voce **esce con errore e propone i nomi vicini**, invece di restituire una lista vuota che si leggerebbe come "non è mai intervenuto". Usa il solo cognome se il nome completo non aggancia.
+- `ars-sicilia-pp-cli resoconti get` — Scarica un singolo resoconto. **Non restituisce la trascrizione integrale**: l'archivio Icaro ne conserva solo frammenti per punto dell'ordine del giorno, e per le sedute recenti non ha nulla (si ferma alla n. 232 del 25.02.2026, mentre `cerca` arriva a luglio 2026). Quando Icaro non ha la seduta, `get` ripiega sulla scheda del backend corrente e restituisce `pdf_url`: **è lì il resoconto stenografico completo**. Il PDF non viene scaricato — pesa alcuni MB e supera i 200.000 caratteri di testo — ma l'URL è stabile e citabile. In quel caso la risposta non ha il campo `body` (che invece c'è quando il record viene da Icaro) e porta un campo `nota` che lo dice: l'assenza di `body` non significa «testo non disponibile». Se il backend non risponde — capita, tronca le risposte a intermittenza — la CLI ritenta da sola (3 tentativi) e solo dopo esce con `il backend /bd/ non ha risposto …`, che è diverso da `nessun documento trovato`: quest'ultimo esce solo quando il backend ha risposto e la seduta davvero non c'è. **Non dedurre da un errore di backend che l'atto non esista.**
 
   ```bash
   ars-sicilia-pp-cli resoconti get 18 263 --agent --select pdf_url
@@ -203,6 +242,18 @@ These capabilities aren't available in any other tool for this API.
 ### Nessun argomento posizionale sui comandi di ricerca
 
 Ogni criterio si passa come **flag**. I comandi `*/cerca`, `commissioni convocazioni|sommari` e `biblioteca multimediali` non prendono argomenti posizionali e li rifiutano con un errore: `commissioni sommari cerca --commissione X` è sbagliato (`cerca` non è un sottocomando lì), la forma giusta è `commissioni sommari --commissione X`. Prima venivano accettati e scartati in silenzio, il che faceva credere di aver invocato un comando diverso da quello realmente eseguito.
+
+### Il backend `/bd/` tronca le risposte grandi
+
+Gli archivi delle sedute — `resoconti`, `commissioni sommari`, `commissioni convocazioni` — sono serviti dal backend `/bd/` del portale, che **a intermittenza consegna il corpo della risposta tagliato a metà**: status 200, header regolari, e il contenuto che si interrompe. Non è un timeout (le risposte tagliate arrivano in due decimi di secondo) e non dipende dal protocollo (succede identico su HTTP/2 e HTTP/1.1). Dipende da **quanto è grande la risposta**: misurato su `sommari`, la ricerca di una singola seduta (24 KB) è arrivata 8 volte su 8, la stessa ricerca senza filtri (44 KB) zero volte su 8.
+
+Cosa fa la CLI da sola: ritenta ogni lettura fino a 3 volte, e quando si arrende lo dice come guasto del backend — mai come assenza del dato. **`il backend /bd/ non ha risposto` non significa che l'atto non esista**: significa riprovare, possibilmente restringendo. Il `nessun documento trovato` invece è affidabile, esce solo quando il backend ha risposto davvero.
+
+Cosa devi fare tu: **chiedere meno righe**. In ordine di efficacia, `--numero` (la singola seduta; su `resoconti` e `commissioni sommari`, mentre `convocazioni` non ha un numero di seduta), poi `--anno`, poi `--commissione`. Quando una ricerca fallisce per troncatura la CLI ti dice quale di questi filtri manca.
+
+Dove la troncatura non si può evitare, viene dichiarata invece che nascosta: `analytics --group-by oratore` fa 91 richieste e, se qualcuna cade, pubblica la classifica con gli altri e nomina su stderr chi non è stato misurato — quei nomi non sono «zero interventi».
+
+Sullo stesso backend non esistono i filtri ISIS: `--isis-query`, `--escludi` e `--frase` (più `--presidente` su `commissioni sommari`) **non sono flag di quei comandi**, perché il form `/bd/` non ha niente che li applichi. Prima erano registrati e venivano respinti a runtime: un giro a vuoto per scoprire una cosa che `--help` poteva dire subito, e per un agente che legge lo schema MCP una chiamata sprecata. La ricerca testuale lì è `--testo` (il campo full-text del form), disponibile anche su `commissioni convocazioni`; su `commissioni sommari` `--argomento` è un alias di `--testo`.
 
 ### Un atto per numero: `--numero`, mai `--testo`
 
@@ -240,7 +291,7 @@ Il campo `nota` non va messo in `--select`: c'è solo quando serve, e chiederlo 
 ars-sicilia-pp-cli ddl cerca --legisl 18 --frase "aree idonee" --json
 ```
 
-Una parola sola passa invariata. Non esiste su `resoconti`, `sommari` e `convocazioni` (backend `/bd/`): lì il comando **fallisce con un errore esplicito** invece di ignorare il filtro. Se una ricerca a due parole restituisce troppi risultati poco pertinenti, prova `--frase` prima di concludere che l'atto non c'è.
+Una parola sola passa invariata. Su `resoconti`, `sommari` e `convocazioni` (backend `/bd/`) il flag **non esiste**: lì la ricerca testuale è `--testo`. Se una ricerca a due parole restituisce troppi risultati poco pertinenti, prova `--frase` prima di concludere che l'atto non c'è.
 
 ### Finding the right command
 

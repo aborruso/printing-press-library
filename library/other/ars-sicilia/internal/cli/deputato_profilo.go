@@ -28,6 +28,7 @@ func newNovelDeputatoProfiloCmd(flags *rootFlags) *cobra.Command {
 		Example: "  ars-sicilia-pp-cli deputato profilo \"Rossi Mario\" --legisl 18 --data 2024-01-01:2024-12-31 --json",
 		Annotations: map[string]string{
 			"mcp:read-only": "true",
+			"pp:happy-args": "nome=Abbate Ignazio;--legisl=18",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {

@@ -72,26 +72,23 @@ Tell your OpenClaw agent (copy this):
 Install the pp-ars-sicilia skill from https://github.com/mvanhorn/printing-press-library/tree/main/cli-skills/pp-ars-sicilia. The skill defines how its required CLI can be installed.
 ```
 
-## Use with Claude Desktop
+## Use as an MCP server
 
-This CLI ships an [MCPB](https://github.com/modelcontextprotocol/mcpb) bundle — Claude Desktop's standard format for one-click MCP extension installs (no JSON config required).
+Every command of this CLI is also an MCP tool, served over stdio by the `ars-sicilia-pp-mcp` binary. Any MCP client can run it — Claude Desktop, Claude Code, Cursor, VS Code (Copilot), Windsurf, Zed, Codex, Gemini CLI, and the rest of the [MCP client directory](https://modelcontextprotocol.io/clients). Asking in plain language ("quali ddl sulla sanità nella XVIII legislatura?") is usually easier than composing flags, so this is the recommended path for non-technical users.
 
-To install:
+### 1. Install the server binary
 
-1. Download the `.mcpb` for your platform from the [latest release](https://github.com/mvanhorn/printing-press-library/releases/tag/ars-sicilia-current).
-2. Double-click the `.mcpb` file. Claude Desktop opens and walks you through the install.
+The `npx` installer and the pre-built binaries above ship the **CLI** only. Install the MCP binary with Go (1.26.5 or newer) — same command on Linux, macOS, and Windows:
 
-Requires Claude Desktop 1.0.0 or later. Pre-built bundles ship for macOS Apple Silicon (`darwin-arm64`) and Windows (`amd64`, `arm64`); for other platforms, use the manual config below.
+```bash
+go install github.com/mvanhorn/printing-press-library/library/other/ars-sicilia/cmd/ars-sicilia-pp-mcp@latest
+```
 
-<details>
-<summary>Manual JSON config (advanced)</summary>
+It lands in `$(go env GOPATH)/bin` (or `go env GOBIN`); make sure that directory is on your `PATH`.
 
-If you can't use the MCPB bundle (older Claude Desktop, unsupported platform), install the MCP binary and configure it manually.
+### 2. Point your client at it
 
-
-Install the MCP binary from this CLI's published public-library entry or pre-built release.
-
-Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+Most clients accept the same stdio server entry:
 
 ```json
 {
@@ -103,7 +100,15 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 }
 ```
 
-</details>
+What changes per client is where that entry goes — Claude Desktop's `claude_desktop_config.json`, `.cursor/mcp.json`, VS Code's `mcp.json`, Gemini CLI's `~/.gemini/settings.json` — and occasionally its syntax: Codex takes the same command in TOML (`[mcp_servers.ars-sicilia]` in `config.toml`). See [connect local MCP servers](https://modelcontextprotocol.io/docs/develop/connect-local-servers), or your client's own docs: [Claude Code](https://docs.claude.com/en/docs/claude-code/mcp), [Cursor](https://docs.cursor.com/context/model-context-protocol), [VS Code](https://code.visualstudio.com/docs/copilot/chat/mcp-servers). If your client does not inherit the shell `PATH`, put the absolute path of the binary in `command`.
+
+Claude Code needs no JSON at all:
+
+```bash
+claude mcp add ars-sicilia -- ars-sicilia-pp-mcp
+```
+
+No credentials to configure: the ARS portal is public.
 
 ## Authentication
 
@@ -143,15 +148,17 @@ ars-sicilia-pp-cli deputato profilo "Abbate Ignazio" --json --select tipo,data,t
 - **`search` JSON shape**: `search --json` returns an object `{ "meta": {...}, "results": [...] }`, not a top-level array. When piping to `jq`, select `.results` (e.g. `search "x" --json | jq '.results[]'`). Status lines ("no search endpoint…", sync hints) go to stderr, so `2>/dev/null` keeps stdout clean.
 - **Local-store commands need a sync first**: `search`, `analytics` and `sync stale` read the local SQLite store. On a fresh install run `ars-sicilia-pp-cli sync --full` first; until then they return empty results (with a sync hint on stderr). All other commands (`*/cerca`, `*/get`, `ddl iter`, `deputato profilo`, `legge cronologia`, `commissione dossier`) query the portal live and need no sync.
 - **`analytics --group-by cofirmatari` and `ddl drift` need a deep sync** ⚠️: a plain sync stores only the list-page fields (`data`, `numero`, `title`, `url`, …). The signatories (`firmatari`) and per-bill iter status (`iter`) live only inside each document `body`, so run **`ars-sicilia-pp-cli sync --resources ddl --deep`** to extract them into the store — then `analytics --group-by cofirmatari --type ddl` works, and `ddl drift` compares the iter state across two deep syncs. The deep pass fetches one detail page per ddl (~1 extra request each), so a full legislature takes a few minutes; a normal sync stays fast.
-- **`analytics --group-by oratore` runs live (no sync)** ℹ️: the speaker ranking is built by querying the `/bd/resoconti` backend once per speaker of the legislature (≈90 requests, ~1 min), so it needs `--legisl` (without it the ~1000 all-time speakers would be too many requests) and does not read the local store. Example: `analytics --type resoconti --group-by oratore --legisl 18`.
-- **ISIS-only filters are rejected on the migrated archives** ⚠️: `sommari`, `resoconti` and `convocazioni` are served by the portal's `/bd/` backend, which has a fixed form instead of an ISIS query string. `--isis-query` and `--escludi` (plus `--argomento` on `resoconti` and `--presidente` on `commissioni sommari`) have no equivalent there, so those commands fail with an explicit error rather than silently returning a wider result set. Every other filter (`--legisl`, `--anno`, `--data`, `--numero`, `--testo`, `--oratore` on resoconti, `--commissione`/`--codcom` on sommari and convocazioni) works. ISIS filters remain available on all the other archives (`ddl`, `leggi`, `interrogazioni`, …).
+- **`analytics --group-by cofirme` runs live (no sync)** ℹ️: how many acts each deputy **co-signed** — a different question from `--group-by cofirmatari`, which counts *pairs* of co-signers and still needs the deep sync (pairs live inside each document). The count comes from the portal's own search engine, asked in ISIS: `(18.LEGISL E ((Nome.FIRMAT) NOT (1 ADJ Nome).FIRMAT))` — appears among the signatories but not in first position. One request per deputy (~66 for a legislature, ~80 s), so it needs `--legisl`; the names in the exact form the portal indexes come from the built-in `firmatari` table (1110 entries, legislatures X–XVIII). Works on every archive with a signatory field (`ddl`, `interrogazioni`, `interpellanze`, `mozioni`, `odg`, `risoluzioni`). Cross-checked against the counters published on www.ars.sicilia.it: Cracolici 302 and Catanzaro 306 co-signed bills in the XVIII, same to the single act. Deputies the portal did not answer for are named on stderr, not counted as zero.
+- **`analytics --group-by oratore` runs live (no sync)** ℹ️: the speaker ranking is built by querying the `/bd/resoconti` backend once per speaker of the legislature (≈90 requests, ~1 min), so it needs `--legisl` (without it the ~1000 all-time speakers would be too many requests) and does not read the local store. Example: `analytics --type resoconti --group-by oratore --legisl 18`. If the backend drops some of those requests, the ranking is still published with the speakers that answered and a `nota:` on stderr names the ones left unmeasured — they are *not* zero-intervention speakers.
+- **The `/bd/` backend truncates large responses — narrow the search** ⚠️: on `sommari`, `resoconti` and `convocazioni` the portal intermittently delivers a half-cut body (HTTP 200, regular headers, content stopping mid-page). It is not a timeout (cut responses arrive in 0.2s) and not protocol-related (same on HTTP/2 and HTTP/1.1): it scales with response size. Measured on `sommari`: a single-sitting search (24 KB) succeeded 8/8, the same search with no filters (44 KB) 0/8. The CLI retries every read up to 3 times and, when it gives up, reports a backend failure — never an absence of data: `il backend /bd/ non ha risposto` does not mean the document does not exist. To make a search reliable, narrow it: `--numero` (single sitting; available on `resoconti` and `commissioni sommari` — `convocazioni` has no sitting number in the portal form), then `--anno`, then `--commissione`. On failure the CLI names the missing filter.
+- **ISIS-only filters do not exist on the migrated archives** ℹ️: `sommari`, `resoconti` and `convocazioni` are served by the portal's `/bd/` backend, which has a fixed form instead of an ISIS query string. `--isis-query`, `--escludi` and `--frase` (plus `--presidente` on `commissioni sommari`) have no equivalent there, so **those flags are not registered on those commands**: `--help` no longer advertises a criterion that could only ever fail, and typing one gets `unknown flag`. They used to be accepted and then rejected at runtime, which cost a round-trip to discover — for an agent reading the MCP schema, a wasted call. Every filter those commands do expose works: `--legisl`, `--anno`, `--data`, `--numero`, `--testo` (the `/bd/` full-text field, now available on `commissioni convocazioni` too), `--oratore` on resoconti, `--argomento` on sommari (an alias of `--testo`), `--commissione`/`--codcom` on sommari and convocazioni. ISIS filters remain available on all the other archives (`ddl`, `leggi`, `interrogazioni`, …).
 - **Six-digit `AAMMGG` dates resolve their century from the archive, and stop at 2046** ℹ️: `--data` also accepts the portal's native six-digit form, which carries no century. On the `/bd/` archives `47`–`99` reads as 1900s and `00`–`46` as 2000s, because the oldest document those archives serve is the inaugural sitting of **25 May 1947** (nothing exists for 1946 — the ARS begins there). So `--data 510412` is 12 April 1951; it used to be read as 2051 and returned `[]` on a sitting that exists, and with it every date between 1947 and 1999 written this way. Dates from 2047 on cannot be expressed in six digits — write them in full, which is never ambiguous.
 - **A malformed `--data` is an error, and only on the `/bd/` archives** ⚠️: on `sommari`, `resoconti` and `convocazioni`, a value the date parser cannot read (`2025-01-01:garbage`, `garbage`) or a date that does not exist (`2025-13-45`, `2025-02-30`) now fails with exit 2 and a message naming the accepted forms. It used to drop the filter entirely and return the archive from the beginning — `resoconti cerca --data 2025-01-01:garbage` answered with sittings from **1951** — presented as a valid answer. On the Icaro archives the same input is passed through to ISIS and simply matches nothing (`mozioni cerca --data garbage` → `[]`), so the wrong-results failure was `/bd/`-only.
 - **`--data` across calendar years costs one request per year** ℹ️: the `/bd/` form filters by a single year, so `--data 2024-11-01:2026-02-28` queries 2026, 2025 and 2024 in turn (most recent first) and filters the exact days client-side. With a small `--limit` you get the most recent records of the range and `troncato`/truncation flags report that earlier years were left unread.
 - **`leggi cerca` returns one row per law, not per article** ℹ️: archive 201 is indexed **per article**, so a twenty-article law used to fill twenty rows — and `--limit 10` was spent on the articles of the first law, answering "which laws passed in 2025?" with a single law while there were dozens. The command now aggregates by law (`articoli_trovati` counts the articles this search matched, not the law's total) and `--limit` counts laws. Use `--articoli` for the raw per-article rows, which is what you want with `--testo` when you need to know *which* article mentions a term. Pagination stops on the unit you asked for: it keeps reading pages until the requested laws are collected, rather than guessing a row budget up front. That guess (10 rows per law) is what made `leggi cerca --legisl 18 --anno 2025` answer with 4 laws out of the year's 31 — the first laws of a year are the budget ones, ~25 article-rows each, and they ate the window. Short laws now cost fewer requests than before, long ones cost more (the portal allows 2 requests/second, so a full default page of 10 laws takes ~20 s on a budget-heavy year). A safety ceiling still caps the rows read; when it cuts in before the requested laws are collected, the CLI says so on stderr instead of returning a short list silently.
 - **Look an act up by its number with `--numero`, never with `--testo`** ⚠️: `--numero` is field-qualified (`NUMORD`/`NUMDDL`/`LEGNUM`) and returns the act itself; it is available on every `cerca` (`ddl`, `leggi`, `odg`, `interrogazioni`, `interpellanze`, `mozioni`, `risoluzioni`). Passing the number as free text instead matches every document that *mentions* it, newest first, so the act you want can sink past the default `--limit`: `mozioni cerca --testo "143"` buries mozione 143 at position 17 of 19, while `--numero 143` returns it alone.
-- **`--testo` is AND over the whole document; `--frase` matches a phrase** ℹ️: `--testo "aree idonee"` builds `(aree E idonee)`, so both words must appear *somewhere* in the document — on a text as long as a bill that also matches acts with one word in article 3 and the other in article 40 (peschicoltura, coworking). `--frase "aree idonee"` builds `(aree adj idonee)`: adjacent, in the given order, which surfaces the acts that actually legislate on the topic (ddl 803, 726). A single word passes through unchanged, and a value already containing operators or parentheses is left verbatim. Not available on `resoconti`, `sommari` and `convocazioni` (the `/bd/` backend takes no ISIS expression) — there the command fails with an explicit error instead of dropping the filter.
-- **Full-text results are not ranked by relevance, and a short list is not proof of absence** ⚠️: the portal returns matches in its own order (roughly newest first), not by how well they match `--testo`. The CLI now pulls the rows whose **title** contains every search term to the front, which is usually enough: `ddl cerca --legisl 17 --testo "gestione rifiuti" --limit 100` moves ddl 290 ("Riforma degli ambiti territoriali ottimali e nuove disposizioni per la gestione integrata dei rifiuti") from row 75 to row 2. **That reordering only sorts the window you already downloaded** — it cannot surface a document that sits past `--limit`. So when none of the rows shown has the terms in its title, a stderr hint says exactly that: read it as "the act you want is probably further down", raise `--limit`, or use `--frase` for the exact phrase. On `resoconti`, `sommari` and `convocazioni` the hint stops at `--limit`, since `--frase` does not exist on the `/bd/` backend and suggesting it would only lead to an error. Whenever the result set is cut short, `*/cerca` says so too — treat both hints as "widen or narrow before concluding it does not exist".
+- **`--testo` is AND over the whole document; `--frase` matches a phrase** ℹ️: `--testo "aree idonee"` builds `(aree E idonee)`, so both words must appear *somewhere* in the document — on a text as long as a bill that also matches acts with one word in article 3 and the other in article 40 (peschicoltura, coworking). `--frase "aree idonee"` builds `(aree adj idonee)`: adjacent, in the given order, which surfaces the acts that actually legislate on the topic (ddl 803, 726). A single word passes through unchanged, and a value already containing operators or parentheses is left verbatim. The flag does not exist on `resoconti`, `sommari` and `convocazioni` (the `/bd/` backend takes no ISIS expression) — there the text search is `--testo`.
+- **Full-text results are not ranked by relevance, and a short list is not proof of absence** ⚠️: the portal returns matches in its own order (roughly newest first), not by how well they match `--testo`. The CLI now pulls the rows whose **title** contains every search term to the front, which is usually enough: `ddl cerca --legisl 17 --testo "gestione rifiuti" --limit 100` moves ddl 290 ("Riforma degli ambiti territoriali ottimali e nuove disposizioni per la gestione integrata dei rifiuti") from row 75 to row 2. **That reordering only sorts the window you already downloaded** — it cannot surface a document that sits past `--limit`. So when none of the rows shown has the terms in its title, a stderr hint says exactly that: read it as "the act you want is probably further down", raise `--limit`, or use `--frase` for the exact phrase. On `resoconti`, `sommari` and `convocazioni` the hint stops at `--limit`, since `--frase` does not exist on the `/bd/` backend. Whenever the result set is cut short, `*/cerca` says so too — treat both hints as "widen or narrow before concluding it does not exist".
 - **The portal cuts list titles at 256 characters, so a missing term in the title proves nothing** ⚠️: long-titled acts — `Schema di progetto di legge costituzionale…`, `Disegno di legge voto…` — are exactly the ones whose subject sits past the cut. Sicily's XVII-legislature bill 199 is titled "…riconoscimento degli svantaggi derivanti dalla condizione di insularità" but the list shows "…svantaggi deriva", so a title match on `insularità` is impossible to see. Rows whose title hits the cap and does not match are therefore ranked **between** the proven matches and the off-topic rows, not lumped with the latter, and the "no relevant title" hint says how many titles were cut and tells you to open the document for the full one. `ddl cerca --legisl 17 --testo "insularità"` moves bill 199 from row 9 to row 1 this way.
 - **`ddl iter` event `url` now points at the sitting record** ⚠️ *(behaviour change)*: on Aula events the event `url` is the resoconto scheda for that sitting, not the bill's own page — it used to repeat the bill page on every event, which is where the events are parsed from but not where they happened. The bill page moved to the report root (`url`, next to `legisl`/`numero`/`titolo`), which also gains it in `legge cronologia`. On events carrying a resoconto link, `archive_id`/`doc_id` are omitted: they identified the bill document and would be inconsistent beside a URL pointing elsewhere. **Aula and committee sittings are numbered independently**, so the link appears only where the portal marks the sitting as Aula — `Esitato per Aula (epa) Seduta n. 260 0400 Commissione QUARTA` is an Aula-phase event citing a *committee* sitting, and linking it would land on the unrelated Aula sitting 260. **The link is also dropped when the source contradicts itself** ⚠️: the Assembly holds one sitting per date, so two Aula events of the same iter giving that date different sitting numbers cannot both be right, and the portal does not say which is. `ddl iter 17 199` reports the final vote as "19 feb 2020 — Approvato dall'Assemblea — Seduta n. 179", but sitting 179 is 26 February — the vote is in 178, as its own record spells out. On such a date both events keep the bill's page as their `url` and a stderr hint tells you to resolve the real sitting from the date (`resoconti cerca --legisl 17 --data 2020-02-19`).
 - **`--envelope` puts the truncation signal inside the JSON** ℹ️: by default `*/cerca` prints a bare array and the "results truncated" / "no relevant title" hints go to **stderr**, where a JSON consumer never sees them — that is how a truncated window gets read as "the document does not exist". Add `--envelope` and the output becomes `{"risultati": [...], "troncato": true, "hint": "..."}`. Opt-in, so existing pipelines that do `... --agent | jq '.[]'` keep working. `--select` filters **inside** `risultati` (the envelope keys always stay), and `--csv` ignores the flag since a wrapper makes no sense around a table. Recommended for agents: `resoconti cerca --legisl 17 --data 2019-10-01:2019-12-31 --agent --envelope --limit 10`. **The MCP tools handle this for you**: they pass `--envelope`, and every `hint:`/`warning:` line the CLI writes to stderr comes back inside the payload as an `avvisi` field — on every command, not just searches. Without that, the MCP transport would discard them all, since it reads stderr only when a command fails.
@@ -213,8 +220,9 @@ These capabilities aren't available in any other tool for this API.
   ```bash
   ars-sicilia-pp-cli analytics --type ddl --group-by anno --limit 50 --json
   ```
+- **`analytics --group-by cofirme`** — Quante volte ciascun deputato ha cofirmato, in diretta e senza sync (richiede `--legisl`). Es: `analytics --type ddl --group-by cofirme --legisl 18`.
 - **`analytics --group-by cofirmatari`** — Mappa le alleanze legislative (coppie di co-firmatari di DDL). Richiede una **deep sync** che estragga i firmatari dalle schede di dettaglio: `ars-sicilia-pp-cli sync --resources ddl --deep`. Dopo, funziona su `--type ddl` (vedi **Known Gaps** per i costi).
-- **`analytics --group-by oratore`** — Classifica gli oratori più attivi in Aula per numero di sedute in cui sono intervenuti. Gira **in diretta** sul backend `/bd/resoconti` (una richiesta per oratore della legislatura), quindi richiede `--legisl` e impiega ~1 minuto. Es: `analytics --type resoconti --group-by oratore --legisl 18`.
+- **`analytics --group-by oratore`** — Classifica gli oratori più attivi in Aula per numero di sedute in cui sono intervenuti. Gira **in diretta** sul backend `/bd/resoconti` (una richiesta per oratore della legislatura), quindi richiede `--legisl` e impiega ~1 minuto. Es: `analytics --type resoconti --group-by oratore --legisl 18`. Se il backend non risponde per qualche oratore, la classifica esce comunque con i restanti e un `nota:` su stderr elenca i non misurati — che non vanno letti come «zero interventi». Se non risponde per nessuno, il comando fallisce invece di restituire una classifica vuota.
 
 ### Stato e monitoraggio
 - **`ddl drift`** — Confronta lo stato dell'iter dei DDL tra due sync e segnala quelli "mossi" (da commissione ad aula, approvati, ritirati). Richiede due **deep sync** a distanza di tempo (`sync --resources ddl --deep`), perché il campo `iter` viene scritto solo dalla deep sync (vedi **Known Gaps**). Per la cronologia di un singolo DDL usa `ddl iter <legisl> <numero>`, che la legge in diretta dal documento.
@@ -225,6 +233,14 @@ These capabilities aren't available in any other tool for this API.
   ```bash
   ars-sicilia-pp-cli sync stale --json
   ```
+- **`sync coverage`** — L'altra metà: fin dove arriva **la fonte**. Per ogni archivio dà la data del documento più recente che il portale espone, il ritardo in giorni rispetto a oggi e, accanto, l'ultima sync locale. Serve a leggere un `[]` per quello che è: se la notizia è del 12 agosto e l'archivio ddl è fermo al 28 luglio, la ricerca a vuoto è latenza della fonte, non un atto inesistente.
+
+  ```bash
+  ars-sicilia-pp-cli sync coverage --resources ddl --json
+  ars-sicilia-pp-cli sync coverage --json   # tutti i 12 archivi, ~45 s
+  ```
+
+  Non assume l'ordinamento della fonte, che non è uniforme (`ddl` consegna dal più recente, `leggi` dal più vecchio): legge la prima pagina, verifica se le date scendono davvero e solo quando non lo fa scarica l'anno per prendere il massimo. Dove la misura non si può dare lo dice invece di inventarla — `pareri` ha le date scritte a parole e tagliate, `biblioteca` non ha colonna data, e sugli archivi `/bd/` può uscire l'errore di backend, che non è assenza di dato. `convocazioni` ha normalmente una data futura, perché annuncia sedute da tenere: il ritardo negativo è corretto e viene annotato.
 
 ## Recipes
 
@@ -363,10 +379,10 @@ Catalogo Bibliografico (archivio 205) e Opere Multimediali (205multimedia).
 
 ### commissioni
 
-Lavori delle Commissioni: convocazioni (229) e sommari (230).
+Lavori delle commissioni: convocazioni (229) e sommari (230).
 
 - **`ars-sicilia-pp-cli commissioni convocazioni`** - Convocazioni delle Commissioni.
-- **`ars-sicilia-pp-cli commissioni sommari`** - Sommari dei lavori di commissione.
+- **`ars-sicilia-pp-cli commissioni sommari`** - Sommari dei lavori di commissione. Il backend `/bd/` tronca le risposte grandi e consegna intere quelle piccole: conviene restringere: `--numero` (numero della seduta di commissione, il filtro più selettivo), poi `--anno`, poi `--commissione`. Misurato: `--numero 270` riesce 10 volte su 10, la stessa ricerca senza filtri 2 volte su 8. Se una ricerca fallisce per troncatura, la CLI dice quale filtro aggiungere.
 
 ### ddl
 
@@ -391,7 +407,7 @@ Interrogazioni parlamentari (archivio 233).
 
 ### leggi
 
-Leggi della Regione Siciliana (archivio 201): testo storico delle leggi regionali.
+Leggi della Regione Siciliana (archivio 201): cerca e scarica le leggi regionali.
 
 - **`ars-sicilia-pp-cli leggi cerca`** - Cerca leggi regionali per legislatura, anno, numero o testo.
 - **`ars-sicilia-pp-cli leggi get`** - Scarica una singola legge regionale.
@@ -421,8 +437,8 @@ Pareri richiesti dal Governo regionale alle Commissioni (archivio 226).
 
 Resoconti delle Sedute d'Aula (archivio 217).
 
-- **`ars-sicilia-pp-cli resoconti cerca`** - Cerca resoconti per data, oratore o argomento.
-- **`ars-sicilia-pp-cli resoconti get`** - Scarica un singolo resoconto. Non restituisce la trascrizione integrale: l'archivio Icaro ne conserva solo frammenti per punto dell'ordine del giorno e si ferma alla seduta n. 232 del 25.02.2026. Quando Icaro non ha la seduta, `get` ripiega sulla scheda del backend corrente e restituisce `pdf_url`, dove sta il resoconto stenografico completo (il PDF non viene scaricato; l'URL è stabile e citabile). La scheda non ha il campo `body` — che invece c'è sui record serviti da Icaro — e porta un campo `nota` che spiega perché: l'assenza di `body` non è «testo non disponibile».
+- **`ars-sicilia-pp-cli resoconti cerca`** - Cerca resoconti per data, numero, oratore o testo.
+- **`ars-sicilia-pp-cli resoconti get`** - Scarica un singolo resoconto. Non restituisce la trascrizione integrale: l'archivio Icaro ne conserva solo frammenti per punto dell'ordine del giorno e si ferma alla seduta n. 232 del 25.02.2026. Quando Icaro non ha la seduta, `get` ripiega sulla scheda del backend corrente e restituisce `pdf_url`, dove sta il resoconto stenografico completo (il PDF non viene scaricato; l'URL è stabile e citabile). La scheda non ha il campo `body` — che invece c'è sui record serviti da Icaro — e porta un campo `nota` che spiega perché: l'assenza di `body` non è «testo non disponibile». Se il backend non risponde (tronca le risposte a intermittenza) ogni lettura viene ritentata fino a 3 volte, e l'errore che esce dopo resta distinto da `nessun documento trovato`, che compare solo quando il backend ha risposto e il documento davvero non c'è.
 
 ### risoluzioni
 
