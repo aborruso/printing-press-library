@@ -125,6 +125,42 @@ func TestBuildQuery_DataOnAttiIspettivi(t *testing.T) {
 	}
 }
 
+// TestBuildQuery_DataOnDdl pins the date range `ddl cerca --data` produces.
+// Su ddl --data condivide DATPRE con --anno: qui si fissa che il range con
+// estremi liberi arriva intatto al motore, mentre la mutua esclusione con
+// --anno (due range in AND sullo stesso campo = zero risultati) è imposta
+// dal comando.
+func TestBuildQuery_DataOnDdl(t *testing.T) {
+	arc := *icaro.BySlug("ddl")
+	if got := arc.FieldMap["data"]; got != "DATPRE" {
+		t.Fatalf("ddl: FieldMap[data] = %q, want DATPRE", got)
+	}
+	q := icaro.BuildQuery(arc, normalizeParams(arc, map[string]string{
+		"legisl": "18", "data": "2026-07-01:2026-07-28",
+	}), "")
+	if !strings.Contains(q, "260701/260728.DATPRE") {
+		t.Errorf("query = %q, want it to qualify 260701/260728 on DATPRE", q)
+	}
+	q = icaro.BuildQuery(arc, normalizeParams(arc, map[string]string{
+		"legisl": "18", "data": "2026-07-28",
+	}), "")
+	if !strings.Contains(q, "260728.DATPRE") {
+		t.Errorf("query = %q, want it to qualify 260728 on DATPRE", q)
+	}
+}
+
+// TestDdlCerca_AnnoDataMutuallyExclusive: entrambe qualificano DATPRE, quindi
+// insieme darebbero (260101/261231.DATPRE E 260701/260728.DATPRE) — zero
+// risultati silenziosi invece dell'intersezione attesa. Meglio un errore.
+func TestDdlCerca_AnnoDataMutuallyExclusive(t *testing.T) {
+	cmd := newDdlCercaCmd(&rootFlags{})
+	cmd.SetArgs([]string{"--anno", "2026", "--data", "2026-07-01"})
+	cmd.SilenceErrors, cmd.SilenceUsage = true, true
+	if err := cmd.Execute(); err == nil {
+		t.Fatal("--anno insieme a --data deve fallire, non produrre una query vuota")
+	}
+}
+
 // L'avviso di troncamento esiste perché una lista corta è indistinguibile da
 // un archivio che non contiene il documento: deve tacere solo quando i
 // risultati sono completi.

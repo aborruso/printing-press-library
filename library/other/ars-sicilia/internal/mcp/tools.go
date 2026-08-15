@@ -87,7 +87,8 @@ func RegisterTools(s *server.MCPServer) {
 		mcplib.NewTool("ddl_cerca",
 			mcplib.WithDescription("Cerca disegni di legge per legislatura, anno, firmatario, materia o testo. Optional: legisl, anno, firmatario (plus 5 more). Returns array of DDL."),
 			mcplib.WithNumber("legisl", mcplib.Description("Legislatura (es. 18 per XVIII).")),
-			mcplib.WithNumber("anno", mcplib.Description("Anno di presentazione.")),
+			mcplib.WithNumber("anno", mcplib.Description("Anno di presentazione. Non usare insieme a data: qualificano lo stesso campo e insieme danno errore.")),
+			mcplib.WithString("data", mcplib.Description("Data di presentazione (YYYY-MM-DD; intervallo con YYYY-MM-DD:YYYY-MM-DD). Alternativa ad anno, che ne e' il range annuale.")),
 			mcplib.WithString("firmatario", mcplib.Description("Nome o cognome del firmatario.")),
 			mcplib.WithString("materia", mcplib.Description("Materia/settore.")),
 			mcplib.WithString("testo", mcplib.Description("Ricerca testuale libera.")),
@@ -98,7 +99,7 @@ func RegisterTools(s *server.MCPServer) {
 			mcplib.WithDestructiveHintAnnotation(false),
 			mcplib.WithOpenWorldHintAnnotation(true),
 		),
-		makeCLIHandler([]string{"ddl", "cerca"}, []mcpParamBinding{{PublicName: "legisl", WireName: "legisl", Location: "query"}, {PublicName: "anno", WireName: "anno", Location: "query"}, {PublicName: "firmatario", WireName: "firmatario", Location: "query"}, {PublicName: "materia", WireName: "materia", Location: "query"}, {PublicName: "testo", WireName: "testo", Location: "query"}, {PublicName: "iter", WireName: "iter", Location: "query"}, {PublicName: "limit", WireName: "limit", Location: "query"}}, []string{}),
+		makeCLIHandler([]string{"ddl", "cerca"}, []mcpParamBinding{{PublicName: "legisl", WireName: "legisl", Location: "query"}, {PublicName: "anno", WireName: "anno", Location: "query"}, {PublicName: "data", WireName: "data", Location: "query"}, {PublicName: "firmatario", WireName: "firmatario", Location: "query"}, {PublicName: "materia", WireName: "materia", Location: "query"}, {PublicName: "testo", WireName: "testo", Location: "query"}, {PublicName: "iter", WireName: "iter", Location: "query"}, {PublicName: "limit", WireName: "limit", Location: "query"}}, []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("ddl_get",

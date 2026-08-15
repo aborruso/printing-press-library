@@ -309,19 +309,19 @@ Nessuna è ordinabile come stringa e nessuna è quella che i filtri vogliono in 
 ars-sicilia-pp-cli deputato profilo "Chinnici Valentina" --legisl 18 --agent --select tipo,data_iso,titolo
 ```
 
-**In ingresso i flag temporali non sono gli stessi su tutti gli archivi**, e nessun archivio li ha entrambi:
+**In ingresso i flag temporali non sono gli stessi su tutti gli archivi**:
 
-- **`--data`** (giorno singolo o range `YYYY-MM-DD:YYYY-MM-DD`): `interrogazioni`, `interpellanze`, `mozioni`, `odg`, `risoluzioni`, `resoconti`, `commissioni sommari`, `commissioni convocazioni`, e `deputato profilo` (che lo applica a tutti i sotto-archivi).
+- **`--data`** (giorno singolo o range `YYYY-MM-DD:YYYY-MM-DD`): `ddl`, `interrogazioni`, `interpellanze`, `mozioni`, `odg`, `risoluzioni`, `resoconti`, `commissioni sommari`, `commissioni convocazioni`, e `deputato profilo` (che lo applica a tutti i sotto-archivi).
 - **`--anno`**: `ddl`, `leggi`, `resoconti`, `commissioni sommari`, `commissioni convocazioni`.
 - **Nessuno dei due**: `pareri` e `biblioteca`.
 
-Su `ddl` e `leggi`, quindi, un intervallo più stretto dell'anno non ha una flag. La macchina del range però c'è lato server — `--anno` non fa altro che espandersi in un range su `DATPRE` — e la si raggiunge da `--isis-query`, con le date in `AAMMGG`:
+Su `ddl` i due flag qualificano lo stesso campo, la data di presentazione: `--anno 2026` è esattamente il range `2026-01-01:2026-12-31`. Per questo **non si usano insieme** — messi entrambi il comando si ferma con un errore, invece di restituire in silenzio zero risultati — e «quali ddl sono stati presentati questa settimana» si chiede così:
 
 ```bash
-ars-sicilia-pp-cli ddl cerca --legisl 18 --isis-query "(18.LEGISL E 260701/260814.DATPRE)" --agent
+ars-sicilia-pp-cli ddl cerca --legisl 18 --data 2026-07-01:2026-08-14 --agent
 ```
 
-Senza questo, «quali ddl sono stati presentati questa settimana» si può solo chiedere per l'anno intero e filtrare a valle su `data_iso`.
+Su `leggi` invece un intervallo più stretto dell'anno non esiste affatto: l'archivio non indicizza una data (l'unico campo temporale è `LEGANN`, l'anno), quindi nemmeno `--isis-query` lo raggiunge. Lì si chiede l'anno e si filtra a valle su `data_iso`.
 
 ### `--testo` cerca le parole, `--frase` cerca la locuzione
 
