@@ -125,6 +125,24 @@ These capabilities aren't available in any other tool for this API.
   ars-sicilia-pp-cli analytics --type ddl --group-by gruppo --json
   ```
 
+### Anagrafiche dal sito istituzionale
+- **`gruppi elenco`** — Elenca i gruppi parlamentari di una legislatura (16, 17, 18; default 18), con lo slug per aprire il dettaglio. I nomi sono gli stessi del campo gruppo delle firme sugli atti, quindi l'elenco è anche il vocabolario per costruire la join. Con `--deputato "<nome>"` legge i dettagli di tutti i gruppi della legislatura e risponde alla domanda inversa — in quale gruppo sta un parlamentare, con ruolo e collegio — a costo di una richiesta per gruppo.
+
+  _L'anagrafica dei gruppi non sta nel motore documentale (dati.ars.sicilia.it), dove il gruppo compare solo come stringa accanto a una firma: sta sul sito istituzionale (www.ars.sicilia.it), che la CLI prima d'ora non toccava._
+
+  ```bash
+  ars-sicilia-pp-cli gruppi elenco --legisl 18 --json
+  ars-sicilia-pp-cli gruppi elenco --legisl 18 --deputato "Cracolici" --json
+  ```
+- **`gruppi get`** — La composizione completa di un gruppo: cariche (Presidente, Vice-Presidente, Segretario, Tesoriere), collegio di elezione, email e scheda di ogni componente. Accetta lo slug (dall'elenco) o il nome del gruppo; un nome ambiguo esce con l'elenco dei candidati invece di indovinare.
+
+  _Da un nome di gruppo trovato negli atti si risale alla sua composizione in una sola richiesta._
+
+  ```bash
+  ars-sicilia-pp-cli gruppi get XVIII-misto --json
+  ars-sicilia-pp-cli gruppi get "Partito Democratico" --legisl 18 --json
+  ```
+
 ### Stato e monitoraggio
 - **`novita`** — Cosa è comparso negli archivi da una certa data in qua, tutti gli archivi datati in una chiamata, con accanto il **ritardo di pubblicazione della fonte** archivio per archivio.
 
@@ -211,6 +229,11 @@ ars-sicilia-pp-cli ddl iniziative --agent   # Governativa, Parlamentare, Iniziat
 ```
 
 Attenzione a `ddl iniziative`: **non esiste un flag `--iniziativa`**. Il portale scrive il tipo di iniziativa nello stesso campo dei firmatari, quindi il valore si passa a `--firmatario`: `ddl cerca --legisl 18 --firmatario Governativa` restituisce i ddl del Governo (verificato: il ddl 1188 così trovato è firmato dal presidente Schifani).
+
+**gruppi** — Gruppi parlamentari (www.ars.sicilia.it): elenco per legislatura e composizione con ruoli e collegio.
+
+- `ars-sicilia-pp-cli gruppi elenco` — Elenca i gruppi di una legislatura (16, 17, 18); con `--deputato "<nome>"` risponde «in quale gruppo sta un parlamentare».
+- `ars-sicilia-pp-cli gruppi get <slug-o-nome>` — Composizione di un gruppo: cariche, collegio di elezione, email e scheda di ogni componente.
 
 **interpellanze** — Interpellanze parlamentari (archivio 234).
 

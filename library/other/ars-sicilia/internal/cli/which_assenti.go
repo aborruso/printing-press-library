@@ -53,10 +53,16 @@ var whichAssenti = []capacitaAssente{
 		chiavi:   []string{"spesa", "spese", "spende", "costi", "costo", "stipendio", "stipendi", "vitalizio", "vitalizi", "indennita", "indennità", "rimborsi"},
 	},
 	{
-		Capacita: "il gruppo parlamentare di un deputato, come anagrafica",
-		Perche:   "non esiste un archivio dei deputati con il gruppo di appartenenza e i suoi cambi nel tempo: il gruppo compare solo accanto alla firma su un atto, e le denominazioni non sono normalizzate (lo stesso gruppo appare in più forme).",
-		Invece:   "`ddl cerca --con-firmatari` restituisce nome e gruppo per ogni firmatario di un atto, che è la via più diretta al gruppo di un deputato in un dato momento.",
-		chiavi:   []string{"gruppo", "gruppi", "partito", "partiti", "schieramento", "maggioranza", "opposizione"},
+		// Quel che resta scoperto dopo l'arrivo di `gruppi`: l'anagrafica dei
+		// gruppi c'è, lo schieramento no. La voce era più larga e copriva
+		// anche «gruppo»/«partito»; ristretta e non tolta, perché toglierla
+		// del tutto lasciava «maggioranza» e «opposizione» senza match e
+		// senza spiegazione — cioè col silenzio, che è quello che questo
+		// elenco esiste per evitare.
+		Capacita: "l'appartenenza a maggioranza o opposizione",
+		Perche:   "nessuna fonte del portale dichiara lo schieramento: i gruppi parlamentari sono un'anagrafica, non una coalizione, e il sostegno al Governo regionale non è un campo pubblicato da nessuna parte.",
+		Invece:   "`gruppi elenco --legisl 18` dà i gruppi e `gruppi get <gruppo>` la loro composizione: da lì lo schieramento si ricostruisce a mano, sapendo quali gruppi sostengono il Governo — un'informazione che va portata da fuori.",
+		chiavi:   []string{"maggioranza", "opposizione", "schieramento", "coalizione", "coalizioni"},
 	},
 }
 

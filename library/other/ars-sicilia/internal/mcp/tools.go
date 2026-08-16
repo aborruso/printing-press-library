@@ -715,6 +715,7 @@ func handleContext(_ context.Context, _ mcplib.CallToolRequest) (*mcplib.CallToo
 			{"name": "Drift iter DDL", "command": "ddl drift", "description": "Confronta lo stato dell'iter dei DDL nella sync corrente con la precedente e segnala i disegni di legge che si sono", "rationale": "Richiede storico dei sync in SQLite locale; il portale offre solo lo snapshot corrente, non sa dire 'cosa è cambiato'.", "via": "mcp-command-mirror"},
 			{"name": "Query ISIS grezza", "command": "leggi cerca", "description": "Flag --isis-query disponibile su tutti i comandi cerca", "rationale": "Il linguaggio ISIS è documentato e potente ma nascosto dietro la UI; flag CLI puliti coprono l'80% dei casi", "via": "mcp-command-mirror"},
 			{"name": "Stato sync archivi", "command": "sync stale", "description": "Mostra per ognuno dei 12 archivi ARS: timestamp ultima sync, n.", "rationale": "Necessario per chi mantiene SQLite locale e deve decidere quando rilanciare sync", "via": "mcp-command-mirror"},
+			{"name": "Anagrafica dei gruppi parlamentari", "command": "gruppi elenco", "description": "Elenco dei gruppi di una legislatura e composizione di ciascuno: cariche, collegio di elezione, email, scheda; con --deputato, in quale gruppo sta un parlamentare", "rationale": "L'anagrafica non sta nel motore documentale, dove il gruppo compare solo come stringa accanto a una firma: sta sul sito istituzionale www.ars.sicilia.it, seconda sorgente della CLI", "via": "mcp-command-mirror"},
 			{"name": "Cronologia inversa di una legge", "command": "legge cronologia", "description": "Partendo da una legge regionale promulgata (archivio 201), risale al DDL originario", "rationale": "Inverso cronologico di ddl iter — input è la legge finale", "via": "mcp-command-mirror"},
 		},
 		"playbook": []map[string]string{
@@ -726,6 +727,7 @@ func handleContext(_ context.Context, _ mcplib.CallToolRequest) (*mcplib.CallToo
 			{"topic": "Drift iter DDL", "insight": "Richiede storico dei sync in SQLite locale; il portale offre solo lo snapshot corrente, non sa dire 'cosa è cambiato'."},
 			{"topic": "Query ISIS grezza", "insight": "Il linguaggio ISIS è documentato e potente ma nascosto dietro la UI; flag CLI puliti coprono l'80% dei casi, questo flag sblocca il 20% restante senza riscrivere il client."},
 			{"topic": "Stato sync archivi", "insight": "Necessario per chi mantiene SQLite locale e deve decidere quando rilanciare sync; informazione esiste solo nel meta locale."},
+			{"topic": "Anagrafica dei gruppi parlamentari", "insight": "Due siti, non uno: gli atti stanno su dati.ars.sicilia.it, le anagrafiche su www.ars.sicilia.it, che non ha API — si legge HTML e i selettori sono certificati da fixture. I nomi dei gruppi sono gli stessi che compaiono accanto alle firme sugli atti, quindi l'elenco è il vocabolario per fare la join."},
 			{"topic": "Cronologia inversa di una legge", "insight": "Inverso cronologico di ddl iter — input è la legge finale, output è la storia parlamentare che ha portato alla promulgazione."},
 		},
 	}

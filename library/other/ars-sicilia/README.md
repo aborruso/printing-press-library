@@ -135,6 +135,15 @@ ars-sicilia-pp-cli ddl iter 18 1153 --json
 # Tutta l'attività parlamentare di un deputato in un'unica chiamata.
 ars-sicilia-pp-cli deputato profilo "Abbate Ignazio" --json --select tipo,data,titolo
 
+# I gruppi parlamentari della XVIII legislatura (anagrafica dal sito istituzionale).
+ars-sicilia-pp-cli gruppi elenco --legisl 18 --json
+
+# Composizione di un gruppo: cariche, collegio di elezione, email e scheda.
+ars-sicilia-pp-cli gruppi get XVIII-misto --json
+
+# In quale gruppo sta un deputato, con ruolo e collegio.
+ars-sicilia-pp-cli gruppi elenco --legisl 18 --deputato "Cracolici" --json
+
 ```
 
 ## Known Gaps
@@ -146,8 +155,9 @@ ars-sicilia-pp-cli deputato profilo "Abbate Ignazio" --json --select tipo,data,t
 - **`legge cronologia` date filtering**: The sommari search finds committee meetings that mention the law number in free text without a date ceiling. A committee meeting held after the law's promulgation date may appear in the timeline if it references the same number. Filter results by the `data` field when you need only pre-promulgation events.
 - **`--csv` on empty results**: when a command (e.g. `analytics --csv`) produces an empty result set, the CSV output is the JSON literal `[]` instead of an empty/header-only CSV. Piping that to a `.csv` file yields malformed content. Use `--json` for empty/unsynced data until this is fixed upstream.
 - **`search` JSON shape**: `search --json` returns an object `{ "meta": {...}, "results": [...] }`, not a top-level array. When piping to `jq`, select `.results` (e.g. `search "x" --json | jq '.results[]'`). Status lines ("no search endpoint…", sync hints) go to stderr, so `2>/dev/null` keeps stdout clean.
-- **Local-store commands need a sync first**: `search`, `analytics` and `sync stale` read the local SQLite store. On a fresh install run `ars-sicilia-pp-cli sync --full` first; until then they return empty results (with a sync hint on stderr). All other commands (`*/cerca`, `*/get`, `ddl iter`, `deputato profilo`, `legge cronologia`, `commissione dossier`) query the portal live and need no sync.
+- **Local-store commands need a sync first**: `search`, `analytics` and `sync stale` read the local SQLite store. On a fresh install run `ars-sicilia-pp-cli sync --full` first; until then they return empty results (with a sync hint on stderr). All other commands (`*/cerca`, `*/get`, `ddl iter`, `deputato profilo`, `legge cronologia`, `commissione dossier`, `gruppi elenco`, `gruppi get`) query the portal live and need no sync.
 - **`analytics --group-by cofirmatari` and `ddl drift` need a deep sync** ⚠️: a plain sync stores only the list-page fields (`data`, `numero`, `title`, `url`, …). The signatories (`firmatari`) and per-bill iter status (`iter`) live only inside each document `body`, so run **`ars-sicilia-pp-cli sync --resources ddl --deep`** to extract them into the store — then `analytics --group-by cofirmatari --type ddl` works, and `ddl drift` compares the iter state across two deep syncs. The deep pass fetches one detail page per ddl (~1 extra request each), so a full legislature takes a few minutes; a normal sync stays fast.
+- **`gruppi` reads a second site, and it is HTML** ℹ️: the group roster is not in the documentary engine — on `dati.ars.sicilia.it` a group is only a string next to a signature. `gruppi elenco` and `gruppi get` read `www.ars.sicilia.it`, which has no API (`/jsonapi`, `/rest/session/token` and `/sitemap.xml` all answer 404), so the selectors are worth exactly what the Icaro `Columns` are worth: verified against the live pages and pinned by fixtures in `internal/wwwclient/testdata`. A restyling breaks them silently, which is why an empty extraction is an error and not a result — the portal publishes no empty groups, so zero rows means the selector moved. Two consequences: `sync coverage` measures `dati.` only and says nothing about this source, and the slugs are not derivable from the name (`XVIII-fratelli-ditalia`, `XVIII-prima-litalia-lega-salvini-premier`) — take them from `gruppi elenco`, do not guess them.
 - **`analytics --group-by cofirme` runs live (no sync)** ℹ️: how many acts each deputy **co-signed** — a different question from `--group-by cofirmatari`, which counts *pairs* of co-signers and still needs the deep sync (pairs live inside each document). The count comes from the portal's own search engine, asked in ISIS: `(18.LEGISL E ((Nome.FIRMAT) NOT (1 ADJ Nome).FIRMAT))` — appears among the signatories but not in first position. One request per deputy (~66 for a legislature, ~80 s), so it needs `--legisl`; the names in the exact form the portal indexes come from the built-in `firmatari` table (1110 entries, legislatures X–XVIII). Works on every archive with a signatory field (`ddl`, `interrogazioni`, `interpellanze`, `mozioni`, `odg`, `risoluzioni`). Cross-checked against the counters published on www.ars.sicilia.it: Cracolici 302 and Catanzaro 306 co-signed bills in the XVIII, same to the single act. Deputies the portal did not answer for are named on stderr, not counted as zero.
 - **`analytics --group-by oratore` runs live (no sync)** ℹ️: the speaker ranking is built by querying the `/bd/resoconti` backend once per speaker of the legislature (≈90 requests, ~1 min), so it needs `--legisl` (without it the ~1000 all-time speakers would be too many requests) and does not read the local store. Example: `analytics --type resoconti --group-by oratore --legisl 18`. If the backend drops some of those requests, the ranking is still published with the speakers that answered and a `nota:` on stderr names the ones left unmeasured — they are *not* zero-intervention speakers.
 - **The `/bd/` backend truncates large responses — narrow the search** ⚠️: on `sommari`, `resoconti` and `convocazioni` the portal intermittently delivers a half-cut body (HTTP 200, regular headers, content stopping mid-page). It is not a timeout (cut responses arrive in 0.2s) and not protocol-related (same on HTTP/2 and HTTP/1.1): it scales with response size. Measured on `sommari`: a single-sitting search (24 KB) succeeded 8/8, the same search with no filters (44 KB) 0/8. The CLI retries every read up to 3 times and, when it gives up, reports a backend failure — never an absence of data: `il backend /bd/ non ha risposto` does not mean the document does not exist. To make a search reliable, narrow it: `--numero` (single sitting; available on `resoconti` and `commissioni sommari` — `convocazioni` has no sitting number in the portal form), then `--anno`, then `--commissione`. On failure the CLI names the missing filter.
@@ -233,7 +243,21 @@ These capabilities aren't available in any other tool for this API.
   ```
 - **`analytics --group-by cofirme`** — Quante volte ciascun deputato ha cofirmato, in diretta e senza sync (richiede `--legisl`). Es: `analytics --type ddl --group-by cofirme --legisl 18`.
 - **`analytics --group-by cofirmatari`** — Mappa le alleanze legislative (coppie di co-firmatari di DDL). Richiede una **deep sync** che estragga i firmatari dalle schede di dettaglio: `ars-sicilia-pp-cli sync --resources ddl --deep`. Dopo, funziona su `--type ddl` (vedi **Known Gaps** per i costi).
-- **`analytics --group-by oratore`** — Classifica gli oratori più attivi in Aula per numero di sedute in cui sono intervenuti. Gira **in diretta** sul backend `/bd/resoconti` (una richiesta per oratore della legislatura), quindi richiede `--legisl` e impiega ~1 minuto. Es: `analytics --type resoconti --group-by oratore --legisl 18`. Se il backend non risponde per qualche oratore, la classifica esce comunque con i restanti e un `nota:` su stderr elenca i non misurati — che non vanno letti come «zero interventi». Se non risponde per nessuno, il comando fallisce invece di restituire una classifica vuota.
+- **`analytics --group-by oratore`** — Classifica gli oratori più attivi in Aula per numero di sedute in cui sono intervenuti. Gira **in diretta** sul backend `/bd/resoconti` (una richiesta per oratore della legislatura), quindi richiede `--legisl` e impiega ~1 minuto. Es: `ars-sicilia-pp-cli analytics --type resoconti --group-by oratore --legisl 18`. Se il backend non risponde per qualche oratore, la classifica esce comunque con i restanti e un `nota:` su stderr elenca i non misurati — che non vanno letti come «zero interventi». Se non risponde per nessuno, il comando fallisce invece di restituire una classifica vuota.
+
+### Anagrafiche dal sito istituzionale
+- **`gruppi elenco`** — Elenca i gruppi parlamentari di una legislatura (16, 17, 18; default 18), con lo slug per aprire il dettaglio. I nomi sono gli stessi del campo gruppo delle firme sugli atti, quindi l'elenco è anche il vocabolario per costruire la join. Con `--deputato "<nome>"` legge i dettagli di tutti i gruppi e risponde alla domanda inversa — in quale gruppo sta un parlamentare, con ruolo e collegio — a costo di una richiesta per gruppo.
+
+  ```bash
+  ars-sicilia-pp-cli gruppi elenco --legisl 18 --json
+  ars-sicilia-pp-cli gruppi elenco --legisl 18 --deputato "Cracolici" --json
+  ```
+- **`gruppi get`** — La composizione completa di un gruppo: cariche (Presidente, Vice-Presidente, Segretario, Tesoriere), collegio di elezione, email e scheda di ogni componente. Accetta lo slug (dall'elenco) o il nome del gruppo; un nome ambiguo esce con i candidati.
+
+  ```bash
+  ars-sicilia-pp-cli gruppi get XVIII-misto --json
+  ars-sicilia-pp-cli gruppi get "Partito Democratico" --legisl 18 --json
+  ```
 
 ### Stato e monitoraggio
 - **`ddl drift`** — Confronta lo stato dell'iter dei DDL tra due sync e segnala quelli "mossi" (da commissione ad aula, approvati, ritirati). Richiede due **deep sync** a distanza di tempo (`sync --resources ddl --deep`), perché il campo `iter` viene scritto solo dalla deep sync (vedi **Known Gaps**). Per la cronologia di un singolo DDL usa `ddl iter <legisl> <numero>`, che la legge in diretta dal documento.
