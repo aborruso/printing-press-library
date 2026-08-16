@@ -54,11 +54,17 @@ These capabilities aren't available in any other tool for this API.
 
   Gli eventi portano **`seduta`** e, per le sedute d'Aula, un **`url`** che punta alla scheda del resoconto (la scheda dell'atto è nel campo `url` della radice). Usali sempre quando parti da una notizia: la data dell'articolo è quasi sempre il giorno **dopo** la seduta, e confonderle fa concludere che manchi un resoconto che invece c'è.
 
+  In `--select` tieni sempre **`titolo`**: è il campo che dice *cosa* è successo, mentre `data`, `fase`, `sede` e `seduta` dicono solo quando e dove, e fra due eventi possono coincidere legittimamente. Nella stessa seduta d'Aula un ddl viene esaminato e poi votato («Esaminato in Aula» e «Approvato dall'Assemblea», 29 lug 2026 seduta 268 sul ddl 6030): senza `titolo` le due righe escono identiche e l'approvazione finale sembra un duplicato da scartare.
+
+  Il campo **`sede`** degli eventi dà la commissione in forma canonica — l'ordinale che gli altri comandi accettano (`commissioni sommari --commissione QUARTA`) — **sulle righe in cui il portale dichiara una seduta**, perché è lì accanto che la scrive, e la si legge da lì anche quando il verbo dell'evento dice altro o non la nomina affatto. Le commissioni speciali tengono il loro nome per esteso, e il nome d'uso resta comunque in `titolo`, che è verbatim: «Parere Commissione Bilancio» ha `sede: Commissione SECONDA`. Sulle righe **senza seduta** — le assegnazioni, gli invii — vale invece la dicitura del verbo, quindi la stessa commissione può comparire con due nomi nella stessa cronologia («Inviato Commissione Bilancio» resta `Commissione Bilancio`, il parere che ne segue è `Commissione SECONDA`). Non raggruppare una timeline per `sede` dandola per canonica.
+
+  L'ultimo evento di una legge è la pubblicazione in Gurs, e porta numero e data come li scrive la fonte: «Pubblicazione Gurs n. 44o1 del 21 agosto 2020». Il suffisso dopo il numero è la notazione del portale per i supplementi (la Gazzetta è la n. 44), non un refuso da correggere, e la data ripete quella dell'evento.
+
   Se due eventi d'Aula danno alla **stessa data** numeri di seduta diversi, il link viene omesso su entrambi e un hint lo dice: l'Aula tiene una seduta al giorno, quindi almeno un numero è sbagliato nella fonte (`ddl iter 17 199` dà il voto del 19 feb 2020 in «Seduta n. 179», ma la 179 è del 26 febbraio). In quel caso la chiave affidabile è la data: `resoconti cerca --legisl 17 --data 2020-02-19`.
 
   ```bash
   ars-sicilia-pp-cli ddl iter 18 1153 --json
-  ars-sicilia-pp-cli ddl iter 17 290 --json --select data,fase,seduta,url
+  ars-sicilia-pp-cli ddl iter 17 290 --json --select data,fase,seduta,titolo,url
   ```
 - **`ddl stralci`** — Elenca i disegni di legge ricavati per stralcio da un ddl base; il verso opposto è il campo `stralcio` di `ddl get` e `ddl iter`.
 
@@ -362,10 +368,10 @@ Prima sincronizzazione di tutti gli archivi politici della XVIII legislatura —
 ### Iter completo di un DDL con output narrowing
 
 ```bash
-ars-sicilia-pp-cli ddl iter 18 1153 --json --select fase,data,sede,oratori
+ars-sicilia-pp-cli ddl iter 18 1153 --json --select fase,data,sede,titolo,oratori
 ```
 
-Timeline del DDL 1153, mostrando solo i campi essenziali — riduce il payload per agenti.
+Timeline del DDL 1153, mostrando solo i campi essenziali — riduce il payload per agenti. `titolo` è fra gli essenziali: è ciò che dice *cosa* è successo, e senza di lui due eventi della stessa seduta escono identici.
 
 ### Network di co-firmatari su DDL
 
@@ -414,7 +420,7 @@ Add `--agent` to any command. Expands to: `--json --compact --no-input --no-colo
   ```bash
   ars-sicilia-pp-cli ddl cerca --legisl 17 --testo "insularità" --agent --envelope   # ddl 199 first, hint: 1 title cut
   ```
-- **Filterable** — `--select` keeps a subset of fields. Dotted paths descend into nested structures; arrays traverse element-wise. On the aggregate commands (`legge cronologia`, `ddl iter`, `deputato profilo`, `commissione dossier`) the payload is an object wrapping an array, so name the fields at the level where they live: `--select data,fase` filters the events, `--select titolo` keeps the act's own title, and mixing both returns both. A name that exists nowhere is reported on stderr with the list of available fields. Critical for keeping context small on verbose APIs:
+- **Filterable** — `--select` keeps a subset of fields. Dotted paths descend into nested structures; arrays traverse element-wise. On the aggregate commands (`legge cronologia`, `ddl iter`, `deputato profilo`, `commissione dossier`) the payload is an object wrapping an array, so name the fields at the level where they live: `--select data,fase` filters the events, `--select titolo` keeps the act's own title, and mixing both returns both. A name that exists nowhere is reported on stderr with the list of available fields. Su `ddl iter` e `legge cronologia` **`titolo` non è un campo fra gli altri**: è il contenuto dell'evento, e le coordinate (`data`, `fase`, `sede`, `seduta`) sono le stesse per eventi diversi della stessa seduta. Toglierlo non riduce il payload, rende le righe indistinguibili. Critical for keeping context small on verbose APIs:
 
   ```bash
   ars-sicilia-pp-cli ddl get mock-value mock-value --agent --select id,name,status

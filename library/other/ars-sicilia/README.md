@@ -182,11 +182,15 @@ These capabilities aren't available in any other tool for this API.
 
   _Quando un agente deve raccontare 'a che punto sta il DDL X', questa è l'unica chiamata che restituisce la timeline completa senza incollare 5 ricerche manuali._
 
-  Ogni evento porta il numero di **`seduta`**, quando il portale lo dichiara, e per le sedute d'Aula il campo **`url`** punta alla scheda del resoconto (la scheda dell'atto sta nel campo `url` della radice). Serve a rispondere a «in quale seduta l'hanno votato?» e, soprattutto, a non scambiare la data della notizia con la data della seduta — la stampa scrive quasi sempre il giorno dopo. Attenzione: sedute d'Aula e di commissione hanno numerazioni **indipendenti**, e il link compare solo dove il portale marca la seduta come d'Aula.
+  Ogni evento porta il numero di **`seduta`**, quando il portale lo dichiara, e per le sedute d'Aula il campo **`url`** punta alla scheda del resoconto (la scheda dell'atto sta nel campo `url` della radice). Serve a rispondere a «in quale seduta l'hanno votato?» e, soprattutto, a non scambiare la data della notizia con la data della seduta — la stampa scrive quasi sempre il giorno dopo. Attenzione: sedute d'Aula e di commissione hanno numerazioni **indipendenti**, e il link compare solo dove il portale marca la seduta come d'Aula. In `--select` tieni sempre **`titolo`**: nella stessa seduta un ddl viene esaminato e poi votato («Esaminato in Aula» e «Approvato dall'Assemblea», 29 lug 2026 seduta 268 sul ddl 6030), e senza quel campo le due righe sono indistinguibili.
+
+  Il campo **`sede`** dà la commissione in forma canonica (l'ordinale, quello che gli altri comandi accettano) **sulle righe in cui il portale dichiara una seduta**: è lì accanto che la scrive, e la si legge da lì anche quando il verbo dell'evento la nomina altrimenti o non la nomina. Le commissioni speciali tengono il nome per esteso, e il nome d'uso resta in `titolo`, che è verbatim — «Parere Commissione Bilancio» ha `sede: Commissione SECONDA`. Sulle righe senza seduta (assegnazioni, invii) vale la dicitura del verbo, quindi la stessa commissione può apparire con due nomi nella stessa cronologia: non raggruppare per `sede` dandola per canonica.
+
+  L'ultimo evento di una legge è la pubblicazione in Gurs, con numero e data come li scrive la fonte («Pubblicazione Gurs n. 44o1 del 21 agosto 2020»): il suffisso dopo il numero è la notazione del portale per i supplementi — la Gazzetta è la n. 44 — e la data ripete quella dell'evento.
 
   ```bash
   ars-sicilia-pp-cli ddl iter 18 1153 --json
-  ars-sicilia-pp-cli ddl iter 17 290 --json --select data,fase,seduta,url
+  ars-sicilia-pp-cli ddl iter 17 290 --json --select data,fase,seduta,titolo,url
   ```
 - **`ddl stralci`** — Elenca i disegni di legge ricavati per stralcio da un ddl base. Il verso opposto è nel campo `stralcio` di `ddl get` e `ddl iter`, che dice da quale ddl lo stralcio proviene.
 
@@ -271,10 +275,10 @@ Per ogni ddl scarica anche la scheda di dettaglio ed estrae i **firmatari** e lo
 ### Iter completo di un DDL con output narrowing
 
 ```bash
-ars-sicilia-pp-cli ddl iter 18 1153 --json --select fase,data,sede,oratori
+ars-sicilia-pp-cli ddl iter 18 1153 --json --select fase,data,sede,titolo,oratori
 ```
 
-Timeline del DDL 1153, mostrando solo i campi essenziali — riduce il payload per agenti.
+Timeline del DDL 1153, mostrando solo i campi essenziali — riduce il payload per agenti. `titolo` fa parte degli essenziali: è ciò che dice *cosa* è successo, e senza di lui due eventi della stessa seduta escono identici.
 
 ### Network di co-firmatari su DDL
 
