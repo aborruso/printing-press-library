@@ -1,6 +1,6 @@
 {
   "api_name": "openipa",
-  "base_url": "https://indicepa.gov.it/public-ws",
+  "base_url": "https://www.indicepa.gov.it",
   "description": "CLI per l'Indice delle Pubbliche Amministrazioni (IPA) — ricerca enti, AOO, UO, PEC, fatturazione elettronica e ordini elettronici",
   "mcp_ready": "full",
   "http_transport": "standard",
