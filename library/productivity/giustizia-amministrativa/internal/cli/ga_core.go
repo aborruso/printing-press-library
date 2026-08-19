@@ -28,6 +28,21 @@ func gaSkip(flags *rootFlags) bool {
 	return dryRunOK(flags) || cliutil.IsVerifyEnv()
 }
 
+// emitSkip chiude un comando uscito per --dry-run senza lasciare stdout vuoto.
+//
+// Con --json un'uscita muta non e' una risposta: chi legge riceve zero byte
+// dove si aspetta un documento, e non puo' distinguere "non ho eseguito perche'
+// me l'hai chiesto" da "sono andato in errore senza dirlo". Il verificatore la
+// tratta infatti come JSON non valido. Senza --json il silenzio va bene: il
+// comando non ha fatto nulla e non ha nulla da mostrare.
+func emitSkip(cmd *cobra.Command, flags *rootFlags) error {
+	if flags == nil || !flags.asJSON {
+		return nil
+	}
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), `{"dry_run":true,"eseguito":false}`)
+	return err
+}
+
 // gaStorePath returns the local SQLite path for this CLI.
 func gaStorePath() string {
 	return defaultDBPath("giustizia-amministrativa-pp-cli")
@@ -146,6 +161,17 @@ func runGASearch(cmd *cobra.Command, flags *rootFlags, opts gaclient.SearchOptio
 			avvisi = append(avvisi, nota)
 			fmt.Fprintf(cmd.ErrOrStderr(), "Nota: %s\n", nota)
 		}
+	}
+	// Solo su stderr, non fra gli `avvisi` dell'envelope. Gli avvisi
+	// incapsulati spiegano un risultato parziale — gemelli raggruppati,
+	// campione piu' piccolo del totale — e sono l'eccezione. Questa nota
+	// descrive una proprieta' costante dell'endpoint, vera su ogni ricerca:
+	// metterla nell'envelope significherebbe incapsulare sempre, e l'array
+	// nudo di `--json` smetterebbe di esistere per chiunque. Il layer MCP la
+	// consegna comunque al client, perche' legge da stderr le righe con
+	// prefisso "Nota: " (warningsFromStderr).
+	if nota := notaDataDepositoAssente(res.Items); nota != "" {
+		fmt.Fprintf(cmd.ErrOrStderr(), "Nota: %s\n", nota)
 	}
 	data, err := json.Marshal(res.Items)
 	if err != nil {
