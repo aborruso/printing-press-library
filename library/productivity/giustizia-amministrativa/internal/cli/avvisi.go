@@ -40,11 +40,12 @@ func avvisoGruppoTroncato(campione, totale int, gruppo string, dims []string) st
 	msg := fmt.Sprintf(
 		"il campione (%d) si e' esaurito prima del totale dichiarato (%d): il gruppo %q e' tagliato a meta' e i gruppi successivi nell'ordine del portale mancano del tutto. I numeri qui sopra non sono una distribuzione completa. Alza --limit oppure interroga un gruppo per volta.",
 		campione, totale, gruppo)
-	for _, d := range dims {
-		if strings.EqualFold(d, "sede") {
-			msg += " Raggruppando per sede il taglio non e' solo parziale ma distorto, perche' l'ordine del portale e' proprio quello delle sedi: --sede-sweep legge il totale dichiarato da ciascuna invece di contare le righe del campione."
-			break
-		}
+	// Solo per --by sede esatto: stats legge i totali dichiarati per sede
+	// unicamente su quella dimensione singola (vedi TotalsBySede in stats.go).
+	// Su --by sede,anno lo sweep non cambia il modo di contare, e prometterlo
+	// manderebbe il lettore a rifare la query per ottenere gli stessi numeri.
+	if len(dims) == 1 && strings.EqualFold(dims[0], "sede") {
+		msg += " Raggruppando per sede il taglio non e' solo parziale ma distorto, perche' l'ordine del portale e' proprio quello delle sedi: --sede-sweep legge il totale dichiarato da ciascuna invece di contare le righe del campione."
 	}
 	return msg
 }

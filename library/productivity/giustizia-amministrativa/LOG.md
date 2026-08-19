@@ -56,8 +56,8 @@ Cancellati i tre cloni gestiti del publish (391 MB): tutte le PR mergiate, ogni 
 
 ### Log MCP di Claude Desktop (per debug del bundle)
 
-`C:\Users\aborr\AppData\Roaming\Claude\logs\mcp.log` — da WSL:
-`/mnt/c/Users/aborr/AppData/Roaming/Claude/logs/`.
+`%APPDATA%\Claude\logs\mcp.log` — da WSL, sotto
+`/mnt/c/Users/<utente>/AppData/Roaming/Claude/logs/`.
 
 ## 2026-08-08 (sera) — emboss: due difetti reali, e quattro allarmi che non lo erano
 

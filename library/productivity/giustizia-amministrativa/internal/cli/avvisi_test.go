@@ -40,6 +40,14 @@ func TestAvvisoGruppoTroncatoPerSede(t *testing.T) {
 		t.Errorf("con --by sede l'avviso deve indicare --sede-sweep, ottenuto: %q", perSede)
 	}
 
+	// Su piu' dimensioni lo sweep non cambia il modo di contare: stats legge i
+	// totali dichiarati solo per --by sede esatto, quindi prometterlo su
+	// sede,anno manderebbe a rifare la query per gli stessi numeri.
+	multi := avvisoGruppoTroncato(119, 167, "ROMA/2026", []string{"sede", "anno"})
+	if strings.Contains(multi, "--sede-sweep") {
+		t.Errorf("su --by sede,anno lo sweep non va promesso, ottenuto: %q", multi)
+	}
+
 	perTipo := avvisoGruppoTroncato(119, 167, "Sentenza", []string{"tipo"})
 	if strings.Contains(perTipo, "--sede-sweep") {
 		t.Errorf("su altre dimensioni --sede-sweep non c'entra, ottenuto: %q", perTipo)

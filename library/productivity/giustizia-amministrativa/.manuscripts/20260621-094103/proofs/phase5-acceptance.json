@@ -17,7 +17,7 @@
   "auth_context": {
     "type": "none"
   },
-  "source_fingerprint": "7e6f9391ee1acc5806c3734301e7fc5bf19ccafd91af5a3af1222a37684f6bf6",
+  "source_fingerprint": "b655d6a36efa7dfaefe2f8bd0a1fc0b7c5f89f199c77761c59749967b87fcd5a",
   "source_files": {
     "cmd/giustizia-amministrativa-pp-cli/main.go": "4ba51ca9a1bf95ef63d5866b7768b8c158da78ce84daed8639b0525aae879d9c",
     "cmd/giustizia-amministrativa-pp-mcp/main.go": "54f86b7b1f32652cab949e1b1757aece1efcbe1b61eb9084aa5e26b07d3b1477",
@@ -27,8 +27,8 @@
     "internal/cli/agent_context.go": "eabd3dcb87cf8b739ee83a6fcc8aed80f9ee7efdaaa2f6432757f6b608556434",
     "internal/cli/appeal_chain.go": "d87bcbfc1f1a4028b6af7efb0a689bb2fc04e49ae525afa82f3f81cd7584f680",
     "internal/cli/appeal_chain_test.go": "4ced60268795d99f090addafccbf607a6574571136c8986e3f01a70edbc8a19d",
-    "internal/cli/avvisi.go": "adfcbbfd9555a48b787ac29645b63f83dad0fde6ac7f5056072888ec3e6a8c9f",
-    "internal/cli/avvisi_test.go": "aad80d8c75823cbc2b5ca3977f2bcdddb1b518baed6d075714747a9cfd952dc4",
+    "internal/cli/avvisi.go": "684d3122baf382e8762bf57f164978d8b63367025d3e038df90a741f8b98614e",
+    "internal/cli/avvisi_test.go": "7a4ef64697daa6be1fdc047688fafd93966fff439737ed57b2707320105ebee7",
     "internal/cli/channel_workflow.go": "9229992e96197299d874dedd6237f93dcc9f287e2839c01bdf640ff94853c046",
     "internal/cli/corpus.go": "95c9e2297cd76ddd33e7db62a255cb5af70eb7a8ed020db557533d42ddb29a06",
     "internal/cli/corpus_build.go": "51c623d8ac728c67e560d5d6785eebf3b08221ba464e57979ae8e16003040b04",
@@ -38,7 +38,7 @@
     "internal/cli/doctor.go": "5477db8bdea5e928456d4380c0b21032ae49910abe249b3e1c95222e5d3b0934",
     "internal/cli/emit_ricerca_test.go": "44e79fb527dece11ecb25c8f5120ed177d3a57f0a452ba27b29520e7395ad50c",
     "internal/cli/feedback.go": "121d89990f5761707629b5e4ac0b8f0a06a8ec7614745dd81d08df2259206862",
-    "internal/cli/ga_core.go": "21556cf6eb93bf09a418985be4fc4e0c36b5fcea5d9052fdbbdb9e3f8a63b09b",
+    "internal/cli/ga_core.go": "015f244c0f5c073cfad7b7ae2ed974f68b422a9175150421e0500843e19fc3a0",
     "internal/cli/get.go": "c82ab82477bb942e876775609b5d8f3646add3b708d03d7adbc4201b0d2937e1",
     "internal/cli/get_test.go": "d885c96f5770c75c558b06f9c6d559fbfdc2583ac45cf1752034aec511279933",
     "internal/cli/grep.go": "d12ed503173451fa39244c1679985dfde2248256b92f762e2ed0028d51811522",
@@ -105,7 +105,7 @@
     "internal/mcp/cobratree/shellout_test.go": "d50a30f7211a70454c461ced4236484cde0f87f6d601f7f5dd492e60df3531b7",
     "internal/mcp/cobratree/typemap.go": "b6f18008c623818e0371e21b005c1b9bc340d2373e1812106d6dfd83028153cc",
     "internal/mcp/cobratree/walker.go": "a88b0b9f0238ebd1b4f08162184f0741156737a2758afd9ecfe692c576a9778a",
-    "internal/mcp/tools.go": "77492e38e50c51748bdfb2c1fbbe40d99b651cf45b6436858b8c8e0f7511a117",
+    "internal/mcp/tools.go": "67ade6a35b7da7720fc6cff78454e94d11f607ebf19c76349d43416048c0fc92",
     "internal/mcp/tools_test.go": "2415442c223c408221567397a04df67040f609fdff6b21c9ec4633e5d236108d",
     "internal/store/extras.go": "0e0e4c85a0e8519a910f2bd5172f83c2e832206b0102d79579f35869c5b30bfe",
     "internal/store/schema_version_test.go": "ecd3d32901f378daf6056d59f1892b2189e7c62914f2d934fb538b6bd4f8c8e4",

@@ -90,7 +90,7 @@ func persistProvvedimenti(st *store.Store, items []gaclient.Provvedimento) {
 // to humans on stderr.
 func runGASearch(cmd *cobra.Command, flags *rootFlags, opts gaclient.SearchOptions) error {
 	if gaSkip(flags) {
-		return nil
+		return emitSkip(cmd, flags)
 	}
 	c := gaclient.New()
 	res, err := c.Search(cmd.Context(), opts)
@@ -347,7 +347,7 @@ func resolveProvvedimento(ctx context.Context, st *store.Store, id string) (gacl
 // is prepended (no-op for json/html, which already carry the fields).
 func runGAGet(cmd *cobra.Command, flags *rootFlags, id, format, sede, nrg, file string, frontMatter bool) error {
 	if gaSkip(flags) {
-		return nil
+		return emitSkip(cmd, flags)
 	}
 	c := gaclient.New()
 	var p gaclient.Provvedimento
