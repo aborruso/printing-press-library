@@ -480,7 +480,8 @@ func sedutePerDataIncoerenti(evs []iterEvent) map[string]bool {
 // alla seduta: senza l'avviso l'assenza dell'URL su alcuni eventi e non su
 // altri sembra un bug della CLI invece di un dato incoerente a monte. Torna il
 // testo invece di scriverlo, come annoNonPinnatoHint: così lo stesso avviso va
-// su stderr e nella `nota` del report, ed è verificabile senza catturare stderr.
+// su stderr e nel campo `note` del report, ed è verificabile senza catturare
+// stderr.
 func avvisoSedutaIncoerente(legisl int, incoerenti map[string]bool) string {
 	if len(incoerenti) == 0 {
 		return ""
@@ -538,8 +539,9 @@ func seduteConDateIncoerenti(evs []iterEvent) map[int]bool {
 // testo dell'avviso, o "" quando l'iter è coerente.
 //
 // L'avviso esce due volte, e non è una ripetizione: su stderr per chi legge, e
-// come `nota` nella radice del report per chi legge in `--json`. La `nota` è un
-// campo di avviso (vedi campiAvviso), quindi sopravvive a --select — e --select
+// come `note` nella radice del report per chi legge in `--json` — è il nome
+// che iterReport dà al campo, mentre il resto della CLI lo chiama `nota`, e
+// campiAvviso li tiene entrambi. È un campo di avviso, quindi sopravvive a --select — e --select
 // è proprio il modo in cui l'iter si legge di solito, dove un marcatore
 // per-evento verrebbe filtrato via insieme ai campi non chiesti.
 func marcaEventiIncoerenti(cmd *cobra.Command, legisl int, evs []iterEvent) (map[string]bool, string) {
