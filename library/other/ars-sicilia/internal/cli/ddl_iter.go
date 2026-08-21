@@ -99,10 +99,17 @@ type iterReport struct {
 	// `ddl iter`, la legge per `legge cronologia`. Stava solo dentro ogni
 	// evento, ripetuta identica, e nella radice del report — dove uno la
 	// cerca — non c'era.
-	URL      string       `json:"url,omitempty"`
-	Stralcio *stralcioOut `json:"stralcio,omitempty"`
-	Eventi   []iterEvent  `json:"eventi"`
-	Note     string       `json:"note,omitempty"`
+	URL string `json:"url,omitempty"`
+	// DdlOriginari sono i numeri dei disegni di legge da cui la legge nasce,
+	// popolati dalla sola `legge cronologia`. Il numero c'era già, ma dentro la
+	// frase `sede` dell'evento ddl_originario ("Disegno di legge n. 239"):
+	// leggibile da un umano, da estrarre con una regex per chi vuole
+	// incatenarci `ddl iter`, che è l'unica cosa che si fa con quel numero. È
+	// una lista perché una legge può nascere da più ddl abbinati.
+	DdlOriginari []int        `json:"ddl_originari,omitempty"`
+	Stralcio     *stralcioOut `json:"stralcio,omitempty"`
+	Eventi       []iterEvent  `json:"eventi"`
+	Note         string       `json:"note,omitempty"`
 }
 
 func runDdlIter(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error {

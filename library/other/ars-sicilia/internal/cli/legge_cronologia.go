@@ -131,6 +131,9 @@ func runLeggeCronologia(cmd *cobra.Command, flags *rootFlags, legisl, numero, an
 			ddls, derr := c2.Search(ctx, *arcDdl, icaro.SearchOptions{ISISRaw: expr, Limit: 5, MaxPages: 1})
 			if derr == nil {
 				for _, r := range ddls {
+					if n, aerr := strconv.Atoi(strings.TrimSpace(r.Fields["Numero"])); aerr == nil {
+						report.DdlOriginari = append(report.DdlOriginari, n)
+					}
 					report.Eventi = append(report.Eventi, iterEvent{
 						Fase:      "ddl_originario",
 						Data:      r.Fields["Data"],
