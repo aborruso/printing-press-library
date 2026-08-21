@@ -202,6 +202,7 @@ func runDdlIter(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error 
 		return iterDateKey(report.Eventi[i].Data) < iterDateKey(report.Eventi[j].Data)
 	})
 	report.Note = uniscoNote(report.Note, avvisoStralcioAnteriore(report))
+	report.Note = uniscoNote(report.Note, avvisoApprovatoSenzaGurs(report.Eventi))
 	return emitIter(cmd, flags, report)
 }
 
@@ -988,4 +989,40 @@ func avvisoStralcioAnteriore(report iterReport) string {
 	return fmt.Sprintf(
 		"la cronologia comincia il %s, prima della presentazione del %s: è uno stralcio, e i lavori che lo hanno ritagliato dal ddl base precedono la sua registrazione come documento autonomo. Il ddl di provenienza è nel campo `stralcio`.",
 		primo, presentazione)
+}
+
+// avvisoApprovatoSenzaGurs dice perché un iter che finisce con l'approvazione
+// non porta la legge.
+//
+// I due archivi hanno ritardi diversi: il ddl arriva a 24 giorni, le leggi a
+// 30 (misurato il 21/08/2026 con `novita`). Chi parte da un ddl approvato di
+// recente trova la timeline che si ferma a «Approvato dall'Assemblea» o
+// «Inviato Presidenza della Regione», cerca la legge e non la trova — e non ha
+// modo di distinguere «non è ancora stata promulgata» da «l'archivio non l'ha
+// ancora indicizzata». È lo stesso buco che `legge cronologia` copre dall'altro
+// verso, e rimanda allo stesso comando.
+//
+// Il segnale è strutturale, non una soglia di giorni inventata: quando la fonte
+// ha registrato la pubblicazione, l'evento «Pubblicazione Gurs» sta nell'iter.
+// Verificato su quattro ddl approvati e promulgati da tempo (17/733, 17/587,
+// 18/4991, 18/1030): tutti e quattro ce l'hanno. Il ddl 6030, approvato il 29
+// luglio 2026 e pubblicato in Gazzetta il 7 agosto, no — ed è l'unico dei sei
+// campionati su cui la nota compare. Un ddl mai arrivato in Aula (18/1171) non
+// la riceve, perché manca l'approvazione.
+func avvisoApprovatoSenzaGurs(eventi []iterEvent) string {
+	var approvato string
+	for _, ev := range eventi {
+		if strings.Contains(strings.ToLower(ev.Titolo), "gurs") {
+			return ""
+		}
+		if strings.Contains(ev.Titolo, "Approvato dall'Assemblea") {
+			approvato = ev.Data
+		}
+	}
+	if approvato == "" {
+		return ""
+	}
+	return fmt.Sprintf(
+		"approvato dall'Assemblea il %s, ma la fonte non registra ancora la pubblicazione in Gazzetta: l'iter si ferma qui. Se cerchi la legge promulgata, l'archivio leggi pubblica con settimane di ritardo — `ars-sicilia-pp-cli novita --archivi leggi` dice fin dove arriva la fonte.",
+		approvato)
 }
