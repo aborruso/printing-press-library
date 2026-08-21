@@ -349,10 +349,11 @@ func ultimaDentro(righe []icaro.Record, soglia string) bool {
 // righeNovitaLeggi rende una riga per legge invece di una per articolo.
 //
 // Il conteggio degli articoli agganciati resta nella riga (`articoli_trovati`),
-// così chi vuole le righe grezze sa che ci sono. `numero` porta l'Atto ("L.R.
-// 14"): per le leggi il campo Numero dell'archivio è vuoto, ed è il motivo per
-// cui `--select numero` non trovava nulla e la resa a schermo lasciava la
-// colonna in bianco.
+// così chi vuole le righe grezze sa che ci sono. La legge si nomina in due
+// modi, entrambi presenti: `atto` è l'etichetta con cui si cita ("L.R. 14"),
+// `numero` è il numero nudo ("14") che si passa a --numero. Nell'archivio 201
+// il campo Numero è vuoto, ed è il motivo per cui `--select numero` non
+// trovava nulla e la resa a schermo lasciava la colonna in bianco.
 func righeNovitaLeggi(arc icaro.Archive, recs []icaro.Record) []map[string]string {
 	out := []map[string]string{}
 	for _, l := range collapseLeggi(recs) {
