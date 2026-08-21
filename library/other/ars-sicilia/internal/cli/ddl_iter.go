@@ -194,6 +194,7 @@ func runDdlIter(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error 
 	sort.SliceStable(report.Eventi, func(i, j int) bool {
 		return iterDateKey(report.Eventi[i].Data) < iterDateKey(report.Eventi[j].Data)
 	})
+	report.Note = uniscoNote(report.Note, avvisoStralcioAnteriore(report))
 	return emitIter(cmd, flags, report)
 }
 
@@ -938,4 +939,46 @@ func uniscoNote(nota, avviso string) string {
 	default:
 		return nota + " " + avviso
 	}
+}
+
+// avvisoStralcioAnteriore spiega la timeline di uno stralcio che comincia prima
+// della propria presentazione.
+//
+// Su `ddl iter 18 6030` il primo evento è l'assegnazione alla Commissione
+// QUARTA del 13 gennaio 2026, mentre la presentazione è del 27: letto senza
+// contesto sembra un dato sballato. Non lo è — lo stralcio nasce da una
+// decisione d'Aula che lo ritaglia dal ddl base e lo instrada alla commissione
+// competente, e come documento autonomo viene registrato giorni dopo.
+//
+// Per questo qui NON si usa `anomalia`. Quel marcatore dice «così come la fonte
+// lo dichiara, questo non può essere vero» (l'Aula tiene una seduta al giorno,
+// una seduta ha una data sola); applicarlo a un ordine spiegabile lo
+// svaluterebbe e produrrebbe a valle il falso buco che esiste per evitare.
+// Misurato il 21/08/2026: nessuno degli 8 ddl non-stralcio campionati ha un
+// evento anteriore alla presentazione, e fra gli stralci lo hanno solo 6030 e
+// 8030, entrambi con primo evento il 13 gennaio, cioè il giorno della delibera
+// di stralcio.
+func avvisoStralcioAnteriore(report iterReport) string {
+	if report.Stralcio == nil {
+		return ""
+	}
+	var presentazione, primo string
+	for _, ev := range report.Eventi {
+		k := iterDateKey(ev.Data)
+		if k == "" {
+			continue
+		}
+		if ev.Fase == "presentazione" && presentazione == "" {
+			presentazione = k
+		}
+		if primo == "" || k < primo {
+			primo = k
+		}
+	}
+	if presentazione == "" || primo == "" || primo >= presentazione {
+		return ""
+	}
+	return fmt.Sprintf(
+		"la cronologia comincia il %s, prima della presentazione del %s: è uno stralcio, e i lavori che lo hanno ritagliato dal ddl base precedono la sua registrazione come documento autonomo. Il ddl di provenienza è nel campo `stralcio`.",
+		primo, presentazione)
 }

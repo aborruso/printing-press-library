@@ -80,3 +80,18 @@ func TestLeggiRawLimit(t *testing.T) {
 		t.Errorf("tetto per 10 leggi = %d: troppo basso, è il caso che il fix esiste per risolvere", leggiRawLimit(10))
 	}
 }
+
+func TestNumeroDaAtto(t *testing.T) {
+	casi := map[string]string{
+		"L.R. 14":  "14",
+		"L.R. 1":   "1",
+		"":         "",
+		"L.R.":     "",
+		"L.R. 44o": "44",
+	}
+	for atto, want := range casi {
+		if got := numeroDaAtto(atto); got != want {
+			t.Errorf("numeroDaAtto(%q) = %q, atteso %q", atto, got, want)
+		}
+	}
+}

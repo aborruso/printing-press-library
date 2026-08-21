@@ -8,3 +8,27 @@ import "testing"
 func TestNovelDdlIterCommandTODO(t *testing.T) {
 	t.Skip("TODO: implement table-driven tests for ddl iter")
 }
+
+// Uno stralcio la cui cronologia comincia prima della presentazione porta la
+// nota che lo spiega; un ddl ordinario e uno stralcio con timeline regolare no.
+func TestAvvisoStralcioAnteriore(t *testing.T) {
+	eventi := []iterEvent{
+		{Fase: "commissione", Data: "13 gen 2026"},
+		{Fase: "presentazione", Data: "27.01.26"},
+	}
+	str := &stralcioOut{Etichetta: "Stralcio IV"}
+
+	if got := avvisoStralcioAnteriore(iterReport{Stralcio: str, Eventi: eventi}); got == "" {
+		t.Error("stralcio con evento anteriore alla presentazione: la nota deve esserci")
+	}
+	if got := avvisoStralcioAnteriore(iterReport{Eventi: eventi}); got != "" {
+		t.Errorf("senza stralcio non si dice niente: %q", got)
+	}
+	regolari := []iterEvent{
+		{Fase: "presentazione", Data: "27.01.26"},
+		{Fase: "commissione", Data: "28 gen 2026"},
+	}
+	if got := avvisoStralcioAnteriore(iterReport{Stralcio: str, Eventi: regolari}); got != "" {
+		t.Errorf("stralcio con timeline regolare: niente nota, invece %q", got)
+	}
+}
