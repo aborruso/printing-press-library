@@ -1108,7 +1108,18 @@ func emitDryRunRequests(cmd *cobra.Command, requests []map[string]any, note stri
 // emitDryRun prints the would-be query without hitting the network, useful
 // for --dry-run flows and Printing Press verify checks.
 func emitDryRun(cmd *cobra.Command, arc icaro.Archive, p cercaParams) error {
-	out := dryRunTarget(arc, normalizeParams(arc, p.Params), p.ISISRaw)
+	// Stessa condizione di runCerca, e per lo stesso motivo: gli archivi /bd/
+	// ricevono i parametri grezzi, la loro traduzione avviene dentro searchBD.
+	// Applicare normalizeParams qui faceva annunciare all'anteprima un
+	// parametro diverso da quello che il comando processa — `--codcom 6`
+	// riscritto in `commissione: SESTA`, che su /bd/ non e' cio' che viaggia.
+	// Se questa riga e quella di runCerca divergono di nuovo, l'anteprima
+	// ricomincia a mentire: vanno lette insieme.
+	searchParams := p.Params
+	if !icaro.IsBDArchive(arc.Slug) {
+		searchParams = normalizeParams(arc, p.Params)
+	}
+	out := dryRunTarget(arc, searchParams, p.ISISRaw)
 	out["dry_run"] = true
 	return writeJSON(cmd.OutOrStdout(), out)
 }

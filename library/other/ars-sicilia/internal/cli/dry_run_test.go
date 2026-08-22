@@ -382,3 +382,52 @@ func TestDryRunBDEnumeraGliAnniDellIntervallo(t *testing.T) {
 		t.Errorf("post_fields = %v, atteso anno=2025 anche senza --data", got["post_fields"])
 	}
 }
+
+// `*/cerca --dry-run` passava SEMPRE da normalizeParams, mentre runCerca lo
+// salta sugli archivi /bd/ (la traduzione avviene dentro searchBD). Cosi'
+// `--codcom 6` usciva riscritto in `commissione: SESTA` solo nell'anteprima:
+// un parametro diverso da quello che il comando processa. Rilievo P1 di
+// Greptile sulla PR #1790.
+func TestEmitDryRunNonNormalizzaSugliArchiviBD(t *testing.T) {
+	var buf bytes.Buffer
+	cmd := &cobra.Command{}
+	cmd.SetOut(&buf)
+	arc := icaro.BySlug("convocazioni")
+	if arc == nil {
+		t.Fatal("archivio convocazioni non registrato")
+	}
+	if err := emitDryRun(cmd, *arc, cercaParams{Params: map[string]string{"legisl": "18", "codcom": "6"}}); err != nil {
+		t.Fatalf("anteprima fallita: %v", err)
+	}
+	var got map[string]any
+	if err := json.Unmarshal(buf.Bytes(), &got); err != nil {
+		t.Fatalf("output non JSON: %v", err)
+	}
+	deferred, _ := got["deferred"].(map[string]any)
+	if deferred["codcom"] == nil {
+		t.Errorf("deferred = %v: su /bd/ viaggia `codcom`, ed e' quello che l'anteprima deve nominare", deferred)
+	}
+	if deferred["commissione"] != nil {
+		t.Errorf("deferred = %v: `commissione` e' la riscrittura di normalizeParams, che su /bd/ non avviene", deferred)
+	}
+
+	// Sugli archivi Icaro la normalizzazione invece ci deve essere, perche' il
+	// percorso vivo ce la fa: --data diventa AAMMGG dentro la query ISIS.
+	buf.Reset()
+	cmd2 := &cobra.Command{}
+	cmd2.SetOut(&buf)
+	ddl := icaro.BySlug("ddl")
+	if ddl == nil {
+		t.Fatal("archivio ddl non registrato")
+	}
+	if err := emitDryRun(cmd2, *ddl, cercaParams{Params: map[string]string{"legisl": "18", "data": "2026-01-01:2026-08-22"}}); err != nil {
+		t.Fatalf("anteprima fallita: %v", err)
+	}
+	got = nil
+	if err := json.Unmarshal(buf.Bytes(), &got); err != nil {
+		t.Fatalf("output non JSON: %v", err)
+	}
+	if q, _ := got["isis_query"].(string); !strings.Contains(q, "260101/260822.DATPRE") {
+		t.Errorf("isis_query = %q: su Icaro --data va normalizzata in AAMMGG come fa runCerca", q)
+	}
+}
