@@ -95,6 +95,19 @@ func IsBDArchive(slug string) bool {
 	return ok
 }
 
+// BDEndpoint torna l'URL a cui il backend /bd/ riceve la POST di ricerca per
+// quell'archivio, e false se l'archivio non è servito da /bd/. Serve alle
+// anteprime --dry-run: senza, annunciano l'URL Icaro anche dove la richiesta
+// parte davvero verso /bd/, cioè dicono con sicurezza un endpoint che non
+// verrà interrogato — su un comando che esiste apposta per diagnosticare.
+func BDEndpoint(baseURL, slug string) (string, bool) {
+	spec, ok := bdArchives[slug]
+	if !ok {
+		return "", false
+	}
+	return strings.TrimSuffix(baseURL, "/") + "/bd/" + spec.path, true
+}
+
 // bdOption è una <option> di un <select> del form (oratori o commissioni): id,
 // nome e le legislature associate (data-leg/data-legs). Per commissioni gli id
 // sono PER-LEGISLATURA (es. "I - Affari Istituzionali" ha id 116 in leg 18, 1 in

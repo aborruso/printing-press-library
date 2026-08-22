@@ -984,17 +984,66 @@ func commissioneOrdinale(code string) string {
 	return ""
 }
 
+// dryRunTarget descrive, nella lingua del backend che serve davvero
+// l'archivio, la richiesta che il comando farebbe.
+//
+// Gli archivi delle sedute (sommari, resoconti, convocazioni) sono migrati al
+// backend /bd/ e Search ce li instrada (vedi icaroclient.Client.Search), ma
+// l'anteprima li descriveva tutti come query Icaro: `resoconti cerca --dry-run`
+// annunciava `/icaro/default.jsp?icaDB=217&icaQuery=(18.LEGISL)`, un URL che
+// quel comando non interroga. Su un flag che esiste per diagnosticare, un
+// endpoint sbagliato detto con sicurezza è peggio del silenzio: manda a
+// cercare il guasto sul backend che non c'entra.
+func dryRunTarget(arc icaro.Archive, params map[string]string, isisRaw string) map[string]any {
+	out := map[string]any{"archive": arc.Slug, "archive_id": arc.ID}
+	if endpoint, ok := icaro.BDEndpoint(icaro.DefaultBaseURL, arc.Slug); ok {
+		// Su /bd/ non c'è una query ISIS: i filtri viaggiano come campi di una
+		// POST, quindi si mostrano quelli invece di una stringa inventata.
+		out["backend"] = "bd"
+		out["would_post"] = endpoint
+		out["params"] = params
+		return out
+	}
+	expr := icaro.BuildQuery(arc, params, isisRaw)
+	out["backend"] = "icaro"
+	out["isis_query"] = expr
+	out["would_fetch"] = fmt.Sprintf("%s/icaro/default.jsp?icaDB=%s&icaQuery=%s", icaro.DefaultBaseURL, arc.ID, expr)
+	return out
+}
+
+// dryRunTargetBySlug è dryRunTarget per i comandi che conoscono l'archivio per
+// slug; torna nil sugli slug sconosciuti, così il chiamante li salta come li
+// salterebbe a runtime.
+//
+// I parametri NON vengono normalizzati qui: normalizeParams riscrive i valori
+// (fra l'altro dirotta `codcom: 6` su `commissione: SESTA`) e non tutti i
+// chiamanti ci passano — `commissione dossier` manda `codcom` grezzo al
+// backend /bd/. Applicarlo d'ufficio farebbe annunciare all'anteprima un
+// parametro diverso da quello che parte davvero, cioè il difetto che questa
+// anteprima esiste per non avere. Chi normalizza a runtime lo fa anche qui.
+func dryRunTargetBySlug(slug string, params map[string]string) map[string]any {
+	arc := icaro.BySlug(slug)
+	if arc == nil {
+		return nil
+	}
+	return dryRunTarget(*arc, params, "")
+}
+
+// emitDryRunRequests stampa l'anteprima dei comandi che interrogano più di un
+// archivio: una riga per richiesta, nell'ordine in cui partirebbero.
+func emitDryRunRequests(cmd *cobra.Command, requests []map[string]any, note string) error {
+	out := map[string]any{"dry_run": true, "requests": requests}
+	if note != "" {
+		out["note"] = note
+	}
+	return writeJSON(cmd.OutOrStdout(), out)
+}
+
 // emitDryRun prints the would-be query without hitting the network, useful
 // for --dry-run flows and Printing Press verify checks.
 func emitDryRun(cmd *cobra.Command, arc icaro.Archive, p cercaParams) error {
-	expr := icaro.BuildQuery(arc, normalizeParams(arc, p.Params), p.ISISRaw)
-	out := map[string]any{
-		"archive":     arc.Slug,
-		"archive_id":  arc.ID,
-		"isis_query":  expr,
-		"would_fetch": fmt.Sprintf("%s/icaro/default.jsp?icaDB=%s&icaQuery=%s", icaro.DefaultBaseURL, arc.ID, expr),
-		"dry_run":     true,
-	}
+	out := dryRunTarget(arc, normalizeParams(arc, p.Params), p.ISISRaw)
+	out["dry_run"] = true
 	return writeJSON(cmd.OutOrStdout(), out)
 }
 
