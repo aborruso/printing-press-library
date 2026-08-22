@@ -345,7 +345,7 @@ func resolveProvvedimento(ctx context.Context, st *store.Store, id string) (gacl
 // requested format (md, text, html, json). When frontMatter is set and the
 // format is md/text, a YAML front-matter block with the provvedimento metadata
 // is prepended (no-op for json/html, which already carry the fields).
-func runGAGet(cmd *cobra.Command, flags *rootFlags, id, format, sede, nrg, file string, frontMatter bool) error {
+func runGAGet(cmd *cobra.Command, flags *rootFlags, id, format, sede, nrg, file string, frontMatter, meta bool) error {
 	if gaSkip(flags) {
 		return emitSkip(cmd, flags)
 	}
@@ -378,6 +378,22 @@ func runGAGet(cmd *cobra.Command, flags *rootFlags, id, format, sede, nrg, file 
 	docHTML := doc.Raw
 	if p.DataDeposito == "" {
 		p.DataDeposito = gaclient.ExtractDataDeposito(docHTML)
+	}
+	if meta {
+		// Not fatal: the document is already in hand, and the metadata is an
+		// addition to it. Say what is missing and carry on.
+		m, merr := c.Meta(cmd.Context(), p)
+		switch {
+		case merr != nil:
+			fmt.Fprintf(cmd.ErrOrStderr(), "Attenzione: metadati non recuperati per %s: %v\n", noTextLabel(p), merr)
+		case m.Empty():
+			fmt.Fprintf(cmd.ErrOrStderr(), "Attenzione: %s non ha una forma XML con i metadati di registro (formato %s)\n", noTextLabel(p), documentFormat(p))
+		default:
+			p.Meta = &m
+			if p.DataDeposito == "" {
+				p.DataDeposito = m.DataPubblicazione
+			}
+		}
 	}
 	// A PDF's text layer is already plain text; running the HTML converter
 	// over it would mangle what it does not need to touch.
