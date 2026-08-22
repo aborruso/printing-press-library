@@ -146,9 +146,17 @@ func TestCommissioneDossierDryRunNonNormalizzaCodcom(t *testing.T) {
 	if !ok {
 		t.Fatalf("manca la sezione convocazioni: %v", perArchivio)
 	}
-	params, _ := bd["params"].(map[string]any)
-	if params["codcom"] != "6" {
-		t.Errorf("convocazioni: params = %v, atteso codcom=6 come lo manda runCommissioneDossier", params)
+	// `codcom` non e' un campo della POST: il backend vuole un id per
+	// legislatura, risolto leggendo le <option> del form. L'anteprima lo deve
+	// nominare fra i differiti, non spacciarlo per un campo — e in nessun caso
+	// mostrarlo gia' tradotto in `commissione: SESTA`, che e' cio' che
+	// normalizeParams farebbe e runCommissioneDossier non fa.
+	deferred, _ := bd["deferred"].(map[string]any)
+	if deferred["codcom"] == nil {
+		t.Errorf("convocazioni: deferred = %v, atteso codcom fra i filtri risolti al momento della richiesta", deferred)
+	}
+	if deferred["commissione"] != nil {
+		t.Errorf("convocazioni: deferred = %v, `commissione` non e' cio' che il comando manda: manda codcom", deferred)
 	}
 	pareri, ok := perArchivio["pareri"]
 	if !ok {
@@ -190,9 +198,11 @@ func TestDeputatoProfiloDryRunElencaTuttiGliArchivi(t *testing.T) {
 	if ultima["backend"] != "bd" {
 		t.Errorf("resoconti: backend = %v, voluto bd", ultima["backend"])
 	}
-	params, _ := ultima["params"].(map[string]any)
-	if params["testo"] != "Cracolici" {
-		t.Errorf("resoconti: params = %v, atteso il nome come testo libero", params)
+	// Sui resoconti il nome viaggia come testo libero, e il backend /bd/ quel
+	// filtro lo riceve sul campo `$TTEXT`: e' quello che l'anteprima deve dire.
+	post, _ := ultima["post_fields"].(map[string]any)
+	if post["$TTEXT"] != "Cracolici" {
+		t.Errorf("resoconti: post_fields = %v, atteso il nome sul campo $TTEXT del backend", post)
 	}
 }
 
@@ -244,5 +254,45 @@ func TestArgomentoNonNumericoRestaErroreSenzaDryRun(t *testing.T) {
 		if err := c.cmd.Execute(); err == nil {
 			t.Errorf("%s: atteso errore su argomento non numerico senza --dry-run", c.nome)
 		}
+	}
+}
+
+// L'anteprima /bd/ non deve spacciare i filtri della riga di comando per campi
+// della POST: searchBD non li spedisce come li riceve. I nomi passano per
+// spec.fields, i selettori di modalità si aggiungono da spec.static, e `data`,
+// `oratore` e `commissione`/`codcom` si risolvono solo al momento della
+// richiesta. Rilievo P1 di Greptile sulla PR #1790.
+func TestDryRunBDDistingueCampiPostEFiltriDifferiti(t *testing.T) {
+	arc := icaro.BySlug("resoconti")
+	if arc == nil {
+		t.Fatal("archivio resoconti non registrato")
+	}
+	got := dryRunTarget(*arc, map[string]string{
+		"legisl":  "18",
+		"data":    "2026-01-01:2026-08-22",
+		"oratore": "Cracolici",
+	}, "")
+
+	if _, ha := got["params"]; ha {
+		t.Error("`params` non deve esistere: prometteva che i filtri partissero cosi' come scritti")
+	}
+	post, _ := got["post_fields"].(map[string]string)
+	if post["$Ilegislatura"] != "18" {
+		t.Errorf("post_fields = %v, atteso il nome di campo del backend per legisl", post)
+	}
+	if post["$S$TTEXT"] != "all" {
+		t.Errorf("post_fields = %v, mancano i selettori di modalita' che il backend riceve sempre", post)
+	}
+	if _, ha := post["legisl"]; ha {
+		t.Errorf("post_fields = %v: la chiave utente non deve comparire come campo POST", post)
+	}
+	deferred, _ := got["deferred"].(map[string]string)
+	for _, k := range []string{"data", "oratore"} {
+		if deferred[k] == "" {
+			t.Errorf("deferred = %v: %q va nominato, non spacciato per un campo", deferred, k)
+		}
+	}
+	if _, ha := post["anno"]; ha {
+		t.Errorf("post_fields = %v: --data non diventa un campo, diventa un ciclo sugli anni", post)
 	}
 }

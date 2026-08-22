@@ -996,12 +996,19 @@ func commissioneOrdinale(code string) string {
 // cercare il guasto sul backend che non c'entra.
 func dryRunTarget(arc icaro.Archive, params map[string]string, isisRaw string) map[string]any {
 	out := map[string]any{"archive": arc.Slug, "archive_id": arc.ID}
-	if endpoint, ok := icaro.BDEndpoint(icaro.DefaultBaseURL, arc.Slug); ok {
+	if bd, ok := icaro.BDPreview(icaro.DefaultBaseURL, arc.Slug, params); ok {
 		// Su /bd/ non c'è una query ISIS: i filtri viaggiano come campi di una
-		// POST, quindi si mostrano quelli invece di una stringa inventata.
+		// POST. Ma non viaggiano come li scrive l'utente — i nomi cambiano, i
+		// selettori di modalità si aggiungono, e tre filtri si risolvono solo
+		// al momento della richiesta. Stamparli come sono arrivati sarebbe la
+		// stessa bugia dell'endpoint sbagliato, un livello più giù: vedi
+		// icaroclient.BDPreview.
 		out["backend"] = "bd"
-		out["would_post"] = endpoint
-		out["params"] = params
+		out["would_post"] = bd.Endpoint
+		out["post_fields"] = bd.PostFields
+		if len(bd.Deferred) > 0 {
+			out["deferred"] = bd.Deferred
+		}
 		return out
 	}
 	expr := icaro.BuildQuery(arc, params, isisRaw)
