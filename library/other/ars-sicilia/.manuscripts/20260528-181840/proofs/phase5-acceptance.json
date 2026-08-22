@@ -11,7 +11,7 @@
   "auth_context": {
     "type": "none"
   },
-  "source_fingerprint": "15ad53cb547c95c2a4643129ed400155d48afe370d4abcdc3ff395a3a036f821",
+  "source_fingerprint": "2be2abcf5c63f0e51e75dc6721e458680c76f084e106e6c522ae870d08f4b0ce",
   "source_files": {
     "cmd/ars-sicilia-pp-cli/main.go": "c0dfc303980570f5c430e6eb920798649f3825d25b3691778e19507229430b0c",
     "cmd/ars-sicilia-pp-mcp/main.go": "f181e27a68985fa073ecdaec19a264e69a0af84075b1460c097dc0dc4ea4b5db",
@@ -62,10 +62,11 @@
     "internal/cli/doctor.go": "d7acdcf38206c6d4af42fb0ddb93392425061ff1d2a7fcdbd3094014941b93b3",
     "internal/cli/dry_run_test.go": "8563e03450424c2e3803ba135e6ca19b77b492e61bdee155d05e6a0bc4824b48",
     "internal/cli/feedback.go": "2470a2a423cae27c10a337e1a28db1a5cb14504d59b15139f5a238cd2052ee22",
+    "internal/cli/get_shape_test.go": "8ad1a7d3eca1e17246f749ddcad4f54a97f99866b5a846377fd246f7fdd20077",
     "internal/cli/gruppi.go": "02feaab867341e8f5274c6f935003b628aa13bc36ba98167d31565397819ec70",
     "internal/cli/helpers.go": "9a17330ca156263b4eb1652db2d5ee365e105c0c404b2fc9eac97e6480067970",
     "internal/cli/html_extract.go": "7355bbacae707a4112fee80a70d01f84c9327170cf2351c88ac6a3a6e930943b",
-    "internal/cli/icaro_helpers.go": "0a53031bcc43ac2bb37a867d4d2a5b02a82dceacec11b71c6ac8be61848ab758",
+    "internal/cli/icaro_helpers.go": "0ea59b08ad7518f7a1894d6e3af1aea5e3273e3b0f7fc4c6fc2d5f93a7c5e4cc",
     "internal/cli/icaro_helpers_test.go": "0093c63922dfbf46038bdff5eef80720a3caccc4807d3c2d9eea99da3145afe1",
     "internal/cli/import.go": "6e2ccefc32e31cf11ffe7cc5bd98d1d019cd5a81d1f63b976f4eddea77da03fc",
     "internal/cli/interpellanze.go": "6247903bf71e3137909aa93a978a18fef8d888a2e9f6add068e47ee5fff4d6c5",

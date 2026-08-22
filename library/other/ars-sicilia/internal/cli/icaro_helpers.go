@@ -848,18 +848,70 @@ func runGetExtra(cmd *cobra.Command, flags *rootFlags, archiveSlug string, legis
 		nota += fmt.Sprintf("; gli altri si vedono con `%s cerca --legisl %d --numero %d`.", arc.Slug, legisl, numero)
 		fmt.Fprintln(os.Stderr, "hint: "+nota)
 	}
-	if len(firm) > 0 || stralcio != nil || nota != "" {
-		return printJSONFiltered(cmd.OutOrStdout(), struct {
-			icaro.Doc
-			Firmatari []firmatario `json:"firmatari,omitempty"`
-			Stralcio  *stralcioOut `json:"stralcio,omitempty"`
-			Nota      string       `json:"nota,omitempty"`
-		}{doc, firm, stralcio, nota}, flags)
-	}
 	// printJSONFiltered (not the bare writeJSON) so --select/--compact/--csv
 	// behave the same as on generator-emitted commands — writeJSON always
 	// dumped the full payload regardless of --select.
-	return printJSONFiltered(cmd.OutOrStdout(), doc, flags)
+	return printJSONFiltered(cmd.OutOrStdout(), getOut{
+		Doc:       doc,
+		Legisl:    legisl,
+		Numero:    numero,
+		Data:      strings.TrimSpace(doc.Fields["Data"]),
+		Titolo:    titoloDoc(doc),
+		Fonte:     "icaro",
+		Firmatari: firm,
+		Stralcio:  stralcio,
+		Nota:      nota,
+	}, flags)
+}
+
+// getOut è la forma di `<archivio> get`, ed esiste per farne UNA sola.
+//
+// I tre archivi migrati a /bd/ hanno due percorsi: se l'indice Icaro il record
+// ce l'ha si risponde con la scheda Icaro, altrimenti con la scheda /bd/
+// (bdSchedaFallback). Le due uscite avevano forme diverse — la prima teneva
+// numero e data dentro `fields` (`fields.Numero`, `fields.Data`), la seconda in
+// radice — quindi lo stesso `--select numero,data_iso,titolo` rendeva sulla
+// seduta 268 e tornava `{}` sulla 147. Con exit 0: chi legge solo stdout
+// conclude che il documento non ha quei dati, o che non esiste.
+//
+// E il confine fra i due percorsi non è una proprietà del documento: è dove si
+// è fermato l'indice Icaro (il 2026-08-22, sui resoconti, alla seduta 232 del
+// 25.02.2026 — misurato: 232 annidata, 233 piatta). Si sposta quando il portale
+// aggiorna l'indice, quindi non è nemmeno una regola che si possa documentare:
+// la stessa seduta può cambiare forma da un giorno all'altro.
+//
+// Le coordinate stanno quindi in radice su entrambi i rami, con gli stessi nomi
+// e gli stessi tipi della scheda /bd/. `legisl` e `numero` vengono dagli
+// argomenti del comando, che sono interi e autorevoli, non da un campo di testo
+// da riparsare. `data` esce grezza come la scrive la fonte, così `data_iso` la
+// affianca il passaggio che lo fa già per tutti gli altri payload
+// (iniettaDataISO). `fields` resta dov'è: chi lo legge continua a funzionare,
+// perché questa è un'aggiunta, non uno spostamento.
+type getOut struct {
+	icaro.Doc
+	Legisl int    `json:"legisl,omitempty"`
+	Numero int    `json:"numero,omitempty"`
+	Data   string `json:"data,omitempty"`
+	Titolo string `json:"titolo,omitempty"`
+	// Fonte dice quale dei due percorsi ha risposto, come già faceva la scheda
+	// /bd/. Ora che la forma è una sola servirebbe a poco distinguere a occhio,
+	// e senza il marcatore non si distinguerebbe affatto: `body` presente o
+	// assente è un indizio, non una risposta.
+	Fonte     string       `json:"fonte,omitempty"`
+	Firmatari []firmatario `json:"firmatari,omitempty"`
+	Stralcio  *stralcioOut `json:"stralcio,omitempty"`
+	Nota      string       `json:"nota,omitempty"`
+}
+
+// titoloDoc sceglie il titolo dell'atto: la fonte lo mette nel titolo della
+// scheda su alcuni archivi e solo nel campo `Titolo` su altri — sui resoconti
+// la scheda ha titolo vuoto e il campo pieno («Ordine del giorno della seduta
+// successiva»), sui ddl è il contrario.
+func titoloDoc(doc icaro.Doc) string {
+	if t := strings.TrimSpace(doc.Title); t != "" {
+		return t
+	}
+	return strings.TrimSpace(doc.Fields["Titolo"])
 }
 
 // normalizeParams rewrites a few flag inputs to the shape the portal expects:
