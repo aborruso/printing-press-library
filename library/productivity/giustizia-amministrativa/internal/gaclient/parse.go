@@ -186,6 +186,19 @@ func isErrorPage(body []byte) bool {
 		return false
 	}
 	low := bytes.ToLower(trimmed)
+	// A real provvedimento served as HTML opens with the portal's own markup:
+	// the body class and the registry lines. Checking for them first keeps a
+	// ruling that happens to discuss a missing web page from being discarded
+	// as the error page.
+	for _, marker := range [][]byte{
+		[]byte(`class="corpo"`),
+		[]byte("reg.prov"),
+		[]byte("reg.ric"),
+	} {
+		if bytes.Contains(low, marker) {
+			return false
+		}
+	}
 	for _, marker := range [][]byte{
 		[]byte("pagina non trovata"),
 		[]byte("documento che stai cercando non esiste"),

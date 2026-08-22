@@ -31,6 +31,14 @@ della stessa pagina resa da `/visualizzah2/`, e porta cio' che la resa perde: ur
 seconda richiesta. Sui provvedimenti in PDF non c'e' XML, e il comando lo dichiara invece di
 inventare campi.
 
+Il primo rimedio all'opt-in era sbagliato in verso opposto, e l'ha visto la review: azzerando i
+metadati *prima* della scrittura, un `get` semplice li cancellava dallo store e costringeva il
+`--meta` successivo a riscaricarli. Ora si azzera solo la copia che va in output, dopo la
+scrittura. Cercando lo stesso schema altrove sono usciti altri due punti che nessuno aveva
+segnalato: `persistProvvedimenti` conservava il testo ma non i metadati, quindi bastava una
+ricerca a cancellarli; e `corpus build`, che risolve dallo store, avrebbe scritto schede
+diverse fra loro a seconda di quali provvedimenti qualcuno avesse gia' letto con `--meta`.
+
 Tre rilievi della review, tutti veri: i metadati salvati nello store riaffioravano in un `get`
 senza `--meta` (opt-in che valeva solo la prima volta), `data_pubblicazione` era documentata ma
 non emessa nel front matter, e l'`action` letta dalla pagina andava ripulita dall'escape HTML

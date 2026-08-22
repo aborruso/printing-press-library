@@ -98,6 +98,10 @@ func TestIsErrorPage(t *testing.T) {
 		"xml":  []byte(`<?xml version="1.0" encoding="UTF-8"?><GA><Provvedimento><meta id="1"/></Provvedimento></GA>`),
 		"pdf":  []byte("%PDF-1.4\n1 0 obj\n"),
 		"html": []byte(`<html><body class="corpo">Pubblicato il 14/08/2026<p class="registri">N. 14259/2026 REG.PROV.COLL.</p></body></html>`),
+		// Una sentenza che parla di una pagina web mancante resta una
+		// sentenza: i marcatori del portale vengono prima di quelli d'errore.
+		"sentenza sul tema": []byte(`<html><body class="corpo">Pubblicato il 14/08/2026<p class="registri">N. 1/2026 REG.PROV.COLL.</p>` +
+			`<p>il ricorrente lamenta che l'atto era irraggiungibile: il portale mostrava "Pagina non trovata"</p></body></html>`),
 	}
 	for name, body := range cases {
 		if isErrorPage(body) {
