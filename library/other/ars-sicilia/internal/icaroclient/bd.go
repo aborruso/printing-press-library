@@ -165,7 +165,7 @@ func BDPreview(baseURL, slug string, params map[string]string) (BDPreviewResult,
 		}
 		switch k {
 		case "data":
-			out.Deferred[k] = "il backend non ha un campo data: l'intervallo diventa una richiesta per ciascun anno in `anni` (campo `anno`), piu' un filtro sulle righe ricevute per tagliare i giorni fuori intervallo. Dentro ogni anno `page` parte da 1 e cresce di uno fino al numero di pagine che la risposta dichiara, o finche' --limit e' pieno: quel numero sta nella risposta, quindi le pagine oltre la prima non sono anteprimabili"
+			out.Deferred[k] = "il backend non ha un campo data: l'intervallo diventa una richiesta per ciascun anno in `anni`, che sono i valori che il campo `anno` prende uno per giro — nei campi c'e' il primo, cioe' quello della prima richiesta — piu' un filtro sulle righe ricevute per tagliare i giorni fuori intervallo. Dentro ogni anno `page` parte da 1 e cresce di uno fino al numero di pagine che la risposta dichiara, o finche' --limit e' pieno: quel numero sta nella risposta, quindi le pagine oltre la prima non sono anteprimabili"
 			// Stessa funzione del percorso vivo, cosi' l'anteprima non puo'
 			// divergere dall'elenco che searchBD scorre davvero.
 			if anni, keep := bdDateFilter(v); anni != nil && keep != nil {
@@ -196,8 +196,23 @@ func BDPreview(baseURL, slug string, params map[string]string) (BDPreviewResult,
 		}
 		out.Anni = keep
 		if len(out.Anni) == 0 {
-			out.Deferred["anno"] = "fuori dall'intervallo di --data: nessun anno da interrogare, la ricerca non restituirebbe nulla"
+			// searchBD in questo caso esce senza mandare nulla. Lasciare `anno`
+			// fra i campi mostrerebbe una richiesta plausibile che non parte:
+			// si toglie, e il motivo resta scritto fra i differiti.
+			delete(out.PostFields, "anno")
+			out.Deferred["anno"] = "fuori dall'intervallo di --data: nessun anno da interrogare, la ricerca non restituirebbe nulla e nessuna richiesta partirebbe"
 		}
+	}
+	// Il campo `anno` va fra i campi, non solo nell'elenco a parte: il ciclo lo
+	// imposta prima di OGNI post, e senza, rigiocando i campi mostrati si manda
+	// una richiesta senza vincolo d'anno — cioe' l'archivio intero invece della
+	// fetta che il comando chiede. Stesso ragionamento di `page`: si mette il
+	// valore della PRIMA richiesta, che e' l'unico dicibile senza indovinare,
+	// e l'elenco `Anni` dice quali altri valori prende quel campo, uno per giro.
+	// Dopo l'intersezione con --anno, cosi' il valore mostrato e' quello che
+	// partirebbe davvero; se non resta nessun anno non si mostra nulla.
+	if len(out.Anni) > 0 {
+		out.PostFields["anno"] = out.Anni[0]
 	}
 	return out, true
 }

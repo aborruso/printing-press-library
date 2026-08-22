@@ -292,8 +292,19 @@ func TestDryRunBDDistingueCampiPostEFiltriDifferiti(t *testing.T) {
 			t.Errorf("deferred = %v: %q va nominato, non spacciato per un campo", deferred, k)
 		}
 	}
-	if _, ha := post["anno"]; ha {
-		t.Errorf("post_fields = %v: --data non diventa un campo, diventa un ciclo sugli anni", post)
+	// `--data` non diventa un campo con il suo valore: diventa un ciclo, e il
+	// campo che ne esce e' `anno` con UN anno per giro (qui il primo). Il valore
+	// grezzo dell'intervallo non deve comparire da nessuna parte fra i campi.
+	if post["anno"] != "2026" {
+		t.Errorf("post_fields = %v, atteso anno=2026, cioe' il primo giro del ciclo", post)
+	}
+	for k, v := range post {
+		if v == "2026-01-01:2026-08-22" {
+			t.Errorf("post_fields[%q] = %q: l'intervallo grezzo non e' un valore che il backend riceve", k, v)
+		}
+	}
+	if _, ha := post["data"]; ha {
+		t.Errorf("post_fields = %v: `data` non e' un campo del backend", post)
 	}
 }
 
@@ -324,6 +335,12 @@ func TestDryRunBDEnumeraGliAnniDellIntervallo(t *testing.T) {
 	if post, _ := got["post_fields"].(map[string]string); post["page"] != "1" {
 		t.Errorf("post_fields = %v, atteso page=1 sulla prima richiesta di ogni anno", got["post_fields"])
 	}
+	// `anno` va fra i CAMPI, non solo nell'elenco a parte: il ciclo lo imposta
+	// prima di ogni post, e senza, rigiocando i campi mostrati si manda una
+	// richiesta senza vincolo d'anno — l'archivio intero invece della fetta.
+	if post, _ := got["post_fields"].(map[string]string); post["anno"] != "2026" {
+		t.Errorf("post_fields = %v, atteso anno=2026 (il primo giro)", got["post_fields"])
+	}
 
 	// --anno e --data scrivono lo stesso campo server: si intersecano, come nel
 	// percorso vivo. Annunciare giri che non partirebbero e' lo stesso difetto.
@@ -343,6 +360,11 @@ func TestDryRunBDEnumeraGliAnniDellIntervallo(t *testing.T) {
 	if deferred["anno"] == "" {
 		t.Errorf("deferred = %v: va detto che nessun anno resta da interrogare", deferred)
 	}
+	// In quel caso searchBD non manda nulla: mostrare `anno` fra i campi
+	// annuncerebbe una richiesta plausibile che non parte.
+	if post, _ := got["post_fields"].(map[string]string); post["anno"] != "" {
+		t.Errorf("post_fields = %v: senza anni da interrogare `anno` non deve comparire", got["post_fields"])
+	}
 
 	// Senza --data non c'e' nessun ciclo, e le chiavi non devono comparire —
 	// ma `page` si', perche' quella richiesta parte comunque paginata.
@@ -352,5 +374,11 @@ func TestDryRunBDEnumeraGliAnniDellIntervallo(t *testing.T) {
 	}
 	if post, _ := got["post_fields"].(map[string]string); post["page"] != "1" {
 		t.Errorf("post_fields = %v, `page` va dichiarato anche senza --data", got["post_fields"])
+	}
+
+	// --anno da solo, senza --data: e' un filtro come gli altri e resta un campo.
+	got = dryRunTarget(*arc, map[string]string{"legisl": "18", "anno": "2025"}, "")
+	if post, _ := got["post_fields"].(map[string]string); post["anno"] != "2025" {
+		t.Errorf("post_fields = %v, atteso anno=2025 anche senza --data", got["post_fields"])
 	}
 }

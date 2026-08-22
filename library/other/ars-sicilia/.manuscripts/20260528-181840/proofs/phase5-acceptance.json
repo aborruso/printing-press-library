@@ -11,7 +11,7 @@
   "auth_context": {
     "type": "none"
   },
-  "source_fingerprint": "2fae2a1603b18c639a710e0f33382df8c1f9c72a3acc82e3d4af61cd71633a07",
+  "source_fingerprint": "3f2c69bd2d0b63b2817a17e7f0a60ecfab0868da8e49770fb61837c58229d302",
   "source_files": {
     "cmd/ars-sicilia-pp-cli/main.go": "c0dfc303980570f5c430e6eb920798649f3825d25b3691778e19507229430b0c",
     "cmd/ars-sicilia-pp-mcp/main.go": "f181e27a68985fa073ecdaec19a264e69a0af84075b1460c097dc0dc4ea4b5db",
@@ -60,7 +60,7 @@
     "internal/cli/deputato_profilo.go": "81a1118a9aa6db292135cddbeeab3c2428229e14e350685582da08aa845b3275",
     "internal/cli/deputato_profilo_test.go": "4c297809807340c134aa0accca8589f87773a85a77e31b9d808703954b514f16",
     "internal/cli/doctor.go": "d7acdcf38206c6d4af42fb0ddb93392425061ff1d2a7fcdbd3094014941b93b3",
-    "internal/cli/dry_run_test.go": "aaffd17cd006f4b5d11af22ce858f5cb73429a2bfb9ca5b9924a8a2d6c607ee7",
+    "internal/cli/dry_run_test.go": "6bee08ba8d23fbaebc4ddea1f2b29447bbd9364f2438a32737ca08ff08a8d06a",
     "internal/cli/feedback.go": "2470a2a423cae27c10a337e1a28db1a5cb14504d59b15139f5a238cd2052ee22",
     "internal/cli/get_shape_test.go": "8ad1a7d3eca1e17246f749ddcad4f54a97f99866b5a846377fd246f7fdd20077",
     "internal/cli/gruppi.go": "02feaab867341e8f5274c6f935003b628aa13bc36ba98167d31565397819ec70",
@@ -136,7 +136,7 @@
     "internal/cliutil/verifyenv.go": "6be7eb30c5a1ded54a8d7608a0d3ccee55d00ab787413b3ac7944fd927779a0f",
     "internal/config/config.go": "c4f8364ab9c245f2b1a19cba0c14b4ad35af06fb39c33b83fe976e51f59a230c",
     "internal/icaroclient/archives.go": "a517823efce412b34a6193c62597a832f09945eac59c2035fd3a13711b50149b",
-    "internal/icaroclient/bd.go": "65632237604f87e697c3602418c1e235ca2501e97b917ada6f50b1f1fce6ce1a",
+    "internal/icaroclient/bd.go": "4727c67a59380d40c19336433c2d8557104418527cbb2f1f0b8df765a558bb6e",
     "internal/icaroclient/bd_test.go": "b741eeb61c186890863c7cf0c477d8867b8333e5d03af8aebe79c8745624977e",
     "internal/icaroclient/client.go": "5491863bfeb03831625b6fd47c1bbfd77218f2b4f4728be22ec5c84b2bdc2ba7",
     "internal/icaroclient/edem.go": "857d84d77956a543f08a324c7d082bbbe100c00b3b6136eb7a9f35a658a92cc8",
