@@ -31,6 +31,12 @@ della stessa pagina resa da `/visualizzah2/`, e porta cio' che la resa perde: ur
 seconda richiesta. Sui provvedimenti in PDF non c'e' XML, e il comando lo dichiara invece di
 inventare campi.
 
+Tre rilievi della review, tutti veri: i metadati salvati nello store riaffioravano in un `get`
+senza `--meta` (opt-in che valeva solo la prima volta), `data_pubblicazione` era documentata ma
+non emessa nel front matter, e l'`action` letta dalla pagina andava ripulita dall'escape HTML
+dei separatori — oggi il portale li scrive nudi, ma il nostro stesso test li aveva escapati
+senza che me ne accorgessi.
+
 Copertura misurata su 10 provvedimenti di 10 sedi diverse, dal 2010 al 2026: estensore, urn e
 data di pubblicazione 10 su 10; presidente 5 su 10 (nel documento la sua firma e' spesso
 vuota); oggetto di registro 4 su 10. `omissis` risulta vero sui provvedimenti anonimizzati.

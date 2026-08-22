@@ -379,6 +379,11 @@ func runGAGet(cmd *cobra.Command, flags *rootFlags, id, format, sede, nrg, file 
 	if p.DataDeposito == "" {
 		p.DataDeposito = gaclient.ExtractDataDeposito(docHTML)
 	}
+	// The store keeps whatever metadata a previous `--meta` run fetched, and
+	// resolveProvvedimento loads it back. Emitting it here would make the
+	// output of a plain `get` depend on whether someone once asked for the
+	// metadata: opt-in has to mean opt-in on every call.
+	p.Meta = nil
 	if meta {
 		// Not fatal: the document is already in hand, and the metadata is an
 		// addition to it. Say what is missing and carry on.
@@ -390,6 +395,12 @@ func runGAGet(cmd *cobra.Command, flags *rootFlags, id, format, sede, nrg, file 
 			fmt.Fprintf(cmd.ErrOrStderr(), "Attenzione: %s non ha una forma XML con i metadati di registro (formato %s)\n", noTextLabel(p), documentFormat(p))
 		default:
 			p.Meta = &m
+			// Same date under two names: the portal prints it as "Pubblicato
+			// il" in the document, and that wording is one of the two that
+			// ExtractDataDeposito already reads into data_deposito. The XML
+			// value fills the field only where the document states none —
+			// measured on a sample of 10, one parere of the Consiglio di
+			// Stato where the date is in the registry and not in the text.
 			if p.DataDeposito == "" {
 				p.DataDeposito = m.DataPubblicazione
 			}

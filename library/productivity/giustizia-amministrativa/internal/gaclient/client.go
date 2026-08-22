@@ -192,7 +192,11 @@ func (c *Client) handshake(ctx context.Context) error {
 // them survives as long as we replay what the page itself declares.
 func parseForm(body []byte) (action, portlet string) {
 	if m := reFormAction.FindSubmatch(body); m != nil {
-		action = string(m[1])
+		// The portal writes the separators bare, but an HTML attribute is
+		// allowed to escape them: left as "&amp;" the query would parse into
+		// keys named "amp;p_p_lifecycle", and the search would fail after a
+		// handshake that looked successful.
+		action = strings.ReplaceAll(string(m[1]), "&amp;", "&")
 	}
 	if m := rePortletID.FindSubmatch(body); m != nil {
 		portlet = string(m[1])

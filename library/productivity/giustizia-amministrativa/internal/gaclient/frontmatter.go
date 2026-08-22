@@ -36,6 +36,7 @@ func FrontMatter(p Provvedimento) string {
 	addStr("formato", p.Formato)
 	addStr("url", p.URL)
 	if p.Meta != nil {
+		addStr("data_pubblicazione", p.Meta.DataPubblicazione)
 		addStr("oggetto", p.Meta.Oggetto)
 		addStr("presidente", p.Meta.Presidente)
 		addStr("estensore", p.Meta.Estensore)

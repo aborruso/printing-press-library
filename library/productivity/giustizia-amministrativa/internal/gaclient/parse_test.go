@@ -114,6 +114,11 @@ func TestParseFormLeggeIstanzaDallaPagina(t *testing.T) {
 		`p_p_lifecycle=1&p_p_state=normal&p_p_mode=view&_decisioni_pareri_web_DecisioniPareriWebPortlet_INSTANCE_NuOvOhAsH_javax.portlet.action=search&p_auth=abc123" ` +
 		`id="_decisioni_pareri_web_DecisioniPareriWebPortlet_INSTANCE_NuOvOhAsH_provvedimentiForm"></form>`)
 	action, portlet := parseForm(page)
+	// The attribute above escapes its separators: left as "&amp;" the query
+	// would parse into keys named "amp;p_p_lifecycle".
+	if strings.Contains(action, "&amp;") {
+		t.Errorf("separatori ancora escapati nell'action: %q", action)
+	}
 	if portlet != "decisioni_pareri_web_DecisioniPareriWebPortlet_INSTANCE_NuOvOhAsH" {
 		t.Errorf("portlet id letto = %q", portlet)
 	}
@@ -128,6 +133,14 @@ func TestParseFormLeggeIstanzaDallaPagina(t *testing.T) {
 	url := c.buildSearchURL(SearchOptions{Testo: "appalto"}, 1)
 	if !strings.Contains(url, "_INSTANCE_NuOvOhAsH_searchtextProvvedimenti=appalto") {
 		t.Errorf("i campi non usano il namespace della pagina: %s", url)
+	}
+	for _, atteso := range []string{"p_p_lifecycle=1", "p_p_state=normal", "p_p_mode=view"} {
+		if !strings.Contains(url, atteso) {
+			t.Errorf("parametro %s perso dall'action: %s", atteso, url)
+		}
+	}
+	if strings.Contains(url, "amp%3B") || strings.Contains(url, "amp;") {
+		t.Errorf("chiavi malformate dall'escape HTML: %s", url)
 	}
 
 	// No form on the page: the constants keep the client working.
