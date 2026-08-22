@@ -1046,9 +1046,15 @@ func commissioneOrdinale(code string) string {
 // quel comando non interroga. Su un flag che esiste per diagnosticare, un
 // endpoint sbagliato detto con sicurezza è peggio del silenzio: manda a
 // cercare il guasto sul backend che non c'entra.
-func dryRunTarget(arc icaro.Archive, params map[string]string, isisRaw string) map[string]any {
+func dryRunTarget(arc icaro.Archive, params map[string]string, isisRaw string) (map[string]any, error) {
 	out := map[string]any{"archive": arc.Slug, "archive_id": arc.ID}
 	if bd, ok := icaro.BDPreview(icaro.DefaultBaseURL, arc.Slug, params); ok {
+		// Un filtro che non si parsa fa fallire searchBD prima di qualunque
+		// richiesta: l'anteprima esce con lo stesso errore invece di stampare
+		// una richiesta che non partirebbe.
+		if bd.Invalid != nil {
+			return nil, usageErr(bd.Invalid)
+		}
 		// Su /bd/ non c'è una query ISIS: i filtri viaggiano come campi di una
 		// POST. Ma non viaggiano come li scrive l'utente — i nomi cambiano, i
 		// selettori di modalità si aggiungono, e tre filtri si risolvono solo
@@ -1068,13 +1074,13 @@ func dryRunTarget(arc icaro.Archive, params map[string]string, isisRaw string) m
 		if len(bd.Deferred) > 0 {
 			out["deferred"] = bd.Deferred
 		}
-		return out
+		return out, nil
 	}
 	expr := icaro.BuildQuery(arc, params, isisRaw)
 	out["backend"] = "icaro"
 	out["isis_query"] = expr
 	out["would_fetch"] = fmt.Sprintf("%s/icaro/default.jsp?icaDB=%s&icaQuery=%s", icaro.DefaultBaseURL, arc.ID, expr)
-	return out
+	return out, nil
 }
 
 // dryRunTargetBySlug è dryRunTarget per i comandi che conoscono l'archivio per
@@ -1087,10 +1093,10 @@ func dryRunTarget(arc icaro.Archive, params map[string]string, isisRaw string) m
 // backend /bd/. Applicarlo d'ufficio farebbe annunciare all'anteprima un
 // parametro diverso da quello che parte davvero, cioè il difetto che questa
 // anteprima esiste per non avere. Chi normalizza a runtime lo fa anche qui.
-func dryRunTargetBySlug(slug string, params map[string]string) map[string]any {
+func dryRunTargetBySlug(slug string, params map[string]string) (map[string]any, error) {
 	arc := icaro.BySlug(slug)
 	if arc == nil {
-		return nil
+		return nil, nil
 	}
 	return dryRunTarget(*arc, params, "")
 }
@@ -1119,7 +1125,10 @@ func emitDryRun(cmd *cobra.Command, arc icaro.Archive, p cercaParams) error {
 	if !icaro.IsBDArchive(arc.Slug) {
 		searchParams = normalizeParams(arc, p.Params)
 	}
-	out := dryRunTarget(arc, searchParams, p.ISISRaw)
+	out, err := dryRunTarget(arc, searchParams, p.ISISRaw)
+	if err != nil {
+		return err
+	}
 	out["dry_run"] = true
 	return writeJSON(cmd.OutOrStdout(), out)
 }

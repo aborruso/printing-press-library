@@ -99,10 +99,10 @@ func emitDeputatoProfiloDryRun(cmd *cobra.Command, name string, legisl int, data
 	// runDeputatoProfilo passa da normalizeParams su ogni archivio: l'anteprima
 	// fa lo stesso, altrimenti annuncia una --data in formato diverso da quello
 	// che poi viaggia.
-	target := func(slug string, p map[string]string) map[string]any {
+	target := func(slug string, p map[string]string) (map[string]any, error) {
 		arc := icaro.BySlug(slug)
 		if arc == nil {
-			return nil
+			return nil, nil
 		}
 		return dryRunTargetBySlug(slug, normalizeParams(*arc, p))
 	}
@@ -110,13 +110,21 @@ func emitDeputatoProfiloDryRun(cmd *cobra.Command, name string, legisl int, data
 	for _, slug := range profiloFirmaArchives {
 		p := base()
 		p["firmatario"] = name
-		if t := target(slug, p); t != nil {
+		t, err := target(slug, p)
+		if err != nil {
+			return err
+		}
+		if t != nil {
 			requests = append(requests, t)
 		}
 	}
 	p := base()
 	p["testo"] = name
-	if t := target("resoconti", p); t != nil {
+	t, err := target("resoconti", p)
+	if err != nil {
+		return err
+	}
+	if t != nil {
 		requests = append(requests, t)
 	}
 	return emitDryRunRequests(cmd, requests, "una richiesta per archivio: il nome va come firmatario (FIRMAT) sugli archivi degli atti e come testo libero sui resoconti, dove l'oratore non è un campo filtrabile.")

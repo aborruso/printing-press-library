@@ -87,7 +87,10 @@ func emitLeggeCronologiaDryRun(cmd *cobra.Command, legisl, numero, anno int) err
 	if anno != 0 {
 		params["anno"] = itoa(anno)
 	}
-	target := dryRunTargetBySlug("leggi", params)
+	target, err := dryRunTargetBySlug("leggi", params)
+	if err != nil {
+		return err
+	}
 	if target == nil {
 		return fmt.Errorf("archivio leggi non disponibile")
 	}

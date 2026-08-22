@@ -64,7 +64,7 @@ func TestDryRunTargetUsaIlBackendGiusto(t *testing.T) {
 		if arc == nil {
 			t.Fatalf("archivio %s non registrato", c.slug)
 		}
-		got := dryRunTarget(*arc, map[string]string{"legisl": "18"}, "")
+		got, _ := dryRunTarget(*arc, map[string]string{"legisl": "18"}, "")
 		if got["backend"] != c.vuoleBE {
 			t.Errorf("%s: backend = %v, voluto %s", c.slug, got["backend"], c.vuoleBE)
 		}
@@ -267,7 +267,7 @@ func TestDryRunBDDistingueCampiPostEFiltriDifferiti(t *testing.T) {
 	if arc == nil {
 		t.Fatal("archivio resoconti non registrato")
 	}
-	got := dryRunTarget(*arc, map[string]string{
+	got, _ := dryRunTarget(*arc, map[string]string{
 		"legisl":  "18",
 		"data":    "2026-01-01:2026-08-22",
 		"oratore": "Cracolici",
@@ -318,7 +318,7 @@ func TestDryRunBDEnumeraGliAnniDellIntervallo(t *testing.T) {
 		t.Fatal("archivio resoconti non registrato")
 	}
 
-	got := dryRunTarget(*arc, map[string]string{"legisl": "18", "data": "2024-06-01:2026-08-22"}, "")
+	got, _ := dryRunTarget(*arc, map[string]string{"legisl": "18", "data": "2024-06-01:2026-08-22"}, "")
 	anni, _ := got["anni"].([]string)
 	if len(anni) != 3 {
 		t.Fatalf("anni = %v, volute le tre annate dell'intervallo", got["anni"])
@@ -344,7 +344,7 @@ func TestDryRunBDEnumeraGliAnniDellIntervallo(t *testing.T) {
 
 	// --anno e --data scrivono lo stesso campo server: si intersecano, come nel
 	// percorso vivo. Annunciare giri che non partirebbero e' lo stesso difetto.
-	got = dryRunTarget(*arc, map[string]string{"legisl": "18", "data": "2024-06-01:2026-08-22", "anno": "2025"}, "")
+	got, _ = dryRunTarget(*arc, map[string]string{"legisl": "18", "data": "2024-06-01:2026-08-22", "anno": "2025"}, "")
 	anni, _ = got["anni"].([]string)
 	if len(anni) != 1 || anni[0] != "2025" {
 		t.Errorf("anni = %v, voluto il solo 2025 dopo l'intersezione con --anno", got["anni"])
@@ -352,7 +352,7 @@ func TestDryRunBDEnumeraGliAnniDellIntervallo(t *testing.T) {
 
 	// --anno fuori dall'intervallo: la ricerca non restituirebbe nulla, e
 	// l'anteprima lo deve dire invece di mostrare una richiesta plausibile.
-	got = dryRunTarget(*arc, map[string]string{"legisl": "18", "data": "2024-06-01:2024-12-31", "anno": "2026"}, "")
+	got, _ = dryRunTarget(*arc, map[string]string{"legisl": "18", "data": "2024-06-01:2024-12-31", "anno": "2026"}, "")
 	if anni, _ := got["anni"].([]string); len(anni) != 0 {
 		t.Errorf("anni = %v, atteso vuoto: il 2026 e' fuori dall'intervallo", got["anni"])
 	}
@@ -368,7 +368,7 @@ func TestDryRunBDEnumeraGliAnniDellIntervallo(t *testing.T) {
 
 	// Senza --data non c'e' nessun ciclo, e le chiavi non devono comparire —
 	// ma `page` si', perche' quella richiesta parte comunque paginata.
-	got = dryRunTarget(*arc, map[string]string{"legisl": "18"}, "")
+	got, _ = dryRunTarget(*arc, map[string]string{"legisl": "18"}, "")
 	if _, ha := got["anni"]; ha {
 		t.Errorf("senza --data `anni` non deve esistere: %v", got)
 	}
@@ -377,7 +377,7 @@ func TestDryRunBDEnumeraGliAnniDellIntervallo(t *testing.T) {
 	}
 
 	// --anno da solo, senza --data: e' un filtro come gli altri e resta un campo.
-	got = dryRunTarget(*arc, map[string]string{"legisl": "18", "anno": "2025"}, "")
+	got, _ = dryRunTarget(*arc, map[string]string{"legisl": "18", "anno": "2025"}, "")
 	if post, _ := got["post_fields"].(map[string]string); post["anno"] != "2025" {
 		t.Errorf("post_fields = %v, atteso anno=2025 anche senza --data", got["post_fields"])
 	}
@@ -429,5 +429,38 @@ func TestEmitDryRunNonNormalizzaSugliArchiviBD(t *testing.T) {
 	}
 	if q, _ := got["isis_query"].(string); !strings.Contains(q, "260101/260822.DATPRE") {
 		t.Errorf("isis_query = %q: su Icaro --data va normalizzata in AAMMGG come fa runCerca", q)
+	}
+}
+
+// Un filtro che non si parsa fa fallire searchBD PRIMA di mandare qualunque
+// cosa. L'anteprima deve fallire allo stesso modo: stampare una richiesta
+// plausibile per un comando che non parte e' il caso peggiore di tutti —
+// descrive una richiesta che non esistera' mai. Rilievo P1 di Greptile sulla
+// PR #1790.
+func TestDryRunBDDataMalformataFallisceComeIlVivo(t *testing.T) {
+	arc := icaro.BySlug("resoconti")
+	if arc == nil {
+		t.Fatal("archivio resoconti non registrato")
+	}
+	got, err := dryRunTarget(*arc, map[string]string{"legisl": "18", "data": "2025-01-01:garbage"}, "")
+	if err == nil {
+		t.Fatalf("atteso errore sulla data malformata, invece l'anteprima ha prodotto %v", got)
+	}
+	if got != nil {
+		t.Errorf("con l'errore non si deve produrre nessuna anteprima: %v", got)
+	}
+	// Stesso codice d'uscita del percorso vivo: e' un errore d'uso, non un
+	// guasto, e chi rama sul codice non deve vedere una differenza fra i due.
+	var codeErr *cliError
+	if !As(err, &codeErr) || codeErr.code != 2 {
+		t.Errorf("err = %v: atteso un usage error (exit 2), come sul percorso vivo", err)
+	}
+	if !strings.Contains(err.Error(), "--data") {
+		t.Errorf("err = %v: deve nominare il filtro incriminato", err)
+	}
+
+	// Una data valida continua a produrre l'anteprima.
+	if _, err := dryRunTarget(*arc, map[string]string{"legisl": "18", "data": "2024-06-01:2026-08-22"}, ""); err != nil {
+		t.Errorf("data valida: errore inatteso %v", err)
 	}
 }

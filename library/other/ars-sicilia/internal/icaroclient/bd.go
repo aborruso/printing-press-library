@@ -127,6 +127,13 @@ type BDPreviewResult struct {
 	Endpoint   string
 	PostFields map[string]string
 	Deferred   map[string]string
+	// Invalid non e' nil quando un filtro non si parsa: searchBD in quel caso
+	// esce con InvalidParamError PRIMA di mandare qualunque cosa, e l'anteprima
+	// deve fare lo stesso. Ignorare l'errore e stampare comunque una richiesta
+	// plausibile e' il peggiore dei casi: `--data 2025-01-01:garbage --dry-run`
+	// diceva «ecco cosa parte», mentre senza --dry-run lo stesso comando
+	// fallisce e non parte nulla.
+	Invalid error
 	// Anni sono i valori che il campo `anno` prende, uno per giro: con --data
 	// searchBD non manda UNA richiesta, ne manda una per anno dell'intervallo
 	// (e dentro ciascuna una per pagina). Dire solo «l'intervallo si risolve al
@@ -167,10 +174,15 @@ func BDPreview(baseURL, slug string, params map[string]string) (BDPreviewResult,
 		case "data":
 			out.Deferred[k] = "il backend non ha un campo data: l'intervallo diventa una richiesta per ciascun anno in `anni`, che sono i valori che il campo `anno` prende uno per giro — nei campi c'e' il primo, cioe' quello della prima richiesta — piu' un filtro sulle righe ricevute per tagliare i giorni fuori intervallo. Dentro ogni anno `page` parte da 1 e cresce di uno fino al numero di pagine che la risposta dichiara, o finche' --limit e' pieno: quel numero sta nella risposta, quindi le pagine oltre la prima non sono anteprimabili"
 			// Stessa funzione del percorso vivo, cosi' l'anteprima non puo'
-			// divergere dall'elenco che searchBD scorre davvero.
-			if anni, keep := bdDateFilter(v); anni != nil && keep != nil {
-				out.Anni = anni
+			// divergere dall'elenco che searchBD scorre davvero — errore
+			// compreso: se non si parsa, searchBD non manda nulla.
+			anni, keep := bdDateFilter(v)
+			if anni == nil || keep == nil {
+				out.Invalid = &InvalidParamError{Filtro: "--data", Valore: v,
+					Rimedio: "usa YYYY-MM-DD, AAMMGG, o un intervallo YYYY-MM-DD:YYYY-MM-DD (AAMMGG/AAMMGG)"}
+				continue
 			}
+			out.Anni = anni
 		case "oratore":
 			out.Deferred[k] = "risolto da nome a id leggendo le <option> di " + spec.speakerField + " nel form, che richiede una richiesta"
 		case "codcom", "commissione":

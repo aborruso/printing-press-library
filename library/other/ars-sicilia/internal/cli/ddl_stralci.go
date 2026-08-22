@@ -69,7 +69,10 @@ Il verso opposto — da uno stralcio al suo ddl base — è nel campo 'stralcio'
 				// coincideva, ma nulla la teneva agganciata — e un'anteprima
 				// libera di divergere dal percorso vivo e' il difetto che
 				// questa CLI ha appena finito di togliersi di dosso.
-				target := dryRunTargetBySlug("ddl", stralciSearchParams(legisl, numero))
+				target, terr := dryRunTargetBySlug("ddl", stralciSearchParams(legisl, numero))
+				if terr != nil {
+					return terr
+				}
 				if target == nil {
 					return fmt.Errorf("archivio ddl non disponibile")
 				}

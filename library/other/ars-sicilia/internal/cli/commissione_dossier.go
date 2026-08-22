@@ -165,21 +165,28 @@ type dossierReport struct {
 // quale delle due forme non ha agganciato.
 func emitCommissioneDossierDryRun(cmd *cobra.Command, arg string, legisl int) error {
 	bdParams, isisName := resolveDossierCommissione(arg)
-	sezione := func(slug string, params map[string]string) map[string]any {
+	sezione := func(slug string, params map[string]string) (map[string]any, error) {
 		if legisl > 0 {
 			params["legisl"] = itoa(legisl)
 		}
 		return dryRunTargetBySlug(slug, params)
 	}
 	requests := []map[string]any{}
-	for _, r := range []map[string]any{
-		sezione("convocazioni", copyParams(bdParams)),
-		sezione("sommari", copyParams(bdParams)),
-		sezione("pareri", map[string]string{"commissione": isisName}),
+	for _, sez := range []struct {
+		slug   string
+		params map[string]string
+	}{
+		{"convocazioni", copyParams(bdParams)},
+		{"sommari", copyParams(bdParams)},
+		{"pareri", map[string]string{"commissione": isisName}},
 		// La sezione ddl è una ricerca testuale, non l'elenco degli assegnati:
 		// l'archivio 221 non espone l'assegnazione come campo filtrabile.
-		sezione("ddl", map[string]string{"testo": isisName}),
+		{"ddl", map[string]string{"testo": isisName}},
 	} {
+		r, err := sezione(sez.slug, sez.params)
+		if err != nil {
+			return err
+		}
 		if r != nil {
 			requests = append(requests, r)
 		}
