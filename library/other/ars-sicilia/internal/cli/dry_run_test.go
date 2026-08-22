@@ -296,3 +296,52 @@ func TestDryRunBDDistingueCampiPostEFiltriDifferiti(t *testing.T) {
 		t.Errorf("post_fields = %v: --data non diventa un campo, diventa un ciclo sugli anni", post)
 	}
 }
+
+// Con --data il percorso vivo non manda una richiesta: ne manda una per anno
+// dell'intervallo, ciascuna paginata. Un'anteprima che mostra una sola voce e
+// dice solo "si risolve dopo" non fa capire quante ne partono ne' come rifarle.
+// Secondo rilievo P1 di Greptile sulla PR #1790.
+func TestDryRunBDEnumeraGliAnniDellIntervallo(t *testing.T) {
+	arc := icaro.BySlug("resoconti")
+	if arc == nil {
+		t.Fatal("archivio resoconti non registrato")
+	}
+
+	got := dryRunTarget(*arc, map[string]string{"legisl": "18", "data": "2024-06-01:2026-08-22"}, "")
+	anni, _ := got["anni"].([]string)
+	if len(anni) != 3 {
+		t.Fatalf("anni = %v, volute le tre annate dell'intervallo", got["anni"])
+	}
+	// L'ordine e' quello in cui searchBD li scorre: dal piu' recente.
+	if anni[0] != "2026" || anni[2] != "2024" {
+		t.Errorf("anni = %v, atteso dal piu' recente al piu' vecchio", anni)
+	}
+	if got["richieste"] == nil {
+		t.Error("manca il conto delle richieste: da un dry run si deve capire quante ne partono")
+	}
+
+	// --anno e --data scrivono lo stesso campo server: si intersecano, come nel
+	// percorso vivo. Annunciare giri che non partirebbero e' lo stesso difetto.
+	got = dryRunTarget(*arc, map[string]string{"legisl": "18", "data": "2024-06-01:2026-08-22", "anno": "2025"}, "")
+	anni, _ = got["anni"].([]string)
+	if len(anni) != 1 || anni[0] != "2025" {
+		t.Errorf("anni = %v, voluto il solo 2025 dopo l'intersezione con --anno", got["anni"])
+	}
+
+	// --anno fuori dall'intervallo: la ricerca non restituirebbe nulla, e
+	// l'anteprima lo deve dire invece di mostrare una richiesta plausibile.
+	got = dryRunTarget(*arc, map[string]string{"legisl": "18", "data": "2024-06-01:2024-12-31", "anno": "2026"}, "")
+	if anni, _ := got["anni"].([]string); len(anni) != 0 {
+		t.Errorf("anni = %v, atteso vuoto: il 2026 e' fuori dall'intervallo", got["anni"])
+	}
+	deferred, _ := got["deferred"].(map[string]string)
+	if deferred["anno"] == "" {
+		t.Errorf("deferred = %v: va detto che nessun anno resta da interrogare", deferred)
+	}
+
+	// Senza --data non c'e' nessun ciclo, e le chiavi non devono comparire.
+	got = dryRunTarget(*arc, map[string]string{"legisl": "18"}, "")
+	if _, ha := got["anni"]; ha {
+		t.Errorf("senza --data `anni` non deve esistere: %v", got)
+	}
+}

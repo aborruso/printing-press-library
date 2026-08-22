@@ -1058,6 +1058,13 @@ func dryRunTarget(arc icaro.Archive, params map[string]string, isisRaw string) m
 		out["backend"] = "bd"
 		out["would_post"] = bd.Endpoint
 		out["post_fields"] = bd.PostFields
+		if len(bd.Anni) > 0 {
+			// Con --data non parte una richiesta: ne parte una per anno, e
+			// dentro ciascuna una per pagina. Enumerarli e' l'unico modo perche'
+			// da un dry run si capisca quante ne partono e come rifarle a mano.
+			out["anni"] = bd.Anni
+			out["richieste"] = fmt.Sprintf("%d (una per anno) x le pagine di ciascuna, che dipendono dal numero di righe", len(bd.Anni))
+		}
 		if len(bd.Deferred) > 0 {
 			out["deferred"] = bd.Deferred
 		}

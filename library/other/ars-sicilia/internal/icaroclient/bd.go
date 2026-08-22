@@ -127,6 +127,14 @@ type BDPreviewResult struct {
 	Endpoint   string
 	PostFields map[string]string
 	Deferred   map[string]string
+	// Anni sono i valori che il campo `anno` prende, uno per giro: con --data
+	// searchBD non manda UNA richiesta, ne manda una per anno dell'intervallo
+	// (e dentro ciascuna una per pagina). Dire solo «l'intervallo si risolve al
+	// momento della richiesta» lasciava credere a una richiesta sola, e da un
+	// dry run su un intervallo di piu' anni non si capiva quante ne partono ne'
+	// come rifarle a mano. Gli anni si ricavano senza rete — bdDateFilter parsa
+	// e basta — quindi tacerli era una scelta, non un limite.
+	Anni []string
 }
 
 // BDPreview torna false sugli archivi che /bd/ non serve.
@@ -150,7 +158,12 @@ func BDPreview(baseURL, slug string, params map[string]string) (BDPreviewResult,
 		}
 		switch k {
 		case "data":
-			out.Deferred[k] = "il backend non ha un campo data: l'intervallo diventa un ciclo sul campo `anno` piu' un filtro sulle righe ricevute"
+			out.Deferred[k] = "il backend non ha un campo data: l'intervallo diventa una richiesta per ciascun anno in `anni` (campo `anno`), ciascuna paginata sul campo `page`, piu' un filtro sulle righe ricevute per tagliare i giorni fuori intervallo"
+			// Stessa funzione del percorso vivo, cosi' l'anteprima non puo'
+			// divergere dall'elenco che searchBD scorre davvero.
+			if anni, keep := bdDateFilter(v); anni != nil && keep != nil {
+				out.Anni = anni
+			}
 		case "oratore":
 			out.Deferred[k] = "risolto da nome a id leggendo le <option> di " + spec.speakerField + " nel form, che richiede una richiesta"
 		case "codcom", "commissione":
@@ -161,6 +174,22 @@ func BDPreview(baseURL, slug string, params map[string]string) (BDPreviewResult,
 			} else {
 				out.Deferred[k] = "filtro non applicabile su questo archivio: la ricerca fallirebbe invece di ignorarlo (vedi bdUnsupported)"
 			}
+		}
+	}
+	// --anno e --data scrivono lo stesso campo server: searchBD li interseca
+	// (l'anno deve cadere nell'intervallo della data). L'anteprima fa lo stesso,
+	// altrimenti annuncia giri che non partirebbero — e nel caso vuoto annuncia
+	// una ricerca che invece non restituisce nulla.
+	if anno := strings.TrimSpace(params["anno"]); anno != "" && len(out.Anni) > 0 {
+		keep := out.Anni[:0]
+		for _, y := range out.Anni {
+			if y == anno {
+				keep = append(keep, y)
+			}
+		}
+		out.Anni = keep
+		if len(out.Anni) == 0 {
+			out.Deferred["anno"] = "fuori dall'intervallo di --data: nessun anno da interrogare, la ricerca non restituirebbe nulla"
 		}
 	}
 	return out, true
