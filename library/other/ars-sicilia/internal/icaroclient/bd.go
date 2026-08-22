@@ -151,6 +151,13 @@ func BDPreview(baseURL, slug string, params map[string]string) (BDPreviewResult,
 	for k, v := range spec.static {
 		out.PostFields[k] = v
 	}
+	// `page` viaggia su OGNI richiesta, e la prima di ogni giro e' sempre 1:
+	// metterlo qui rende la prima POST riproducibile alla lettera invece di
+	// lasciarla incompleta. Le successive non si possono enumerare — il numero
+	// di pagine (`total`) arriva DENTRO la risposta, quindi conoscerlo vorrebbe
+	// dire fare la richiesta che il dry run non fa: si dice la regola invece
+	// del numero, che e' l'unica cosa vera che si puo' dire.
+	out.PostFields["page"] = "1"
 	for k, v := range params {
 		v = strings.TrimSpace(v)
 		if v == "" {
@@ -158,7 +165,7 @@ func BDPreview(baseURL, slug string, params map[string]string) (BDPreviewResult,
 		}
 		switch k {
 		case "data":
-			out.Deferred[k] = "il backend non ha un campo data: l'intervallo diventa una richiesta per ciascun anno in `anni` (campo `anno`), ciascuna paginata sul campo `page`, piu' un filtro sulle righe ricevute per tagliare i giorni fuori intervallo"
+			out.Deferred[k] = "il backend non ha un campo data: l'intervallo diventa una richiesta per ciascun anno in `anni` (campo `anno`), piu' un filtro sulle righe ricevute per tagliare i giorni fuori intervallo. Dentro ogni anno `page` parte da 1 e cresce di uno fino al numero di pagine che la risposta dichiara, o finche' --limit e' pieno: quel numero sta nella risposta, quindi le pagine oltre la prima non sono anteprimabili"
 			// Stessa funzione del percorso vivo, cosi' l'anteprima non puo'
 			// divergere dall'elenco che searchBD scorre davvero.
 			if anni, keep := bdDateFilter(v); anni != nil && keep != nil {

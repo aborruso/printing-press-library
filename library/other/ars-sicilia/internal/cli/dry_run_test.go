@@ -319,6 +319,11 @@ func TestDryRunBDEnumeraGliAnniDellIntervallo(t *testing.T) {
 	if got["richieste"] == nil {
 		t.Error("manca il conto delle richieste: da un dry run si deve capire quante ne partono")
 	}
+	// `page` viaggia su ogni POST e la prima di ogni giro e' 1: senza, nemmeno
+	// la prima richiesta si puo' rifare alla lettera.
+	if post, _ := got["post_fields"].(map[string]string); post["page"] != "1" {
+		t.Errorf("post_fields = %v, atteso page=1 sulla prima richiesta di ogni anno", got["post_fields"])
+	}
 
 	// --anno e --data scrivono lo stesso campo server: si intersecano, come nel
 	// percorso vivo. Annunciare giri che non partirebbero e' lo stesso difetto.
@@ -339,9 +344,13 @@ func TestDryRunBDEnumeraGliAnniDellIntervallo(t *testing.T) {
 		t.Errorf("deferred = %v: va detto che nessun anno resta da interrogare", deferred)
 	}
 
-	// Senza --data non c'e' nessun ciclo, e le chiavi non devono comparire.
+	// Senza --data non c'e' nessun ciclo, e le chiavi non devono comparire —
+	// ma `page` si', perche' quella richiesta parte comunque paginata.
 	got = dryRunTarget(*arc, map[string]string{"legisl": "18"}, "")
 	if _, ha := got["anni"]; ha {
 		t.Errorf("senza --data `anni` non deve esistere: %v", got)
+	}
+	if post, _ := got["post_fields"].(map[string]string); post["page"] != "1" {
+		t.Errorf("post_fields = %v, `page` va dichiarato anche senza --data", got["post_fields"])
 	}
 }

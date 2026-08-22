@@ -1063,7 +1063,7 @@ func dryRunTarget(arc icaro.Archive, params map[string]string, isisRaw string) m
 			// dentro ciascuna una per pagina. Enumerarli e' l'unico modo perche'
 			// da un dry run si capisca quante ne partono e come rifarle a mano.
 			out["anni"] = bd.Anni
-			out["richieste"] = fmt.Sprintf("%d (una per anno) x le pagine di ciascuna, che dipendono dal numero di righe", len(bd.Anni))
+			out["richieste"] = fmt.Sprintf("almeno %d, una per anno con `page` a 1; dentro ciascun anno `page` cresce fino al numero di pagine che la risposta dichiara, o finché --limit è pieno", len(bd.Anni))
 		}
 		if len(bd.Deferred) > 0 {
 			out["deferred"] = bd.Deferred
