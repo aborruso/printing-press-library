@@ -158,7 +158,7 @@ func BDPreview(baseURL, slug string, params map[string]string) (BDPreviewResult,
 	// sessionHTML vuoto = modo anteprima. La form e' quella che searchBD
 	// manderebbe, costruita dalla stessa funzione: non c'e' una seconda
 	// implementazione che possa divergere.
-	req, err := bdBuildForm(slug, spec, params, "")
+	req, err := bdBuildForm(slug, spec, params, "", true)
 	if err != nil {
 		out.Invalid = err
 		return out, true
@@ -411,13 +411,18 @@ type bdRequest struct {
 
 // bdBuildForm compila la richiesta per il backend /bd/.
 //
-// sessionHTML vuoto significa MODO ANTEPRIMA: --oratore e --commissione/--codcom
-// non si risolvono in id, perche' quella risoluzione legge le <option> del form
-// e quindi richiede una richiesta che un dry run non fa; finiscono in Deferred.
-// Con sessionHTML valorizzato la risoluzione avviene, e un valore che non
+// `anteprima` e' un parametro esplicito e non si deduce da sessionHTML vuoto.
+// Dedurlo sarebbe un guasto silenzioso: se la GET di sessione tornasse 200 con
+// corpo vuoto — portale che sbanda, risposta troncata — il percorso VIVO
+// scivolerebbe in modo anteprima, non risolverebbe --oratore e
+// --commissione/--codcom, e manderebbe la POST senza quel filtro. Il risultato
+// sarebbe piu' largo di quello chiesto, presentato come buono: esattamente il
+// filtro che sparisce in silenzio contro cui e' costruito il resto di questo
+// file. In anteprima --oratore e --commissione/--codcom non si risolvono perche'
+// leggono le <option> del form, cioe' una richiesta che un dry run non fa, e
+// finiscono in Deferred; dal vivo la risoluzione avviene e un valore che non
 // aggancia nulla produce UnresolvedFilterError come prima.
-func bdBuildForm(slug string, spec bdSpec, params map[string]string, sessionHTML string) (bdRequest, error) {
-	anteprima := sessionHTML == ""
+func bdBuildForm(slug string, spec bdSpec, params map[string]string, sessionHTML string, anteprima bool) (bdRequest, error) {
 	out := bdRequest{Form: url.Values{}, Deferred: map[string]string{}}
 
 	// Un filtro che questo archivio non sa applicare fallisce, non viene
@@ -578,7 +583,7 @@ func (c *Client) searchBD(ctx context.Context, arc Archive, opts SearchOptions) 
 	// La form la costruisce bdBuildForm, la stessa che l'anteprima --dry-run
 	// stampa: e' l'unico modo perche' le due non possano descrivere richieste
 	// diverse (vedi bdRequest).
-	req, err := bdBuildForm(arc.Slug, spec, opts.Params, sessionHTML)
+	req, err := bdBuildForm(arc.Slug, spec, opts.Params, sessionHTML, false)
 	if err != nil {
 		return nil, err
 	}

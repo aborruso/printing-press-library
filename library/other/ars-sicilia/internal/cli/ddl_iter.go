@@ -145,7 +145,7 @@ func runDdlIter(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error 
 		return emitIter(cmd, flags, report)
 	}
 	recs, err := c.Search(ctx, *arc, icaro.SearchOptions{
-		Params: map[string]string{"legisl": itoa(legisl), "numero": itoa(numero)},
+		Params: ddlIterSearchParams(legisl, numero),
 		Limit:  1,
 	})
 	if err != nil {
@@ -224,12 +224,18 @@ func runDdlIter(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error 
 // the silent no-op this used to be, it mirrors the ISIS-query preview that
 // `*/cerca` commands already show — ddl iter's --dry-run should be as useful
 // a diagnostic as the rest of the CLI.
+// ddlIterSearchParams sono i parametri con cui si aggancia il ddl, in un posto
+// solo: anteprima e ricerca vera devono partire dagli stessi.
+func ddlIterSearchParams(legisl, numero int) map[string]string {
+	return map[string]string{"legisl": itoa(legisl), "numero": itoa(numero)}
+}
+
 func emitDdlIterDryRun(cmd *cobra.Command, legisl, numero int) error {
 	arc := icaro.BySlug("ddl")
 	if arc == nil {
 		return fmt.Errorf("archivio ddl non disponibile")
 	}
-	expr := icaro.BuildQuery(*arc, map[string]string{"legisl": itoa(legisl), "numero": itoa(numero)}, "")
+	expr := icaro.BuildQuery(*arc, ddlIterSearchParams(legisl, numero), "")
 	out := map[string]any{
 		"archive":     arc.Slug,
 		"archive_id":  arc.ID,
