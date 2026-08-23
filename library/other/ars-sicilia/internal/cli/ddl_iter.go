@@ -1,8 +1,15 @@
 // pp:data-source live
 // pp:client-call
-// Novel feature — ricostruisce la cronologia completa di un DDL.
-// Combina ricerche su più archivi (DDL 221, sommari commissione 230,
-// resoconti d'aula 217) usando direttamente l'icaroclient.
+// Novel feature — ricostruisce la cronologia di un DDL leggendo il blocco
+// «Iter Storico» della sua scheda nell'archivio DDL (221), l'unico che questo
+// comando interroga.
+//
+// La testata dichiarava di combinare 221 con i sommari di commissione (230) e i
+// resoconti d'aula (217): non è mai stato vero, nel file c'è solo `BySlug("ddl")`.
+// Chi lo leggeva concludeva che un iter troncato dipendesse da altro, mentre
+// dipende proprio dal fatto che 230 non viene guardato — e l'Iter Storico può
+// essere indietro rispetto ai lavori reali (issue #3: sul ddl 18/779 l'iter si
+// ferma al 10/06/2026 mentre i sommari della I commissione arrivano al 22/07).
 
 package cli
 
