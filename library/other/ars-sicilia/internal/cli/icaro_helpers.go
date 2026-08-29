@@ -1390,20 +1390,41 @@ func atoiArg(s, name string) (int, error) {
 			return 0, fmt.Errorf("argomento %q non valido: %s. Il suffisso %q indica il testo emendato, ma l'archivio indicizza per numero base: ripeti con %d",
 				name, s, suffisso, base)
 		}
+		// Coda dopo la barra che non è la variante nota: non si dice che cosa
+		// significhi, perché non lo sappiamo. Il numero base però si nomina.
+		if m := reCodaDopoBarra.FindStringSubmatch(t); m != nil {
+			if base, cerr := strconv.Atoi(m[1]); cerr == nil && base > 0 {
+				return 0, fmt.Errorf("argomento %q non valido: %s. Il suffisso %q non è una variante che il portale usi per numerare un ddl (l'unica è la forma «/A», il testo emendato): se cercavi il ddl %d, ripeti con %d",
+					name, s, "/"+m[2], base, base)
+			}
+		}
 		return 0, fmt.Errorf("argomento %q non valido (atteso numero intero): %s", name, s)
 	}
 	return n, nil
 }
 
-// reNumeroConSuffisso riconosce la forma con cui il portale numera i testi
-// derivati da un atto: il numero base, una barra e una lettera o un ordinale
-// romano («1030/A», «738/B», «6030/I»). Non è un numero d'atto a sé: l'archivio
-// indicizza per numero base, e la barra per giunta rompe la query ISIS.
-var reNumeroConSuffisso = regexp.MustCompile(`^(\d+)\s*/\s*([A-Za-z]+)$`)
+// reNumeroConSuffisso riconosce la forma con cui il portale numera il testo
+// emendato di un atto: il numero base, una barra e UNA lettera («1030/A»). Non
+// è un numero d'atto a sé: l'archivio indicizza per numero base, e la barra per
+// giunta rompe la query ISIS.
+//
+// Una lettera sola e non una coda alfabetica qualunque: misurato sui riferimenti
+// dei ddl nelle legislature XVI-XVIII, l'unica variante che il portale scrive in
+// quella posizione è «/A» (24 occorrenze, nessun'altra forma). Accettare
+// «1030/XYZ» significherebbe rispondere sul ddl 1030 dichiarando che /XYZ è la
+// sua variante emendata — cioè affermare come vero qualcosa che non è stato
+// verificato, che è esattamente il difetto che questa modifica sta togliendo.
+var reNumeroConSuffisso = regexp.MustCompile(`^(\d+)\s*/\s*([A-Za-z])$`)
 
 // numeroConSuffisso scompone «1030/A» in (1030, "/A", true). Su qualunque altra
 // forma torna ok=false, così chi la chiama distingue il suffisso del portale da
 // un argomento semplicemente sbagliato e può dire due cose diverse.
+//
+// reCodaDopoBarra è il caso intermedio: una coda che non è la variante nota. Non
+// si accetta, ma il numero base si nomina lo stesso — chi ha scritto «1030/XYZ»
+// il ddl 1030 lo sta comunque cercando.
+var reCodaDopoBarra = regexp.MustCompile(`^(\d+)\s*/\s*(\S+)$`)
+
 func numeroConSuffisso(s string) (int, string, bool) {
 	m := reNumeroConSuffisso.FindStringSubmatch(strings.TrimSpace(s))
 	if m == nil {

@@ -278,7 +278,12 @@ func TestNumeroConSuffisso(t *testing.T) {
 	}{
 		{"1030/A", 1030, "/A", true},
 		{"738/b", 738, "/B", true},
-		{"6030 / IV", 6030, "/IV", true},
+		{"6030 / A", 6030, "/A", true},
+		// Una lettera sola: sui riferimenti del portale l'unica variante scritta
+		// dopo la barra è «/A», e accettare una coda qualunque vorrebbe dire
+		// dichiararla variante emendata senza saperlo.
+		{"6030/IV", 0, "", false},
+		{"1030/XYZ", 0, "", false},
 		{"1030", 0, "", false},
 		{"/A", 0, "", false},
 		{"1030/", 0, "", false},
