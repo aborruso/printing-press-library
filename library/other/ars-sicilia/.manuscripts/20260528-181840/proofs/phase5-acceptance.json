@@ -11,7 +11,7 @@
   "auth_context": {
     "type": "none"
   },
-  "source_fingerprint": "92e2fed6f4394b22c7b97ee6a7b529207c47d3ca7023e3137220f4d86c76bf23",
+  "source_fingerprint": "5a6021d79d7ca6e656ba36f94f951ddc1282a77c92e5a10f950fa69c01784656",
   "source_files": {
     "cmd/ars-sicilia-pp-cli/main.go": "c0dfc303980570f5c430e6eb920798649f3825d25b3691778e19507229430b0c",
     "cmd/ars-sicilia-pp-mcp/main.go": "f181e27a68985fa073ecdaec19a264e69a0af84075b1460c097dc0dc4ea4b5db",
@@ -66,7 +66,7 @@
     "internal/cli/gruppi.go": "d561c302effefdf42ec8c31e62e66fb2b51701b42c4bb693f2a25410e6e9df93",
     "internal/cli/helpers.go": "9a17330ca156263b4eb1652db2d5ee365e105c0c404b2fc9eac97e6480067970",
     "internal/cli/html_extract.go": "7355bbacae707a4112fee80a70d01f84c9327170cf2351c88ac6a3a6e930943b",
-    "internal/cli/icaro_helpers.go": "3085f679c9988aaae2e015ed505cf999830fe760616ccf51046ae6c8503a5e6d",
+    "internal/cli/icaro_helpers.go": "f5086f16c93f3de764d889d0842bf6fac131f817f477e9d3ea83b3c5c5fe7e64",
     "internal/cli/icaro_helpers_test.go": "0093c63922dfbf46038bdff5eef80720a3caccc4807d3c2d9eea99da3145afe1",
     "internal/cli/import.go": "6e2ccefc32e31cf11ffe7cc5bd98d1d019cd5a81d1f63b976f4eddea77da03fc",
     "internal/cli/interpellanze.go": "6247903bf71e3137909aa93a978a18fef8d888a2e9f6add068e47ee5fff4d6c5",
@@ -102,7 +102,7 @@
     "internal/cli/risoluzioni_cerca.go": "8226746050d080ac6b0e25a58868ff79fdb3d5b71b2be066b618f65cc0da8b72",
     "internal/cli/risoluzioni_get.go": "8467b08e762705ea337e0e722af7aaea31e4fad8ef24526dbf4bf7cadfcf397a",
     "internal/cli/root.go": "db3da047742c4f376a6320b41e18050ad07d38b312bdd63fe9357f57caa3be4b",
-    "internal/cli/root_test.go": "03bb0c47c8796c522cae99c2ac8a45fb75d60309f89d516e9d12a93cc3ce0003",
+    "internal/cli/root_test.go": "c1cd142aaff1f11ffaac95b6166dae4d57863cce84822000de5e7acc015edbf2",
     "internal/cli/search.go": "e7bdc0fb1ff24b9fa49a8cb15eeae5135039d4fc9b94898d792a14e8fb460e98",
     "internal/cli/select_hint_test.go": "53147eb51f96b56ed4a4cef9536581e830d8377c932af57443084e141931e1ae",
     "internal/cli/sync.go": "b0884f5f9b93e6e1b242422139bcdbcdf6efa738893658a6e6ec5722e757810e",

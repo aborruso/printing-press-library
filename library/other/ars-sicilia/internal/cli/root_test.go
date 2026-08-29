@@ -277,11 +277,13 @@ func TestNumeroConSuffisso(t *testing.T) {
 		ok       bool
 	}{
 		{"1030/A", 1030, "/A", true},
-		{"738/b", 738, "/B", true},
+		{"738/a", 738, "/A", true},
 		{"6030 / A", 6030, "/A", true},
-		// Una lettera sola: sui riferimenti del portale l'unica variante scritta
-		// dopo la barra è «/A», e accettare una coda qualunque vorrebbe dire
-		// dichiararla variante emendata senza saperlo.
+		// Solo «/A»: sui riferimenti del portale è l'unica variante scritta dopo
+		// la barra, e accettarne altre vorrebbe dire dichiararle emendate senza
+		// saperlo — oltre che contraddire il messaggio d'errore, che la misura
+		// la dichiara.
+		{"738/B", 0, "", false},
 		{"6030/IV", 0, "", false},
 		{"1030/XYZ", 0, "", false},
 		{"1030", 0, "", false},

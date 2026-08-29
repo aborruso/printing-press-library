@@ -1404,17 +1404,19 @@ func atoiArg(s, name string) (int, error) {
 }
 
 // reNumeroConSuffisso riconosce la forma con cui il portale numera il testo
-// emendato di un atto: il numero base, una barra e UNA lettera («1030/A»). Non
+// emendato di un atto: il numero base, una barra e la lettera A («1030/A»). Non
 // è un numero d'atto a sé: l'archivio indicizza per numero base, e la barra per
 // giunta rompe la query ISIS.
 //
-// Una lettera sola e non una coda alfabetica qualunque: misurato sui riferimenti
-// dei ddl nelle legislature XVI-XVIII, l'unica variante che il portale scrive in
-// quella posizione è «/A» (24 occorrenze, nessun'altra forma). Accettare
-// «1030/XYZ» significherebbe rispondere sul ddl 1030 dichiarando che /XYZ è la
-// sua variante emendata — cioè affermare come vero qualcosa che non è stato
-// verificato, che è esattamente il difetto che questa modifica sta togliendo.
-var reNumeroConSuffisso = regexp.MustCompile(`^(\d+)\s*/\s*([A-Za-z])$`)
+// Solo «/A», non una lettera qualunque: misurato sui riferimenti dei ddl nelle
+// legislature XVI-XVIII, è l'unica variante che il portale scriva in quella
+// posizione (24 occorrenze, nessun'altra forma). Accettare «/B» perché è
+// plausibile sarebbe di nuovo dire per vero qualcosa che non è stato
+// verificato — il difetto che questa modifica sta togliendo — e per giunta in
+// contraddizione col messaggio d'errore, che quella misura la dichiara.
+// Se un giorno il portale usasse «/B», il costo è un errore che nomina
+// comunque il numero base, non una risposta sbagliata data per buona.
+var reNumeroConSuffisso = regexp.MustCompile(`^(\d+)\s*/\s*[Aa]$`)
 
 // numeroConSuffisso scompone «1030/A» in (1030, "/A", true). Su qualunque altra
 // forma torna ok=false, così chi la chiama distingue il suffisso del portale da
@@ -1434,5 +1436,5 @@ func numeroConSuffisso(s string) (int, string, bool) {
 	if err != nil || n <= 0 {
 		return 0, "", false
 	}
-	return n, "/" + strings.ToUpper(m[2]), true
+	return n, "/A", true
 }
