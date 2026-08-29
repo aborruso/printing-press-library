@@ -39,14 +39,31 @@ func soloCifre(s string) bool {
 	return true
 }
 
-// Il secolo è già perduto a monte: `aammgg` in normalizeParams tiene solo le
-// ultime due cifre dell'anno, e il portale indicizza così. Qui serve solo per
-// fare aritmetica sui giorni e viene riassorbito in uscita, quindi la scelta
-// del 2000 non aggiunge un'assunzione che non ci fosse già.
-const secoloAAMMGG = 2000
-
+// daAAMMGG espande la data a sei cifre in una time.Time per farci aritmetica.
+//
+// Il secolo non c'è e va scelto, e la scelta NON può essere quella di
+// `time.Parse("060102", …)`: il layout `06` di Go perna sul 68/69, quindi
+// leggerebbe `470101` come 2047 e `690101` come 1969. Su un range storico che
+// attraversa quel perno gli estremi escono invertiti, `spezzaPerAnno` lo
+// scarta, e il rifiuto del portale torna al chiamante invece di essere
+// riprovato a fette — cioè il difetto che questo file esiste per chiudere,
+// ricomparso su un intervallo diverso.
+//
+// La finestra giusta è già stabilita altrove nella CLI (`bd.go`, `data_iso.go`)
+// ed è fondata sull'archivio, non su una convenzione generica: il documento più
+// antico dell'ARS è la seduta inaugurale del 25/05/1947, nel 1946 non c'è
+// nulla. Quindi da 47 in su è Novecento, sotto è Duemila. Il prezzo, identico
+// a quello che paga `bd.go`, è che AAMMGG non arriva al 2047: là si scrive la
+// data per esteso, che non è ambigua.
 func daAAMMGG(s string) (time.Time, error) {
-	t, err := time.Parse("060102", s)
+	if len(s) != 6 || !soloCifre(s) {
+		return time.Time{}, fmt.Errorf("data AAMMGG non valida %q", s)
+	}
+	secolo := "20"
+	if s[:2] >= "47" {
+		secolo = "19"
+	}
+	t, err := time.Parse("20060102", secolo+s)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("data AAMMGG non valida %q: %w", s, err)
 	}

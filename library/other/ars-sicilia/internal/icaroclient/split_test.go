@@ -73,6 +73,49 @@ func TestSpezzaAMeta(t *testing.T) {
 	}
 }
 
+// Il perno di secolo. `time.Parse("060102", …)` perna sul 68/69: leggeva
+// `470101` come 2047 e `690101` come 1969, e su un range storico che attraversa
+// quel confine gli estremi uscivano invertiti — `spezzaPerAnno` lo scartava e il
+// rifiuto del portale tornava al chiamante invece di essere riprovato a fette.
+// La finestra è quella dell'archivio: l'ARS nasce con la seduta del 25/05/1947.
+func TestDaAAMMGG_PernoDiSecolo(t *testing.T) {
+	casi := map[string]int{
+		"470101": 1947, // la prima seduta: da qui in su è Novecento
+		"680101": 1968, // con il perno di Go sarebbe stato 2068
+		"690101": 1969,
+		"990101": 1999,
+		"000101": 2000, // sotto il 47 è Duemila
+		"260829": 2026,
+	}
+	for in, want := range casi {
+		got, err := daAAMMGG(in)
+		if err != nil {
+			t.Errorf("daAAMMGG(%q) = %v", in, err)
+			continue
+		}
+		if got.Year() != want {
+			t.Errorf("daAAMMGG(%q).Year() = %d, atteso %d", in, got.Year(), want)
+		}
+	}
+	if _, err := daAAMMGG("26082"); err == nil {
+		t.Error("cinque cifre: atteso errore")
+	}
+	if _, err := daAAMMGG("2608xx"); err == nil {
+		t.Error("non numerica: atteso errore")
+	}
+}
+
+// Un range storico a cavallo del perno deve spezzarsi, non essere scartato.
+func TestSpezzaPerAnno_AttraversoIlPerno(t *testing.T) {
+	fette := spezzaPerAnno("680101", "690630")
+	if len(fette) != 2 {
+		t.Fatalf("spezzaPerAnno(680101,690630) = %v, attese 2 fette", fette)
+	}
+	if fette[0] != "690101/690630" || fette[1] != "680101/681231" {
+		t.Errorf("fette = %v, attese [690101/690630 680101/681231]", fette)
+	}
+}
+
 func TestChiaveRange(t *testing.T) {
 	// --anno su ddl è compilato in un range DATPRE: è spezzabile come --data.
 	if k, lo, hi, ok := chiaveRange(map[string]string{"anno": "230101/231231"}); !ok || k != "anno" || lo != "230101" || hi != "231231" {
