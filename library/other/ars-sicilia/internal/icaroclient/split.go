@@ -26,8 +26,21 @@ func chiaveRange(params map[string]string) (chiave, lo, hi string, ok bool) {
 	return "", "", "", false
 }
 
+// isAAMMGGRange dice se i due estremi sono un range di date valido.
+//
+// L'ordine va giudicato sulle date, non sulle stringhe: dopo che daAAMMGG ha
+// smesso di prefissare il secolo a occhio, il confronto lessicografico non
+// concorda piu' con quello cronologico. `990101/001231` e' il 1999-2000, un
+// range legittimo, ma "990101" > "001231" e finiva scartato — e uno scarto qui
+// non e' silenzioso a meta': fa tornare al chiamante il rifiuto del portale
+// invece della risposta a fette, che e' il difetto che questo file chiude.
 func isAAMMGGRange(a, b string) bool {
-	return len(a) == 6 && len(b) == 6 && soloCifre(a) && soloCifre(b) && a < b
+	lo, err := daAAMMGG(a)
+	if err != nil {
+		return false
+	}
+	hi, err := daAAMMGG(b)
+	return err == nil && lo.Before(hi)
 }
 
 func soloCifre(s string) bool {

@@ -130,6 +130,24 @@ func TestChiaveRange(t *testing.T) {
 	}
 }
 
+// Il confronto degli estremi deve essere cronologico, non lessicografico: dopo
+// il perno di secolo le due cose non concordano piu', e `990101/001231` (il
+// 1999-2000) usciva scartato pur essendo un range legittimo.
+func TestChiaveRange_AttraversoIlSecolo(t *testing.T) {
+	k, lo, hi, ok := chiaveRange(map[string]string{"data": "990101/001231"})
+	if !ok || k != "data" || lo != "990101" || hi != "001231" {
+		t.Fatalf("990101/001231: %q %q %q %v — atteso riconosciuto come range", k, lo, hi, ok)
+	}
+	fette := spezzaPerAnno(lo, hi)
+	if len(fette) != 2 || fette[0] != "000101/001231" || fette[1] != "990101/991231" {
+		t.Errorf("fette = %v, attese [000101/001231 990101/991231]", fette)
+	}
+	// Un range davvero rovesciato resta scartato.
+	if _, _, _, ok := chiaveRange(map[string]string{"data": "001231/990101"}); ok {
+		t.Error("range rovesciato (2000 -> 1999) accettato")
+	}
+}
+
 // serverSpezzato rifiuta le query il cui range supera maxGiorni, come fa il
 // portale, e risponde con la sua pagina d'errore. Sotto quella soglia serve una
 // riga per fetta, marcata col range, così l'unione è verificabile.
