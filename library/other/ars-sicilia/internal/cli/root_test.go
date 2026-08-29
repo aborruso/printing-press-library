@@ -235,3 +235,60 @@ func TestFilterFields(t *testing.T) {
 		})
 	}
 }
+
+// La lettura permissiva degli argomenti numerici (Sscanf "%d") leggeva le cifre
+// iniziali e scartava la coda senza errore: `ddl stralci 18 1030/A` diventava
+// 1030 in silenzio e rispondeva come se fosse stato chiesto quello. La forma
+// con la barra non è un errore di battitura — è come sommari e stampa citano il
+// testo emendato — quindi va riconosciuta e detta, non ignorata.
+func TestAtoiArgRifiutaLaCoda(t *testing.T) {
+	cases := []struct {
+		in      string
+		want    int
+		wantErr bool
+	}{
+		{"1030", 1030, false},
+		{" 18 ", 18, false},
+		{"1030/A", 0, true},
+		{"1030 / a", 0, true},
+		{"18abc", 0, true},
+		{"pippo", 0, true},
+		{"", 0, true},
+	}
+	for _, c := range cases {
+		got, err := atoiArg(c.in, "numero")
+		if (err != nil) != c.wantErr {
+			t.Errorf("atoiArg(%q) err = %v, wantErr %v", c.in, err, c.wantErr)
+			continue
+		}
+		if got != c.want {
+			t.Errorf("atoiArg(%q) = %d, want %d", c.in, got, c.want)
+		}
+	}
+}
+
+// Il suffisso del portale si distingue da un argomento semplicemente sbagliato:
+// sul primo si può dire qual è il numero base, sul secondo no.
+func TestNumeroConSuffisso(t *testing.T) {
+	cases := []struct {
+		in       string
+		base     int
+		suffisso string
+		ok       bool
+	}{
+		{"1030/A", 1030, "/A", true},
+		{"738/b", 738, "/B", true},
+		{"6030 / IV", 6030, "/IV", true},
+		{"1030", 0, "", false},
+		{"/A", 0, "", false},
+		{"1030/", 0, "", false},
+		{"1030/A/B", 0, "", false},
+		{"0/A", 0, "", false},
+	}
+	for _, c := range cases {
+		base, suf, ok := numeroConSuffisso(c.in)
+		if ok != c.ok || base != c.base || suf != c.suffisso {
+			t.Errorf("numeroConSuffisso(%q) = (%d, %q, %v), want (%d, %q, %v)", c.in, base, suf, ok, c.base, c.suffisso, c.ok)
+		}
+	}
+}
