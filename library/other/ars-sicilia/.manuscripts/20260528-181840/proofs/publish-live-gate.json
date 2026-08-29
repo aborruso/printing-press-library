@@ -1,6 +1,6 @@
 {
-  "dir": "/home/aborruso/printing-press/library/ars-sicilia",
-  "binary": "/home/aborruso/printing-press/library/ars-sicilia/build/stage/bin/ars-sicilia-pp-cli",
+  "dir": "library/other/ars-sicilia",
+  "binary": "build/stage/bin/ars-sicilia-pp-cli",
   "level": "full",
   "verdict": "PASS",
   "matrix_size": 127,
