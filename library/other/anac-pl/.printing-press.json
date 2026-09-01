@@ -5,6 +5,10 @@
   "api_name": "anac-pl",
   "display_name": "ANAC Pubblicità a Valore Legale",
   "cli_name": "anac-pl-pp-cli",
+  "creator": {
+    "handle": "aborruso",
+    "name": "aborruso"
+  },
   "owner": "aborruso",
   "printer": "aborruso",
   "printer_name": "aborruso",

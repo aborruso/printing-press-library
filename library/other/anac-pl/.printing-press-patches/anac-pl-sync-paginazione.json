@@ -1,0 +1,13 @@
+{
+  "schema_version": 2,
+  "id": "anac-pl-sync-paginazione",
+  "applied_at": "2026-09-01",
+  "base_run_id": "20260623-093040-ed91772a",
+  "base_printing_press_version": "4.17.0",
+  "summary": "sync ora pagina davvero sugli avvisi: resourceSupportsPagination riconosce la risorsa, i parametri di paginazione sono quelli veri di ANAC (size, tokenPaginazione, direzionePaginazione=AVANTI) e lastPaginationToken e' fra le chiavi di cursore riconosciute nella risposta.",
+  "reason": "Lo switch generato era vuoto, quindi la paginazione era disattivata per ogni risorsa: sync si fermava alla prima pagina e lo store locale — e con lui search-local, analytics ed export — restava incompleto senza dirlo. I valori dedotti a generazione (after/offset/limit) non appartengono a questa API, che pagina a token.",
+  "files": [
+    "internal/cli/sync.go"
+  ],
+  "validated_outcome": "`sync --resources avvisi --param keywords=microsoft --max-pages 3` passa da 10 record a 300 consumati e 296 distinti nello store; senza il parametro `size` corretto il servizio ignorava la dimensione di pagina e ne restituiva 10."
+}

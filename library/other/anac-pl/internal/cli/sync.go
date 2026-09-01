@@ -432,6 +432,9 @@ func syncResource(ctx context.Context, c interface {
 			params[pageSize.limitParam] = strconv.Itoa(pageSize.limit)
 			if cursor != "" {
 				params[pageSize.cursorParam] = cursor
+				// PATCH(anac-pl-sync-paginazione): il token da solo non basta,
+				// il servizio vuole anche la direzione.
+				params["direzionePaginazione"] = "AVANTI"
 			}
 		}
 
@@ -672,16 +675,26 @@ type paginationDefaults struct {
 // determinePaginationDefaults returns the pagination parameter names to use.
 // Values are detected from the API spec by the profiler at generation time.
 func determinePaginationDefaults() paginationDefaults {
+	// PATCH(anac-pl-sync-paginazione): i valori dedotti a generazione
+	// ("after"/offset/"limit") non appartengono a questa API. La ricerca ANAC
+	// pagina a token: `pageSize` per la dimensione, `tokenPaginazione` +
+	// `direzionePaginazione=AVANTI` per avanzare, `lastPaginationToken` nella
+	// risposta. Sono gli stessi parametri usati da cerca-avanzata e affidamenti.
 	return paginationDefaults{
-		cursorParam: "after",
-		cursorType:  "offset",
-		limitParam:  "limit",
+		cursorParam: "tokenPaginazione",
+		cursorType:  "cursor",
+		limitParam:  "size",
 		limit:       100,
 	}
 }
 
 func resourceSupportsPagination(resource string) bool {
 	switch resource {
+	// PATCH(anac-pl-sync-paginazione): senza questo caso lo switch generato era
+	// vuoto, quindi sync scaricava solo la prima pagina e lo store locale
+	// restava incompleto in silenzio.
+	case "avvisi":
+		return true
 	}
 	return false
 }
@@ -942,6 +955,8 @@ func extractPaginationFromEnvelope(envelope map[string]json.RawMessage, cursorPa
 	cursorKeys := []string{
 		"next_cursor", "nextCursor", "cursor", "next_page_token",
 		"nextPageToken", "page_token", "after", "end_cursor", "endCursor",
+		// PATCH(anac-pl-sync-paginazione): nome del token in casa ANAC.
+		"lastPaginationToken",
 	}
 	if nextCursor == "" {
 		nextCursor = findCursorInMap(envelope, cursorKeys)
