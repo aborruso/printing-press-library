@@ -15,6 +15,7 @@ import (
 
 	"github.com/mvanhorn/printing-press-library/library/other/anac-pl/internal/cli"
 	"github.com/mvanhorn/printing-press-library/library/other/anac-pl/internal/client"
+	"github.com/mvanhorn/printing-press-library/library/other/anac-pl/internal/cliutil"
 	"github.com/mvanhorn/printing-press-library/library/other/anac-pl/internal/config"
 	"github.com/mvanhorn/printing-press-library/library/other/anac-pl/internal/mcp/cobratree"
 	"github.com/mvanhorn/printing-press-library/library/other/anac-pl/internal/store"
@@ -297,6 +298,7 @@ func newMCPClient() (*client.Client, error) {
 		return nil, fmt.Errorf("loading config: %w", err)
 	}
 	c := client.New(cfg, 60*time.Second, 0)
+	c.UserAgent = cliutil.UserAgent("anac-pl-pp-mcp")
 	// Agents calling through MCP need fresh data every call. The on-disk
 	// response cache survives across MCP server invocations, so a
 	// DELETE/PATCH followed by a GET would otherwise return the

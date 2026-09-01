@@ -171,10 +171,15 @@ func newDoctorCmd(flags *rootFlags) *cobra.Command {
 			// for standard). A separate stdlib http.Client would silently
 			// bypass that choice and report false negatives against
 			// Cloudflare-fronted, Akamai-fronted, or otherwise bot-detected
-			// sites. By going through flags.newClient(), the doctor's
+			// sites. By going through the same constructor, the doctor's
 			// reachability verdict matches what real commands experience.
+			//
+			// Salta pero' il lock di istanza singola: un altro comando in
+			// corso non e' un guasto di questa CLI, e finiva nel report
+			// come "client init error" — che e' esattamente cio' che un
+			// controllo di salute non deve dire.
 			if cfg != nil && cfg.BaseURL != "" {
-				c, clientErr := flags.newClient()
+				c, clientErr := flags.newClientNoInstanceLock()
 				if clientErr != nil {
 					report["api"] = fmt.Sprintf("client init error: %s", clientErr)
 				} else {

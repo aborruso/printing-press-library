@@ -33,8 +33,11 @@ type Client struct {
 	HTTPClient *http.Client
 	DryRun     bool
 	NoCache    bool
-	cacheDir   string
-	limiter    *cliutil.AdaptiveLimiter
+	// UserAgent e' l'intestazione con cui questo client si presenta al
+	// servizio. Vuota, si ripiega sul nome del solo binario CLI.
+	UserAgent string
+	cacheDir  string
+	limiter   *cliutil.AdaptiveLimiter
 }
 
 // APIError carries HTTP status information for structured exit codes.
@@ -501,7 +504,11 @@ func (c *Client) doInternal(ctx context.Context, method, path string, params map
 			req.Header.Del(BinaryResponseHeader)
 		}
 		if req.Header.Get("User-Agent") == "" {
-			req.Header.Set("User-Agent", "github.com/mvanhorn/printing-press-library/library/other/anac-pl/0.1.0")
+			ua := c.UserAgent
+			if ua == "" {
+				ua = cliutil.UserAgent("anac-pl-pp-cli")
+			}
+			req.Header.Set("User-Agent", ua)
 		}
 		// Go's net/http omits Accept by default; browsers, curl, and other
 		// stdlibs always send it. Fingerprint-checking WAFs (Imperva, Akamai,

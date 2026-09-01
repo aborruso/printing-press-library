@@ -18,7 +18,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var version = "1.0.0"
+// version e' la versione mostrata da --version. La fonte e'
+// cliutil.Version, iniettata al build, cosi' che CLI, server MCP e
+// User-Agent dichiarino tutti lo stesso numero.
+var version = cliutil.Version
 
 type rootFlags struct {
 	asJSON        bool
@@ -59,6 +62,10 @@ func RootCmd() *cobra.Command {
 func Execute() error {
 	var flags rootFlags
 	rootCmd := newRootCmd(&flags)
+
+	// L'attesa del proprio turno sul lock di istanza va detta, altrimenti un
+	// comando che tace per minuti sembra bloccato.
+	cliutil.InstanceWaitNotice = func(msg string) { fmt.Fprintln(os.Stderr, msg) }
 
 	err := rootCmd.Execute()
 	if err != nil && strings.Contains(err.Error(), "unknown flag") {
@@ -271,10 +278,36 @@ func (f *rootFlags) newClient() (*client.Client, error) {
 	if err != nil {
 		return nil, configErr(err)
 	}
-	if err := cliutil.AcquireSingleInstance(); err != nil {
+	// In modalita' non interattiva (--no-input, e quindi --agent) non si
+	// attende: uno script o un agente preferisce un errore subito a un
+	// comando che tace per minuti. Interattivamente si aspetta il turno.
+	wait := cliutil.InstanceWaitTimeout
+	if f.noInput {
+		wait = 0
+	}
+	if err := cliutil.AcquireSingleInstanceWithin(wait); err != nil {
 		return nil, &cliError{code: 7, err: err}
 	}
 	c := client.New(cfg, f.timeout, cliutil.ClampRate(f.rateLimit))
+	c.UserAgent = cliutil.UserAgent("anac-pl-pp-cli")
+	c.DryRun = f.dryRun
+	c.NoCache = f.noCache
+	return c, nil
+}
+
+// newClientNoInstanceLock costruisce il client saltando il lock di istanza
+// singola. Serve al solo `doctor`: un controllo di salute deve rispondere
+// mentre un sync lavora, non mettersi in coda dietro di lui per minuti ne'
+// riportare come guasto del client il fatto che un altro comando sia in
+// corso. Il tetto verso ANAC non ne risente: lo tiene Pace(), che condivide
+// il ritmo fra processi diversi.
+func (f *rootFlags) newClientNoInstanceLock() (*client.Client, error) {
+	cfg, err := config.Load(f.configPath)
+	if err != nil {
+		return nil, configErr(err)
+	}
+	c := client.New(cfg, f.timeout, cliutil.ClampRate(f.rateLimit))
+	c.UserAgent = cliutil.UserAgent("anac-pl-pp-cli")
 	c.DryRun = f.dryRun
 	c.NoCache = f.noCache
 	return c, nil

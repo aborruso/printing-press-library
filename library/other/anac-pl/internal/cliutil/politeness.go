@@ -149,22 +149,58 @@ var (
 // servizio.
 type ErrInstanceRunning struct {
 	Path string
+	// Waited e' quanto si e' atteso prima di arrendersi.
+	Waited time.Duration
 }
 
 func (e *ErrInstanceRunning) Error() string {
-	return fmt.Sprintf("un'altra istanza di anac-pl-pp-cli sta gia' interrogando il servizio (lock: %s).\n"+
-		"Per non superare %g chiamata/s verso ANAC ne gira una sola per volta: attendi che finisca, oppure interrompila.", e.Path, MaxRequestsPerSecond)
+	if e.Waited <= 0 {
+		return fmt.Sprintf("un'altra istanza di anac-pl-pp-cli sta gia' interrogando il servizio (lock: %s).\n"+
+			"Ne gira una sola per volta: attendi che finisca, oppure interrompila.", e.Path)
+	}
+	return fmt.Sprintf("un'altra istanza di anac-pl-pp-cli sta ancora interrogando il servizio dopo %s di attesa (lock: %s).\n"+
+		"Ne gira una sola per volta: attendi che finisca, oppure interrompila.", e.Waited, e.Path)
 }
 
+// InstanceWaitTimeout e' quanto AcquireSingleInstance attende il proprio turno
+// prima di arrendersi. Un sync lungo puo' tenere il lock per parecchi minuti,
+// e un comando che esce subito costringerebbe a riprovare a mano; un'attesa
+// senza fine, pero', sarebbe indistinguibile da un blocco.
+const InstanceWaitTimeout = 5 * time.Minute
+
+// instanceRetryInterval e' la distanza fra due tentativi di presa del lock.
+const instanceRetryInterval = 200 * time.Millisecond
+
+// InstanceWaitNotice, se valorizzata, riceve una riga da mostrare all'utente
+// quando l'attesa comincia davvero. Sta qui e non in un fmt.Fprintf perche'
+// cliutil non deve decidere dove scrive un comando.
+var InstanceWaitNotice func(string)
+
 // AcquireSingleInstance prende un lock esclusivo di sistema, valido fra
-// processi diversi, e lo tiene fino all'uscita del programma. Se il lock e'
-// gia' preso restituisce *ErrInstanceRunning senza attendere: due istanze in
-// parallelo raddoppierebbero il carico sul servizio, e il tetto per processo
-// non basterebbe piu' a garantirlo.
+// processi diversi, e lo tiene fino all'uscita del programma.
+//
+// Se il lock e' gia' preso **attende** fino a InstanceWaitTimeout, e solo
+// allora restituisce *ErrInstanceRunning. Non e' questo lock a garantire il
+// tetto di chiamate al secondo — quello lo garantisce Pace(), che condivide
+// l'istante dell'ultima chiamata fra processi diversi tramite pace.lock, e
+// regge quindi con un numero qualunque di processi. Il lock di istanza serve
+// come rete per il ramo degradato, quando il file condiviso non e'
+// utilizzabile e Pace() ripiega sul ritmo del solo processo: li' due istanze
+// in parallelo raddoppierebbero il carico. Rifiutare invece di attendere
+// costava un errore a chi lancia un comando mentre un sync sta lavorando,
+// senza togliere una sola chiamata al servizio.
 //
 // Chiamate ripetute nello stesso processo sono un no-op: il lock e' del
 // processo, non del comando.
 func AcquireSingleInstance() error {
+	return AcquireSingleInstanceWithin(InstanceWaitTimeout)
+}
+
+// AcquireSingleInstanceWithin e' AcquireSingleInstance con un'attesa massima
+// scelta dal chiamante. Un timeout nullo o negativo significa "non attendere":
+// e' cio' che serve in modalita' non interattiva, dove un comando che si ferma
+// cinque minuti e' peggio di un errore immediato.
+func AcquireSingleInstanceWithin(wait time.Duration) error {
 	instanceMu.Lock()
 	defer instanceMu.Unlock()
 	if instanceFile != nil {
@@ -181,12 +217,27 @@ func AcquireSingleInstance() error {
 	if err != nil {
 		return fmt.Errorf("apertura del lock di istanza: %w", err)
 	}
-	if err := lockExclusiveNonBlocking(f); err != nil {
-		f.Close()
-		if isLockBusy(err) {
-			return &ErrInstanceRunning{Path: path}
+
+	deadline := time.Now().Add(wait)
+	notified := false
+	for {
+		lockErr := lockExclusiveNonBlocking(f)
+		if lockErr == nil {
+			break
 		}
-		return fmt.Errorf("lock di istanza su %s: %w", path, err)
+		if !isLockBusy(lockErr) {
+			f.Close()
+			return fmt.Errorf("lock di istanza su %s: %w", path, lockErr)
+		}
+		if wait <= 0 || time.Now().After(deadline) {
+			f.Close()
+			return &ErrInstanceRunning{Path: path, Waited: max(wait, 0)}
+		}
+		if !notified && InstanceWaitNotice != nil {
+			InstanceWaitNotice(fmt.Sprintf("un'altra istanza di anac-pl-pp-cli sta interrogando il servizio: attendo il mio turno (fino a %s).", wait))
+			notified = true
+		}
+		time.Sleep(instanceRetryInterval)
 	}
 	// Il lock viene rilasciato dal sistema operativo alla chiusura del
 	// processo, anche in caso di kill: nessun file di stato da ripulire.

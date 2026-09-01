@@ -1,0 +1,22 @@
+{
+  "schema_version": 2,
+  "id": "anac-pl-identificarsi-e-attendere",
+  "applied_at": "2026-09-01",
+  "base_run_id": "20260623-093040-ed91772a",
+  "base_printing_press_version": "4.17.0",
+  "summary": "Tre correzioni alla buona educazione verso il servizio ANAC. (1) User-Agent che dichiara nome, versione reale e URL del repository al posto del letterale generato `anac-pl-pp-cli/0.1.0`, con la versione spostata in cliutil.Version cosi' che CLI, server MCP e ldflags dichiarino lo stesso numero. (2) Il lock di istanza singola attende il proprio turno fino a cinque minuti annunciandolo su stderr, invece di uscire subito con exit 7; in modalita' non interattiva (--no-input, e quindi --agent) l'attesa e' zero e il comportamento resta quello di prima. (3) `doctor` salta il lock di istanza: un altro comando in corso non e' un guasto del client.",
+  "reason": "Il tetto di una chiamata al secondo lo garantisce Pace(), che condivide l'istante dell'ultima chiamata fra processi diversi tramite pace.lock e regge con un numero qualunque di processi; il lock di istanza serve solo come rete per il ramo degradato, quando quel file non e' utilizzabile. Rifiutare invece di attendere costava percio' un errore a chi lancia un comando mentre un sync lavora, senza togliere una sola chiamata al servizio, e faceva riportare a `doctor` un `client init error` che descriveva un guasto inesistente. Lo User-Agent generato dichiarava inoltre una versione mai esistita e nessun contatto: per un servizio pubblico senza quota dichiarata e senza un canale per concordarla, un client che non si nomina lascia a chi lo amministra una sola mossa, il blocco.",
+  "files": [
+    "internal/cliutil/useragent.go",
+    "internal/cliutil/useragent_test.go",
+    "internal/cliutil/politeness.go",
+    "internal/client/client.go",
+    "internal/cli/root.go",
+    "internal/cli/doctor.go",
+    "internal/mcp/tools.go",
+    "README.md",
+    ".goreleaser.yaml",
+    ".github/workflows/release.yml"
+  ],
+  "validated_outcome": "Un server locale che registra le intestazioni riceve `anac-pl-pp-cli/2026.9.5 (+https://github.com/aborruso/anac-pl-pp-cli)`, con la versione iniettata dagli ldflags. Durante un sync: `cerca` interattivo esce 0 dopo 4,59 s di attesa annunciata su stderr, `cerca --agent` esce 7 in 0,01 s come prima, `doctor` riporta `api: reachable` dove riportava `client init error`. Tetto invariato: tre chiamate consecutive da processi distinti a 0,23 / 0,95 / 1,03 s, cinque pagine in un processo in 5,42 s."
+}

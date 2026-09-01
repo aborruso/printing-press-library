@@ -101,7 +101,11 @@ La piattaforma di ANAC e' un servizio pubblico che non dichiara alcuna quota, e 
 
 Il ritmo e' condiviso fra processi, non solo dentro il processo: l'istante dell'ultima chiamata sta in `~/.cache/anac-pl-pp-cli/pace.lock`, protetto da un lock esclusivo di sistema. Anche facendo lavorare insieme la CLI e il server MCP, la somma resta una chiamata al secondo.
 
-Due copie della CLI non possono girare in parallelo: la seconda si ferma subito, con un messaggio esplicito e codice di uscita 7. Il lock e' `~/.cache/anac-pl-pp-cli/instance.lock`, rilasciato dal sistema operativo alla fine del processo, quindi non resta mai appeso.
+Due copie della CLI non girano in parallelo: la seconda aspetta il proprio turno, dicendolo su stderr, fino a cinque minuti; scaduti quelli esce con codice 7. In modalita' non interattiva (`--no-input`, e quindi `--agent`) non attende affatto ed esce 7 subito, perche' uno script preferisce un errore immediato a un comando che tace. Il lock e' `~/.cache/anac-pl-pp-cli/instance.lock`, rilasciato dal sistema operativo alla fine del processo, quindi non resta mai appeso.
+
+Il lock non e' pero' cio' che garantisce il tetto - quello lo tiene `pace.lock`, che vale per un numero qualunque di processi. Serve come rete per il caso in cui quel file non sia utilizzabile e il ritmo torni a valere per il solo processo. Per questo `doctor` lo salta: un controllo di salute deve rispondere anche mentre un `sync` lavora.
+
+Ogni richiesta si presenta con un `User-Agent` che dichiara nome, versione e questo repository, cosi' che chi amministra la piattaforma possa riconoscere il traffico e, se desse fastidio, scrivere invece di bloccare.
 
 `--rate-limit` esiste ancora, ma serve solo a rallentare ulteriormente: `--rate-limit 0.2` scende a una chiamata ogni cinque secondi, `--rate-limit 100` non alza nulla.
 
