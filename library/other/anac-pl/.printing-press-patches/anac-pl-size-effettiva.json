@@ -1,0 +1,13 @@
+{
+  "schema_version": 2,
+  "id": "anac-pl-size-effettiva",
+  "applied_at": "2026-09-01",
+  "base_run_id": "20260623-093040-ed91772a",
+  "base_printing_press_version": "4.17.0",
+  "summary": "Il ciclo di paginazione di `sync` confronta la pagina ricevuta con la dimensione davvero richiesta, letta da `params[limitParam]` dopo `userParams.applyTo`, invece che con il default di 100 fissato in determinePaginationDefaults.",
+  "reason": "`--param size=N` sovrascrive la dimensione di pagina nella richiesta, ma il test di terminazione continuava a confrontare la risposta col default: una pagina piena da 20 elementi risultava piu' corta di 100 e il sync si fermava alla prima, pur avendo un token di continuazione valido, lasciando lo store locale incompleto in silenzio e con exit 0. Stessa famiglia del difetto della paginazione spenta, un livello piu' giu'.",
+  "files": [
+    "internal/cli/sync.go"
+  ],
+  "validated_outcome": "`sync --resources avvisi --max-pages 3 --param size=20` scaricava 20 record (una pagina) e ora ne scarica 60 (tre pagine). Il percorso senza override e' invariato: 300 record su tre pagine con la dimensione di default."
+}

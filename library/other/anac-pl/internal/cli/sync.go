@@ -448,6 +448,18 @@ func syncResource(ctx context.Context, c interface {
 		// endpoint whose OpenAPI spec marks the filter optional).
 		userParams.applyTo(resource, params, false)
 
+		// PATCH(anac-pl-size-effettiva): la dimensione di pagina che conta e'
+		// quella davvero spedita, non il default: --param size=20 la
+		// sovrascrive qui sopra, e confrontare la risposta col default
+		// fermerebbe il sync alla prima pagina pur avendo un token di
+		// continuazione, lasciando lo store incompleto in silenzio.
+		effectiveLimit := pageSize.limit
+		if raw, ok := params[pageSize.limitParam]; ok {
+			if n, convErr := strconv.Atoi(raw); convErr == nil && n > 0 {
+				effectiveLimit = n
+			}
+		}
+
 		data, err := c.Get(ctx, path, params)
 		if err != nil {
 			if w, ok := isSyncAccessWarning(err); ok {
@@ -486,7 +498,7 @@ func syncResource(ctx context.Context, c interface {
 		// 1 even though more pages exist (the original symptom in #1296).
 		// Guard on cursorType, not cursorParam name, so all canonical
 		// spellings (page / page_number / pageNumber / page[number]) work.
-		if pageSize.cursorType == "page" && nextCursor == "" && len(items) >= pageSize.limit {
+		if pageSize.cursorType == "page" && nextCursor == "" && len(items) >= effectiveLimit {
 			currentPage, _ := strconv.Atoi(cursor)
 			if currentPage < 1 {
 				currentPage = 1
@@ -614,7 +626,7 @@ func syncResource(ctx context.Context, c interface {
 		if !resourceSupportsPagination(resource) {
 			break
 		}
-		if !hasMore || len(items) < pageSize.limit {
+		if !hasMore || len(items) < effectiveLimit {
 			break
 		}
 		if nextCursor == "" {
@@ -622,7 +634,7 @@ func syncResource(ctx context.Context, c interface {
 				// Cursor-based APIs return the next cursor in the envelope.
 				// Offset-based APIs carry their pagination position client-side.
 				currentOffset, _ := strconv.Atoi(cursor)
-				nextCursor = strconv.Itoa(currentOffset + pageSize.limit)
+				nextCursor = strconv.Itoa(currentOffset + effectiveLimit)
 			} else {
 				// A cursor-based API reporting has_more without a next cursor
 				// cannot advance safely; stop instead of looping silently.
