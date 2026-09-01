@@ -1,0 +1,14 @@
+{
+  "schema_version": 2,
+  "id": "anac-pl-cronologia-idappalto",
+  "applied_at": "2026-09-01",
+  "base_run_id": "20260623-093040-ed91772a",
+  "base_printing_press_version": "4.17.0",
+  "summary": "`avvisi cronologia` risolve da se' l'idAppalto leggendolo dal dettaglio dell'avviso quando l'utente non passa --appalto.",
+  "reason": "Da agosto 2026 il servizio risponde 404 a /avvisi/{id}/cronologia se manca idAppalto, che a giugno era facoltativo e serviva solo a disambiguare. Senza questa risoluzione il comando e' inutilizzabile, e chiedere all'utente un secondo UUID che il servizio conosce gia' non ha senso.",
+  "files": [
+    "internal/cli/avvisi_cronologia.go",
+    "internal/cli/avvisi_cronologia_appalto.go"
+  ],
+  "validated_outcome": "Dieci avvisi presi dalla ricerca rispondono 404 senza il parametro e 200 con; dopo la modifica `avvisi cronologia ab62bd4c-...` restituisce le versioni dell'avviso, e un id inesistente continua a uscire 3."
+}

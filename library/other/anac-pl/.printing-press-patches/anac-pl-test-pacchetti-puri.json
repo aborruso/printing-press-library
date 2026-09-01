@@ -1,0 +1,14 @@
+{
+  "schema_version": 2,
+  "id": "anac-pl-test-pacchetti-puri",
+  "applied_at": "2026-09-01",
+  "base_run_id": "20260623-093040-ed91772a",
+  "base_printing_press_version": "4.17.0",
+  "summary": "Test unitari per i due pacchetti di sola logica: cpvdata (vocabolario, normalizzazione dei valori CPV eterogenei, ricerca) e giurisdizione (classificazione del fornitore).",
+  "reason": "Il dogfood segnalava «pure-logic packages with no tests: cpvdata, giurisdizione». Sono i due pacchetti che decidono il codice CPV di una riga e la giurisdizione di un aggiudicatario, cioe' il contenuto della tabella affidamenti.",
+  "files": [
+    "internal/cpvdata/cpvdata_test.go",
+    "internal/giurisdizione/giurisdizione_test.go"
+  ],
+  "validated_outcome": "`go test ./...` verde; il dogfood statico passa da FAIL a PASS senza issue."
+}

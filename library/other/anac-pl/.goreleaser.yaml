@@ -1,0 +1,51 @@
+version: 2
+project_name: anac-pl-pp-cli
+changelog:
+  disable: true
+builds:
+  - id: anac-pl-pp-cli
+    main: ./cmd/anac-pl-pp-cli
+    binary: anac-pl-pp-cli
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X github.com/mvanhorn/printing-press-library/library/other/anac-pl/internal/cli.version={{ .Version }}
+    targets:
+      - darwin_amd64
+      - darwin_arm64
+      - linux_amd64
+      - linux_arm64
+      - windows_amd64
+      - windows_arm64
+  - id: anac-pl-pp-mcp
+    main: ./cmd/anac-pl-pp-mcp
+    binary: anac-pl-pp-mcp
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+    targets:
+      - darwin_amd64
+      - darwin_arm64
+      - linux_amd64
+      - linux_arm64
+      - windows_amd64
+      - windows_arm64
+archives:
+  - formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+checksum:
+  name_template: checksums.txt
+brews:
+  - name: anac-pl-pp-cli
+    repository:
+      owner: aborruso
+      name: homebrew-tap
+    homepage: "https://github.com/mvanhorn/printing-press-library"
+    description: "Cerca bandi, esiti e avvisi di gara della piattaforma ANAC dalla riga di comando, con dettaglio JSON, cronologia"
+    install: |
+      bin.install "anac-pl-pp-cli"
+      bin.install "anac-pl-pp-mcp"

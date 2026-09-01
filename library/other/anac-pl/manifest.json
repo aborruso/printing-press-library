@@ -1,0 +1,27 @@
+{
+  "manifest_version": "0.3",
+  "name": "anac-pl-pp-mcp",
+  "display_name": "ANAC Pubblicità a Valore Legale",
+  "version": "4.17.0",
+  "description": "Cerca bandi, esiti e avvisi di gara della piattaforma ANAC dalla riga di comando, con dettaglio JSON, cronologia, store locale e ricerca offline.",
+  "author": {
+    "name": "CLI Printing Press"
+  },
+  "license": "Apache-2.0",
+  "server": {
+    "type": "binary",
+    "entry_point": "bin/anac-pl-pp-mcp",
+    "mcp_config": {
+      "command": "${__dirname}/bin/anac-pl-pp-mcp",
+      "args": []
+    }
+  },
+  "compatibility": {
+    "claude_desktop": ">=1.0.0",
+    "platforms": [
+      "darwin",
+      "linux",
+      "win32"
+    ]
+  }
+}

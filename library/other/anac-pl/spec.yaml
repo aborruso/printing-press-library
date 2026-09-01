@@ -1,0 +1,209 @@
+name: anac-pl
+description: "CLI per la Piattaforma di Pubblicità a Valore Legale di ANAC: ricerca bandi, esiti e avvisi di gara, dettaglio JSON, cronologia, store locale ed export."
+version: "0.1.0"
+base_url: "https://pubblicitalegale.anticorruzione.it/api/v0"
+health_check_path: "/map"
+category: other
+
+required_headers:
+  - name: Accept
+    value: "application/json"
+
+auth:
+  type: none
+
+config:
+  format: toml
+  path: "~/.config/anac-pl-cli/config.toml"
+
+resources:
+  avvisi:
+    description: "Ricerca e consultazione di bandi, esiti e avvisi pubblicati sulla Piattaforma di Pubblicità a Valore Legale ANAC"
+    endpoints:
+      search:
+        method: GET
+        path: "/avvisi-full-text"
+        description: "Ricerca full-text di avvisi (bandi, esiti, altri avvisi) con ranking di rilevanza e filtri"
+        params:
+          - name: keywords
+            flag_name: query
+            aliases: [keywords]
+            type: string
+            description: "Testo libero: parola chiave, CIG, CUP, stazione appaltante, oggetto"
+          - name: codiceScheda
+            flag_name: scheda
+            type: string
+            description: "Filtra per codice scheda/tipologia avviso (es. AD3, P7_1_1, M1). Vedi 'tipologie map'"
+          - name: cpv
+            flag_name: cpv
+            type: string
+            description: "Codice CPV (Common Procurement Vocabulary) dell'oggetto della gara"
+          - name: importoLotto
+            flag_name: amount
+            aliases: [importo]
+            type: string
+            description: "Filtro per fascia di importo del lotto"
+          - name: dataPubblicazioneStart
+            flag_name: published-from
+            type: string
+            description: "Data di pubblicazione minima, formato GG/MM/AAAA"
+          - name: dataPubblicazioneEnd
+            flag_name: published-to
+            type: string
+            description: "Data di pubblicazione massima, formato GG/MM/AAAA"
+          - name: ricercaArchivio
+            flag_name: archive
+            type: bool
+            default: false
+            description: "Cerca nell'archivio storico (richiede intervallo date inferiore a 6 mesi)"
+          - name: sortField
+            flag_name: sort-field
+            type: string
+            description: "Campo di ordinamento (es. dataPubblicazione)"
+          - name: sortDirection
+            flag_name: sort-dir
+            type: string
+            enum: ["ASC", "DESC"]
+            description: "Direzione di ordinamento: ASC o DESC"
+          - name: atlasFuzzySearchEnabled
+            flag_name: fuzzy
+            type: bool
+            default: true
+            description: "Abilita la ricerca fuzzy (tolleranza errori) lato motore di ricerca"
+          - name: page
+            type: int
+            default: 0
+            description: "Numero di pagina (0-based)"
+          - name: size
+            type: int
+            default: 10
+            description: "Numero di risultati per pagina"
+        response:
+          type: array
+          item: Avviso
+        response_path: content
+        pagination:
+          type: offset
+
+      get:
+        method: GET
+        path: "/avvisi/{id}"
+        description: "Dettaglio completo di un avviso/esito in formato JSON, incluse sezioni e committente"
+        params:
+          - name: id
+            type: string
+            required: true
+            positional: true
+            description: "idAvviso (UUID) dell'avviso"
+        response:
+          type: object
+          item: AvvisoDetail
+
+      cronologia:
+        method: GET
+        path: "/avvisi/{id}/cronologia"
+        description: "Cronologia delle versioni/rettifiche di un avviso nel tempo"
+        params:
+          - name: id
+            type: string
+            required: true
+            positional: true
+            description: "idAvviso (UUID) dell'avviso"
+          - name: ricercaArchivio
+            flag_name: archive
+            type: bool
+            default: false
+            description: "Cerca la cronologia nell'archivio storico"
+          - name: idAppalto
+            flag_name: appalto
+            type: string
+            description: "idAppalto (UUID) opzionale per disambiguare la cronologia"
+        response:
+          type: array
+          item: Avviso
+
+  tipologie:
+    description: "Tassonomia delle tipologie di avviso (categorie, tipologie e codici scheda)"
+    endpoints:
+      map:
+        method: GET
+        path: "/map"
+        description: "Mappa di categorie, tipologie e codici scheda usati per filtrare la ricerca"
+        response:
+          type: object
+          item: TipologieMap
+
+  news:
+    description: "Avvisi e comunicazioni della piattaforma"
+    endpoints:
+      list:
+        method: GET
+        path: "/news"
+        description: "Ultime news pubblicate sulla piattaforma"
+        params:
+          - name: size
+            type: int
+            default: 10
+            description: "Numero di news da restituire"
+        response:
+          type: array
+          item: News
+
+types:
+  Avviso:
+    fields:
+      - name: idAvviso
+        type: string
+      - name: idAppalto
+        type: string
+      - name: codiceScheda
+        type: string
+      - name: codiceEform
+        type: string
+      - name: dataPubblicazione
+        type: string
+      - name: dataScadenza
+        type: string
+      - name: dataPubblicazioneRettifica
+        type: string
+      - name: dataCreazione
+        type: string
+      - name: tipo
+        type: string
+      - name: attivo
+        type: bool
+      - name: oscurato
+        type: bool
+      - name: score
+        type: float
+
+  AvvisoDetail:
+    fields:
+      - name: idAvviso
+        type: string
+      - name: idAppalto
+        type: string
+      - name: codiceScheda
+        type: string
+      - name: dataPubblicazione
+        type: string
+      - name: dataCreazione
+        type: string
+      - name: tipo
+        type: string
+      - name: attivo
+        type: bool
+
+  TipologieMap:
+    fields:
+      - name: templateTipologia
+        type: string
+      - name: templateSchedeMapping
+        type: string
+
+  News:
+    fields:
+      - name: titolo
+        type: string
+      - name: dataPubblicazione
+        type: string

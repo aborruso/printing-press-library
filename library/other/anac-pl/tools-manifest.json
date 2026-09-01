@@ -1,0 +1,183 @@
+{
+  "api_name": "anac-pl",
+  "base_url": "https://pubblicitalegale.anticorruzione.it/api/v0",
+  "description": "Cerca bandi, esiti e avvisi di gara della piattaforma ANAC dalla riga di comando, con dettaglio JSON, cronologia, store locale e ricerca offline.",
+  "mcp_ready": "full",
+  "http_transport": "standard",
+  "auth": {
+    "type": "none"
+  },
+  "required_headers": [
+    {
+      "name": "Accept",
+      "value": "application/json"
+    }
+  ],
+  "tools": [
+    {
+      "name": "avvisi_cronologia",
+      "description": "Cronologia delle versioni/rettifiche di un avviso nel tempo. Required: id. Optional: archive (default: false), appalto. Returns array of Avviso.",
+      "method": "GET",
+      "path": "/avvisi/{id}/cronologia",
+      "no_auth": true,
+      "params": [
+        {
+          "name": "id",
+          "type": "string",
+          "location": "path",
+          "description": "idAvviso (UUID) dell'avviso",
+          "required": true
+        },
+        {
+          "name": "archive",
+          "wire_name": "ricercaArchivio",
+          "type": "bool",
+          "location": "query",
+          "description": "Cerca la cronologia nell'archivio storico"
+        },
+        {
+          "name": "appalto",
+          "wire_name": "idAppalto",
+          "type": "string",
+          "location": "query",
+          "description": "idAppalto (UUID) opzionale per disambiguare la cronologia"
+        }
+      ]
+    },
+    {
+      "name": "avvisi_get",
+      "description": "Dettaglio completo di un avviso/esito in formato JSON, incluse sezioni e committente. Required: id. Returns the AvvisoDetail.",
+      "method": "GET",
+      "path": "/avvisi/{id}",
+      "no_auth": true,
+      "params": [
+        {
+          "name": "id",
+          "type": "string",
+          "location": "path",
+          "description": "idAvviso (UUID) dell'avviso",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "avvisi_search",
+      "description": "Ricerca full-text di avvisi (bandi, esiti, altri avvisi) con ranking di rilevanza e filtri. Optional: query, scheda, cpv (plus 9 more). Returns array of Avviso.",
+      "method": "GET",
+      "path": "/avvisi-full-text",
+      "no_auth": true,
+      "params": [
+        {
+          "name": "query",
+          "wire_name": "keywords",
+          "type": "string",
+          "location": "query",
+          "description": "Testo libero: parola chiave, CIG, CUP, stazione appaltante, oggetto",
+          "aliases": [
+            "keywords"
+          ]
+        },
+        {
+          "name": "scheda",
+          "wire_name": "codiceScheda",
+          "type": "string",
+          "location": "query",
+          "description": "Filtra per codice scheda/tipologia avviso (es. AD3, P7_1_1, M1). Vedi 'tipologie map'"
+        },
+        {
+          "name": "cpv",
+          "type": "string",
+          "location": "query",
+          "description": "Codice CPV (Common Procurement Vocabulary) dell'oggetto della gara"
+        },
+        {
+          "name": "amount",
+          "wire_name": "importoLotto",
+          "type": "string",
+          "location": "query",
+          "description": "Filtro per fascia di importo del lotto",
+          "aliases": [
+            "importo"
+          ]
+        },
+        {
+          "name": "published-from",
+          "wire_name": "dataPubblicazioneStart",
+          "type": "string",
+          "location": "query",
+          "description": "Data di pubblicazione minima, formato GG/MM/AAAA"
+        },
+        {
+          "name": "published-to",
+          "wire_name": "dataPubblicazioneEnd",
+          "type": "string",
+          "location": "query",
+          "description": "Data di pubblicazione massima, formato GG/MM/AAAA"
+        },
+        {
+          "name": "archive",
+          "wire_name": "ricercaArchivio",
+          "type": "bool",
+          "location": "query",
+          "description": "Cerca nell'archivio storico (richiede intervallo date inferiore a 6 mesi)"
+        },
+        {
+          "name": "sort-field",
+          "wire_name": "sortField",
+          "type": "string",
+          "location": "query",
+          "description": "Campo di ordinamento (es. dataPubblicazione)"
+        },
+        {
+          "name": "sort-dir",
+          "wire_name": "sortDirection",
+          "type": "string",
+          "location": "query",
+          "description": "Direzione di ordinamento: ASC o DESC"
+        },
+        {
+          "name": "fuzzy",
+          "wire_name": "atlasFuzzySearchEnabled",
+          "type": "bool",
+          "location": "query",
+          "description": "Abilita la ricerca fuzzy (tolleranza errori) lato motore di ricerca"
+        },
+        {
+          "name": "page",
+          "type": "int",
+          "location": "query",
+          "description": "Numero di pagina (0-based)"
+        },
+        {
+          "name": "size",
+          "type": "int",
+          "location": "query",
+          "description": "Numero di risultati per pagina"
+        }
+      ]
+    },
+    {
+      "name": "news_list",
+      "description": "Ultime news pubblicate sulla piattaforma. Optional: size (default: 10). Returns array of News.",
+      "method": "GET",
+      "path": "/news",
+      "no_auth": true,
+      "params": [
+        {
+          "name": "size",
+          "type": "int",
+          "location": "query",
+          "description": "Numero di news da restituire"
+        }
+      ]
+    },
+    {
+      "name": "tipologie_map",
+      "description": "Mappa di categorie, tipologie e codici scheda usati per filtrare la ricerca. Returns the TipologieMap.",
+      "method": "GET",
+      "path": "/map",
+      "no_auth": true,
+      "params": []
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "id": "anac-pl-una-chiamata-al-secondo",
+  "applied_at": "2026-09-01",
+  "base_run_id": "20260623-093040-ed91772a",
+  "base_printing_press_version": "4.17.0",
+  "summary": "Tetto invalicabile di una richiesta al secondo verso il servizio ANAC (cliutil.Pace() in doRequest, prima del limiter adattivo), ritmo condiviso fra processi tramite un lock esclusivo su ~/.cache/anac-pl-pp-cli/pace.lock, lock di istanza singola che rifiuta una seconda CLI in parallelo con exit 7, e --rate-limit riportato dentro il tetto da ClampRate.",
+  "reason": "La piattaforma di pubblicita' legale e' un servizio pubblico che non dichiara alcuna quota e non offre un canale per chiederne di piu'. Un limite configurabile e' un limite che prima o poi viene alzato: qui deve essere una proprieta' del programma, e deve reggere anche quando CLI e server MCP lavorano insieme.",
+  "files": [
+    "internal/cliutil/politeness.go",
+    "internal/cliutil/politeness_unix.go",
+    "internal/cliutil/politeness_windows.go",
+    "internal/cliutil/politeness_test.go",
+    "internal/client/client.go",
+    "internal/cli/root.go"
+  ],
+  "validated_outcome": "Cinque pagine in 4,1 s, invariate con --rate-limit 100; una seconda istanza esce subito con exit 7; un processo lanciato subito dopo un altro attende 0,95 s prima della prima chiamata e 0,23 s dopo una pausa di 1,5 s."
+}

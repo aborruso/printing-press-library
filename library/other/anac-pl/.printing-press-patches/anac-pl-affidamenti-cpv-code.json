@@ -1,0 +1,14 @@
+{
+  "schema_version": 2,
+  "id": "anac-pl-affidamenti-cpv-code",
+  "applied_at": "2026-08-03",
+  "base_run_id": "20260623-093040-ed91772a",
+  "base_printing_press_version": "4.17.0",
+  "summary": "`affidamenti --cpv-code` riscritto sull'endpoint specializzato (via la doppia query codice+descrizione), con `--tipologia` applicata lato client tramite il nuovo campo `Tipo` della mappa tipologie e rifiuto esplicito dei flag che quell'endpoint non ha (--query, --amount-*, --mode).",
+  "reason": "La tabella committente/aggiudicatario/importo/CIG/CPV serve a rispondere per codice CPV: appoggiarla al filtro testuale produceva righe di avvisi con CPV estranei. L'endpoint specializzato non conosce testo, importi ne' tipologia, quindi i flag incompatibili devono fallire invece di essere ignorati in silenzio.",
+  "files": [
+    "internal/cli/affidamenti.go",
+    "internal/cli/tipologie_list.go"
+  ],
+  "validated_outcome": "Su 200 avvisi campionati, 652/652 lotti normalizzabili col vocabolario CPV; con --cpv-code il filtro riga tiene anche i lotti non normalizzabili, perche' il server ha gia' selezionato l'avviso."
+}

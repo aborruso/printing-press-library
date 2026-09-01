@@ -1,0 +1,13 @@
+{
+  "schema_version": 2,
+  "id": "anac-pl-cerca-cpv-non-selettivo",
+  "applied_at": "2026-08-03",
+  "base_run_id": "20260623-093040-ed91772a",
+  "base_printing_press_version": "4.17.0",
+  "summary": "`cerca --cpv` avvisa su stderr che quel filtro non e' selettivo e rimanda a `cerca-avanzata`; aggiunto anche un avviso sul conteggio sottostimato quando count >= 1000 con pagina piccola.",
+  "reason": "Il filtro CPV del vecchio endpoint restituisce avvisi con codici estranei e il `count` sugli aggregati e' una stima che dipende dalla dimensione di pagina. Senza avviso l'utente legge come esaustivo un risultato che non lo e'.",
+  "files": [
+    "internal/cli/cerca.go"
+  ],
+  "validated_outcome": "`cerca --cpv 302 --size 20` stampa l'avviso; `--cpv 30213000` e `--size 200` no, perche' li' il conteggio e' esatto."
+}

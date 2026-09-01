@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-23T07:59:48.196956222Z",
+  "printing_press_version": "4.17.0",
+  "api_name": "anac-pl",
+  "display_name": "ANAC Pubblicità a Valore Legale",
+  "cli_name": "anac-pl-pp-cli",
+  "owner": "aborruso",
+  "printer": "aborruso",
+  "printer_name": "aborruso",
+  "spec_path": "anac-pl-spec.yaml",
+  "spec_format": "internal",
+  "spec_checksum": "sha256:732d5a53a649bc04be0e49837ce0f1213500e2e08928f709282d2934ee780d19",
+  "run_id": "20260623-093040-ed91772a",
+  "category": "other",
+  "description": "Cerca bandi, esiti e avvisi di gara della piattaforma ANAC dalla riga di comando, con dettaglio JSON, cronologia, store locale e ricerca offline.",
+  "mcp_binary": "anac-pl-pp-mcp",
+  "mcp_tool_count": 5,
+  "mcp_public_tool_count": 5,
+  "mcp_ready": "full",
+  "api_version": "0.1.0",
+  "auth_type": "none",
+  "novel_features": [
+    {
+      "name": "Store locale + sync",
+      "command": "sync",
+      "description": "Scarica e conserva gli avvisi in un database SQLite locale per analisi offline."
+    },
+    {
+      "name": "Ricerca offline FTS",
+      "command": "search-local",
+      "description": "Cerca tra gli avvisi gia' sincronizzati in locale, senza rete."
+    },
+    {
+      "name": "Export CSV/JSON",
+      "command": "export",
+      "description": "Esporta gli avvisi sincronizzati in CSV o JSON per fogli di calcolo e pipeline dati."
+    }
+  ]
+}

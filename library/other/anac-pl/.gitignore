@@ -1,0 +1,20 @@
+# Binari compilati
+/anac-pl-pp-cli
+/anac-pl-pp-mcp
+/anac-pubblicita-pp-cli
+build/
+dist/
+
+# Database locale sincronizzato e file di lavoro
+*.db
+tmp/
+tasks/
+
+# Note personali e valutazioni: non si pubblicano
+docs/future-ideas.md
+docs/evaluation*.md
+LOG.md
+
+# Proof del collaudo live: contengono path assoluti e output grezzo dell API
+.manuscripts/*/proofs/publish-live-gate.json
+.manuscripts/*/proofs/live-gate.stderr

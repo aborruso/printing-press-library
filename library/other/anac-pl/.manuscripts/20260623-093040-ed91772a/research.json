@@ -1,0 +1,126 @@
+{
+  "api_name": "anac-pl",
+  "novelty_score": 0,
+  "alternatives": [],
+  "gaps": [],
+  "patterns": [],
+  "recommendation": "proceed",
+  "researched_at": "2026-06-23T07:35:00Z",
+  "novel_features": [
+    {
+      "name": "Store locale + sync",
+      "command": "sync",
+      "description": "Scarica e conserva gli avvisi in un database SQLite locale per analisi offline.",
+      "rationale": "Solo avendo i dati in locale puoi interrogarli con SQL e ricerca full-text senza ripetere chiamate di rete.",
+      "example": "anac-pl-pp-cli sync --resources avvisi --param keywords=microsoft",
+      "why_it_matters": "Permette analisi ripetute e aggregazioni che l'API paginata non offre.",
+      "group": "Stato locale che si accumula"
+    },
+    {
+      "name": "Ricerca offline FTS",
+      "command": "search-local",
+      "description": "Cerca tra gli avvisi gia' sincronizzati in locale, senza rete.",
+      "rationale": "L'indice FTS locale e' costruito sui dati sincronizzati, impossibile lato API.",
+      "example": "anac-pl-pp-cli search-local microsoft",
+      "why_it_matters": "Risposte istantanee e componibili con jq/SQL.",
+      "group": "Stato locale che si accumula"
+    },
+    {
+      "name": "Export CSV/JSON",
+      "command": "export",
+      "description": "Esporta gli avvisi sincronizzati in CSV o JSON per fogli di calcolo e pipeline dati.",
+      "rationale": "L'export tabellare deriva dallo store locale normalizzato.",
+      "example": "anac-pl-pp-cli export avvisi",
+      "why_it_matters": "Porta i dati ANAC direttamente in strumenti di analisi.",
+      "group": "Stato locale che si accumula"
+    }
+  ],
+  "novel_features_built": [
+    {
+      "name": "Store locale + sync",
+      "command": "sync",
+      "description": "Scarica e conserva gli avvisi in un database SQLite locale per analisi offline.",
+      "rationale": "Solo avendo i dati in locale puoi interrogarli con SQL e ricerca full-text senza ripetere chiamate di rete.",
+      "example": "anac-pl-pp-cli sync --resources avvisi --param keywords=microsoft",
+      "why_it_matters": "Permette analisi ripetute e aggregazioni che l'API paginata non offre.",
+      "group": "Stato locale che si accumula"
+    },
+    {
+      "name": "Ricerca offline FTS",
+      "command": "search-local",
+      "description": "Cerca tra gli avvisi gia' sincronizzati in locale, senza rete.",
+      "rationale": "L'indice FTS locale e' costruito sui dati sincronizzati, impossibile lato API.",
+      "example": "anac-pl-pp-cli search-local microsoft",
+      "why_it_matters": "Risposte istantanee e componibili con jq/SQL.",
+      "group": "Stato locale che si accumula"
+    },
+    {
+      "name": "Export CSV/JSON",
+      "command": "export",
+      "description": "Esporta gli avvisi sincronizzati in CSV o JSON per fogli di calcolo e pipeline dati.",
+      "rationale": "L'export tabellare deriva dallo store locale normalizzato.",
+      "example": "anac-pl-pp-cli export avvisi",
+      "why_it_matters": "Porta i dati ANAC direttamente in strumenti di analisi.",
+      "group": "Stato locale che si accumula"
+    }
+  ],
+  "auth": {},
+  "narrative": {
+    "display_name": "ANAC Pubblicità a Valore Legale",
+    "headline": "Cerca bandi, esiti e avvisi di gara della piattaforma ANAC dalla riga di comando, con dettaglio JSON, cronologia, store locale e ricerca offline.",
+    "value_prop": "anac-pl espone l'API pubblica della Piattaforma di Pubblicità a Valore Legale di ANAC come CLI agent-native: ricerca full-text con filtri (data, importo, CPV, tipologia), dettaglio JSON completo degli esiti, cronologia delle rettifiche, e un database SQLite locale per ricerca offline ed export CSV/JSON. Nessuna autenticazione richiesta.",
+    "quickstart": [
+      {
+        "command": "anac-pl-cli doctor --dry-run",
+        "comment": "Verifica raggiungibilita' dell'API"
+      },
+      {
+        "command": "anac-pl-cli avvisi search --query microsoft --size 5",
+        "comment": "Ricerca full-text dei primi 5 avvisi"
+      },
+      {
+        "command": "anac-pl-cli tipologie map",
+        "comment": "Elenco di categorie/tipologie e codici scheda per i filtri"
+      }
+    ],
+    "troubleshoots": [
+      {
+        "symptom": "HTTP 500 sui filtri data",
+        "fix": "Usa il formato GG/MM/AAAA per --published-from e --published-to"
+      },
+      {
+        "symptom": "ricerca archivio vuota",
+        "fix": "Con --archive specifica un intervallo date inferiore a 6 mesi"
+      }
+    ],
+    "when_to_use": "Usa questo CLI per cercare e analizzare programmaticamente bandi, esiti e avvisi pubblicati da stazioni appaltanti italiane sulla piattaforma ANAC. Ideale per monitoraggio appalti, due diligence e analisi dati con CSV/SQL.",
+    "anti_triggers": [
+      "Non usare per la Banca Dati Nazionale Contratti Pubblici (BDNCP) o l'anagrafe CIG completa.",
+      "Non usare per inviare o pubblicare avvisi: l'API e' di sola lettura."
+    ],
+    "recipes": [
+      {
+        "title": "Esiti recenti per parola chiave",
+        "command": "anac-pl-cli avvisi search --query 'servizi informatici' --scheda P7_1_1 --size 20",
+        "explanation": "Filtra i risultati di gara per oggetto."
+      },
+      {
+        "title": "Dettaglio JSON di un esito",
+        "command": "anac-pl-cli avvisi get c5bfcc8d-ebed-4b6b-ab5f-661d78fa88e2 --json",
+        "explanation": "Recupera il JSON completo del detail page."
+      },
+      {
+        "title": "Estrai solo campi chiave",
+        "command": "anac-pl-cli avvisi search --query microsoft --agent --select idAvviso,codiceScheda,dataPubblicazione,score",
+        "explanation": "Output compatto per agenti su risposte voluminose."
+      }
+    ],
+    "trigger_phrases": [
+      "cerca un bando ANAC",
+      "trova esiti di gara",
+      "dettaglio avviso pubblicita legale",
+      "usa anac-pl",
+      "ricerca appalti ANAC"
+    ]
+  }
+}

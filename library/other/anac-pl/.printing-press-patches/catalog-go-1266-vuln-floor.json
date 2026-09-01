@@ -1,0 +1,15 @@
+{
+  "schema_version": 2,
+  "id": "catalog-go-1266-vuln-floor",
+  "applied_at": "2026-09-01",
+  "base_run_id": "20260623-093040-ed91772a",
+  "base_printing_press_version": "4.17.0",
+  "summary": "Floor del toolchain Go alzato a 1.26.6 in go.mod, README.md e SKILL.md.",
+  "reason": "govulncheck segnalava tre vulnerabilita' della standard library raggiungibili dal codice (GO-2026-6218 in net/url, GO-2026-6090 in crypto/tls, GO-2026-6089 in net/http), tutte corrette in go1.26.6. E' lo stesso floor gia' dichiarato da .go-version alla radice del catalogo.",
+  "files": [
+    "go.mod",
+    "README.md",
+    "SKILL.md"
+  ],
+  "validated_outcome": "`govulncheck ./...` passa da tre vulnerabilita' raggiungibili a «No vulnerabilities found»."
+}

@@ -1,0 +1,15 @@
+{
+  "schema_version": 2,
+  "id": "anac-pl-search-local-nessun-risultato",
+  "applied_at": "2026-09-01",
+  "base_run_id": "20260623-093040-ed91772a",
+  "base_printing_press_version": "4.17.0",
+  "summary": "`search-local <testo>` esce con codice 3 quando nessun avviso locale corrisponde, lasciando invariato lo stdout.",
+  "reason": "Una ricerca che non trova nulla usciva 0 come una che trova: chi concatena comandi non poteva distinguere i due casi, e la matrice del collaudo lo segnalava come error path senza esito. Il codice 3 e' quello gia' usato dalla CLI per le risorse non trovate.",
+  "files": [
+    "internal/cli/search_local_anac.go",
+    "README.md",
+    "SKILL.md"
+  ],
+  "validated_outcome": "`search-local __printing_press_invalid__` stampa `[]` ed esce 3; `search-local microsoft` con risultati esce 0."
+}
