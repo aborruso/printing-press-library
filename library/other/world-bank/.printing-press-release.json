@@ -2,9 +2,17 @@
   "schema_version": 1,
   "slug": "world-bank",
   "cli_name": "world-bank-pp-cli",
-  "version": "",
-  "released_at": "",
-  "source_commit": "",
+  "version": "2026.9.1",
+  "released_at": "2026-09-03T15:11:07Z",
+  "source_commit": "4afb1d1ba6954ed72a830efb0e089938e172730a",
   "printing_press_version": "4.24.0",
-  "run_id": "20260617-195946-cffecdb0"
+  "run_id": "20260617-195946-cffecdb0",
+  "changes": [
+    {
+      "title": "feat(world-bank): add world-bank",
+      "pr": 1920,
+      "url": "https://github.com/mvanhorn/printing-press-library/pull/1920",
+      "commit": "4afb1d1ba6954ed72a830efb0e089938e172730a"
+    }
+  ]
 }
