@@ -2,17 +2,17 @@
   "schema_version": 1,
   "slug": "amazon-orders",
   "cli_name": "amazon-orders-pp-cli",
-  "version": "2026.8.2",
-  "released_at": "2026-08-17T09:32:36Z",
-  "source_commit": "4ca9b8c2abbfaaa227fd484232a5fb927eee6745",
+  "version": "2026.9.1",
+  "released_at": "2026-09-03T15:19:04Z",
+  "source_commit": "8fca8ce0a9d1a7e7ce76fb3e83a95211d1f13d25",
   "printing_press_version": "4.2.2",
   "run_id": "20260510-105710",
   "changes": [
     {
-      "title": "fix(amazon-orders): rebase amazon.in parser fix",
-      "pr": 1741,
-      "url": "https://github.com/mvanhorn/printing-press-library/pull/1741",
-      "commit": "4ca9b8c2abbfaaa227fd484232a5fb927eee6745"
+      "title": "docs(amazon-orders): clarify headless auth validation (leftover from #1007)",
+      "pr": 1917,
+      "url": "https://github.com/mvanhorn/printing-press-library/pull/1917",
+      "commit": "8fca8ce0a9d1a7e7ce76fb3e83a95211d1f13d25"
     }
   ]
 }

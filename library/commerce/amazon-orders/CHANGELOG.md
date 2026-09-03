@@ -2,6 +2,10 @@
 
 This file is maintained by printing-press-library release automation. Do not hand-edit release sections in normal PRs.
 
+## 2026.9.1 - 2026-09-03
+
+- docs(amazon-orders): clarify headless auth validation (leftover from #1007) (#1917).
+
 ## 2026.8.2 - 2026-08-17
 
 - fix(amazon-orders): rebase amazon.in parser fix (#1741).
