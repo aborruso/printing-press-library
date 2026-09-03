@@ -14057,6 +14057,12 @@
         "Scan everything you've already researched and rank the best untapped plays: high demand, low competition, rising velocity — with zero new API calls."
       ],
       "path": "library/marketing/listingview",
+      "release": {
+        "cli_name": "listingview-pp-cli",
+        "version": "2026.9.1",
+        "released_at": "2026-09-03T14:42:45Z",
+        "source_commit": "76a9b150ca1a5e90eb79fabbd727374d1fb79d19"
+      },
       "printer": "vcolombo",
       "printer_name": "Vincent Colombo",
       "creator": {
@@ -27627,6 +27633,56 @@
         "env_vars": [
           "GOOGLE_WORKSPACE_TOKEN"
         ],
+        "mcp_ready": "full",
+        "spec_format": "internal"
+      }
+    },
+    {
+      "name": "world-bank",
+      "category": "other",
+      "api": "World Bank",
+      "description": "Every World Bank indicator, queryable offline, with cross-country SQL and rankings no wrapper has.",
+      "search_terms": [
+        "world-bank",
+        "World Bank",
+        "world-bank-pp-cli",
+        "Every World Bank indicator, queryable offline, with cross-country SQL and rankings no wrapper has.",
+        "Offline indicator search",
+        "indicators find",
+        "Search the full ~16,000-indicator catalog by keyword in a single call.",
+        "Cross-country compare",
+        "compare",
+        "Line up one indicator across many countries in a single aligned table with deltas vs a baseline.",
+        "Trend / growth stats",
+        "trend",
+        "CAGR, year-over-year change, min/max/latest for one country+indicator series.",
+        "Rank countries",
+        "rank",
+        "Rank all economies by an indicator for a year, filtered by region or income level.",
+        "Pipeline export",
+        "export",
+        "Bulk country x indicator pull emitted as pipeline-ready wide or long CSV.",
+        "Revision diff",
+        "data diff",
+        "Compare a fresh pull against the last synced snapshot to surface revised observations."
+      ],
+      "path": "library/other/world-bank",
+      "printer": "LukeTheoJohnson",
+      "printer_name": "Luke J",
+      "creator": {
+        "handle": "LukeTheoJohnson",
+        "name": "Luke J"
+      },
+      "mcp": {
+        "binary": "world-bank-pp-mcp",
+        "transports": [
+          "stdio",
+          "http"
+        ],
+        "tool_count": 11,
+        "public_tool_count": 11,
+        "auth_type": "none",
+        "env_vars": [],
         "mcp_ready": "full",
         "spec_format": "internal"
       }
