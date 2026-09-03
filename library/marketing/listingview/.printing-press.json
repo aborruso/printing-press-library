@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-27T11:29:37.215219Z",
+  "printing_press_version": "4.26.1",
+  "api_name": "listingview",
+  "display_name": "ListingView",
+  "cli_name": "listingview-pp-cli",
+  "creator": {
+    "handle": "vcolombo",
+    "name": "Vincent Colombo"
+  },
+  "owner": "vcolombo",
+  "printer": "vcolombo",
+  "printer_name": "Vincent Colombo",
+  "spec_path": "listingview-spec.yaml",
+  "spec_format": "internal",
+  "spec_checksum": "sha256:eea2e2e4d2cc01f2058f8c465923e05ed8bb99e64e0e6d82d94ec3090dbe2618",
+  "run_id": "20260627-031657-1bc0ab62",
+  "category": "marketing",
+  "description": "Every ListingView research tool in your terminal, plus a local database that adds drift tracking, niche scoring, and offline analysis no ListingView tool keeps.",
+  "mcp_binary": "listingview-pp-mcp",
+  "mcp_tool_count": 16,
+  "mcp_ready": "partial",
+  "api_version": "0.1.0",
+  "auth_type": "cookie",
+  "auth_env_vars": [
+    "LISTINGVIEW_COOKIES"
+  ],
+  "novel_features": [
+    {
+      "name": "Niche go/no-go verdict",
+      "command": "niche",
+      "description": "Get a single go/no-go verdict on an Etsy niche, combining keyword demand, competition, best-seller density, price band, and how winnable the current top sellers are."
+    },
+    {
+      "name": "Listing tag teardown",
+      "command": "listings audit",
+      "description": "Audit a listing's tags: extract the tags it uses and grade each by ListingView's opportunity, demand, competition, and velocity scores, flagging dead-weight tags and proposing stronger replacements."
+    },
+    {
+      "name": "Snapshot drift diff",
+      "command": "drift",
+      "description": "Re-run your saved keyword/listing/shop queries and diff against the last snapshot: volume changes, new best-seller entrants, price drops, and SEO/rank movement."
+    },
+    {
+      "name": "Revenue-weighted tag consensus",
+      "command": "tags consensus",
+      "description": "Find the tags that repeatedly appear across the top-selling listings for a term, ranked by frequency weighted by each listing's revenue estimate."
+    },
+    {
+      "name": "Velocity early-mover",
+      "command": "tags rising",
+      "description": "Rank tags by ListingView's velocity score (accelerating demand) while competition is still low, surfacing early-mover windows."
+    },
+    {
+      "name": "Revenue-weighted shop gaps",
+      "command": "gaps",
+      "description": "Compare your shop's tags/keywords against a competitor's, ranked by the revenue those tags drive for the competitor."
+    },
+    {
+      "name": "Local opportunity shortlist",
+      "command": "opportunities",
+      "description": "Scan everything you've already researched and rank the best untapped plays: high demand, low competition, rising velocity — with zero new API calls."
+    }
+  ]
+}

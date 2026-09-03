@@ -1,0 +1,2382 @@
+name: listingview
+description: Discovered API spec for listingview
+version: 0.1.0
+base_url: https://app.listingview.io
+spec_source: sniffed
+http_transport: browser-chrome
+auth:
+    type: cookie
+    header: Cookie
+    format: ""
+    env_vars:
+        - LISTINGVIEW_COOKIES
+    in: cookie
+    cookie_domain: .app.listingview.io
+    requires_browser_session: true
+    browser_session_reason: browser clearance is required to replay captured website traffic
+    browser_session_validation_path: /api/proxy/api/integration/etsy/list-favourite
+    browser_session_validation_method: GET
+auth_warnings:
+    - 'rejected auth candidate "filter" from body: search input'
+    - 'rejected auth candidate "keyword" from body: search input'
+    - 'rejected auth candidate "limit" from body: search input'
+    - 'rejected auth candidate "limit" from query: search input'
+    - 'rejected auth candidate "page" from body: search input'
+    - 'rejected auth candidate "search" from body: search input'
+    - 'rejected auth candidate "sort_column" from body: search input'
+    - 'rejected auth candidate "sort_order" from body: search input'
+config:
+    format: toml
+    path: ~/.config/listingview-pp-cli/config.toml
+resources:
+    auth:
+        description: Operations on me
+        endpoints:
+            list_me:
+                method: GET
+                path: /api/auth/me
+                description: GET /api/auth/me
+                params:
+                    - name: data
+                      type: object
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields:
+                        - name: email
+                          type: string
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields: []
+                        - name: id
+                          type: integer
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields: []
+                        - name: plan
+                          type: string
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields: []
+                        - name: shops
+                          type: array
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields:
+                            - name: shopId
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: shopName
+                              type: string
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                    - name: message
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: statusCode
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                body: []
+                response:
+                    type: object
+                    item: Me
+                pagination: null
+                observed_auth:
+                    - cookie
+                    - x-csrf-token
+    proxy:
+        description: Operations on getFilteredListings
+        endpoints:
+            create_add_remove_favourite:
+                method: POST
+                path: /api/proxy/api/integration/etsy/add-remove-favourite
+                description: POST /api/proxy/api/integration/etsy/add-remove-favourite
+                params:
+                    - name: data
+                      type: object
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields:
+                        - name: added
+                          type: boolean
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields: []
+                    - name: message
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: statusCode
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                body:
+                    - name: id
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: type
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                response:
+                    type: object
+                    item: AddRemoveFavourite
+                pagination: null
+                observed_auth:
+                    - cookie
+                    - x-csrf-token
+            create_analytics:
+                method: POST
+                path: /api/proxy/api/integration/etsy/tag-analyzer/analytics
+                description: POST /api/proxy/api/integration/etsy/tag-analyzer/analytics
+                params:
+                    - name: data
+                      type: object
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields:
+                        - name: opportunity
+                          type: integer
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields: []
+                        - name: trend
+                          type: array
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields:
+                            - name: month
+                              type: string
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: volume
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                    - name: message
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: statusCode
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                body:
+                    - name: tag
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                response:
+                    type: object
+                    item: Analytic
+                pagination: null
+                observed_auth:
+                    - cookie
+                    - x-csrf-token
+            create_analytics_2:
+                method: POST
+                path: /api/proxy/api/integration/etsy/shop-analyzer/analytics
+                description: POST /api/proxy/api/integration/etsy/shop-analyzer/analytics
+                params:
+                    - name: data
+                      type: object
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields:
+                        - name: monthlyRevenue
+                          type: integer
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields: []
+                        - name: shopName
+                          type: string
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields: []
+                        - name: totalSales
+                          type: integer
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields: []
+                    - name: message
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: statusCode
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                body:
+                    - name: shopName
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                response:
+                    type: object
+                    item: Analytic2
+                pagination: null
+                observed_auth:
+                    - cookie
+                    - x-csrf-token
+            create_analytics_3:
+                method: POST
+                path: /api/proxy/api/integration/etsy/listing-explorer/analytics
+                description: POST /api/proxy/api/integration/etsy/listing-explorer/analytics
+                params:
+                    - name: data
+                      type: object
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields:
+                        - name: listingId
+                          type: integer
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields: []
+                        - name: monthlyRevenue
+                          type: integer
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields: []
+                        - name: monthlySales
+                          type: integer
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields: []
+                        - name: seoScore
+                          type: integer
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields: []
+                    - name: message
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: statusCode
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                body:
+                    - name: listingId
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                response:
+                    type: object
+                    item: Analytic3
+                pagination: null
+                observed_auth:
+                    - cookie
+                    - x-csrf-token
+            create_get_filtered_shops:
+                method: POST
+                path: /api/proxy/api/integration/etsy/get-filtered-shops
+                description: POST /api/proxy/api/integration/etsy/get-filtered-shops
+                params:
+                    - name: data
+                      type: object
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields:
+                        - name: shops
+                          type: array
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields:
+                            - name: avgPrice
+                              type: number
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: engagementScore
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: etsyShopId
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: listingCount
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: monthlyRevenue
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: shopName
+                              type: string
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: totalSales
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                    - name: message
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: statusCode
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                body:
+                    - name: filter
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: filters
+                      type: object
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: limit
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: page
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: salesInterval
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: search
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: sort_column
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: sort_order
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: timeframe
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                response:
+                    type: object
+                    item: GetFilteredShop
+                pagination: null
+                observed_auth:
+                    - cookie
+                    - x-csrf-token
+            create_getFilteredKeywords:
+                method: POST
+                path: /api/proxy/api/integration/etsy/getFilteredKeywords
+                description: POST /api/proxy/api/integration/etsy/getFilteredKeywords
+                params:
+                    - name: data
+                      type: object
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields:
+                        - name: keywords
+                          type: array
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields:
+                            - name: avgPrice
+                              type: number
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: clicks
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: competition
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: competitionShops
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: demand
+                              type: string
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: keyword
+                              type: string
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: recommendationScore
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: searchVolume
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                    - name: message
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: statusCode
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                body:
+                    - name: filters
+                      type: object
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: limit
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: page
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: search
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: sort_column
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: sort_order
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                response:
+                    type: object
+                    item: GetFilteredKeyword
+                pagination: null
+                observed_auth:
+                    - cookie
+                    - x-csrf-token
+            create_getFilteredListings:
+                method: POST
+                path: /api/proxy/api/integration/etsy/getFilteredListings
+                description: POST /api/proxy/api/integration/etsy/getFilteredListings
+                params:
+                    - name: data
+                      type: object
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields:
+                        - name: listings
+                          type: array
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields:
+                            - name: conversion
+                              type: number
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: dateListed
+                              type: string
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: etsyShopId
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: folderIds
+                              type: array
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: isFavorite
+                              type: boolean
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: isFree
+                              type: boolean
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: listingId
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: monthlyRevenue
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: monthlySales
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: monthlyTrend
+                              type: number
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: price
+                              type: number
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: reviews
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: seoScore
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: shopName
+                              type: string
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: title
+                              type: string
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: views
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                        - name: timeCounter
+                          type: object
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields:
+                            - name: d_startToEnd
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                    - name: message
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: statusCode
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                body:
+                    - name: filter
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: filters
+                      type: object
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: limit
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: page
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: salesInterval
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: search
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: sort_column
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: sort_order
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: timeframe
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                response:
+                    type: object
+                    item: GetFilteredListing
+                pagination: null
+                observed_auth:
+                    - cookie
+                    - x-csrf-token
+            create_getFilteredTags:
+                method: POST
+                path: /api/proxy/api/integration/etsy/getFilteredTags
+                description: POST /api/proxy/api/integration/etsy/getFilteredTags
+                params:
+                    - name: data
+                      type: object
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields:
+                        - name: tags
+                          type: array
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields:
+                            - name: avgPrice
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: competition
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: demand
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: listings
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: opportunity
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: tag
+                              type: string
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: velocity
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                    - name: message
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: statusCode
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                body:
+                    - name: filters
+                      type: object
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: limit
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: page
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: search
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: sort_column
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: sort_order
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                response:
+                    type: object
+                    item: GetFilteredTag
+                pagination: null
+                observed_auth:
+                    - cookie
+                    - x-csrf-token
+            create_listings:
+                method: POST
+                path: /api/proxy/api/integration/etsy/tag-analyzer/listings
+                description: POST /api/proxy/api/integration/etsy/tag-analyzer/listings
+                params:
+                    - name: data
+                      type: object
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields:
+                        - name: listings
+                          type: array
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields:
+                            - name: conversion
+                              type: number
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: dateListed
+                              type: string
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: etsyShopId
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: folderIds
+                              type: array
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: isFavorite
+                              type: boolean
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: isFree
+                              type: boolean
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: listingId
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: monthlyRevenue
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: monthlySales
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: monthlyTrend
+                              type: number
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: price
+                              type: number
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: reviews
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: seoScore
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: shopName
+                              type: string
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: title
+                              type: string
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: views
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                    - name: message
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: statusCode
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                body:
+                    - name: limit
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: page
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: tag
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                response:
+                    type: object
+                    item: Listing2
+                pagination: null
+                observed_auth:
+                    - cookie
+                    - x-csrf-token
+            create_listings_2:
+                method: POST
+                path: /api/proxy/api/integration/etsy/shop-analyzer/listings
+                description: POST /api/proxy/api/integration/etsy/shop-analyzer/listings
+                params:
+                    - name: data
+                      type: object
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields:
+                        - name: listings
+                          type: array
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields:
+                            - name: conversion
+                              type: number
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: dateListed
+                              type: string
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: etsyShopId
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: folderIds
+                              type: array
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: isFavorite
+                              type: boolean
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: isFree
+                              type: boolean
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: listingId
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: monthlyRevenue
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: monthlySales
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: monthlyTrend
+                              type: number
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: price
+                              type: number
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: reviews
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: seoScore
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: shopName
+                              type: string
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: title
+                              type: string
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: views
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                    - name: message
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: statusCode
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                body:
+                    - name: limit
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: order
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: page
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: shopName
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: sortBy
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                response:
+                    type: object
+                    item: Listing4
+                pagination: null
+                observed_auth:
+                    - cookie
+                    - x-csrf-token
+            create_progress:
+                method: POST
+                path: /api/proxy/api/integration/etsy/shop-analyzer/progress
+                description: POST /api/proxy/api/integration/etsy/shop-analyzer/progress
+                params:
+                    - name: data
+                      type: object
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields:
+                        - name: progress
+                          type: integer
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields: []
+                        - name: status
+                          type: string
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields: []
+                    - name: message
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: statusCode
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                body:
+                    - name: shopName
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                response:
+                    type: object
+                    item: Progress
+                pagination: null
+                observed_auth:
+                    - cookie
+                    - x-csrf-token
+            create_shops:
+                method: POST
+                path: /api/proxy/api/integration/etsy/tag-analyzer/shops
+                description: POST /api/proxy/api/integration/etsy/tag-analyzer/shops
+                params:
+                    - name: data
+                      type: object
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields:
+                        - name: shops
+                          type: array
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields:
+                            - name: avgPrice
+                              type: number
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: engagementScore
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: etsyShopId
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: listingCount
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: monthlyRevenue
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: shopName
+                              type: string
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: totalSales
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                    - name: message
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: statusCode
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                body:
+                    - name: limit
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: page
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: tag
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                response:
+                    type: object
+                    item: Shop2
+                pagination: null
+                observed_auth:
+                    - cookie
+                    - x-csrf-token
+            create_tag_analyzer:
+                method: POST
+                path: /api/proxy/api/integration/etsy/tag-analyzer
+                description: POST /api/proxy/api/integration/etsy/tag-analyzer
+                params:
+                    - name: data
+                      type: object
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields:
+                        - name: competition
+                          type: integer
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields: []
+                        - name: demand
+                          type: integer
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields: []
+                        - name: opportunity
+                          type: integer
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields: []
+                        - name: tag
+                          type: string
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields: []
+                    - name: message
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: statusCode
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                body:
+                    - name: tag
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                response:
+                    type: object
+                    item: TagAnalyzer
+                pagination: null
+                observed_auth:
+                    - cookie
+                    - x-csrf-token
+            create_tag_extractor:
+                method: POST
+                path: /api/proxy/api/integration/etsy/tag-extractor
+                description: POST /api/proxy/api/integration/etsy/tag-extractor
+                params:
+                    - name: data
+                      type: object
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields:
+                        - name: tags
+                          type: array
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields: []
+                    - name: message
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: statusCode
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                body:
+                    - name: listingId
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                response:
+                    type: object
+                    item: TagExtractor
+                pagination: null
+                observed_auth:
+                    - cookie
+                    - x-csrf-token
+            create_tag_generator:
+                method: POST
+                path: /api/proxy/api/integration/etsy/tag-generator
+                description: POST /api/proxy/api/integration/etsy/tag-generator
+                params:
+                    - name: data
+                      type: object
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields:
+                        - name: tags
+                          type: array
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields: []
+                    - name: message
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: statusCode
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                body:
+                    - name: keyword
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                response:
+                    type: object
+                    item: TagGenerator
+                pagination: null
+                observed_auth:
+                    - cookie
+                    - x-csrf-token
+            create_tags:
+                method: POST
+                path: /api/proxy/api/integration/etsy/tag-analyzer/tags
+                description: POST /api/proxy/api/integration/etsy/tag-analyzer/tags
+                params:
+                    - name: data
+                      type: object
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields:
+                        - name: tags
+                          type: array
+                          required: true
+                          positional: false
+                          default: null
+                          description: ""
+                          fields:
+                            - name: avgPrice
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: competition
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: demand
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: listings
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: opportunity
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: tag
+                              type: string
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                            - name: velocity
+                              type: integer
+                              required: true
+                              positional: false
+                              default: null
+                              description: ""
+                              fields: []
+                    - name: message
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: statusCode
+                      type: integer
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                body:
+                    - name: tag
+                      type: string
+                      required: true
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                response:
+                    type: object
+                    item: Tag2
+                pagination: null
+                observed_auth:
+                    - cookie
+                    - x-csrf-token
+            list_list_favourite:
+                method: GET
+                path: /api/proxy/api/integration/etsy/list-favourite
+                description: GET /api/proxy/api/integration/etsy/list-favourite
+                params:
+                    - name: limit
+                      type: integer
+                      required: false
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                    - name: type
+                      type: string
+                      required: false
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                body: []
+                response:
+                    type: object
+                    item: ListFavourite
+                pagination: null
+                observed_auth:
+                    - cookie
+                    - x-csrf-token
+            list_popular:
+                method: GET
+                path: /api/proxy/api/integration/etsy/popular
+                description: GET /api/proxy/api/integration/etsy/popular
+                params:
+                    - name: type
+                      type: string
+                      required: false
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                body: []
+                response:
+                    type: object
+                    item: Popular
+                pagination: null
+                observed_auth:
+                    - cookie
+                    - x-csrf-token
+            list_recent_history:
+                method: GET
+                path: /api/proxy/api/integration/etsy/recent-history
+                description: GET /api/proxy/api/integration/etsy/recent-history
+                params:
+                    - name: type
+                      type: string
+                      required: false
+                      positional: false
+                      default: null
+                      description: ""
+                      fields: []
+                body: []
+                response:
+                    type: object
+                    item: RecentHistory
+                pagination: null
+                observed_auth:
+                    - cookie
+                    - x-csrf-token
+types:
+    AddRemoveFavourite:
+        fields:
+            - name: data
+              type: ref:Data19
+            - name: message
+              type: string
+            - name: statusCode
+              type: integer
+    Analytic:
+        fields:
+            - name: data
+              type: ref:Data6
+            - name: message
+              type: string
+            - name: statusCode
+              type: integer
+    Analytic2:
+        fields:
+            - name: data
+              type: ref:Data12
+            - name: message
+              type: string
+            - name: statusCode
+              type: integer
+    Analytic3:
+        fields:
+            - name: data
+              type: ref:Data15
+            - name: message
+              type: string
+            - name: statusCode
+              type: integer
+    Data:
+        fields:
+            - name: listings
+              type: '[]ref:Listing'
+            - name: timeCounter
+              type: ref:TimeCounter
+    Data2:
+        fields:
+            - name: keywords
+              type: '[]ref:Keyword'
+    Data3:
+        fields:
+            - name: shops
+              type: '[]ref:Shop'
+    Data4:
+        fields:
+            - name: tags
+              type: '[]ref:Tag'
+    Data5:
+        fields:
+            - name: competition
+              type: integer
+            - name: demand
+              type: integer
+            - name: opportunity
+              type: integer
+            - name: tag
+              type: string
+    Data6:
+        fields:
+            - name: opportunity
+              type: integer
+            - name: trend
+              type: '[]ref:Trend'
+    Data7:
+        fields:
+            - name: listings
+              type: '[]ref:Listing3'
+    Data8:
+        fields:
+            - name: shops
+              type: '[]ref:Shop3'
+    Data9:
+        fields:
+            - name: tags
+              type: '[]ref:Tag3'
+    Data10:
+        fields:
+            - name: tags
+              type: array
+    Data11:
+        fields:
+            - name: tags
+              type: array
+    Data12:
+        fields:
+            - name: monthlyRevenue
+              type: integer
+            - name: shopName
+              type: string
+            - name: totalSales
+              type: integer
+    Data13:
+        fields:
+            - name: listings
+              type: '[]ref:Listing5'
+    Data14:
+        fields:
+            - name: progress
+              type: integer
+            - name: status
+              type: string
+    Data15:
+        fields:
+            - name: listingId
+              type: integer
+            - name: monthlyRevenue
+              type: integer
+            - name: monthlySales
+              type: integer
+            - name: seoScore
+              type: integer
+    Data16:
+        fields:
+            - name: popular
+              type: array
+    Data17:
+        fields:
+            - name: history
+              type: array
+    Data18:
+        fields:
+            - name: watchlist
+              type: '[]ref:Watchlist'
+    Data19:
+        fields:
+            - name: added
+              type: bool
+    Data20:
+        fields:
+            - name: email
+              type: string
+            - name: id
+              type: integer
+            - name: plan
+              type: string
+            - name: shops
+              type: '[]ref:Shop4'
+    GetFilteredKeyword:
+        fields:
+            - name: data
+              type: ref:Data2
+            - name: message
+              type: string
+            - name: statusCode
+              type: integer
+    GetFilteredListing:
+        fields:
+            - name: data
+              type: ref:Data
+            - name: message
+              type: string
+            - name: statusCode
+              type: integer
+    GetFilteredShop:
+        fields:
+            - name: data
+              type: ref:Data3
+            - name: message
+              type: string
+            - name: statusCode
+              type: integer
+    GetFilteredTag:
+        fields:
+            - name: data
+              type: ref:Data4
+            - name: message
+              type: string
+            - name: statusCode
+              type: integer
+    Keyword:
+        fields:
+            - name: avgPrice
+              type: number
+            - name: clicks
+              type: integer
+            - name: competition
+              type: integer
+            - name: competitionShops
+              type: integer
+            - name: demand
+              type: string
+            - name: keyword
+              type: string
+            - name: recommendationScore
+              type: integer
+            - name: searchVolume
+              type: integer
+    ListFavourite:
+        fields:
+            - name: data
+              type: ref:Data18
+            - name: message
+              type: string
+            - name: statusCode
+              type: integer
+    Listing:
+        fields:
+            - name: conversion
+              type: number
+            - name: dateListed
+              type: string
+            - name: etsyShopId
+              type: integer
+            - name: folderIds
+              type: array
+            - name: isFavorite
+              type: bool
+            - name: isFree
+              type: bool
+            - name: listingId
+              type: integer
+            - name: monthlyRevenue
+              type: integer
+            - name: monthlySales
+              type: integer
+            - name: monthlyTrend
+              type: number
+            - name: price
+              type: number
+            - name: reviews
+              type: integer
+            - name: seoScore
+              type: integer
+            - name: shopName
+              type: string
+            - name: title
+              type: string
+            - name: views
+              type: integer
+    Listing2:
+        fields:
+            - name: data
+              type: ref:Data7
+            - name: message
+              type: string
+            - name: statusCode
+              type: integer
+    Listing3:
+        fields:
+            - name: conversion
+              type: number
+            - name: dateListed
+              type: string
+            - name: etsyShopId
+              type: integer
+            - name: folderIds
+              type: array
+            - name: isFavorite
+              type: bool
+            - name: isFree
+              type: bool
+            - name: listingId
+              type: integer
+            - name: monthlyRevenue
+              type: integer
+            - name: monthlySales
+              type: integer
+            - name: monthlyTrend
+              type: number
+            - name: price
+              type: number
+            - name: reviews
+              type: integer
+            - name: seoScore
+              type: integer
+            - name: shopName
+              type: string
+            - name: title
+              type: string
+            - name: views
+              type: integer
+    Listing4:
+        fields:
+            - name: data
+              type: ref:Data13
+            - name: message
+              type: string
+            - name: statusCode
+              type: integer
+    Listing5:
+        fields:
+            - name: conversion
+              type: number
+            - name: dateListed
+              type: string
+            - name: etsyShopId
+              type: integer
+            - name: folderIds
+              type: array
+            - name: isFavorite
+              type: bool
+            - name: isFree
+              type: bool
+            - name: listingId
+              type: integer
+            - name: monthlyRevenue
+              type: integer
+            - name: monthlySales
+              type: integer
+            - name: monthlyTrend
+              type: number
+            - name: price
+              type: number
+            - name: reviews
+              type: integer
+            - name: seoScore
+              type: integer
+            - name: shopName
+              type: string
+            - name: title
+              type: string
+            - name: views
+              type: integer
+    Me:
+        fields:
+            - name: data
+              type: ref:Data20
+            - name: message
+              type: string
+            - name: statusCode
+              type: integer
+    Popular:
+        fields:
+            - name: data
+              type: ref:Data16
+            - name: message
+              type: string
+            - name: statusCode
+              type: integer
+    Progress:
+        fields:
+            - name: data
+              type: ref:Data14
+            - name: message
+              type: string
+            - name: statusCode
+              type: integer
+    RecentHistory:
+        fields:
+            - name: data
+              type: ref:Data17
+            - name: message
+              type: string
+            - name: statusCode
+              type: integer
+    Shop:
+        fields:
+            - name: avgPrice
+              type: number
+            - name: engagementScore
+              type: integer
+            - name: etsyShopId
+              type: integer
+            - name: listingCount
+              type: integer
+            - name: monthlyRevenue
+              type: integer
+            - name: shopName
+              type: string
+            - name: totalSales
+              type: integer
+    Shop2:
+        fields:
+            - name: data
+              type: ref:Data8
+            - name: message
+              type: string
+            - name: statusCode
+              type: integer
+    Shop3:
+        fields:
+            - name: avgPrice
+              type: number
+            - name: engagementScore
+              type: integer
+            - name: etsyShopId
+              type: integer
+            - name: listingCount
+              type: integer
+            - name: monthlyRevenue
+              type: integer
+            - name: shopName
+              type: string
+            - name: totalSales
+              type: integer
+    Shop4:
+        fields:
+            - name: shopId
+              type: integer
+            - name: shopName
+              type: string
+    Tag:
+        fields:
+            - name: avgPrice
+              type: integer
+            - name: competition
+              type: integer
+            - name: demand
+              type: integer
+            - name: listings
+              type: integer
+            - name: opportunity
+              type: integer
+            - name: tag
+              type: string
+            - name: velocity
+              type: integer
+    Tag2:
+        fields:
+            - name: data
+              type: ref:Data9
+            - name: message
+              type: string
+            - name: statusCode
+              type: integer
+    Tag3:
+        fields:
+            - name: avgPrice
+              type: integer
+            - name: competition
+              type: integer
+            - name: demand
+              type: integer
+            - name: listings
+              type: integer
+            - name: opportunity
+              type: integer
+            - name: tag
+              type: string
+            - name: velocity
+              type: integer
+    TagAnalyzer:
+        fields:
+            - name: data
+              type: ref:Data5
+            - name: message
+              type: string
+            - name: statusCode
+              type: integer
+    TagExtractor:
+        fields:
+            - name: data
+              type: ref:Data10
+            - name: message
+              type: string
+            - name: statusCode
+              type: integer
+    TagGenerator:
+        fields:
+            - name: data
+              type: ref:Data11
+            - name: message
+              type: string
+            - name: statusCode
+              type: integer
+    TimeCounter:
+        fields:
+            - name: d_startToEnd
+              type: integer
+    Trend:
+        fields:
+            - name: month
+              type: string
+            - name: volume
+              type: integer
+    Watchlist:
+        fields:
+            - name: conversion
+              type: number
+            - name: dateListed
+              type: string
+            - name: etsyShopId
+              type: integer
+            - name: folderIds
+              type: array
+            - name: isFavorite
+              type: bool
+            - name: isFree
+              type: bool
+            - name: listingId
+              type: integer
+            - name: monthlyRevenue
+              type: integer
+            - name: monthlySales
+              type: integer
+            - name: monthlyTrend
+              type: number
+            - name: price
+              type: number
+            - name: reviews
+              type: integer
+            - name: seoScore
+              type: integer
+            - name: shopName
+              type: string
+            - name: title
+              type: string
+            - name: views
+              type: integer

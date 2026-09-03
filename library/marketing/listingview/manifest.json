@@ -1,0 +1,45 @@
+{
+  "manifest_version": "0.3",
+  "name": "listingview-pp-mcp",
+  "display_name": "ListingView",
+  "version": "0.0.0",
+  "description": "Every ListingView research tool in your terminal, plus a local database that adds drift tracking, niche scoring, and offline analysis no ListingView tool keeps.",
+  "author": {
+    "name": "CLI Printing Press"
+  },
+  "license": "Apache-2.0",
+  "server": {
+    "type": "binary",
+    "entry_point": "bin/listingview-pp-mcp",
+    "mcp_config": {
+      "command": "${__dirname}/bin/listingview-pp-mcp",
+      "args": [],
+      "env": {
+        "LISTINGVIEW_COOKIES": "${user_config.listingview_cookies}",
+        "LISTINGVIEW_SHOP_ID": "${user_config.listingview_shop_id}"
+      }
+    }
+  },
+  "user_config": {
+    "listingview_cookies": {
+      "type": "string",
+      "title": "LISTINGVIEW_COOKIES",
+      "description": "Optional. Sets LISTINGVIEW_COOKIES for the ListingView MCP server.",
+      "sensitive": true
+    },
+    "listingview_shop_id": {
+      "type": "string",
+      "title": "LISTINGVIEW_SHOP_ID",
+      "description": "Optional. Sets LISTINGVIEW_SHOP_ID for the ListingView MCP server. Required by the generated client for credential refresh or hand-written auth flow.",
+      "sensitive": true
+    }
+  },
+  "compatibility": {
+    "claude_desktop": ">=1.0.0",
+    "platforms": [
+      "darwin",
+      "linux",
+      "win32"
+    ]
+  }
+}

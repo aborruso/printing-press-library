@@ -1,0 +1,405 @@
+name: listingview
+description: "ListingView CLI — Etsy keyword, listing, shop, and tag research from the terminal, backed by a local SQLite store no other ListingView tool keeps."
+version: "0.1.0"
+base_url: "https://app.listingview.io"
+spec_source: sniffed
+http_transport: browser-chrome
+category: marketing
+health_check_path: "/api/auth/me"
+
+auth:
+  type: cookie
+  header: Cookie
+  in: cookie
+  cookie_domain: .app.listingview.io
+  requires_browser_session: true
+  browser_session_reason: "ListingView authenticates with an httpOnly session cookie set when you log in to app.listingview.io; auth login --chrome imports it."
+  browser_session_validation_path: /api/auth/me
+  browser_session_validation_method: GET
+  env_vars:
+    - LISTINGVIEW_COOKIES
+
+required_headers:
+  - name: X-Requested-With
+    value: "XMLHttpRequest"
+  - name: Origin
+    value: "https://app.listingview.io"
+  - name: Referer
+    value: "https://app.listingview.io/dashboard"
+
+config:
+  format: toml
+  path: "~/.config/listingview-pp-cli/config.toml"
+
+resources:
+  keywords:
+    description: "Search Term Analyzer — Etsy keyword research: search volume, competition, demand, recommendation score."
+    endpoints:
+      search:
+        method: POST
+        path: "/api/proxy/api/integration/etsy/getFilteredKeywords"
+        description: "Search/rank keywords by volume, competition, and demand across ListingView's keyword database."
+        response_path: data
+        body:
+          - name: search
+            type: string
+            required: true
+            positional: true
+            description: "Keyword or search term to research."
+          - name: sort_column
+            type: string
+            required: false
+            default: "searchVolume"
+            description: "Sort field (e.g. searchVolume, competition)."
+          - name: sort_order
+            type: string
+            required: false
+            default: "desc"
+            enum: ["asc", "desc"]
+            description: "Sort direction."
+          - name: page
+            type: int
+            required: false
+            default: 1
+            description: "Result page (1-based)."
+          - name: limit
+            type: int
+            required: false
+            default: 50
+            description: "Results per page."
+          - name: filters
+            type: object
+            required: false
+            description: "Optional advanced filter object (JSON)."
+
+  listings:
+    description: "Listing research: search the 140M+ listing database and explore any listing's analytics."
+    endpoints:
+      search:
+        method: POST
+        path: "/api/proxy/api/integration/etsy/getFilteredListings"
+        description: "Search and rank Etsy listings by sales, revenue, and trend across ListingView's database."
+        response_path: data
+        body:
+          - name: search
+            type: string
+            required: true
+            positional: true
+            description: "Keyword/phrase to search listings for."
+          - name: sort_column
+            type: string
+            required: false
+            default: "sales"
+            description: "Sort field (sales, revenue, trend, etc.)."
+          - name: sort_order
+            type: string
+            required: false
+            default: "desc"
+            enum: ["asc", "desc"]
+            description: "Sort direction."
+          - name: filter
+            type: string
+            required: false
+            default: "top"
+            description: "Result filter bucket (top, new, trending, outliers)."
+          - name: timeframe
+            type: string
+            required: false
+            default: ""
+            description: "Optional timeframe window."
+          - name: salesInterval
+            type: int
+            required: false
+            default: 30
+            description: "Sales aggregation interval in days."
+          - name: page
+            type: int
+            required: false
+            default: 1
+            description: "Result page (1-based)."
+          - name: limit
+            type: int
+            required: false
+            default: 50
+            description: "Results per page."
+          - name: filters
+            type: object
+            required: false
+            description: "Optional advanced filter object (JSON)."
+
+  shops:
+    description: "Shop research: search the shop database and analyze any shop's performance."
+    endpoints:
+      search:
+        method: POST
+        path: "/api/proxy/api/integration/etsy/get-filtered-shops"
+        description: "Search and rank Etsy shops by sales, revenue, and trend."
+        response_path: data
+        body:
+          - name: search
+            type: string
+            required: true
+            positional: true
+            description: "Shop name or keyword to search shops for."
+          - name: sort_column
+            type: string
+            required: false
+            default: "sales"
+            description: "Sort field."
+          - name: sort_order
+            type: string
+            required: false
+            default: "desc"
+            enum: ["asc", "desc"]
+            description: "Sort direction."
+          - name: filter
+            type: string
+            required: false
+            default: "top"
+            description: "Result filter bucket."
+          - name: timeframe
+            type: string
+            required: false
+            default: ""
+            description: "Optional timeframe window."
+          - name: salesInterval
+            type: int
+            required: false
+            default: 30
+            description: "Sales aggregation interval in days."
+          - name: page
+            type: int
+            required: false
+            default: 1
+            description: "Result page (1-based)."
+          - name: limit
+            type: int
+            required: false
+            default: 50
+            description: "Results per page."
+      listings:
+        method: POST
+        path: "/api/proxy/api/integration/etsy/shop-analyzer/listings"
+        description: "Top listings for a shop with sales/revenue, sortable."
+        response_path: data
+        body:
+          - name: shopName
+            type: string
+            required: true
+            positional: true
+            description: "Etsy shop name."
+          - name: sortBy
+            type: string
+            required: false
+            default: "sales"
+            description: "Sort field."
+          - name: order
+            type: string
+            required: false
+            default: "desc"
+            enum: ["asc", "desc"]
+            description: "Sort direction."
+          - name: page
+            type: int
+            required: false
+            default: 1
+            description: "Result page (1-based)."
+          - name: limit
+            type: int
+            required: false
+            default: 50
+            description: "Results per page."
+
+  tags:
+    description: "Tag intelligence: search tags, analyze a tag, generate market-validated tags, and extract a listing's tags."
+    endpoints:
+      search:
+        method: POST
+        path: "/api/proxy/api/integration/etsy/getFilteredTags"
+        description: "Search and rank Etsy tags by opportunity, demand, competition, and velocity."
+        response_path: data
+        body:
+          - name: search
+            type: string
+            required: true
+            positional: true
+            description: "Tag or keyword to search."
+          - name: sort_column
+            type: string
+            required: false
+            default: "opportunity"
+            description: "Sort field."
+          - name: sort_order
+            type: string
+            required: false
+            default: "desc"
+            enum: ["asc", "desc"]
+            description: "Sort direction."
+          - name: page
+            type: int
+            required: false
+            default: 1
+            description: "Result page (1-based)."
+          - name: limit
+            type: int
+            required: false
+            default: 50
+            description: "Results per page."
+      analyze:
+        method: POST
+        path: "/api/proxy/api/integration/etsy/tag-analyzer"
+        description: "Tag Analyzer — opportunity/demand/competition/velocity scores for a tag."
+        response_path: data
+        body:
+          - name: tag
+            type: string
+            required: true
+            positional: true
+            description: "Tag to analyze."
+      analytics:
+        method: POST
+        path: "/api/proxy/api/integration/etsy/tag-analyzer/analytics"
+        description: "Trend analytics over time for a tag."
+        response_path: data
+        body:
+          - name: tag
+            type: string
+            required: true
+            positional: true
+            description: "Tag to analyze."
+      listings:
+        method: POST
+        path: "/api/proxy/api/integration/etsy/tag-analyzer/listings"
+        description: "Top listings using a tag."
+        response_path: data
+        body:
+          - name: tag
+            type: string
+            required: true
+            positional: true
+            description: "Tag to inspect."
+          - name: page
+            type: int
+            required: false
+            default: 1
+            description: "Result page (1-based)."
+          - name: limit
+            type: int
+            required: false
+            default: 50
+            description: "Results per page."
+      shops:
+        method: POST
+        path: "/api/proxy/api/integration/etsy/tag-analyzer/shops"
+        description: "Top shops using a tag."
+        response_path: data
+        body:
+          - name: tag
+            type: string
+            required: true
+            positional: true
+            description: "Tag to inspect."
+          - name: page
+            type: int
+            required: false
+            default: 1
+            description: "Result page (1-based)."
+          - name: limit
+            type: int
+            required: false
+            default: 50
+            description: "Results per page."
+      generate:
+        method: POST
+        path: "/api/proxy/api/integration/etsy/tag-generator"
+        description: "Tag Generator — generate market-validated tags from a keyword."
+        response_path: data
+        body:
+          - name: keyword
+            type: string
+            required: true
+            positional: true
+            description: "Seed keyword/product to generate tags for."
+      extract:
+        method: POST
+        path: "/api/proxy/api/integration/etsy/tag-extractor"
+        description: "Tag Extractor — extract the tags a given listing uses."
+        response_path: data
+        body:
+          - name: listingId
+            type: int
+            required: true
+            positional: true
+            description: "Etsy listing ID to extract tags from."
+
+  watchlist:
+    description: "Saved items: list watchlisted listings/shops/keywords and add or remove favourites."
+    endpoints:
+      list:
+        method: GET
+        path: "/api/proxy/api/integration/etsy/list-favourite"
+        description: "List saved/favourited items (listings, shops, or keywords)."
+        response_path: data
+        params:
+          - name: type
+            type: string
+            required: true
+            positional: true
+            default: "listing"
+            enum: ["listing", "shop", "keyword"]
+            description: "Watchlist type to list."
+          - name: limit
+            type: int
+            required: false
+            default: 50
+            description: "Max items to return."
+      toggle:
+        method: POST
+        path: "/api/proxy/api/integration/etsy/add-remove-favourite"
+        description: "Add or remove an item from the watchlist."
+        response_path: data
+        body:
+          - name: type
+            type: string
+            required: true
+            enum: ["listing", "shop", "keyword"]
+            description: "Type of item to favourite."
+          - name: id
+            type: int
+            required: true
+            description: "ID of the item to add/remove."
+
+  discover:
+    description: "Discovery helpers: popular search terms and your recent research history."
+    endpoints:
+      popular:
+        method: GET
+        path: "/api/proxy/api/integration/etsy/popular"
+        description: "Popular search terms for a research type."
+        response_path: data
+        params:
+          - name: type
+            type: string
+            required: true
+            positional: true
+            description: "Research type (e.g. keyword, listing, shop, tag)."
+      recent:
+        method: GET
+        path: "/api/proxy/api/integration/etsy/recent-history"
+        description: "Your recent research history for a type."
+        response_path: data
+        params:
+          - name: type
+            type: string
+            required: true
+            positional: true
+            description: "Research type (e.g. keyword, listing, shop, tag)."
+
+  account:
+    description: "Account: who am I, plan, and connected shops."
+    endpoints:
+      me:
+        method: GET
+        path: "/api/auth/me"
+        description: "Show the authenticated user, plan, and connected Etsy shops."
+        response_path: data

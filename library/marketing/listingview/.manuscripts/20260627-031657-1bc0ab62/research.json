@@ -1,0 +1,220 @@
+{
+  "api_name": "listingview",
+  "novelty_score": 0,
+  "alternatives": [],
+  "gaps": [],
+  "patterns": [],
+  "recommendation": "proceed",
+  "researched_at": "2026-06-27T03:40:00Z",
+  "novel_features": [
+    {
+      "name": "Niche go/no-go verdict",
+      "command": "niche",
+      "description": "Get a single go/no-go verdict on an Etsy niche, combining keyword demand, competition, best-seller density, price band, and how winnable the current top sellers are.",
+      "rationale": "Requires joining keyword, listing, and sales/trend data that only sit together in the local store; ListingView's real sales/revenue estimates let it score winnability, not just volume.",
+      "example": "listingview-pp-cli niche \"retro cat mom sweatshirt\" --agent",
+      "why_it_matters": "Reach for this before committing design time to a niche — one command replaces five hand-checks across separate tools.",
+      "group": "Composite Etsy intelligence"
+    },
+    {
+      "name": "Listing tag teardown",
+      "command": "listings audit",
+      "description": "Audit a listing's tags: extract the tags it uses and grade each by ListingView's opportunity, demand, competition, and velocity scores, flagging dead-weight tags and proposing stronger replacements.",
+      "rationale": "Joins tag extraction with per-tag analytics that only ListingView scores; surfacing the weak tag to swap requires correlating a listing's tags against the tag database.",
+      "example": "listingview-pp-cli listings audit 1581100221 --agent",
+      "why_it_matters": "Use this to revive underperforming listings — it tells you which specific tag to swap, not just that the listing is weak.",
+      "group": "Composite Etsy intelligence"
+    },
+    {
+      "name": "Snapshot drift diff",
+      "command": "drift",
+      "description": "Re-run your saved keyword/listing/shop queries and diff against the last snapshot: volume changes, new best-seller entrants, price drops, and SEO/rank movement.",
+      "rationale": "The ListingView API returns only point-in-time estimates; a local store keyed by query+timestamp is the only place change-over-time can be computed.",
+      "example": "listingview-pp-cli drift --since 7d --agent",
+      "why_it_matters": "Reach for this to catch the week a rival launches a bestseller or a keyword starts climbing — invisible in the web UI.",
+      "group": "Local state that compounds"
+    },
+    {
+      "name": "Revenue-weighted tag consensus",
+      "command": "tags consensus",
+      "description": "Find the tags that repeatedly appear across the top-selling listings for a term, ranked by frequency weighted by each listing's revenue estimate.",
+      "rationale": "ListingView returns top sellers with revenue estimates, so the consensus reflects what actually sells rather than a flat tag count eRank produces.",
+      "example": "listingview-pp-cli tags consensus \"vinyl sticker\" --agent",
+      "why_it_matters": "Use this when writing a new listing's tags — it shows the tag set the winners actually use.",
+      "group": "Composite Etsy intelligence"
+    },
+    {
+      "name": "Velocity early-mover",
+      "command": "tags rising",
+      "description": "Rank tags by ListingView's velocity score (accelerating demand) while competition is still low, surfacing early-mover windows.",
+      "rationale": "Velocity is exclusive to ListingView's data; neither eRank nor EverBee exposes it, and the local store confirms the acceleration across snapshots.",
+      "example": "listingview-pp-cli tags rising \"sticker\" --min-competition-score 50 --agent",
+      "why_it_matters": "Reach for this to get into a trend before it saturates.",
+      "group": "Local state that compounds"
+    },
+    {
+      "name": "Revenue-weighted shop gaps",
+      "command": "gaps",
+      "description": "Compare your shop's tags/keywords against a competitor's, ranked by the revenue those tags drive for the competitor.",
+      "rationale": "A cross-entity join of extracted tags weighted by competitor revenue; deeper than flat gap lists because it prioritizes the gaps that actually convert.",
+      "example": "listingview-pp-cli gaps MyShop RivalShop --agent",
+      "why_it_matters": "Use this to find the SEO coverage a winning competitor has that you don't.",
+      "group": "Composite Etsy intelligence"
+    },
+    {
+      "name": "Local opportunity shortlist",
+      "command": "opportunities",
+      "description": "Scan everything you've already researched and rank the best untapped plays: high demand, low competition, rising velocity — with zero new API calls.",
+      "rationale": "Pure local SQLite aggregation that dedupes repeat queries, stretching the 50-uses/month free quota.",
+      "example": "listingview-pp-cli opportunities --limit 10 --agent",
+      "why_it_matters": "Reach for this to turn a month of scattered research into a ranked shortlist without spending more quota.",
+      "group": "Local state that compounds"
+    }
+  ],
+  "novel_features_built": [
+    {
+      "name": "Niche go/no-go verdict",
+      "command": "niche",
+      "description": "Get a single go/no-go verdict on an Etsy niche, combining keyword demand, competition, best-seller density, price band, and how winnable the current top sellers are.",
+      "rationale": "Requires joining keyword, listing, and sales/trend data that only sit together in the local store; ListingView's real sales/revenue estimates let it score winnability, not just volume.",
+      "example": "listingview-pp-cli niche \"retro cat mom sweatshirt\" --agent",
+      "why_it_matters": "Reach for this before committing design time to a niche — one command replaces five hand-checks across separate tools.",
+      "group": "Composite Etsy intelligence"
+    },
+    {
+      "name": "Listing tag teardown",
+      "command": "listings audit",
+      "description": "Audit a listing's tags: extract the tags it uses and grade each by ListingView's opportunity, demand, competition, and velocity scores, flagging dead-weight tags and proposing stronger replacements.",
+      "rationale": "Joins tag extraction with per-tag analytics that only ListingView scores; surfacing the weak tag to swap requires correlating a listing's tags against the tag database.",
+      "example": "listingview-pp-cli listings audit 1581100221 --agent",
+      "why_it_matters": "Use this to revive underperforming listings — it tells you which specific tag to swap, not just that the listing is weak.",
+      "group": "Composite Etsy intelligence"
+    },
+    {
+      "name": "Snapshot drift diff",
+      "command": "drift",
+      "description": "Re-run your saved keyword/listing/shop queries and diff against the last snapshot: volume changes, new best-seller entrants, price drops, and SEO/rank movement.",
+      "rationale": "The ListingView API returns only point-in-time estimates; a local store keyed by query+timestamp is the only place change-over-time can be computed.",
+      "example": "listingview-pp-cli drift --since 7d --agent",
+      "why_it_matters": "Reach for this to catch the week a rival launches a bestseller or a keyword starts climbing — invisible in the web UI.",
+      "group": "Local state that compounds"
+    },
+    {
+      "name": "Revenue-weighted tag consensus",
+      "command": "tags consensus",
+      "description": "Find the tags that repeatedly appear across the top-selling listings for a term, ranked by frequency weighted by each listing's revenue estimate.",
+      "rationale": "ListingView returns top sellers with revenue estimates, so the consensus reflects what actually sells rather than a flat tag count eRank produces.",
+      "example": "listingview-pp-cli tags consensus \"vinyl sticker\" --agent",
+      "why_it_matters": "Use this when writing a new listing's tags — it shows the tag set the winners actually use.",
+      "group": "Composite Etsy intelligence"
+    },
+    {
+      "name": "Velocity early-mover",
+      "command": "tags rising",
+      "description": "Rank tags by ListingView's velocity score (accelerating demand) while competition is still low, surfacing early-mover windows.",
+      "rationale": "Velocity is exclusive to ListingView's data; neither eRank nor EverBee exposes it, and the local store confirms the acceleration across snapshots.",
+      "example": "listingview-pp-cli tags rising \"sticker\" --min-competition-score 50 --agent",
+      "why_it_matters": "Reach for this to get into a trend before it saturates.",
+      "group": "Local state that compounds"
+    },
+    {
+      "name": "Revenue-weighted shop gaps",
+      "command": "gaps",
+      "description": "Compare your shop's tags/keywords against a competitor's, ranked by the revenue those tags drive for the competitor.",
+      "rationale": "A cross-entity join of extracted tags weighted by competitor revenue; deeper than flat gap lists because it prioritizes the gaps that actually convert.",
+      "example": "listingview-pp-cli gaps MyShop RivalShop --agent",
+      "why_it_matters": "Use this to find the SEO coverage a winning competitor has that you don't.",
+      "group": "Composite Etsy intelligence"
+    },
+    {
+      "name": "Local opportunity shortlist",
+      "command": "opportunities",
+      "description": "Scan everything you've already researched and rank the best untapped plays: high demand, low competition, rising velocity — with zero new API calls.",
+      "rationale": "Pure local SQLite aggregation that dedupes repeat queries, stretching the 50-uses/month free quota.",
+      "example": "listingview-pp-cli opportunities --limit 10 --agent",
+      "why_it_matters": "Reach for this to turn a month of scattered research into a ranked shortlist without spending more quota.",
+      "group": "Local state that compounds"
+    }
+  ],
+  "auth": {},
+  "narrative": {
+    "display_name": "ListingView",
+    "headline": "Every ListingView research tool in your terminal, plus a local database that adds drift tracking, niche scoring, and offline analysis no ListingView tool keeps.",
+    "value_prop": "ListingView's keyword, listing, shop, and tag research — backed by a local SQLite store that turns point-in-time estimates into change-over-time intelligence. Run `niche` for a one-command go/no-go, `drift` to catch what moved since last week, `tags consensus` for the tag set winners actually use, and `opportunities` to rank everything you've researched without spending more of your monthly quota.",
+    "auth_narrative": "ListingView has no public API key. The CLI authenticates with your logged-in browser session: run `listingview-pp-cli auth login --chrome` to import your app.listingview.io cookies (the CLI derives the required X-CSRF-Token header from them automatically). The free plan covers the entire research surface.",
+    "quickstart": [
+      {
+        "command": "listingview-pp-cli doctor --dry-run",
+        "comment": "Check config and reachability before doing anything else."
+      },
+      {
+        "command": "listingview-pp-cli tags consensus \"vinyl sticker\" --agent",
+        "comment": "Find the tags the top sellers actually use for a term."
+      },
+      {
+        "command": "listingview-pp-cli niche \"retro cat mom sweatshirt\" --agent",
+        "comment": "Get a go/no-go verdict on a niche idea."
+      },
+      {
+        "command": "listingview-pp-cli drift --since 7d --agent",
+        "comment": "See what changed across your saved research since last week."
+      }
+    ],
+    "troubleshoots": [
+      {
+        "symptom": "401 / empty results on every command",
+        "fix": "Your session expired. Re-run `listingview-pp-cli auth login --chrome` while logged in to app.listingview.io."
+      },
+      {
+        "symptom": "drift or opportunities returns nothing",
+        "fix": "Those read the local store — run some research commands (or `sync`) first so there is history to compare."
+      },
+      {
+        "symptom": "429 / quota errors",
+        "fix": "ListingView free tier allows ~50 uses/month per tool. Lean on cached results and `opportunities`/`drift`, which make zero new API calls."
+      }
+    ],
+    "when_to_use": "Use this CLI for Etsy product, keyword, SEO, and tag research from the terminal or an agent: validating niches, auditing listing SEO, finding winning tags, tracking competitors and trends over time, and ranking opportunities. It is ideal when you want to batch research across many terms, keep an offline history the ListingView web app discards, or pipe structured results to an LLM.",
+    "anti_triggers": [
+      "Do not use this CLI to place orders, fulfill print-on-demand, or edit live Etsy listings — it is research/read-focused.",
+      "Do not use it for exact financial accounting; ListingView numbers are directional estimates derived from public Etsy signals.",
+      "Do not use it as a general Etsy API client — it speaks ListingView's internal research surface, not Etsy's official API."
+    ],
+    "recipes": [
+      {
+        "title": "Validate a niche before designing",
+        "command": "listingview-pp-cli niche \"personalized dog bandana\" --agent",
+        "explanation": "One composite verdict from keyword demand, best-seller density, price band, and winnability."
+      },
+      {
+        "title": "Audit a listing's SEO and tags",
+        "command": "listingview-pp-cli listings audit 1581100221 --agent",
+        "explanation": "SEO score plus a per-tag grade with replacement suggestions."
+      },
+      {
+        "title": "Find the tag set winners use",
+        "command": "listingview-pp-cli tags consensus \"vinyl sticker\" --agent",
+        "explanation": "Revenue-weighted consensus tags across the term's top sellers."
+      },
+      {
+        "title": "Narrow a nested response for an agent",
+        "command": "listingview-pp-cli tags consensus \"vinyl sticker\" --agent --select tags.tag,tags.share_pct",
+        "explanation": "Pull only the fields you need from a nested response with dotted --select paths to save agent context."
+      },
+      {
+        "title": "See what moved this week",
+        "command": "listingview-pp-cli drift --since 7d --agent",
+        "explanation": "Diff saved snapshots for volume changes, new best-sellers, and price drops."
+      }
+    ],
+    "trigger_phrases": [
+      "research Etsy keyword volume",
+      "is this Etsy niche saturated",
+      "audit my Etsy listing SEO",
+      "what tags do top Etsy sellers use",
+      "find rising Etsy tags",
+      "use listingview",
+      "run listingview"
+    ]
+  }
+}

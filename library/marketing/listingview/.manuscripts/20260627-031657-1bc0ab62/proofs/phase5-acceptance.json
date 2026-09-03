@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "api_name": "listingview",
+  "run_id": "20260627-031657-1bc0ab62",
+  "status": "pass",
+  "level": "full",
+  "matrix_size": 91,
+  "tests_passed": 91,
+  "tests_skipped": 70,
+  "auth_context": {
+    "type": "cookie"
+  }
+}

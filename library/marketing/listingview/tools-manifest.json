@@ -1,0 +1,43 @@
+{
+  "api_name": "listingview",
+  "base_url": "https://app.listingview.io",
+  "description": "Every ListingView research tool in your terminal, plus a local database that adds drift tracking, niche scoring, and offline analysis no ListingView tool keeps.",
+  "mcp_ready": "partial",
+  "http_transport": "browser-chrome",
+  "auth": {
+    "type": "cookie",
+    "header": "Cookie",
+    "in": "cookie",
+    "env_vars": [
+      "LISTINGVIEW_COOKIES"
+    ],
+    "env_var_specs": [
+      {
+        "name": "LISTINGVIEW_COOKIES",
+        "kind": "per_call",
+        "required": true,
+        "sensitive": true,
+        "inferred": true
+      }
+    ],
+    "cookie_domain": ".app.listingview.io",
+    "requires_browser_session": true,
+    "browser_session_validation_path": "/api/auth/me",
+    "browser_session_validation_method": "GET"
+  },
+  "required_headers": [
+    {
+      "name": "X-Requested-With",
+      "value": "XMLHttpRequest"
+    },
+    {
+      "name": "Origin",
+      "value": "https://app.listingview.io"
+    },
+    {
+      "name": "Referer",
+      "value": "https://app.listingview.io/dashboard"
+    }
+  ],
+  "tools": []
+}

@@ -1,0 +1,408 @@
+{
+  "target_url": "https://app.listingview.io",
+  "captured_at": "2026-06-27T03:30:00Z",
+  "interaction_rounds": 12,
+  "auth": {
+    "type": "cookie_session_csrf",
+    "site": "app.listingview.io",
+    "notes": "httpOnly session cookie + X-CSRF-Token header (value from csrf_token cookie) + shopid header; same-origin /api/proxy passthrough to api/backend.listingview.io"
+  },
+  "entries": [
+    {
+      "method": "POST",
+      "url": "https://app.listingview.io/api/proxy/api/integration/etsy/getFilteredListings",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-CSRF-Token": "REDACTED",
+        "shopid": "REDACTED",
+        "Cookie": "REDACTED"
+      },
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "request_body": "{\"search\": \"sticker\", \"sort_column\": \"sales\", \"sort_order\": \"desc\", \"page\": 1, \"limit\": 50, \"filter\": \"top\", \"search_after\": null, \"timeframe\": \"\", \"filters\": {}, \"salesInterval\": 30}",
+      "response_body": null,
+      "response_status": 200,
+      "response_content_type": "application/json",
+      "classification": "",
+      "is_noise": false
+    },
+    {
+      "method": "POST",
+      "url": "https://app.listingview.io/api/proxy/api/integration/etsy/getFilteredKeywords",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-CSRF-Token": "REDACTED",
+        "shopid": "REDACTED",
+        "Cookie": "REDACTED"
+      },
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "request_body": "{\"search\": \"sticker\", \"sort_column\": \"searchVolume\", \"sort_order\": \"desc\", \"page\": 1, \"limit\": 50, \"filters\": {}}",
+      "response_body": null,
+      "response_status": 200,
+      "response_content_type": "application/json",
+      "classification": "",
+      "is_noise": false
+    },
+    {
+      "method": "POST",
+      "url": "https://app.listingview.io/api/proxy/api/integration/etsy/get-filtered-shops",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-CSRF-Token": "REDACTED",
+        "shopid": "REDACTED",
+        "Cookie": "REDACTED"
+      },
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "request_body": "{\"search\": \"sticker\", \"sort_column\": \"sales\", \"sort_order\": \"desc\", \"page\": 1, \"limit\": 50, \"filter\": \"top\", \"search_after\": null, \"timeframe\": \"\", \"filters\": {}, \"salesInterval\": 30}",
+      "response_body": null,
+      "response_status": 200,
+      "response_content_type": "application/json",
+      "classification": "",
+      "is_noise": false
+    },
+    {
+      "method": "POST",
+      "url": "https://app.listingview.io/api/proxy/api/integration/etsy/getFilteredTags",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-CSRF-Token": "REDACTED",
+        "shopid": "REDACTED",
+        "Cookie": "REDACTED"
+      },
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "request_body": "{\"search\": \"sticker\", \"sort_column\": \"searchVolume\", \"sort_order\": \"desc\", \"page\": 1, \"limit\": 50, \"filters\": {}}",
+      "response_body": null,
+      "response_status": 200,
+      "response_content_type": "application/json",
+      "classification": "",
+      "is_noise": false
+    },
+    {
+      "method": "POST",
+      "url": "https://app.listingview.io/api/proxy/api/integration/etsy/tag-analyzer",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-CSRF-Token": "REDACTED",
+        "shopid": "REDACTED",
+        "Cookie": "REDACTED"
+      },
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "request_body": "{\"tag\": \"vinyl sticker\"}",
+      "response_body": null,
+      "response_status": 200,
+      "response_content_type": "application/json",
+      "classification": "",
+      "is_noise": false
+    },
+    {
+      "method": "POST",
+      "url": "https://app.listingview.io/api/proxy/api/integration/etsy/tag-analyzer/analytics",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-CSRF-Token": "REDACTED",
+        "shopid": "REDACTED",
+        "Cookie": "REDACTED"
+      },
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "request_body": "{\"tag\": \"vinyl sticker\"}",
+      "response_body": null,
+      "response_status": 200,
+      "response_content_type": "application/json",
+      "classification": "",
+      "is_noise": false
+    },
+    {
+      "method": "POST",
+      "url": "https://app.listingview.io/api/proxy/api/integration/etsy/tag-analyzer/listings",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-CSRF-Token": "REDACTED",
+        "shopid": "REDACTED",
+        "Cookie": "REDACTED"
+      },
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "request_body": "{\"tag\": \"vinyl sticker\", \"page\": 1, \"limit\": 50}",
+      "response_body": null,
+      "response_status": 200,
+      "response_content_type": "application/json",
+      "classification": "",
+      "is_noise": false
+    },
+    {
+      "method": "POST",
+      "url": "https://app.listingview.io/api/proxy/api/integration/etsy/tag-analyzer/shops",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-CSRF-Token": "REDACTED",
+        "shopid": "REDACTED",
+        "Cookie": "REDACTED"
+      },
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "request_body": "{\"tag\": \"vinyl sticker\", \"page\": 1, \"limit\": 50}",
+      "response_body": null,
+      "response_status": 200,
+      "response_content_type": "application/json",
+      "classification": "",
+      "is_noise": false
+    },
+    {
+      "method": "POST",
+      "url": "https://app.listingview.io/api/proxy/api/integration/etsy/tag-analyzer/tags",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-CSRF-Token": "REDACTED",
+        "shopid": "REDACTED",
+        "Cookie": "REDACTED"
+      },
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "request_body": "{\"tag\": \"vinyl sticker\"}",
+      "response_body": null,
+      "response_status": 200,
+      "response_content_type": "application/json",
+      "classification": "",
+      "is_noise": false
+    },
+    {
+      "method": "POST",
+      "url": "https://app.listingview.io/api/proxy/api/integration/etsy/tag-extractor",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-CSRF-Token": "REDACTED",
+        "shopid": "REDACTED",
+        "Cookie": "REDACTED"
+      },
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "request_body": "{\"listingId\": 1581100221}",
+      "response_body": null,
+      "response_status": 200,
+      "response_content_type": "application/json",
+      "classification": "",
+      "is_noise": false
+    },
+    {
+      "method": "POST",
+      "url": "https://app.listingview.io/api/proxy/api/integration/etsy/tag-generator",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-CSRF-Token": "REDACTED",
+        "shopid": "REDACTED",
+        "Cookie": "REDACTED"
+      },
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "request_body": "{\"keyword\": \"sticker\"}",
+      "response_body": null,
+      "response_status": 200,
+      "response_content_type": "application/json",
+      "classification": "",
+      "is_noise": false
+    },
+    {
+      "method": "POST",
+      "url": "https://app.listingview.io/api/proxy/api/integration/etsy/shop-analyzer/analytics",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-CSRF-Token": "REDACTED",
+        "shopid": "REDACTED",
+        "Cookie": "REDACTED"
+      },
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "request_body": "{\"shopName\": \"ExampleShop\"}",
+      "response_body": null,
+      "response_status": 200,
+      "response_content_type": "application/json",
+      "classification": "",
+      "is_noise": false
+    },
+    {
+      "method": "POST",
+      "url": "https://app.listingview.io/api/proxy/api/integration/etsy/shop-analyzer/listings",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-CSRF-Token": "REDACTED",
+        "shopid": "REDACTED",
+        "Cookie": "REDACTED"
+      },
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "request_body": "{\"shopName\": \"ExampleShop\", \"sortBy\": \"sales\", \"order\": \"desc\", \"limit\": 50, \"page\": 1}",
+      "response_body": null,
+      "response_status": 200,
+      "response_content_type": "application/json",
+      "classification": "",
+      "is_noise": false
+    },
+    {
+      "method": "POST",
+      "url": "https://app.listingview.io/api/proxy/api/integration/etsy/shop-analyzer/progress",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-CSRF-Token": "REDACTED",
+        "shopid": "REDACTED",
+        "Cookie": "REDACTED"
+      },
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "request_body": "{\"shopName\": \"ExampleShop\"}",
+      "response_body": null,
+      "response_status": 200,
+      "response_content_type": "application/json",
+      "classification": "",
+      "is_noise": false
+    },
+    {
+      "method": "POST",
+      "url": "https://app.listingview.io/api/proxy/api/integration/etsy/listing-explorer/analytics",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-CSRF-Token": "REDACTED",
+        "shopid": "REDACTED",
+        "Cookie": "REDACTED"
+      },
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "request_body": "{\"listingId\": 1581100221}",
+      "response_body": null,
+      "response_status": 200,
+      "response_content_type": "application/json",
+      "classification": "",
+      "is_noise": false
+    },
+    {
+      "method": "GET",
+      "url": "https://app.listingview.io/api/proxy/api/integration/etsy/popular?type=sticker",
+      "request_headers": {
+        "Accept": "application/json",
+        "X-CSRF-Token": "REDACTED",
+        "shopid": "REDACTED",
+        "Cookie": "REDACTED"
+      },
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "request_body": "",
+      "response_body": null,
+      "response_status": 200,
+      "response_content_type": "application/json",
+      "classification": "",
+      "is_noise": false
+    },
+    {
+      "method": "GET",
+      "url": "https://app.listingview.io/api/proxy/api/integration/etsy/recent-history?type=keyword",
+      "request_headers": {
+        "Accept": "application/json",
+        "X-CSRF-Token": "REDACTED",
+        "shopid": "REDACTED",
+        "Cookie": "REDACTED"
+      },
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "request_body": "",
+      "response_body": null,
+      "response_status": 200,
+      "response_content_type": "application/json",
+      "classification": "",
+      "is_noise": false
+    },
+    {
+      "method": "GET",
+      "url": "https://app.listingview.io/api/proxy/api/integration/etsy/list-favourite?type=listing&limit=50",
+      "request_headers": {
+        "Accept": "application/json",
+        "X-CSRF-Token": "REDACTED",
+        "shopid": "REDACTED",
+        "Cookie": "REDACTED"
+      },
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "request_body": "",
+      "response_body": null,
+      "response_status": 200,
+      "response_content_type": "application/json",
+      "classification": "",
+      "is_noise": false
+    },
+    {
+      "method": "POST",
+      "url": "https://app.listingview.io/api/proxy/api/integration/etsy/add-remove-favourite",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-CSRF-Token": "REDACTED",
+        "shopid": "REDACTED",
+        "Cookie": "REDACTED"
+      },
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "request_body": "{\"type\": \"listing\", \"id\": 1581100221}",
+      "response_body": null,
+      "response_status": 200,
+      "response_content_type": "application/json",
+      "classification": "",
+      "is_noise": false
+    },
+    {
+      "method": "GET",
+      "url": "https://app.listingview.io/api/auth/me",
+      "request_headers": {
+        "Accept": "application/json",
+        "X-CSRF-Token": "REDACTED",
+        "shopid": "REDACTED",
+        "Cookie": "REDACTED"
+      },
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "request_body": "",
+      "response_body": null,
+      "response_status": 200,
+      "response_content_type": "application/json",
+      "classification": "",
+      "is_noise": false
+    }
+  ]
+}

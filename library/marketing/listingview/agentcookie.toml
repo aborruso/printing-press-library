@@ -1,0 +1,16 @@
+# agentcookie.toml: secrets-bus adoption manifest v2
+# See docs/spec-agentcookie-secrets-bus-v2-adoption.md
+schema_version = 2
+name = "listingview-pp-cli"
+display_name = "ListingView"
+description = "Every ListingView research tool in your terminal, plus a local database that adds drift tracking, niche scoring, and offline analysis no ListingView tool keeps."
+project_kind = "cli"
+
+[secrets.file]
+path = "~/.config/listingview-pp-cli/config.toml"
+
+[sync]
+default = false
+
+[sync.keys]
+LISTINGVIEW_COOKIES = true
