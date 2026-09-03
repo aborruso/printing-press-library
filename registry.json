@@ -8742,6 +8742,12 @@
         "Persist target prices for recurring staples and compare them against future synced snapshots."
       ],
       "path": "library/food-and-dining/flipp",
+      "release": {
+        "cli_name": "flipp-pp-cli",
+        "version": "2026.9.1",
+        "released_at": "2026-09-03T10:23:47Z",
+        "source_commit": "cf0876c8cebc0d6c6909c645eff6f21b31618c85"
+      },
       "printer": "mlabrenz",
       "printer_name": "mlabrenz",
       "creator": {
@@ -14020,6 +14026,60 @@
       }
     },
     {
+      "name": "listingview",
+      "category": "marketing",
+      "api": "ListingView",
+      "description": "Every ListingView research tool in your terminal, plus a local database that adds drift tracking, niche scoring, and offline analysis no ListingView tool keeps.",
+      "search_terms": [
+        "listingview",
+        "listingview-pp-cli",
+        "Every ListingView research tool in your terminal, plus a local database that adds drift tracking, niche scoring, and offline analysis no ListingView tool keeps.",
+        "Niche go/no-go verdict",
+        "niche",
+        "Get a single go/no-go verdict on an Etsy niche, combining keyword demand, competition, best-seller density, price band, and how winnable the current top sellers are.",
+        "Listing tag teardown",
+        "listings audit",
+        "Audit a listing's tags: extract the tags it uses and grade each by ListingView's opportunity, demand, competition, and velocity scores, flagging dead-weight tags and proposing stronger replacements.",
+        "Snapshot drift diff",
+        "drift",
+        "Re-run your saved keyword/listing/shop queries and diff against the last snapshot: volume changes, new best-seller entrants, price drops, and SEO/rank movement.",
+        "Revenue-weighted tag consensus",
+        "tags consensus",
+        "Find the tags that repeatedly appear across the top-selling listings for a term, ranked by frequency weighted by each listing's revenue estimate.",
+        "Velocity early-mover",
+        "tags rising",
+        "Rank tags by ListingView's velocity score (accelerating demand) while competition is still low, surfacing early-mover windows.",
+        "Revenue-weighted shop gaps",
+        "gaps",
+        "Compare your shop's tags/keywords against a competitor's, ranked by the revenue those tags drive for the competitor.",
+        "Local opportunity shortlist",
+        "opportunities",
+        "Scan everything you've already researched and rank the best untapped plays: high demand, low competition, rising velocity — with zero new API calls."
+      ],
+      "path": "library/marketing/listingview",
+      "printer": "vcolombo",
+      "printer_name": "Vincent Colombo",
+      "creator": {
+        "handle": "vcolombo",
+        "name": "Vincent Colombo"
+      },
+      "mcp": {
+        "binary": "listingview-pp-mcp",
+        "transports": [
+          "stdio",
+          "http"
+        ],
+        "tool_count": 16,
+        "public_tool_count": 0,
+        "auth_type": "cookie",
+        "env_vars": [
+          "LISTINGVIEW_COOKIES"
+        ],
+        "mcp_ready": "partial",
+        "spec_format": "internal"
+      }
+    },
+    {
       "name": "logitech-docs",
       "category": "devices",
       "api": "Logitech",
@@ -14337,6 +14397,12 @@
         "List the most common tags across your synced catalog, or find models matching ALL of several tags at once."
       ],
       "path": "library/media-and-entertainment/makerworld",
+      "release": {
+        "cli_name": "makerworld-pp-cli",
+        "version": "2026.9.1",
+        "released_at": "2026-09-03T10:29:29Z",
+        "source_commit": "f84df1d5ded7be9009a6addb06e2e1ac2fd68bda"
+      },
       "printer": "vcolombo",
       "printer_name": "Vincent Colombo",
       "creator": {
