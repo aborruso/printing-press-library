@@ -1,0 +1,11 @@
+{
+  "schema_version": 2,
+  "id": "pixabay-greptile-fixes",
+  "applied_at": "2026-06-24",
+  "base_run_id": "20260623-122808-afd957b7",
+  "base_printing_press_version": "4.25.0",
+  "summary": "Address Greptile PR review: move novel tables to canonical migrateExtras (extras.go) so read-only pull --from-collection finds them; quota surfaces non-2xx as an auth error instead of -1/-1; remove dead pull --launch variable.",
+  "reason": "Novel tables (pp_collections, pp_stat_snapshots) were created ad-hoc in ensurePixabayTables, which read-only store opens (pull --from-collection) skip — causing a 'no such table' crash on a sync-only DB. extras.go migrateExtras is the canonical location and runs on every write-capable open.",
+  "files": ["internal/store/extras.go"],
+  "validated_outcome": "go vet/test/build green; collection add (write) creates tables via migration; read-only pull --from-collection resolves them; missing-table read path returns empty gracefully."
+}

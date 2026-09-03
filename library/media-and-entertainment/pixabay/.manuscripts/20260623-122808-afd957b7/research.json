@@ -1,0 +1,284 @@
+{
+  "api_name": "pixabay",
+  "novelty_score": 0,
+  "alternatives": [
+    {
+      "name": "gopixabay",
+      "url": "https://github.com/netbrain/gopixabay",
+      "language": "Go",
+      "install_method": "",
+      "stars": 30,
+      "last_updated": "",
+      "command_count": 1,
+      "has_json_output": false,
+      "has_auth_support": false
+    },
+    {
+      "name": "pixabay-mcp",
+      "url": "https://github.com/zym9863/pixabay-mcp",
+      "language": "TypeScript",
+      "install_method": "",
+      "stars": 7,
+      "last_updated": "",
+      "command_count": 2,
+      "has_json_output": false,
+      "has_auth_support": false
+    },
+    {
+      "name": "python-pixabay",
+      "url": "https://github.com/momozor/python-pixabay",
+      "language": "Python",
+      "install_method": "",
+      "stars": 30,
+      "last_updated": "",
+      "command_count": 2,
+      "has_json_output": false,
+      "has_auth_support": false
+    },
+    {
+      "name": "pixabay-cli-downloader",
+      "url": "https://github.com/AlexusBlack/pixabay-cli-downloader",
+      "language": "Python",
+      "install_method": "",
+      "stars": 3,
+      "last_updated": "",
+      "command_count": 1,
+      "has_json_output": false,
+      "has_auth_support": false
+    },
+    {
+      "name": "pixabayjs",
+      "url": "https://github.com/leonardseymore/pixabayjs",
+      "language": "JavaScript",
+      "install_method": "",
+      "stars": 5,
+      "last_updated": "",
+      "command_count": 1,
+      "has_json_output": false,
+      "has_auth_support": false
+    }
+  ],
+  "gaps": [],
+  "patterns": [],
+  "recommendation": "proceed",
+  "researched_at": "2026-06-23T18:11:00Z",
+  "novel_features": [
+    {
+      "name": "Resumable bulk download with attribution",
+      "command": "pull",
+      "description": "Download chosen size variants for a collection with parallel workers, re-resolving 24h-expired URLs by id and writing per-file attribution sidecars; re-runs skip what's already on disk.",
+      "rationale": "Pixabay URLs expire after 24h and the license requires attribution; only a local id store lets the CLI re-resolve dead URLs and emit credits at download time.",
+      "example": "pixabay-pp-cli pull --from-collection winter --size large --workers 8 --resume",
+      "why_it_matters": "Use this to materialize an already-curated collection to disk safely; it survives interruptions and expired URLs that break naive downloaders.",
+      "group": "Search \u0026 acquisition"
+    },
+    {
+      "name": "Live rate-limit awareness",
+      "command": "quota",
+      "description": "Surface the X-RateLimit-Limit/Remaining/Reset headers from your last call (which no other Pixabay tool exposes) and project how many requests a planned batch of requests will cost before it throttles.",
+      "rationale": "Pixabay returns rate-limit headers on every response but no existing wrapper reads them; persisting and projecting them is only possible with local state.",
+      "example": "pixabay-pp-cli quota --agent",
+      "why_it_matters": "Check this before a big batch so an agent can pace itself instead of dying mid-run on an HTTP 429.",
+      "group": "Agent-native plumbing"
+    },
+    {
+      "name": "Unified image + video search",
+      "command": "media search",
+      "description": "Fan one query across both the image and video endpoints in parallel and merge stills and footage into a single ranked, persisted result set.",
+      "rationale": "Pixabay exposes images and videos as two separate endpoints; only a client-side parallel fan-out can return them together in one ranked result.",
+      "example": "pixabay-pp-cli media search \"drone coastline\" --limit 40 --agent",
+      "why_it_matters": "Use this when a task needs both photos and video for a theme and you don't want to run two searches and merge by hand.",
+      "group": "Search \u0026 acquisition"
+    },
+    {
+      "name": "Offline more-like-this",
+      "command": "similar",
+      "description": "Find synced hits that share the most tags with a given id using a local tag-set overlap (Jaccard) score — no API endpoint for this exists.",
+      "rationale": "The API has no related-item endpoint; tag-overlap ranking is only possible over a local store of synced hits.",
+      "example": "pixabay-pp-cli similar 195893 --limit 20 --agent",
+      "why_it_matters": "Reach for this to expand a curated set with visually-related assets you already pulled, with zero extra API quota.",
+      "group": "Local state that compounds"
+    },
+    {
+      "name": "Engagement deltas over time",
+      "command": "trends",
+      "description": "Snapshot views/downloads/likes/comments on each sync and report the deltas per tag or id between sync runs.",
+      "rationale": "The API returns only a point-in-time snapshot; trend deltas require persisting history locally across syncs.",
+      "example": "pixabay-pp-cli trends --tag winter --since 7d --agent",
+      "why_it_matters": "Use this to see which themes are gaining downloads/likes week over week — impossible from a single API response.",
+      "group": "Local state that compounds"
+    },
+    {
+      "name": "Contributor ranking",
+      "command": "contributors",
+      "description": "Aggregate synced image and video hits by contributor and rank them by total or average downloads, likes, or views across your store.",
+      "rationale": "The API has no aggregation endpoint; ranking contributors requires a local GROUP BY across synced hits.",
+      "example": "pixabay-pp-cli contributors --by downloads --min-assets 3 --agent",
+      "why_it_matters": "Use this to find the strongest contributors for a theme so you can source consistently from people whose work performs.",
+      "group": "Local state that compounds"
+    },
+    {
+      "name": "Named offline collections",
+      "command": "collection",
+      "description": "Group synced hits into named local collections that feed downstream pull, similar, and trends — persistence no Pixabay tool offers.",
+      "rationale": "No Pixabay tool persists user collections; this is pure local SQLite state that the other novel commands build on.",
+      "example": "pixabay-pp-cli collection add winter 195893,1850181",
+      "why_it_matters": "Use this as the backbone for curation — build a set once, then download, expand, or track it later without re-searching.",
+      "group": "Local state that compounds"
+    }
+  ],
+  "novel_features_built": [
+    {
+      "name": "Resumable bulk download with attribution",
+      "command": "pull",
+      "description": "Download chosen size variants for a collection with parallel workers, re-resolving 24h-expired URLs by id and writing per-file attribution sidecars; re-runs skip what's already on disk.",
+      "rationale": "Pixabay URLs expire after 24h and the license requires attribution; only a local id store lets the CLI re-resolve dead URLs and emit credits at download time.",
+      "example": "pixabay-pp-cli pull --from-collection winter --size large --workers 8 --resume",
+      "why_it_matters": "Use this to materialize an already-curated collection to disk safely; it survives interruptions and expired URLs that break naive downloaders.",
+      "group": "Search \u0026 acquisition"
+    },
+    {
+      "name": "Live rate-limit awareness",
+      "command": "quota",
+      "description": "Surface the X-RateLimit-Limit/Remaining/Reset headers from your last call (which no other Pixabay tool exposes) and project how many requests a planned batch of requests will cost before it throttles.",
+      "rationale": "Pixabay returns rate-limit headers on every response but no existing wrapper reads them; persisting and projecting them is only possible with local state.",
+      "example": "pixabay-pp-cli quota --agent",
+      "why_it_matters": "Check this before a big batch so an agent can pace itself instead of dying mid-run on an HTTP 429.",
+      "group": "Agent-native plumbing"
+    },
+    {
+      "name": "Unified image + video search",
+      "command": "media search",
+      "description": "Fan one query across both the image and video endpoints in parallel and merge stills and footage into a single ranked, persisted result set.",
+      "rationale": "Pixabay exposes images and videos as two separate endpoints; only a client-side parallel fan-out can return them together in one ranked result.",
+      "example": "pixabay-pp-cli media search \"drone coastline\" --limit 40 --agent",
+      "why_it_matters": "Use this when a task needs both photos and video for a theme and you don't want to run two searches and merge by hand.",
+      "group": "Search \u0026 acquisition"
+    },
+    {
+      "name": "Offline more-like-this",
+      "command": "similar",
+      "description": "Find synced hits that share the most tags with a given id using a local tag-set overlap (Jaccard) score — no API endpoint for this exists.",
+      "rationale": "The API has no related-item endpoint; tag-overlap ranking is only possible over a local store of synced hits.",
+      "example": "pixabay-pp-cli similar 195893 --limit 20 --agent",
+      "why_it_matters": "Reach for this to expand a curated set with visually-related assets you already pulled, with zero extra API quota.",
+      "group": "Local state that compounds"
+    },
+    {
+      "name": "Engagement deltas over time",
+      "command": "trends",
+      "description": "Snapshot views/downloads/likes/comments on each sync and report the deltas per tag or id between sync runs.",
+      "rationale": "The API returns only a point-in-time snapshot; trend deltas require persisting history locally across syncs.",
+      "example": "pixabay-pp-cli trends --tag winter --since 7d --agent",
+      "why_it_matters": "Use this to see which themes are gaining downloads/likes week over week — impossible from a single API response.",
+      "group": "Local state that compounds"
+    },
+    {
+      "name": "Contributor ranking",
+      "command": "contributors",
+      "description": "Aggregate synced image and video hits by contributor and rank them by total or average downloads, likes, or views across your store.",
+      "rationale": "The API has no aggregation endpoint; ranking contributors requires a local GROUP BY across synced hits.",
+      "example": "pixabay-pp-cli contributors --by downloads --min-assets 3 --agent",
+      "why_it_matters": "Use this to find the strongest contributors for a theme so you can source consistently from people whose work performs.",
+      "group": "Local state that compounds"
+    },
+    {
+      "name": "Named offline collections",
+      "command": "collection",
+      "description": "Group synced hits into named local collections that feed downstream pull, similar, and trends — persistence no Pixabay tool offers.",
+      "rationale": "No Pixabay tool persists user collections; this is pure local SQLite state that the other novel commands build on.",
+      "example": "pixabay-pp-cli collection add winter 195893,1850181",
+      "why_it_matters": "Use this as the backbone for curation — build a set once, then download, expand, or track it later without re-searching.",
+      "group": "Local state that compounds"
+    }
+  ],
+  "auth": {
+    "canonical_env_var": "PIXABAY_API_KEY"
+  },
+  "narrative": {
+    "display_name": "Pixabay",
+    "headline": "Every Pixabay search filter the API has — plus a 24-hour local cache, offline search, resumable downloads with built-in attribution, live rate-limit awareness, and agent-native JSON no other Pixabay tool ships.",
+    "value_prop": "The only maintained Pixabay CLI is ten years dead and images-only; the only agent-native tool emits text you have to scrape. This one unifies image and video search, caches results in a local SQLite store for up to 24 hours (per Pixabay's API Terms) so you can search offline with `search`, credits Pixabay with a visible link on every result, and adds commands the raw API can't do: `media search` merges photos and video, `pull` does resumable downloads with attribution and 24h URL re-resolution, and `quota` surfaces the rate-limit headers nobody else exposes so you can pace within limits.",
+    "auth_narrative": "Pixabay uses a single free API key passed as a query parameter. Get one from your account at pixabay.com/api/docs (when logged in), then set PIXABAY_API_KEY in your environment or run `pixabay-pp-cli auth set-token \u003ckey\u003e`. The API is read-only — search only, no writes.",
+    "quickstart": [
+      {
+        "command": "pixabay-pp-cli doctor --dry-run",
+        "comment": "Confirm the binary and config wiring before you need a key."
+      },
+      {
+        "command": "pixabay-pp-cli images search \"yellow flowers\" --image-type photo --per-page 5",
+        "comment": "The core workflow: search photos by query with filters."
+      },
+      {
+        "command": "pixabay-pp-cli media search \"drone coastline\" --limit 20 --agent",
+        "comment": "Search photos and videos together, structured JSON for an agent."
+      },
+      {
+        "command": "pixabay-pp-cli sync --resources images --param q=mountains --param image_type=photo",
+        "comment": "Persist results into the local SQLite store for offline search."
+      },
+      {
+        "command": "pixabay-pp-cli search \"mountain\" --type images",
+        "comment": "Offline full-text search over what you've synced — zero API quota."
+      }
+    ],
+    "troubleshoots": [
+      {
+        "symptom": "HTTP 400 \"Invalid or missing API key\"",
+        "fix": "Set PIXABAY_API_KEY=\u003cyour-key\u003e or run `pixabay-pp-cli auth set-token \u003ckey\u003e`; get a free key at pixabay.com/api/docs."
+      },
+      {
+        "symptom": "Search errors when paging deep / per_page high",
+        "fix": "Pixabay caps results at 500 per query (page × per_page must be ≤ 500). Narrow your query with filters (category, colors, image-type) instead of paging past the cap."
+      },
+      {
+        "symptom": "Downloaded image URLs 404 a day later",
+        "fix": "Pixabay image URLs expire after 24h. Re-run `sync` or use `pull`, which re-resolves expired URLs by id before downloading."
+      },
+      {
+        "symptom": "Batch job dies on HTTP 429",
+        "fix": "Run `pixabay-pp-cli quota` to see remaining requests; pace large `harvest`/`pull` runs under the limit."
+      }
+    ],
+    "when_to_use": "Use this CLI when an agent or developer needs royalty-free photos, illustrations, vectors, or videos by search query and wants the results as structured JSON, persisted locally for offline reuse, or downloaded in bulk. It is the right choice for content pipelines, media-picker backends, and any workflow that re-uses the same searches and benefits from a local cache, attribution tracking, or pushing past the API's 500-result limit.",
+    "anti_triggers": [
+      "Do not use Pixabay content or this CLI's output for AI or machine-learning training, model fine-tuning, dataset generation, or automated scraping — the Pixabay API Terms of Service explicitly prohibit it.",
+      "Do not run this CLI from unattended automation, cron jobs, or background daemons. Pixabay requires API usage to remain user-triggered; each invocation must correspond to a real user request.",
+      "Do not use this CLI to upload, edit, or manage Pixabay content — the API is read-only search and has no write operations.",
+      "Do not use it for generic web-image search across the whole internet; it only queries Pixabay's own library.",
+      "Do not use it to scrape the Pixabay website (which is Cloudflare-protected) — it talks only to the documented /api/ endpoints.",
+      "Do not systematically mass-download the library; the Pixabay license forbids it. Always credit Pixabay with a visible link when displaying results."
+    ],
+    "recipes": [
+      {
+        "title": "Find Editor's Choice nature photos, agent-ready",
+        "command": "pixabay-pp-cli images search \"forest\" --image-type photo --category nature --editors-choice --order popular --agent --select hits.id,hits.tags,hits.largeImageURL,hits.likes",
+        "explanation": "Narrows to award-winning nature photos and returns only the fields an agent needs, keeping payloads small."
+      },
+      {
+        "title": "Search videos and pull the smallest rendition URL",
+        "command": "pixabay-pp-cli videos search \"ocean waves\" --video-type film --per-page 10 --agent --select hits.id,hits.duration,hits.videos.tiny.url,hits.videos.large.url",
+        "explanation": "Video hits nest renditions deeply (videos.tiny.url, videos.large.url); --select with dotted paths extracts just the URLs you want."
+      },
+      {
+        "title": "Download a curated collection with attribution",
+        "command": "pixabay-pp-cli pull --from-collection campaign --size large --workers 6",
+        "explanation": "After adding IDs with 'collection add campaign ...', materialize the set to disk with parallel workers and per-file credit sidecars."
+      },
+      {
+        "title": "Check quota before a batch",
+        "command": "pixabay-pp-cli quota --agent",
+        "explanation": "Reads the persisted rate-limit headers so an automated job can pace itself instead of failing on a 429."
+      }
+    ],
+    "trigger_phrases": [
+      "find a royalty-free photo of",
+      "search pixabay for",
+      "get stock video of",
+      "download free images of",
+      "find an illustration of",
+      "use pixabay",
+      "run pixabay"
+    ]
+  }
+}

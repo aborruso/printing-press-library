@@ -1,0 +1,1076 @@
+{
+  "dir": "/Users/colombov/printing-press/library/pixabay",
+  "binary": "/Users/colombov/printing-press/library/pixabay/pixabay-pp-cli",
+  "level": "full",
+  "verdict": "PASS",
+  "matrix_size": 61,
+  "passed": 61,
+  "failed": 0,
+  "skipped": 50,
+  "commands": [
+    "collection add",
+    "collection list",
+    "collection remove",
+    "collection show",
+    "contributors",
+    "doctor",
+    "feedback list",
+    "images get",
+    "images search",
+    "import",
+    "media search",
+    "profile delete",
+    "profile list",
+    "profile save",
+    "profile show",
+    "profile use",
+    "pull",
+    "quota",
+    "search",
+    "similar",
+    "sync",
+    "trends",
+    "videos get",
+    "videos search",
+    "which",
+    "workflow archive",
+    "workflow status"
+  ],
+  "tests": [
+    {
+      "command": "collection add",
+      "kind": "help",
+      "args": [
+        "collection",
+        "add",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Add one or more hit IDs to a named collection\n\nUsage:\n  pixabay-pp-cli collection add <name> <id> [id...] [flags]\n\nExamples:\n  pixabay-pp-cli collection add winter 195893,1850181\n  pixabay-pp-cli collection add nature 1234 5678 --kind videos\n\nFlags:\n      --db string     Database path\n  -h, --help          help for add\n      --kind string   Media kind: images or videos (default \"images\")\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "collection add",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "command path [collection add] has fewer segments than placeholders (2)"
+    },
+    {
+      "command": "collection add",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "command path [collection add] has fewer segments than placeholders (2)"
+    },
+    {
+      "command": "collection add",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "mutating command; error_path would call live API without --dry-run"
+    },
+    {
+      "command": "collection add",
+      "kind": "error_path_real",
+      "args": null,
+      "status": "skip",
+      "reason": "command path [collection add] has fewer segments than placeholders (2)"
+    },
+    {
+      "command": "collection list",
+      "kind": "help",
+      "args": [
+        "collection",
+        "list",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "List named collections with member counts\n\nUsage:\n  pixabay-pp-cli collection list [flags]\n\nExamples:\n  pixabay-pp-cli collection list --agent\n\nFlags:\n      --db string   Database path\n  -h, --help        help for list\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "collection list",
+      "kind": "happy_path",
+      "args": [
+        "collection",
+        "list",
+        "--agent"
+      ],
+      "status": "pass",
+      "output_sample": "[]\n"
+    },
+    {
+      "command": "collection list",
+      "kind": "json_fidelity",
+      "args": [
+        "collection",
+        "list",
+        "--agent",
+        "--json"
+      ],
+      "status": "pass",
+      "output_sample": "[]\n"
+    },
+    {
+      "command": "collection list",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no positional argument"
+    },
+    {
+      "command": "collection remove",
+      "kind": "help",
+      "args": [
+        "collection",
+        "remove",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Remove IDs from a collection, or the whole collection with --all\n\nUsage:\n  pixabay-pp-cli collection remove <name> [id...] [flags]\n\nExamples:\n  pixabay-pp-cli collection remove winter 195893\n  pixabay-pp-cli collection remove winter --all\n\nFlags:\n      --all           Remove the entire collection\n      --db string     Database path\n  -h, --help          help for remove\n      --kind string   Filter by media kind\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "collection remove",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "collection remove",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "collection remove",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "mutating command; error_path would call live API without --dry-run"
+    },
+    {
+      "command": "collection remove",
+      "kind": "error_path_real",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "collection show",
+      "kind": "help",
+      "args": [
+        "collection",
+        "show",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Show the member IDs of a collection\n\nUsage:\n  pixabay-pp-cli collection show <name> [flags]\n\nExamples:\n  pixabay-pp-cli collection show winter --agent\n\nFlags:\n      --db string     Database path\n  -h, --help          help for show\n      --kind string   Filter by media kind: images or videos\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "collection show",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "collection show",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "collection show",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no-error-path-probe annotation"
+    },
+    {
+      "command": "contributors",
+      "kind": "help",
+      "args": [
+        "contributors",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Aggregate synced image and video hits by contributor and rank them by total or\naverage downloads, likes, views, or comments. The Pixabay API has no aggregation\nendpoint, so this is computed locally over whatever you have synced.\nUse it to find the strongest contributors for a theme.\n\nUsage:\n  pixabay-pp-cli contributors [flags]\n\nExamples:\n  pixabay-pp-cli contributors --by downloads --min-assets 3 --agent\n\nFlags:\n      --by string        Rank by: downloads, likes, views, or comments (default \"downloads\")\n      --db string        Database path\n  -h, --help             help for contributors\n      --kind string      Media kind: images, videos, or all (default \"all\")\n      --limit int        Maximum contributors to return (default 25)\n      --min-assets int   Only contributors with at least this many synced assets (default 1)\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "contributors",
+      "kind": "happy_path",
+      "args": [
+        "contributors",
+        "--by",
+        "downloads",
+        "--min-assets",
+        "3",
+        "--agent"
+      ],
+      "status": "pass",
+      "output_sample": "[\n  {\n    \"assets\": 3,\n    \"avg_metric\": 372550,\n    \"downloads\": 1117650,\n    \"likes\": 13555,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"Natures_Embrace\",\n    \"user_id\": \"30639570\",\n    \"views\": 2152866\n  },\n  {\n    \"assets\": 4,\n    \"avg_metric\": 197574.75,\n    \"downloads\": 790299,\n    \"likes\": 8789,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"Kanenori\",\n    \"user_id\": \"4749850\",\n    \"views\": 1241328\n  },\n  {\n    \"assets\": 4,\n    \"avg_metric\": 167785.75,\n    \"downloads\": 671143,\n    \"likes\": 8071,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"adege\",\n    \"user_id\": \"4994132\",\n    \"views\": 1112360\n  },\n  {\n    \"assets\": 3,\n    \"avg_metric\": 72569.333,\n    \"downloads\": 217708,\n    \"likes\": 3116,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"Mario_Krimer\",\n    \"user_id\": \"34815979\",\n    \"views\": 315087\n  },\n  {\n    \"assets\": 14,\n    \"avg_metric\": 3397.786,\n    \"downloads\": 47569,\n    \"likes\": 717,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"doktorkleinmusic\",\n    \"user_id\": \"5871510\",\n    \"views\": 38866\n  },\n  {\n    \"assets\": 14,\n    \"avg_metric\": 1893.571,\n    \"downloads\": 26510,\n    \"likes\": 603,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"anselmo7511\",\n    \"user_id\": \"43046719\",\n    \"views\": 30596\n  },\n  {\n    \"assets\": 26,\n    \"avg_metric\": 789.846,\n    \"downloads\": 20536,\n    \"likes\": 799,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"Couleur\",\n    \"user_id\": \"1195798\",\n    \"views\": 21343\n  },\n  {\n    \"assets\": 25,\n    \"avg_metric\": 304.68,\n    \"downloads\": 7617,\n    \"likes\": 791,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"flutie8211\",\n    \"user_id\": \"17475707\",\n    \"views\": 11402\n  },\n  {\n    \"assets\": 21,\n    \"avg_metric\": 354.857,\n    \"downloads\": 7452,\n    \"likes\": 437,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"Alexas_Fotos\",\n    \"user_id\": \"686414\",\n    \"views\": 7854\n  },\n  {\n    \"assets\": 6,\n    \"avg_metric\": 1011.333,\n    \"downloads\": 6068,\n    \"likes\": 147,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"neelam279\",\n    \"user_id\": \"9820894\",\n    \"views\": 6236\n  },\n  {\n    \"assets\": 8,\n    \"avg_metric\": 598.875,\n    \"downloads\": 4791,\n    \"likes\": 193,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"Nennieinszweidrei\",\n    \"user_id\": \"10084616\",\n    \"views\": 5132\n  },\n  {\n    \"assets\": 5,\n    \"avg_metric\": 503.8,\n    \"downloads\": 2519,\n    \"likes\": 118,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"Elsemargriet\",\n    \"user_id\": \"1614842\",\n    \"views\": 2656\n  },\n  {\n    \"assets\": 3,\n    \"avg_metric\": 813.333,\n    \"downloads\": 2440,\n    \"likes\": 145,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"Mollyroselee\",\n    \"user_id\": \"9214707\",\n    \"views\": 3721\n  },\n  {\n    \"assets\": 5,\n    \"avg_metric\": 238,\n    \"downloads\": 1190,\n    \"likes\": 118,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"geralt\",\n    \"user_id\": \"9301\",\n    \"views\": 1301\n  },\n  {\n    \"assets\": 5,\n    \"avg_metric\": 95.2,\n    \"downloads\": 476,\n    \"likes\": 88,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"mycuppatea\",\n    \"user_id\": \"55376546\",\n    \"views\": 536\n  },\n  {\n    \"assets\": 5,\n    \"avg_metric\": 70.4,\n    \"downloads\": 352,\n    \"likes\": 77,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"klaatubaradanikto\",\n    \"user_id\": \"49447292\",\n    \"views\": 350\n  }\n]\n"
+    },
+    {
+      "command": "contributors",
+      "kind": "json_fidelity",
+      "args": [
+        "contributors",
+        "--by",
+        "downloads",
+        "--min-assets",
+        "3",
+        "--agent",
+        "--json"
+      ],
+      "status": "pass",
+      "output_sample": "[\n  {\n    \"assets\": 3,\n    \"avg_metric\": 372550,\n    \"downloads\": 1117650,\n    \"likes\": 13555,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"Natures_Embrace\",\n    \"user_id\": \"30639570\",\n    \"views\": 2152866\n  },\n  {\n    \"assets\": 4,\n    \"avg_metric\": 197574.75,\n    \"downloads\": 790299,\n    \"likes\": 8789,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"Kanenori\",\n    \"user_id\": \"4749850\",\n    \"views\": 1241328\n  },\n  {\n    \"assets\": 4,\n    \"avg_metric\": 167785.75,\n    \"downloads\": 671143,\n    \"likes\": 8071,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"adege\",\n    \"user_id\": \"4994132\",\n    \"views\": 1112360\n  },\n  {\n    \"assets\": 3,\n    \"avg_metric\": 72569.333,\n    \"downloads\": 217708,\n    \"likes\": 3116,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"Mario_Krimer\",\n    \"user_id\": \"34815979\",\n    \"views\": 315087\n  },\n  {\n    \"assets\": 14,\n    \"avg_metric\": 3397.786,\n    \"downloads\": 47569,\n    \"likes\": 717,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"doktorkleinmusic\",\n    \"user_id\": \"5871510\",\n    \"views\": 38866\n  },\n  {\n    \"assets\": 14,\n    \"avg_metric\": 1893.571,\n    \"downloads\": 26510,\n    \"likes\": 603,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"anselmo7511\",\n    \"user_id\": \"43046719\",\n    \"views\": 30596\n  },\n  {\n    \"assets\": 26,\n    \"avg_metric\": 789.846,\n    \"downloads\": 20536,\n    \"likes\": 799,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"Couleur\",\n    \"user_id\": \"1195798\",\n    \"views\": 21343\n  },\n  {\n    \"assets\": 25,\n    \"avg_metric\": 304.68,\n    \"downloads\": 7617,\n    \"likes\": 791,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"flutie8211\",\n    \"user_id\": \"17475707\",\n    \"views\": 11402\n  },\n  {\n    \"assets\": 21,\n    \"avg_metric\": 354.857,\n    \"downloads\": 7452,\n    \"likes\": 437,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"Alexas_Fotos\",\n    \"user_id\": \"686414\",\n    \"views\": 7854\n  },\n  {\n    \"assets\": 6,\n    \"avg_metric\": 1011.333,\n    \"downloads\": 6068,\n    \"likes\": 147,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"neelam279\",\n    \"user_id\": \"9820894\",\n    \"views\": 6236\n  },\n  {\n    \"assets\": 8,\n    \"avg_metric\": 598.875,\n    \"downloads\": 4791,\n    \"likes\": 193,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"Nennieinszweidrei\",\n    \"user_id\": \"10084616\",\n    \"views\": 5132\n  },\n  {\n    \"assets\": 5,\n    \"avg_metric\": 503.8,\n    \"downloads\": 2519,\n    \"likes\": 118,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"Elsemargriet\",\n    \"user_id\": \"1614842\",\n    \"views\": 2656\n  },\n  {\n    \"assets\": 3,\n    \"avg_metric\": 813.333,\n    \"downloads\": 2440,\n    \"likes\": 145,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"Mollyroselee\",\n    \"user_id\": \"9214707\",\n    \"views\": 3721\n  },\n  {\n    \"assets\": 5,\n    \"avg_metric\": 238,\n    \"downloads\": 1190,\n    \"likes\": 118,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"geralt\",\n    \"user_id\": \"9301\",\n    \"views\": 1301\n  },\n  {\n    \"assets\": 5,\n    \"avg_metric\": 95.2,\n    \"downloads\": 476,\n    \"likes\": 88,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"mycuppatea\",\n    \"user_id\": \"55376546\",\n    \"views\": 536\n  },\n  {\n    \"assets\": 5,\n    \"avg_metric\": 70.4,\n    \"downloads\": 352,\n    \"likes\": 77,\n    \"ranked_by\": \"downloads\",\n    \"user\": \"klaatubaradanikto\",\n    \"user_id\": \"49447292\",\n    \"views\": 350\n  }\n]\n"
+    },
+    {
+      "command": "contributors",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no positional argument"
+    },
+    {
+      "command": "doctor",
+      "kind": "help",
+      "args": [
+        "doctor",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Check CLI health\n\nUsage:\n  pixabay-pp-cli doctor [flags]\n\nExamples:\n  pixabay-pp-cli doctor\n  pixabay-pp-cli doctor --json\n  pixabay-pp-cli doctor --fail-on warn\n  pixabay-pp-cli doctor --fail-on stale\n\nFlags:\n      --fail-on string   Exit non-zero for selected health gates. stale: cache freshness plus errors; warn: credential/path warnings plus errors; error: errors only. Default is never.\n  -h, --help             help for doctor\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "doctor",
+      "kind": "happy_path",
+      "args": [
+        "doctor"
+      ],
+      "status": "pass",
+      "output_sample": "  OK Config: ok\n  OK Auth: configured\n  OK Env Vars: OK 1/1 available\n  OK Verify Mode: normal operation\n  OK API: reachable\n  INFO Credentials: present, not verified. Run any read command to confirm the token works end-to-end.\n  config_path: /var/folders/x4/g6csmwkj1n73fgyc484z4jqc0000gp/T/printing-press-subprocess-<redacted>/.config/pixabay-pp-cli/config.toml\n  base_url: https://pixabay.com\n  auth_source: env:PIXABAY_API_KEY\n  credentials_location: env:PIXABAY_API_KEY\n  version: 1.0.0\n  OK Cache: fresh\n    db_path: /var/folders/x4/g6csmwkj1n73fgyc484z4jqc0000gp/T/printing-press-subprocess-<redacted>/.local/share/pixabay-pp-cli/data.db\n    schema_version: 4\n    db_bytes: 1024000\n    stale_after: 6h0m0s\n    resources:\n      - images: 100 rows, 0s\n      - videos: 100 rows, 0s\n  Paths:\n    config: /var/folders/x4/g6csmwkj1n73fgyc484z4jqc0000gp/T/printing-press-subprocess-<redacted>/.config/pixabay-pp-cli (XDG_CONFIG_HOME)\n    data: /var/folders/x4/g6csmwkj1n73fgyc484z4jqc0000gp/T/printing-press-subprocess-<redacted>/.local/share/pixabay-pp-cli (XDG_DATA_HOME)\n    state: /var/folders/x4/g6csmwkj1n73fgyc484z4jqc0000gp/T/printing-press-subprocess-<redacted>/.local/state/pixabay-pp-cli (XDG_STATE_HOME)\n    cache: /var/folders/x4/g6csmwkj1n73fgyc484z4jqc0000gp/T/printing-press-subprocess-<redacted>/.cache/pixabay-pp-cli (XDG_CACHE_HOME)\n"
+    },
+    {
+      "command": "doctor",
+      "kind": "json_fidelity",
+      "args": [
+        "doctor",
+        "--json"
+      ],
+      "status": "pass",
+      "output_sample": "{\"agentcookie\":\"not detected (optional)\",\"api\":\"reachable\",\"auth\":\"configured\",\"auth_source\":\"env:PIXABAY_API_KEY\",\"base_url\":\"https://pixabay.com\",\"cache\":{\"db_bytes\":1024000,\"db_path\":\"/var/folders/x4/g6csmwkj1n73fgyc484z4jqc0000gp/T/printing-press-subprocess-<redacted>/.local/share/pixabay-pp-cli/data.db\",\"resources\":[{\"last_synced_at\":\"2026-06-24T04:38:51Z\",\"rows\":100,\"staleness\":\"0s\",\"type\":\"images\"},{\"last_synced_at\":\"2026-06-24T04:38:51Z\",\"rows\":100,\"staleness\":\"0s\",\"type\":\"videos\"}],\"schema_version\":4,\"stale_after\":\"6h0m0s\",\"status\":\"fresh\"},\"config\":\"ok\",\"config_path\":\"/var/folders/x4/g6csmwkj1n73fgyc484z4jqc0000gp/T/printing-press-subprocess-<redacted>/.config/pixabay-pp-cli/config.toml\",\"credentials\":\"present, not verified. Run any read command to confirm the token works end-to-end.\",\"credentials_location\":\"env:PIXABAY_API_KEY\",\"env_vars\":\"OK 1/1 available\",\"paths\":{\"cache\":{\"dir\":\"/var/folders/x4/g6csmwkj1n73fgyc484z4jqc0000gp/T/printing-press-subprocess-<redacted>/.cache/pixabay-pp-cli\",\"rung\":\"xdg-env\",\"source\":\"XDG_CACHE_HOME\"},\"config\":{\"dir\":\"/var/folders/x4/g6csmwkj1n73fgyc484z4jqc0000gp/T/printing-press-subprocess-<redacted>/.config/pixabay-pp-cli\",\"rung\":\"xdg-env\",\"source\":\"XDG_CONFIG_HOME\"},\"data\":{\"dir\":\"/var/folders/x4/g6csmwkj1n73fgyc484z4jqc0000gp/T/printing-press-subprocess-<redacted>/.local/share/pixabay-pp-cli\",\"rung\":\"xdg-env\",\"source\":\"XDG_DATA_HOME\"},\"state\":{\"dir\":\"/var/folders/x4/g6csmwkj1n73fgyc484z4jqc0000gp/T/printing-press-subprocess-<redacted>/.local/state/pixabay-pp-cli\",\"rung\":\"xdg-env\",\"source\":\"XDG_STATE_HOME\"},\"status\":\"ok\"},\"verify_mode\":\"normal operation\",\"version\":\"1.0.0\"}"
+    },
+    {
+      "command": "doctor",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no positional argument"
+    },
+    {
+      "command": "feedback list",
+      "kind": "help",
+      "args": [
+        "feedback",
+        "list",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "List recent feedback entries\n\nUsage:\n  pixabay-pp-cli feedback list [flags]\n\nExamples:\n  pixabay-pp-cli feedback list\n  pixabay-pp-cli feedback list --limit 5\n  pixabay-pp-cli feedback list --json\n\nFlags:\n  -h, --help        help for list\n      --limit int   Maximum number of recent entries to return (default 20)\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "feedback list",
+      "kind": "happy_path",
+      "args": [
+        "feedback",
+        "list"
+      ],
+      "status": "pass"
+    },
+    {
+      "command": "feedback list",
+      "kind": "json_fidelity",
+      "args": [
+        "feedback",
+        "list",
+        "--json"
+      ],
+      "status": "pass",
+      "output_sample": "[]\n"
+    },
+    {
+      "command": "feedback list",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no positional argument"
+    },
+    {
+      "command": "images get",
+      "kind": "help",
+      "args": [
+        "images",
+        "get",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Get image(s) by ID\n\nUsage:\n  pixabay-pp-cli images get <id> [flags]\n\nExamples:\n  pixabay-pp-cli images get 550e8400-e29b-41d4-a716-446655440000\n\nFlags:\n  -h, --help   help for get\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "images get",
+      "kind": "happy_path",
+      "args": [
+        "images",
+        "get",
+        "10338309"
+      ],
+      "status": "pass",
+      "fixture_source": "store",
+      "output_sample": "{\"meta\":{\"source\":\"live\"},\"results\":{\"hits\":[{\"collections\":1,\"comments\":28,\"downloads\":1857,\"id\":10338309,\"imageHeight\":2848,\"imageSize\":1258105,\"imageWidth\":4288,\"isAiGenerated\":false,\"isGRated\":true,\"isLowQuality\":true,\"largeImageURL\":\"https://pixabay.com/get/ga512193b6eedd5b647ea4905c214ac774634f423a28ec50b8a4982d2fbb55dd4af927ed113d96156e8f67af320a83ef009a76e2485a36a8d0b36e00fcdec8b6f_1280.jpg\",\"likes\":51,\"name\":\"<redacted>\",\"noAiTraining\":false,\"pageURL\":\"https://pixabay.com/photos/butterfly-colorful-insect-nature-10338309/\",\"previewHeight\":100,\"previewURL\":\"https://cdn.pixabay.com/photo/2026/06/18/15/36/15-36-50-135_150.jpg\",\"previewWidth\":150,\"tags\":\"butterfly, colorful insect, nature, flower, pollination, yellow flowers, nectar, summer scene, macro photography, detail, insect, garden, natural beauty, habitat, wildlife, orange and black wings, fauna, pollinator insect, environment, garden flowers\",\"type\":\"photo\",\"user\":\"anselmo7511\",\"userImageURL\":\"https://cdn.pixabay.com/user/2024/03/24/15-14-51-538_250x250.jpg\",\"userURL\":\"https://pixabay.com/users/43046719/\",\"user_id\":43046719,\"views\":2430,\"webformatHeight\":425,\"webformatURL\":\"https://pixabay.com/get/g020b3c06975782e30c802e832a6f0d626f54d5d4987c7c22aad480e8472f9eb1f9c9733f99d05bc352c39960e4efa01e_640.jpg\",\"webformatWidth\":640}],\"total\":1,\"totalHits\":1}}warning: 1/1 images items returned but not cached locally (no extractable ID field; offline lookup against these rows will be incomplete; live queries unaffected)\n"
+    },
+    {
+      "command": "images get",
+      "kind": "json_fidelity",
+      "args": [
+        "images",
+        "get",
+        "10338309",
+        "--json"
+      ],
+      "status": "pass",
+      "fixture_source": "store",
+      "output_sample": "{\"meta\":{\"source\":\"live\"},\"results\":{\"hits\":[{\"collections\":1,\"comments\":28,\"downloads\":1857,\"id\":10338309,\"imageHeight\":2848,\"imageSize\":1258105,\"imageWidth\":4288,\"isAiGenerated\":false,\"isGRated\":true,\"isLowQuality\":true,\"largeImageURL\":\"https://pixabay.com/get/ga512193b6eedd5b647ea4905c214ac774634f423a28ec50b8a4982d2fbb55dd4af927ed113d96156e8f67af320a83ef009a76e2485a36a8d0b36e00fcdec8b6f_1280.jpg\",\"likes\":51,\"name\":\"<redacted>\",\"noAiTraining\":false,\"pageURL\":\"https://pixabay.com/photos/butterfly-colorful-insect-nature-10338309/\",\"previewHeight\":100,\"previewURL\":\"https://cdn.pixabay.com/photo/2026/06/18/15/36/15-36-50-135_150.jpg\",\"previewWidth\":150,\"tags\":\"butterfly, colorful insect, nature, flower, pollination, yellow flowers, nectar, summer scene, macro photography, detail, insect, garden, natural beauty, habitat, wildlife, orange and black wings, fauna, pollinator insect, environment, garden flowers\",\"type\":\"photo\",\"user\":\"anselmo7511\",\"userImageURL\":\"https://cdn.pixabay.com/user/2024/03/24/15-14-51-538_250x250.jpg\",\"userURL\":\"https://pixabay.com/users/43046719/\",\"user_id\":43046719,\"views\":2430,\"webformatHeight\":425,\"webformatURL\":\"https://pixabay.com/get/g020b3c06975782e30c802e832a6f0d626f54d5d4987c7c22aad480e8472f9eb1f9c9733f99d05bc352c39960e4efa01e_640.jpg\",\"webformatWidth\":640}],\"total\":1,\"totalHits\":1}}warning: 1/1 images items returned but not cached locally (no extractable ID field; offline lookup against these rows will be incomplete; live queries unaffected)\n"
+    },
+    {
+      "command": "images get",
+      "kind": "error_path",
+      "args": [
+        "images",
+        "get",
+        "__printing_press_invalid__"
+      ],
+      "status": "pass",
+      "exit_code": 5,
+      "output_sample": "Error: GET /api/ returned HTTP 400: [ERROR 400] Invalid value for \"id\".\n"
+    },
+    {
+      "command": "images search",
+      "kind": "help",
+      "args": [
+        "images",
+        "search",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Search images by query and filters\n\nUsage:\n  pixabay-pp-cli images search <q> [flags]\n\nExamples:\n  pixabay-pp-cli images search \"forest\" --image-type photo --category nature --editors-choice --order popular --agent --select hits.id,hits.tags,hits.largeImageURL,hits.likes\n\nFlags:\n      --category string      Filter results by category. (one of: backgrounds, fashion, nature, science, education, feelings, health, people, religion, places, animals, industry, computer, food, sports, transportation, travel, buildings, business, music)\n      --colors string        Filter by color (comma-separated): grayscale, transparent, red, orange, yellow, green, turquoise, blue, lilac, pink\n      --editors-choice       Only images that received an Editor's Choice award.\n  -h, --help                 help for search\n      --id string            Retrieve specific image(s) by ID (comma-separated).\n      --image-type string    Filter by image type. (one of: all, photo, illustration, vector) (default \"all\")\n      --lang string          Language code to search in. (one of: cs, da, de, en, es, fr, id, it, hu, nl, no, pl, pt, ro, sk, fi, sv, tr, vi, th, bg, ru, el, ja, ko, zh) (default \"en\")\n      --min-height int       Minimum image height in pixels.\n      --min-width int        Minimum image width in pixels.\n      --order string         How results are ordered. (one of: popular, latest) (default \"popular\")\n      --orientation string   Filter by image orientation. (one of: all, horizontal, vertical) (default \"all\")\n      --page string          Page number (page * per_page must be <= 500). (default \"1\")\n      --per-page int         Results per page (3-200). (default 20)\n      --safesearch           Only images suitable for all ages.\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "images search",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"q\" at depth 0"
+    },
+    {
+      "command": "images search",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"q\" at depth 0"
+    },
+    {
+      "command": "images search",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no-error-path-probe annotation"
+    },
+    {
+      "command": "import",
+      "kind": "help",
+      "args": [
+        "import",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Import data from a JSONL file by issuing POST requests for each record.\nEach line must be a valid JSON object. Failed records are logged to stderr\nbut do not stop the import.\n\nUsage:\n  pixabay-pp-cli import <resource> [flags]\n\nExamples:\n  # Import from a JSONL file\n  pixabay-pp-cli import <resource> --input data.jsonl\n\n  # Dry-run to preview without sending\n  pixabay-pp-cli import <resource> --input data.jsonl --dry-run\n\n  # Import from stdin\n  cat data.jsonl | pixabay-pp-cli import <resource> --input -\n\nFlags:\n      --batch-size int   Records per batch (future: batch API support) (default 1)\n      --dry-run          Preview import without sending requests\n  -h, --help             help for import\n  -i, --input string     Input JSONL file path (use - for stdin)\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "import",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "command path [import] has fewer segments than placeholders (1)"
+    },
+    {
+      "command": "import",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "command path [import] has fewer segments than placeholders (1)"
+    },
+    {
+      "command": "import",
+      "kind": "error_path",
+      "args": [
+        "import",
+        "__printing_press_invalid__"
+      ],
+      "status": "pass",
+      "exit_code": 2,
+      "output_sample": "Error: required flag(s) \"input\" not set\n"
+    },
+    {
+      "command": "media search",
+      "kind": "help",
+      "args": [
+        "media",
+        "search",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Fan one query across both the image and video endpoints in parallel and merge\nstills and footage into a single result set ranked by downloads. Use this when\nyou want stills and footage together; for one medium only, use 'images search'\nor 'videos search'. Results are written through to the local store.\n\nUsage:\n  pixabay-pp-cli media search <q> [flags]\n\nExamples:\n  pixabay-pp-cli media search \"drone coastline\" --limit 40 --agent\n\nFlags:\n      --category string   Filter by category\n      --db string         Database path for write-through cache\n  -h, --help              help for search\n      --lang string       Language code to search in\n      --limit int         Maximum merged results to return (default 20)\n      --order string      Order results: popular or latest\n      --safesearch        Only results suitable for all ages\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "media search",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"q\" at depth 0"
+    },
+    {
+      "command": "media search",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"q\" at depth 0"
+    },
+    {
+      "command": "media search",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no-error-path-probe annotation"
+    },
+    {
+      "command": "profile delete",
+      "kind": "help",
+      "args": [
+        "profile",
+        "delete",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Remove a profile\n\nUsage:\n  pixabay-pp-cli profile delete <name> [flags]\n\nExamples:\n  pixabay-pp-cli profile delete my-defaults --yes\n  pixabay-pp-cli profile delete old-profile --yes --json\n\nFlags:\n  -h, --help   help for delete\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "profile delete",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "profile delete",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "profile delete",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "mutating command; error_path would call live API without --dry-run"
+    },
+    {
+      "command": "profile delete",
+      "kind": "error_path_real",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "profile list",
+      "kind": "help",
+      "args": [
+        "profile",
+        "list",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "List saved profiles\n\nUsage:\n  pixabay-pp-cli profile list [flags]\n\nExamples:\n  pixabay-pp-cli profile list\n  pixabay-pp-cli profile list --json\n\nFlags:\n  -h, --help   help for list\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "profile list",
+      "kind": "happy_path",
+      "args": [
+        "profile",
+        "list"
+      ],
+      "status": "pass",
+      "output_sample": "NAME  FIELDS  DESCRIPTION\n"
+    },
+    {
+      "command": "profile list",
+      "kind": "json_fidelity",
+      "args": [
+        "profile",
+        "list",
+        "--json"
+      ],
+      "status": "pass",
+      "output_sample": "[]\n"
+    },
+    {
+      "command": "profile list",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no positional argument"
+    },
+    {
+      "command": "profile save",
+      "kind": "help",
+      "args": [
+        "profile",
+        "save",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Captures every flag explicitly set on the invocation and stores\nthem under <name>. To update an existing profile, run save again; the\nentry is replaced.\n\nTo avoid creating empty profiles, at least one non-default flag must be\npresent (other than --profile, --config, and --home, which are never\ncaptured: they control profile/config resolution and would never apply).\n\nUsage:\n  pixabay-pp-cli profile save <name> [--<flag> <value> ...] [flags]\n\nExamples:\n  pixabay-pp-cli profile save my-defaults --json --compact\n  pixabay-pp-cli profile save tonight-defaults --region US\n\nFlags:\n      --description string   Short description shown in 'profile list'\n  -h, --help                 help for save\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "profile save",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "profile save",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "profile save",
+      "kind": "error_path",
+      "args": [
+        "profile",
+        "save",
+        "__printing_press_invalid__"
+      ],
+      "status": "pass",
+      "exit_code": 1,
+      "output_sample": "Error: no non-default flags set - pass at least one flag to save into \"__printing_press_invalid__\"\n"
+    },
+    {
+      "command": "profile show",
+      "kind": "help",
+      "args": [
+        "profile",
+        "show",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Show a profile's values as JSON\n\nUsage:\n  pixabay-pp-cli profile show <name> [flags]\n\nExamples:\n  pixabay-pp-cli profile show my-defaults\n  pixabay-pp-cli profile show tonight-defaults --json\n\nFlags:\n  -h, --help   help for show\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "profile show",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "profile show",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "profile show",
+      "kind": "error_path",
+      "args": [
+        "profile",
+        "show",
+        "__printing_press_invalid__"
+      ],
+      "status": "pass",
+      "exit_code": 1,
+      "output_sample": "Error: profile \"__printing_press_invalid__\" not found\n"
+    },
+    {
+      "command": "profile use",
+      "kind": "help",
+      "args": [
+        "profile",
+        "use",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Print the flag values a profile will apply (does not execute anything)\n\nUsage:\n  pixabay-pp-cli profile use <name> [flags]\n\nExamples:\n  pixabay-pp-cli profile use my-defaults\n  pixabay-pp-cli profile use tonight-defaults --json\n\nFlags:\n  -h, --help   help for use\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "profile use",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "profile use",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"name\" at depth 0"
+    },
+    {
+      "command": "profile use",
+      "kind": "error_path",
+      "args": [
+        "profile",
+        "use",
+        "__printing_press_invalid__"
+      ],
+      "status": "pass",
+      "exit_code": 1,
+      "output_sample": "Error: profile \"__printing_press_invalid__\" not found\n"
+    },
+    {
+      "command": "pull",
+      "kind": "help",
+      "args": [
+        "pull",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Download assets you already have in a collection or store (or by explicit IDs)\nto disk. Pull re-fetches URLs that may have expired (Pixabay URLs last 24h),\nruns parallel workers, writes a per-file attribution sidecar, and skips files\nalready downloaded with --resume. Use this to materialize a curated set; do NOT\nuse it to discover new assets \u2014 use 'images search' or 'media search'.\n\nUsage:\n  pixabay-pp-cli pull [id...] [flags]\n\nExamples:\n  pixabay-pp-cli pull --from-collection winter --size large --workers 8 --resume\n\nFlags:\n      --db string                Database path\n      --from-collection string   Pull all IDs in this local collection\n  -h, --help                     help for pull\n      --kind string              Media kind: images or videos (default \"images\")\n      --out string               Output directory (default ./pixabay-downloads)\n      --query string             Search live and pull the top results\n      --resume                   Skip files that already exist on disk\n      --size string              Size variant: preview/web/large/fullhd/original (images) or large/medium/small/tiny (videos) (default \"large\")\n      --workers int              Parallel download workers (default 4)\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "pull",
+      "kind": "happy_path",
+      "args": [
+        "pull",
+        "--query",
+        "nature",
+        "--workers",
+        "1"
+      ],
+      "status": "pass",
+      "output_sample": "{\n  \"downloaded\": 1,\n  \"failed\": 0,\n  \"out_dir\": \"pixabay-downloads\",\n  \"pull_failures\": [],\n  \"requested\": 1,\n  \"skipped\": 0\n}\n"
+    },
+    {
+      "command": "pull",
+      "kind": "json_fidelity",
+      "args": [
+        "pull",
+        "--query",
+        "nature",
+        "--workers",
+        "1",
+        "--json"
+      ],
+      "status": "pass",
+      "output_sample": "{\n  \"downloaded\": 1,\n  \"failed\": 0,\n  \"out_dir\": \"pixabay-downloads\",\n  \"pull_failures\": [],\n  \"requested\": 1,\n  \"skipped\": 0\n}\n"
+    },
+    {
+      "command": "pull",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no positional argument"
+    },
+    {
+      "command": "quota",
+      "kind": "help",
+      "args": [
+        "quota",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Make one lightweight request and read the X-RateLimit-Limit/Remaining/Reset\nheaders Pixabay returns on every response (which no other Pixabay tool exposes).\nUse --plan N to project whether a batch of N requests would throttle. Run this\nbefore a large 'pull' so you can pace within the rate limit.\n\nUsage:\n  pixabay-pp-cli quota [flags]\n\nExamples:\n  pixabay-pp-cli quota --plan 200 --agent\n\nFlags:\n  -h, --help       help for quota\n      --plan int   Project remaining budget after a batch of this many requests\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "quota",
+      "kind": "happy_path",
+      "args": [
+        "quota",
+        "--plan",
+        "200",
+        "--agent"
+      ],
+      "status": "pass",
+      "output_sample": "{\n  \"checked_at\": \"2026-06-24T04:38:54Z\",\n  \"limit\": 100,\n  \"plan_requests\": 200,\n  \"remaining\": 92,\n  \"remaining_after_plan\": -108,\n  \"reset_seconds\": 57,\n  \"would_throttle\": true\n}\n"
+    },
+    {
+      "command": "quota",
+      "kind": "json_fidelity",
+      "args": [
+        "quota",
+        "--plan",
+        "200",
+        "--agent",
+        "--json"
+      ],
+      "status": "pass",
+      "output_sample": "{\n  \"checked_at\": \"2026-06-24T04:38:54Z\",\n  \"limit\": 100,\n  \"plan_requests\": 200,\n  \"remaining\": 91,\n  \"remaining_after_plan\": -109,\n  \"reset_seconds\": 57,\n  \"would_throttle\": true\n}\n"
+    },
+    {
+      "command": "quota",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no positional argument"
+    },
+    {
+      "command": "search",
+      "kind": "help",
+      "args": [
+        "search",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Search data using FTS5 full-text search on locally synced data,\nor hit the API's search endpoint when available.\n\nIn auto mode (default): uses the API search endpoint if the API has one,\notherwise searches local data. Falls back to local on network failure.\nIn live mode: uses the API search endpoint only.\nIn local mode: searches locally synced data only.\n\nUsage:\n  pixabay-pp-cli search <query> [flags]\n\nExamples:\n  # Search (uses API endpoint if available, local FTS otherwise)\n  pixabay-pp-cli search \"error timeout\"\n\n  # Force local search only\n  pixabay-pp-cli search \"payment failed\" --data-source local\n\n  # Search a specific resource type locally\n  pixabay-pp-cli search \"critical\" --type transactions --data-source local\n\n  # JSON output for piping\n  pixabay-pp-cli search \"critical\" --json --limit 20\n\nFlags:\n      --db string     SQLite database file path (default: resolved data directory data.db)\n  -h, --help          help for search\n      --limit int     Maximum results to return (default 50)\n      --type string   Filter by resource type\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "search",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "command path [search] has fewer segments than placeholders (1)"
+    },
+    {
+      "command": "search",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "command path [search] has fewer segments than placeholders (1)"
+    },
+    {
+      "command": "search",
+      "kind": "error_path",
+      "args": [
+        "search",
+        "__printing_press_invalid__",
+        "--json"
+      ],
+      "status": "pass",
+      "output_sample": "{\n  \"meta\": {\n    \"source\": \"live\"\n  },\n  \"results\": []\n}\n"
+    },
+    {
+      "command": "similar",
+      "kind": "help",
+      "args": [
+        "similar",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Rank synced hits by how many tags they share with a target ID, using a local\ntag-set overlap (Jaccard) score. Use this for offline 'more like this' over your\nsynced store; do NOT use it to fetch new results from the API \u2014 use\n'images search' for that. Sync results first so there is cached data to\ncompare against.\n\nUsage:\n  pixabay-pp-cli similar <id> [flags]\n\nExamples:\n  pixabay-pp-cli similar 195893 --limit 20 --agent\n\nFlags:\n      --db string     Database path\n  -h, --help          help for similar\n      --kind string   Media kind: images or videos (default \"images\")\n      --limit int     Maximum similar items to return (default 20)\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "similar",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "command path [similar] has fewer segments than placeholders (1)"
+    },
+    {
+      "command": "similar",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "command path [similar] has fewer segments than placeholders (1)"
+    },
+    {
+      "command": "similar",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no-error-path-probe annotation"
+    },
+    {
+      "command": "sync",
+      "kind": "help",
+      "args": [
+        "sync",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Sync data from the API into a local SQLite database. Supports resumable\nincremental sync (only fetches new data since last sync) and full resync.\nOnce synced, use the 'search' command for instant full-text search.\n\nExit codes & warnings:\n  Resources the API denies access to (HTTP 403, or HTTP 400 with an\n  access-policy body) are reported as warnings rather than failing the\n  run. In --json mode each is emitted as a {\"event\":\"sync_warning\",...}\n  line carrying status, reason, and message fields, and a final\n  {\"event\":\"sync_summary\",...} aggregates the run.\n\n  Exit 0 when at least one resource synced and no resource flagged in\n  the spec as critical (x-critical: true) failed; non-critical failures\n  emit {\"event\":\"sync_warning\",\"reason\":\"exit_policy_default_changed\",\n  ...} so callers can detect that a partial failure was tolerated. Pass\n  --strict to exit non-zero on any per-resource failure. Exit is always\n  non-zero when every selected resource failed, regardless of --strict.\n\nResource scoping:\n  --resources runs the named top-level resources, plus any parent-keyed\n  dependent whose own name is listed OR whose parent table is listed.\n  Naming a parent therefore cascades to its dependents (so \"sync this\n  parent and its children\" works without listing every nested resource\n  by hand). There is no flag today to suppress the cascade for a named\n  parent. To run a dependent without re-syncing its parent, list only\n  the dependent by name; the parent table must already be populated\n  from a prior sync.\n\nUsage:\n  pixabay-pp-cli sync [flags]\n\nExamples:\n  # Sync all resources\n  pixabay-pp-cli sync\n\n  # Sync specific resources only\n  pixabay-pp-cli sync --resources channels,messages\n\n  # Full resync (ignore previous checkpoint)\n  pixabay-pp-cli sync --full\n\n  # Incremental sync: only records from the last 7 days\n  pixabay-pp-cli sync --since 7d\n\n  # Parallel sync with 8 workers\n  pixabay-pp-cli sync --concurrency 8\n\n  # Latest-only: refresh head of each resource, no historical backfill\n  pixabay-pp-cli sync --latest-only\n\nFlags:\n      --concurrency int              Number of parallel sync workers (default 4)\n      --db string                    SQLite database file path (default: resolved data directory data.db)\n      --full                         Full resync (ignore previous checkpoint)\n      --global-param stringArray     Extra query param to inject into every sync request including dependent path-scoped calls (repeatable, key=value). Use when an API requires a scope on every call regardless of path nesting.\n  -h, --help                         help for sync\n      --latest-only                  Refresh head of each resource only; clears resume cursor and caps pages at 1. Mutually exclusive with --since (--since wins).\n      --max-pages int                Maximum pages to fetch per resource (0 = unlimited; cap-hit emits a sync_warning event)\n      --param stringArray            Extra query param to inject into flat-list sync requests (repeatable, key=value). Skipped on path-scoped dependent requests so a top-level scope like workspace=<id> does not double up on /parents/<id>/children calls. Use --global-param to inject everywhere. Avoid pagination keys (limit/since/cursor) \u2014 overriding them corrupts resume state.\n      --resource-param stringArray   Per-resource extra query param (repeatable, resource:key=value). Wins over --param and --global-param when keys conflict.\n      --resources strings            Comma-separated resource types to sync. Naming a parent also runs its parent-keyed dependents (see Long help for scoping).\n      --since string                 Incremental sync duration (e.g. 7d, 24h, 1w, 30m)\n      --strict                       Exit non-zero on any per-resource failure (default: only critical failures or all-resource failure exit non-zero).\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config f\u2026[truncated]"
+    },
+    {
+      "command": "sync",
+      "kind": "happy_path",
+      "args": [
+        "sync"
+      ],
+      "status": "pass",
+      "output_sample": "{\"event\":\"sync_start\",\"resource\":\"images\"}\n{\"event\":\"sync_start\",\"resource\":\"videos\"}\n{\"event\":\"sync_warning\",\"resource\":\"images\",\"reason\":\"resource_not_incremental\",\"message\":\"endpoint does not declare a temporal filter parameter; incremental sync has no effect for this resource\"}\n{\"event\":\"sync_warning\",\"resource\":\"videos\",\"reason\":\"resource_not_incremental\",\"message\":\"endpoint does not declare a temporal filter parameter; incremental sync has no effect for this resource\"}\n{\"event\":\"sync_warning\",\"resource\":\"videos\",\"reason\":\"pagination_cursor_missing\",\"message\":\"API returned a full page without a usable next cursor; data may be truncated.\"}\n{\"event\":\"sync_progress\",\"resource\":\"videos\",\"fetched\":100}\n{\"event\":\"sync_complete\",\"resource\":\"videos\",\"total\":100,\"duration_ms\":207}\n{\"event\":\"sync_warning\",\"resource\":\"images\",\"reason\":\"pagination_cursor_missing\",\"message\":\"API returned a full page without a usable next cursor; data may be truncated.\"}\n{\"event\":\"sync_progress\",\"resource\":\"images\",\"fetched\":100}\n{\"event\":\"sync_complete\",\"resource\":\"images\",\"total\":100,\"duration_ms\":246}\n{\"event\":\"sync_summary\",\"total_records\":200,\"resources\":2,\"success\":2,\"warned\":0,\"errored\":0,\"duration_ms\":246}\n"
+    },
+    {
+      "command": "sync",
+      "kind": "json_fidelity",
+      "args": [
+        "sync",
+        "--json"
+      ],
+      "status": "pass",
+      "output_sample": "{\"event\":\"sync_start\",\"resource\":\"images\"}\n{\"event\":\"sync_start\",\"resource\":\"videos\"}\n{\"event\":\"sync_warning\",\"resource\":\"images\",\"reason\":\"resource_not_incremental\",\"message\":\"endpoint does not declare a temporal filter parameter; incremental sync has no effect for this resource\"}\n{\"event\":\"sync_warning\",\"resource\":\"videos\",\"reason\":\"resource_not_incremental\",\"message\":\"endpoint does not declare a temporal filter parameter; incremental sync has no effect for this resource\"}\n{\"event\":\"sync_warning\",\"resource\":\"videos\",\"reason\":\"pagination_cursor_missing\",\"message\":\"API returned a full page without a usable next cursor; data may be truncated.\"}\n{\"event\":\"sync_progress\",\"resource\":\"videos\",\"fetched\":100}\n{\"event\":\"sync_complete\",\"resource\":\"videos\",\"total\":100,\"duration_ms\":190}\n{\"event\":\"sync_warning\",\"resource\":\"images\",\"reason\":\"pagination_cursor_missing\",\"message\":\"API returned a full page without a usable next cursor; data may be truncated.\"}\n{\"event\":\"sync_progress\",\"resource\":\"images\",\"fetched\":100}\n{\"event\":\"sync_complete\",\"resource\":\"images\",\"total\":100,\"duration_ms\":235}\n{\"event\":\"sync_summary\",\"total_records\":200,\"resources\":2,\"success\":2,\"warned\":0,\"errored\":0,\"duration_ms\":235}\n"
+    },
+    {
+      "command": "sync",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no positional argument"
+    },
+    {
+      "command": "trends",
+      "kind": "help",
+      "args": [
+        "trends",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Each run records a snapshot of current views/downloads/likes/comments and diffs\nthem against a prior snapshot, building up trend history the point-in-time API\ncannot provide. The first run for an item is a baseline (no prior to compare).\nRe-run after each 'sync' to see what is gaining.\n\nUsage:\n  pixabay-pp-cli trends [flags]\n\nExamples:\n  pixabay-pp-cli trends --tag winter --since 7d --agent\n\nFlags:\n      --db string      Database path\n  -h, --help           help for trends\n      --kind string    Media kind: images, videos, or all (default \"all\")\n      --limit int      Maximum items to report (default 50)\n      --no-snapshot    Do not record a new snapshot this run\n      --since string   Compare against the most recent snapshot at least this old (e.g. 7d, 24h)\n      --tag strings    Filter to items whose tags contain this value (repeatable)\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "trends",
+      "kind": "happy_path",
+      "args": [
+        "trends",
+        "--tag",
+        "winter",
+        "--since",
+        "7d",
+        "--agent"
+      ],
+      "status": "pass",
+      "output_sample": "[\n  {\n    \"baseline\": true,\n    \"delta_comments\": 0,\n    \"delta_downloads\": 0,\n    \"delta_likes\": 0,\n    \"delta_views\": 0,\n    \"downloads\": 428,\n    \"id\": \"358929\",\n    \"kind\": \"videos\",\n    \"likes\": 41,\n    \"tags\": \"ai generated, snowy owl, owl, bird, nature, animal, wildlife, raptor, ornithology, forest, woods, perched, avian, birdwatching, branch, wild, winter, species\",\n    \"views\": 590\n  },\n  {\n    \"baseline\": true,\n    \"delta_comments\": 0,\n    \"delta_downloads\": 0,\n    \"delta_likes\": 0,\n    \"delta_views\": 0,\n    \"downloads\": 338,\n    \"id\": \"358676\",\n    \"kind\": \"videos\",\n    \"likes\": 25,\n    \"tags\": \"ai generated, penguins, nature, bird, animal, wildlife, fauna, winter, ornithology, cold, antarctic, antarctica, species, glacier, iceberg, sea, frozen, jumping, leaping\",\n    \"views\": 302\n  },\n  {\n    \"baseline\": true,\n    \"delta_comments\": 0,\n    \"delta_downloads\": 0,\n    \"delta_likes\": 0,\n    \"delta_views\": 0,\n    \"downloads\": 33936,\n    \"id\": \"333600\",\n    \"kind\": \"videos\",\n    \"likes\": 429,\n    \"tags\": \"flowers, red plum, winter flowers, snowstorm, snow, japan\",\n    \"views\": 33728\n  },\n  {\n    \"baseline\": true,\n    \"delta_comments\": 0,\n    \"delta_downloads\": 0,\n    \"delta_likes\": 0,\n    \"delta_views\": 0,\n    \"downloads\": 99521,\n    \"id\": \"260397\",\n    \"kind\": \"videos\",\n    \"likes\": 1529,\n    \"tags\": \"fog, sun, sunshine, mist, ripe, hoarfrost, winter's day, winter morning, sunrise, sunlight, sunbeams, fog ceiling, sea of fog, nature, landscape\",\n    \"views\": 121543\n  },\n  {\n    \"baseline\": true,\n    \"delta_comments\": 0,\n    \"delta_downloads\": 0,\n    \"delta_likes\": 0,\n    \"delta_views\": 0,\n    \"downloads\": 19820,\n    \"id\": \"348057\",\n    \"kind\": \"videos\",\n    \"likes\": 200,\n    \"tags\": \"geothermal, iceland, nature, steam, landscape, natural, mountain, waterfall, trees, snow, winter, cold, frost, snowy, frozen, ice, cliffs\",\n    \"views\": 15819\n  },\n  {\n    \"baseline\": true,\n    \"delta_comments\": 0,\n    \"delta_downloads\": 0,\n    \"delta_likes\": 0,\n    \"delta_views\": 0,\n    \"downloads\": 80,\n    \"id\": \"359253\",\n    \"kind\": \"videos\",\n    \"likes\": 13,\n    \"tags\": \"mountaineering, survival, mountain, nature, expedition, storm, snow, winter, climbers, endurance, shelter, challenge, wilderness, adventure, resilience, ai generated\",\n    \"views\": 89\n  },\n  {\n    \"baseline\": true,\n    \"delta_comments\": 0,\n    \"delta_downloads\": 0,\n    \"delta_likes\": 0,\n    \"delta_views\": 0,\n    \"downloads\": 166280,\n    \"id\": \"192357\",\n    \"kind\": \"videos\",\n    \"likes\": 2411,\n    \"tags\": \"trees, forest, snow, track, winter, dji, drone, sky, nature, countryside, landscape\",\n    \"views\": 340351\n  },\n  {\n    \"baseline\": true,\n    \"delta_comments\": 0,\n    \"delta_downloads\": 0,\n    \"delta_likes\": 0,\n    \"delta_views\": 0,\n    \"downloads\": 32412,\n    \"id\": \"336603\",\n    \"kind\": \"videos\",\n    \"likes\": 303,\n    \"tags\": \"winter, snow, nature, cold, frost, trees, snowy, tree, white, icy, frozen, wintry\",\n    \"views\": 32513\n  }\n]\n"
+    },
+    {
+      "command": "trends",
+      "kind": "json_fidelity",
+      "args": [
+        "trends",
+        "--tag",
+        "winter",
+        "--since",
+        "7d",
+        "--agent",
+        "--json"
+      ],
+      "status": "pass",
+      "output_sample": "[\n  {\n    \"baseline\": true,\n    \"delta_comments\": 0,\n    \"delta_downloads\": 0,\n    \"delta_likes\": 0,\n    \"delta_views\": 0,\n    \"downloads\": 428,\n    \"id\": \"358929\",\n    \"kind\": \"videos\",\n    \"likes\": 41,\n    \"tags\": \"ai generated, snowy owl, owl, bird, nature, animal, wildlife, raptor, ornithology, forest, woods, perched, avian, birdwatching, branch, wild, winter, species\",\n    \"views\": 590\n  },\n  {\n    \"baseline\": true,\n    \"delta_comments\": 0,\n    \"delta_downloads\": 0,\n    \"delta_likes\": 0,\n    \"delta_views\": 0,\n    \"downloads\": 338,\n    \"id\": \"358676\",\n    \"kind\": \"videos\",\n    \"likes\": 25,\n    \"tags\": \"ai generated, penguins, nature, bird, animal, wildlife, fauna, winter, ornithology, cold, antarctic, antarctica, species, glacier, iceberg, sea, frozen, jumping, leaping\",\n    \"views\": 302\n  },\n  {\n    \"baseline\": true,\n    \"delta_comments\": 0,\n    \"delta_downloads\": 0,\n    \"delta_likes\": 0,\n    \"delta_views\": 0,\n    \"downloads\": 33936,\n    \"id\": \"333600\",\n    \"kind\": \"videos\",\n    \"likes\": 429,\n    \"tags\": \"flowers, red plum, winter flowers, snowstorm, snow, japan\",\n    \"views\": 33728\n  },\n  {\n    \"baseline\": true,\n    \"delta_comments\": 0,\n    \"delta_downloads\": 0,\n    \"delta_likes\": 0,\n    \"delta_views\": 0,\n    \"downloads\": 99521,\n    \"id\": \"260397\",\n    \"kind\": \"videos\",\n    \"likes\": 1529,\n    \"tags\": \"fog, sun, sunshine, mist, ripe, hoarfrost, winter's day, winter morning, sunrise, sunlight, sunbeams, fog ceiling, sea of fog, nature, landscape\",\n    \"views\": 121543\n  },\n  {\n    \"baseline\": true,\n    \"delta_comments\": 0,\n    \"delta_downloads\": 0,\n    \"delta_likes\": 0,\n    \"delta_views\": 0,\n    \"downloads\": 19820,\n    \"id\": \"348057\",\n    \"kind\": \"videos\",\n    \"likes\": 200,\n    \"tags\": \"geothermal, iceland, nature, steam, landscape, natural, mountain, waterfall, trees, snow, winter, cold, frost, snowy, frozen, ice, cliffs\",\n    \"views\": 15819\n  },\n  {\n    \"baseline\": true,\n    \"delta_comments\": 0,\n    \"delta_downloads\": 0,\n    \"delta_likes\": 0,\n    \"delta_views\": 0,\n    \"downloads\": 80,\n    \"id\": \"359253\",\n    \"kind\": \"videos\",\n    \"likes\": 13,\n    \"tags\": \"mountaineering, survival, mountain, nature, expedition, storm, snow, winter, climbers, endurance, shelter, challenge, wilderness, adventure, resilience, ai generated\",\n    \"views\": 89\n  },\n  {\n    \"baseline\": true,\n    \"delta_comments\": 0,\n    \"delta_downloads\": 0,\n    \"delta_likes\": 0,\n    \"delta_views\": 0,\n    \"downloads\": 166280,\n    \"id\": \"192357\",\n    \"kind\": \"videos\",\n    \"likes\": 2411,\n    \"tags\": \"trees, forest, snow, track, winter, dji, drone, sky, nature, countryside, landscape\",\n    \"views\": 340351\n  },\n  {\n    \"baseline\": true,\n    \"delta_comments\": 0,\n    \"delta_downloads\": 0,\n    \"delta_likes\": 0,\n    \"delta_views\": 0,\n    \"downloads\": 32412,\n    \"id\": \"336603\",\n    \"kind\": \"videos\",\n    \"likes\": 303,\n    \"tags\": \"winter, snow, nature, cold, frost, trees, snowy, tree, white, icy, frozen, wintry\",\n    \"views\": 32513\n  }\n]\n"
+    },
+    {
+      "command": "trends",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no positional argument"
+    },
+    {
+      "command": "videos get",
+      "kind": "help",
+      "args": [
+        "videos",
+        "get",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Get video(s) by ID\n\nUsage:\n  pixabay-pp-cli videos get <id> [flags]\n\nExamples:\n  pixabay-pp-cli videos get 550e8400-e29b-41d4-a716-446655440000\n\nFlags:\n  -h, --help   help for get\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "videos get",
+      "kind": "happy_path",
+      "args": [
+        "videos",
+        "get",
+        "359212"
+      ],
+      "status": "pass",
+      "fixture_source": "store",
+      "output_sample": "{\"meta\":{\"source\":\"live\"},\"results\":{\"hits\":[{\"comments\":17,\"downloads\":643,\"duration\":5,\"id\":359212,\"isAiGenerated\":true,\"isGRated\":true,\"isLowQuality\":true,\"likes\":46,\"name\":\"<redacted>\",\"noAiTraining\":true,\"pageURL\":\"https://pixabay.com/videos/id-359212/\",\"tags\":\"ai generated, butterfly, nature, insect, fauna, animal, wildlife, lepidoptera, pollination, entomology, flower, bloom, blossom, summer, garden, spring, nectar\",\"type\":\"animation\",\"user\":\"flutie8211\",\"userImageURL\":\"https://cdn.pixabay.com/user/2023/05/21/19-38-51-804_250x250.jpg\",\"userURL\":\"https://pixabay.com/users/17475707/\",\"user_id\":17475707,\"videos\":{\"large\":{\"height\":2160,\"size\":7655747,\"thumbnail\":\"https://cdn.pixabay.com/video/2026/06/18/359212_large.jpg\",\"url\":\"https://cdn.pixabay.com/video/2026/06/18/359212_large.mp4\",\"width\":3840},\"medium\":{\"height\":1440,\"size\":3565871,\"thumbnail\":\"https://cdn.pixabay.com/video/2026/06/18/359212_medium.jpg\",\"url\":\"https://cdn.pixabay.com/video/2026/06/18/359212_medium.mp4\",\"width\":2560},\"small\":{\"height\":1080,\"size\":2224776,\"thumbnail\":\"https://cdn.pixabay.com/video/2026/06/18/359212_small.jpg\",\"url\":\"https://cdn.pixabay.com/video/2026/06/18/359212_small.mp4\",\"width\":1920},\"tiny\":{\"height\":720,\"size\":850492,\"thumbnail\":\"https://cdn.pixabay.com/video/2026/06/18/359212_tiny.jpg\",\"url\":\"https://cdn.pixabay.com/video/2026/06/18/359212_tiny.mp4\",\"width\":1280}},\"views\":1060}],\"total\":1,\"totalHits\":1}}warning: 1/1 videos items returned but not cached locally (no extractable ID field; offline lookup against these rows will be incomplete; live queries unaffected)\n"
+    },
+    {
+      "command": "videos get",
+      "kind": "json_fidelity",
+      "args": [
+        "videos",
+        "get",
+        "359212",
+        "--json"
+      ],
+      "status": "pass",
+      "fixture_source": "store",
+      "output_sample": "{\"meta\":{\"source\":\"live\"},\"results\":{\"hits\":[{\"comments\":17,\"downloads\":643,\"duration\":5,\"id\":359212,\"isAiGenerated\":true,\"isGRated\":true,\"isLowQuality\":true,\"likes\":46,\"name\":\"<redacted>\",\"noAiTraining\":true,\"pageURL\":\"https://pixabay.com/videos/id-359212/\",\"tags\":\"ai generated, butterfly, nature, insect, fauna, animal, wildlife, lepidoptera, pollination, entomology, flower, bloom, blossom, summer, garden, spring, nectar\",\"type\":\"animation\",\"user\":\"flutie8211\",\"userImageURL\":\"https://cdn.pixabay.com/user/2023/05/21/19-38-51-804_250x250.jpg\",\"userURL\":\"https://pixabay.com/users/17475707/\",\"user_id\":17475707,\"videos\":{\"large\":{\"height\":2160,\"size\":7655747,\"thumbnail\":\"https://cdn.pixabay.com/video/2026/06/18/359212_large.jpg\",\"url\":\"https://cdn.pixabay.com/video/2026/06/18/359212_large.mp4\",\"width\":3840},\"medium\":{\"height\":1440,\"size\":3565871,\"thumbnail\":\"https://cdn.pixabay.com/video/2026/06/18/359212_medium.jpg\",\"url\":\"https://cdn.pixabay.com/video/2026/06/18/359212_medium.mp4\",\"width\":2560},\"small\":{\"height\":1080,\"size\":2224776,\"thumbnail\":\"https://cdn.pixabay.com/video/2026/06/18/359212_small.jpg\",\"url\":\"https://cdn.pixabay.com/video/2026/06/18/359212_small.mp4\",\"width\":1920},\"tiny\":{\"height\":720,\"size\":850492,\"thumbnail\":\"https://cdn.pixabay.com/video/2026/06/18/359212_tiny.jpg\",\"url\":\"https://cdn.pixabay.com/video/2026/06/18/359212_tiny.mp4\",\"width\":1280}},\"views\":1060}],\"total\":1,\"totalHits\":1}}warning: 1/1 videos items returned but not cached locally (no extractable ID field; offline lookup against these rows will be incomplete; live queries unaffected)\n"
+    },
+    {
+      "command": "videos get",
+      "kind": "error_path",
+      "args": [
+        "videos",
+        "get",
+        "__printing_press_invalid__"
+      ],
+      "status": "pass",
+      "exit_code": 5,
+      "output_sample": "Error: GET /api/videos/ returned HTTP 400: [ERROR 400] Invalid value for \"id\".\n"
+    },
+    {
+      "command": "videos search",
+      "kind": "help",
+      "args": [
+        "videos",
+        "search",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Search videos by query and filters\n\nUsage:\n  pixabay-pp-cli videos search <q> [flags]\n\nExamples:\n  pixabay-pp-cli videos search example-value\n\nFlags:\n      --category string     Filter results by category. (one of: backgrounds, fashion, nature, science, education, feelings, health, people, religion, places, animals, industry, computer, food, sports, transportation, travel, buildings, business, music)\n      --editors-choice      Only videos that received an Editor's Choice award.\n  -h, --help                help for search\n      --id string           Retrieve specific video(s) by ID (comma-separated).\n      --lang string         Language code to search in. (one of: cs, da, de, en, es, fr, id, it, hu, nl, no, pl, pt, ro, sk, fi, sv, tr, vi, th, bg, ru, el, ja, ko, zh) (default \"en\")\n      --min-height int      Minimum video height in pixels.\n      --min-width int       Minimum video width in pixels.\n      --order string        How results are ordered. (one of: popular, latest) (default \"popular\")\n      --page string         Page number (page * per_page must be <= 500). (default \"1\")\n      --per-page int        Results per page (3-200). (default 20)\n      --safesearch          Only videos suitable for all ages.\n      --video-type string   Filter by video type. (one of: all, film, animation) (default \"all\")\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "videos search",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"q\" at depth 0"
+    },
+    {
+      "command": "videos search",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "non-id positional \"q\" at depth 0"
+    },
+    {
+      "command": "videos search",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no-error-path-probe annotation"
+    },
+    {
+      "command": "which",
+      "kind": "help",
+      "args": [
+        "which",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "which resolves a natural-language capability query (for example, \"search messages\" or \"stale tickets\") to the best matching command from this CLI's curated feature index.\n\nExit codes:\n  0  at least one match found\n  2  no confident match - the query did not score against any indexed capability; fall back to '--help' or 'search' if this CLI has one\n\nUsage:\n  pixabay-pp-cli which [query] [flags]\n\nExamples:\n  pixabay-pp-cli which \"stale tickets\"\n  pixabay-pp-cli which \"bottleneck\"\n  pixabay-pp-cli which --limit 1 \"send message\"\n  pixabay-pp-cli which                                # list the full capability index\n\nFlags:\n  -h, --help        help for which\n      --limit int   Maximum number of matches to return (default 3)\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "which",
+      "kind": "happy_path",
+      "args": null,
+      "status": "skip",
+      "reason": "command path [which] has fewer segments than placeholders (1)"
+    },
+    {
+      "command": "which",
+      "kind": "json_fidelity",
+      "args": null,
+      "status": "skip",
+      "reason": "command path [which] has fewer segments than placeholders (1)"
+    },
+    {
+      "command": "which",
+      "kind": "error_path",
+      "args": [
+        "which",
+        "__printing_press_invalid__",
+        "--json"
+      ],
+      "status": "pass",
+      "output_sample": "{\n  \"matches\": []\n}\n"
+    },
+    {
+      "command": "workflow archive",
+      "kind": "help",
+      "args": [
+        "workflow",
+        "archive",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Archive fetches all syncable resources from the API and stores them in a\nlocal SQLite database. Supports incremental sync (only new data since last run)\nand full resync. After archiving, use 'search' for instant full-text search.\n\nUsage:\n  pixabay-pp-cli workflow archive [flags]\n\nExamples:\n  # Archive all resources\n  pixabay-pp-cli workflow archive\n\n  # Full re-archive (ignore previous sync state)\n  pixabay-pp-cli workflow archive --full\n\nFlags:\n      --db string   SQLite database file path (default: resolved data directory data.db)\n      --full        Full re-archive (ignore previous sync state)\n  -h, --help        help for archive\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "workflow archive",
+      "kind": "happy_path",
+      "args": [
+        "workflow",
+        "archive"
+      ],
+      "status": "pass",
+      "output_sample": "{\"event\":\"sync_start\",\"resource\":\"images\"}\n{\"event\":\"sync_warning\",\"resource\":\"images\",\"reason\":\"resource_not_incremental\",\"message\":\"endpoint does not declare a temporal filter parameter; incremental sync has no effect for this resource\"}\n{\"event\":\"sync_warning\",\"resource\":\"images\",\"reason\":\"pagination_cursor_missing\",\"message\":\"API returned a full page without a usable next cursor; data may be truncated.\"}\n{\"event\":\"sync_progress\",\"resource\":\"images\",\"fetched\":100}\n{\"event\":\"sync_complete\",\"resource\":\"images\",\"total\":100,\"duration_ms\":273}\n{\"event\":\"sync_start\",\"resource\":\"videos\"}\n{\"event\":\"sync_warning\",\"resource\":\"videos\",\"reason\":\"resource_not_incremental\",\"message\":\"endpoint does not declare a temporal filter parameter; incremental sync has no effect for this resource\"}\n{\"event\":\"sync_warning\",\"resource\":\"videos\",\"reason\":\"pagination_cursor_missing\",\"message\":\"API returned a full page without a usable next cursor; data may be truncated.\"}\n{\"event\":\"sync_progress\",\"resource\":\"videos\",\"fetched\":100}\n{\"event\":\"sync_complete\",\"resource\":\"videos\",\"total\":100,\"duration_ms\":161}\nArchived 200 items across 2 resources to /var/folders/x4/g6csmwkj1n73fgyc484z4jqc0000gp/T/printing-press-subprocess-<redacted>/.local/share/pixabay-pp-cli/data.db\n  images: 100 synced\n  videos: 100 synced\n"
+    },
+    {
+      "command": "workflow archive",
+      "kind": "json_fidelity",
+      "args": [
+        "workflow",
+        "archive",
+        "--json"
+      ],
+      "status": "pass",
+      "output_sample": "{\n  \"resources_synced\": 2,\n  \"store_path\": \"/var/folders/x4/g6csmwkj1n73fgyc484z4jqc0000gp/T/printing-press-subprocess-<redacted>/.local/share/pixabay-pp-cli/data.db\",\n  \"timestamp\": \"2026-06-24T04:38:57Z\",\n  \"total_items\": 200\n}\n{\"event\":\"sync_start\",\"resource\":\"images\"}\n{\"event\":\"sync_warning\",\"resource\":\"images\",\"reason\":\"resource_not_incremental\",\"message\":\"endpoint does not declare a temporal filter parameter; incremental sync has no effect for this resource\"}\n{\"event\":\"sync_warning\",\"resource\":\"images\",\"reason\":\"pagination_cursor_missing\",\"message\":\"API returned a full page without a usable next cursor; data may be truncated.\"}\n{\"event\":\"sync_progress\",\"resource\":\"images\",\"fetched\":100}\n{\"event\":\"sync_complete\",\"resource\":\"images\",\"total\":100,\"duration_ms\":310}\n  images: 100 synced\n{\"event\":\"sync_start\",\"resource\":\"videos\"}\n{\"event\":\"sync_warning\",\"resource\":\"videos\",\"reason\":\"resource_not_incremental\",\"message\":\"endpoint does not declare a temporal filter parameter; incremental sync has no effect for this resource\"}\n{\"event\":\"sync_warning\",\"resource\":\"videos\",\"reason\":\"pagination_cursor_missing\",\"message\":\"API returned a full page without a usable next cursor; data may be truncated.\"}\n{\"event\":\"sync_progress\",\"resource\":\"videos\",\"fetched\":100}\n{\"event\":\"sync_complete\",\"resource\":\"videos\",\"total\":100,\"duration_ms\":168}\n  videos: 100 synced\n"
+    },
+    {
+      "command": "workflow archive",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no positional argument"
+    },
+    {
+      "command": "workflow status",
+      "kind": "help",
+      "args": [
+        "workflow",
+        "status",
+        "--help"
+      ],
+      "status": "pass",
+      "output_sample": "Show local archive status and sync state for all resources\n\nUsage:\n  pixabay-pp-cli workflow status [flags]\n\nExamples:\n  # Show archive status\n  pixabay-pp-cli workflow status\n\n  # Show status as JSON\n  pixabay-pp-cli workflow status --json\n\nFlags:\n      --db string   SQLite database file path (default: resolved data directory data.db)\n  -h, --help        help for status\n\nGlobal Flags:\n      --agent                Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)\n      --compact              Return only key fields (id, name, status, timestamps) for minimal token usage\n      --config string        Config file path\n      --csv                  Output as CSV (table and array responses)\n      --data-source string   Data source for read commands: auto (live with local fallback), live (API only), local (synced data only) (default \"auto\")\n      --deliver string       Route output to a sink: stdout (default), file:<path>, webhook:<url>\n      --dry-run              Show request without sending\n      --home string          Root directory for config, data, state, and cache files\n      --human-friendly       Enable colored output and rich formatting\n      --idempotent           Treat already-existing create results as a successful no-op\n      --json                 Output as JSON\n      --max-age duration     Maximum acceptable age of local-store data before a stderr hint suggests sync; 0 disables (default 30m0s)\n      --no-cache             Bypass response cache\n      --no-color             Disable colored output\n      --no-input             Disable all interactive prompts (for CI/agents)\n      --plain                Output as plain tab-separated text\n      --profile string       Apply values from a saved profile (see 'pixabay-pp-cli profile list')\n      --quiet                Bare output, one value per line\n      --rate-limit float     Max requests per second (0 to disable)\n      --select string        Comma-separated fields to include in output (e.g. --select id,name,status)\n      --timeout duration     Request timeout (default 1m0s)\n      --yes                  Skip confirmation prompts (for agents and scripts)\n"
+    },
+    {
+      "command": "workflow status",
+      "kind": "happy_path",
+      "args": [
+        "workflow",
+        "status"
+      ],
+      "status": "pass",
+      "output_sample": "Archive Status:\n  images                         100 items\n  videos                         100 items\n\n  Total: 200 items\n  Store: /var/folders/x4/g6csmwkj1n73fgyc484z4jqc0000gp/T/printing-press-subprocess-<redacted>/.local/share/pixabay-pp-cli/data.db\n"
+    },
+    {
+      "command": "workflow status",
+      "kind": "json_fidelity",
+      "args": [
+        "workflow",
+        "status",
+        "--json"
+      ],
+      "status": "pass",
+      "output_sample": "{\n  \"images\": 100,\n  \"videos\": 100\n}\n"
+    },
+    {
+      "command": "workflow status",
+      "kind": "error_path",
+      "args": null,
+      "status": "skip",
+      "reason": "no positional argument"
+    }
+  ],
+  "ran_at": "2026-06-24T04:38:51.212391Z"
+}

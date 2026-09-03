@@ -1,0 +1,9 @@
+{
+  "timestamp": "2026-06-23T20:45:15.715415Z",
+  "cli_dir": "\u003ccli-dir\u003e/pixabay-pp-cli",
+  "findings": null,
+  "scorecard_before": {
+    "mcp_description_quality": 10,
+    "captured": "2026-06-23T20:40:35.624584Z"
+  }
+}

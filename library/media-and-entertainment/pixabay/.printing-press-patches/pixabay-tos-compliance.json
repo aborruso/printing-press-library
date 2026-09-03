@@ -1,0 +1,15 @@
+{
+  "schema_version": 2,
+  "id": "pixabay-tos-compliance",
+  "applied_at": "2026-06-23",
+  "base_run_id": "20260623-122808-afd957b7",
+  "base_printing_press_version": "4.25.0",
+  "summary": "Honor Pixabay API Terms of Service: visible attribution, 24h response cache, user-triggered-only, and removal of the bulk-corpus harvest command.",
+  "reason": "Pixabay granted full API access conditioned on: crediting Pixabay with a visible link on displayed results; caching responses up to 24h; user-triggered usage only (no background/automated requests); and no AI/ML, dataset generation, or scraping. The generated 5-minute response cache, lack of explicit attribution, and the harvest (500-cap-busting) command conflicted with these terms.",
+  "files": [
+    "internal/cli/pixabay_attribution.go",
+    "internal/cli/root.go",
+    "internal/client/client.go"
+  ],
+  "validated_outcome": "shipcheck 7/7 PASS; JSON/piped output stays clean (credit only on TTY human output); response cache TTL = 24h; harvest command removed and 7 novel features remain."
+}

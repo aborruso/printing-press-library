@@ -1,0 +1,240 @@
+{
+  "api_name": "pixabay",
+  "base_url": "https://pixabay.com",
+  "description": "Every Pixabay search filter the API has — plus a 24-hour local cache, offline search, resumable downloads with built-in attribution, live rate-limit awareness, and agent-native JSON no other Pixabay tool ships.",
+  "mcp_ready": "full",
+  "http_transport": "standard",
+  "auth": {
+    "type": "api_key",
+    "header": "key",
+    "format": "{PIXABAY_API_KEY}",
+    "in": "query",
+    "env_vars": [
+      "PIXABAY_API_KEY"
+    ],
+    "env_var_specs": [
+      {
+        "name": "PIXABAY_API_KEY",
+        "kind": "per_call",
+        "required": true,
+        "sensitive": true,
+        "inferred": true
+      }
+    ]
+  },
+  "required_headers": [],
+  "tools": [
+    {
+      "name": "images_get",
+      "description": "Get image(s) by ID. Required: id. Returns array of ImageHit.",
+      "method": "GET",
+      "path": "/api/",
+      "params": [
+        {
+          "name": "id",
+          "type": "string",
+          "location": "path",
+          "description": "Image ID (or comma-separated IDs).",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "images_search",
+      "description": "Search images by query and filters. Required: q. Optional: id, lang (default: en), image-type (default: all) (plus 10 more). Returns array of ImageHit.",
+      "method": "GET",
+      "path": "/api/",
+      "params": [
+        {
+          "name": "q",
+          "type": "string",
+          "location": "path",
+          "description": "Search term (max 100 chars). Omit to browse all images."
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "location": "query",
+          "description": "Retrieve specific image(s) by ID (comma-separated)."
+        },
+        {
+          "name": "lang",
+          "type": "string",
+          "location": "query",
+          "description": "Language code to search in."
+        },
+        {
+          "name": "image-type",
+          "wire_name": "image_type",
+          "type": "string",
+          "location": "query",
+          "description": "Filter by image type."
+        },
+        {
+          "name": "orientation",
+          "type": "string",
+          "location": "query",
+          "description": "Filter by image orientation."
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "location": "query",
+          "description": "Filter results by category."
+        },
+        {
+          "name": "min-width",
+          "wire_name": "min_width",
+          "type": "int",
+          "location": "query",
+          "description": "Minimum image width in pixels."
+        },
+        {
+          "name": "min-height",
+          "wire_name": "min_height",
+          "type": "int",
+          "location": "query",
+          "description": "Minimum image height in pixels."
+        },
+        {
+          "name": "colors",
+          "type": "string",
+          "location": "query",
+          "description": "Filter by color (comma-separated): grayscale, transparent, red, orange, yellow, green, turquoise, blue, lilac, pink, white, gray, black, brown."
+        },
+        {
+          "name": "editors-choice",
+          "wire_name": "editors_choice",
+          "type": "bool",
+          "location": "query",
+          "description": "Only images that received an Editor's Choice award."
+        },
+        {
+          "name": "safesearch",
+          "type": "bool",
+          "location": "query",
+          "description": "Only images suitable for all ages."
+        },
+        {
+          "name": "order",
+          "type": "string",
+          "location": "query",
+          "description": "How results are ordered."
+        },
+        {
+          "name": "page",
+          "type": "int",
+          "location": "query",
+          "description": "Page number (page * per_page must be \u003c= 500)."
+        },
+        {
+          "name": "per-page",
+          "wire_name": "per_page",
+          "type": "int",
+          "location": "query",
+          "description": "Results per page (3-200)."
+        }
+      ]
+    },
+    {
+      "name": "videos_get",
+      "description": "Get video(s) by ID. Required: id. Returns array of VideoHit.",
+      "method": "GET",
+      "path": "/api/videos/",
+      "params": [
+        {
+          "name": "id",
+          "type": "string",
+          "location": "path",
+          "description": "Video ID (or comma-separated IDs).",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "videos_search",
+      "description": "Search videos by query and filters. Required: q. Optional: id, lang (default: en), video-type (default: all) (plus 8 more). Returns array of VideoHit.",
+      "method": "GET",
+      "path": "/api/videos/",
+      "params": [
+        {
+          "name": "q",
+          "type": "string",
+          "location": "path",
+          "description": "Search term (max 100 chars). Omit to browse all videos."
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "location": "query",
+          "description": "Retrieve specific video(s) by ID (comma-separated)."
+        },
+        {
+          "name": "lang",
+          "type": "string",
+          "location": "query",
+          "description": "Language code to search in."
+        },
+        {
+          "name": "video-type",
+          "wire_name": "video_type",
+          "type": "string",
+          "location": "query",
+          "description": "Filter by video type."
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "location": "query",
+          "description": "Filter results by category."
+        },
+        {
+          "name": "min-width",
+          "wire_name": "min_width",
+          "type": "int",
+          "location": "query",
+          "description": "Minimum video width in pixels."
+        },
+        {
+          "name": "min-height",
+          "wire_name": "min_height",
+          "type": "int",
+          "location": "query",
+          "description": "Minimum video height in pixels."
+        },
+        {
+          "name": "editors-choice",
+          "wire_name": "editors_choice",
+          "type": "bool",
+          "location": "query",
+          "description": "Only videos that received an Editor's Choice award."
+        },
+        {
+          "name": "safesearch",
+          "type": "bool",
+          "location": "query",
+          "description": "Only videos suitable for all ages."
+        },
+        {
+          "name": "order",
+          "type": "string",
+          "location": "query",
+          "description": "How results are ordered."
+        },
+        {
+          "name": "page",
+          "type": "int",
+          "location": "query",
+          "description": "Page number (page * per_page must be \u003c= 500)."
+        },
+        {
+          "name": "per-page",
+          "wire_name": "per_page",
+          "type": "int",
+          "location": "query",
+          "description": "Results per page (3-200)."
+        }
+      ]
+    }
+  ]
+}

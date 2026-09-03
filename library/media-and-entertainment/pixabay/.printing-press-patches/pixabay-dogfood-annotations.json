@@ -1,0 +1,11 @@
+{
+  "schema_version": 2,
+  "id": "pixabay-dogfood-annotations",
+  "applied_at": "2026-06-23",
+  "base_run_id": "20260623-122808-afd957b7",
+  "base_printing_press_version": "4.25.0",
+  "summary": "Annotate search commands with pp:no-error-path-probe (any query is a valid empty search) and give pull a pp:happy-args live fixture.",
+  "reason": "Live dogfood error-path probes pass '__printing_press_invalid__'; for Pixabay search that is a valid query returning 200 + empty hits (exit 0 is correct), and for local not-found lookups empty is correct. pull needs a real --query target the synthesizer cannot guess.",
+  "files": ["internal/cli/images_search.go", "internal/cli/videos_search.go"],
+  "validated_outcome": "Live full dogfood: 61/61 pass, 0 failures against the real Pixabay API."
+}

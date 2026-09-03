@@ -1,0 +1,272 @@
+name: pixabay
+description: "Pixabay stock media CLI — search photos, illustrations, vectors, and videos with a local index and offline search"
+version: "0.1.0"
+base_url: "https://pixabay.com"
+health_check_path: "/api/"
+category: media-and-entertainment
+
+auth:
+  type: api_key
+  in: query
+  header: key
+  format: "{token}"
+  env_vars:
+    - PIXABAY_API_KEY
+
+config:
+  format: toml
+  path: "~/.config/pixabay-pp-cli/config.toml"
+
+resources:
+  images:
+    description: "Search Pixabay photos, illustrations, and vectors"
+    endpoints:
+      search:
+        method: GET
+        path: "/api/"
+        description: "Search images by query and filters"
+        params:
+          - name: q
+            type: string
+            positional: true
+            required: false
+            description: "Search term (max 100 chars). Omit to browse all images."
+          - name: id
+            type: string
+            description: "Retrieve specific image(s) by ID (comma-separated)."
+          - name: lang
+            type: string
+            default: "en"
+            description: "Language code to search in."
+            enum: [cs, da, de, en, es, fr, id, it, hu, nl, no, pl, pt, ro, sk, fi, sv, tr, vi, th, bg, ru, el, ja, ko, zh]
+          - name: image_type
+            flag_name: image-type
+            type: string
+            default: "all"
+            description: "Filter by image type."
+            enum: [all, photo, illustration, vector]
+          - name: orientation
+            type: string
+            default: "all"
+            description: "Filter by image orientation."
+            enum: [all, horizontal, vertical]
+          - name: category
+            type: string
+            description: "Filter results by category."
+            enum: [backgrounds, fashion, nature, science, education, feelings, health, people, religion, places, animals, industry, computer, food, sports, transportation, travel, buildings, business, music]
+          - name: min_width
+            flag_name: min-width
+            type: int
+            default: 0
+            description: "Minimum image width in pixels."
+          - name: min_height
+            flag_name: min-height
+            type: int
+            default: 0
+            description: "Minimum image height in pixels."
+          - name: colors
+            type: string
+            description: "Filter by color (comma-separated): grayscale, transparent, red, orange, yellow, green, turquoise, blue, lilac, pink, white, gray, black, brown."
+          - name: editors_choice
+            flag_name: editors-choice
+            type: bool
+            default: false
+            description: "Only images that received an Editor's Choice award."
+          - name: safesearch
+            type: bool
+            default: false
+            description: "Only images suitable for all ages."
+          - name: order
+            type: string
+            default: "popular"
+            description: "How results are ordered."
+            enum: [popular, latest]
+          - name: page
+            type: int
+            default: 1
+            description: "Page number (page * per_page must be <= 500)."
+          - name: per_page
+            flag_name: per-page
+            type: int
+            default: 20
+            description: "Results per page (3-200)."
+        response:
+          type: array
+          item: ImageHit
+        response_path: hits
+      get:
+        method: GET
+        path: "/api/"
+        description: "Get image(s) by ID"
+        params:
+          - name: id
+            type: string
+            positional: true
+            required: true
+            description: "Image ID (or comma-separated IDs)."
+        response:
+          type: array
+          item: ImageHit
+        response_path: hits
+
+  videos:
+    description: "Search Pixabay videos (film and animation)"
+    endpoints:
+      search:
+        method: GET
+        path: "/api/videos/"
+        description: "Search videos by query and filters"
+        params:
+          - name: q
+            type: string
+            positional: true
+            required: false
+            description: "Search term (max 100 chars). Omit to browse all videos."
+          - name: id
+            type: string
+            description: "Retrieve specific video(s) by ID (comma-separated)."
+          - name: lang
+            type: string
+            default: "en"
+            description: "Language code to search in."
+            enum: [cs, da, de, en, es, fr, id, it, hu, nl, no, pl, pt, ro, sk, fi, sv, tr, vi, th, bg, ru, el, ja, ko, zh]
+          - name: video_type
+            flag_name: video-type
+            type: string
+            default: "all"
+            description: "Filter by video type."
+            enum: [all, film, animation]
+          - name: category
+            type: string
+            description: "Filter results by category."
+            enum: [backgrounds, fashion, nature, science, education, feelings, health, people, religion, places, animals, industry, computer, food, sports, transportation, travel, buildings, business, music]
+          - name: min_width
+            flag_name: min-width
+            type: int
+            default: 0
+            description: "Minimum video width in pixels."
+          - name: min_height
+            flag_name: min-height
+            type: int
+            default: 0
+            description: "Minimum video height in pixels."
+          - name: editors_choice
+            flag_name: editors-choice
+            type: bool
+            default: false
+            description: "Only videos that received an Editor's Choice award."
+          - name: safesearch
+            type: bool
+            default: false
+            description: "Only videos suitable for all ages."
+          - name: order
+            type: string
+            default: "popular"
+            description: "How results are ordered."
+            enum: [popular, latest]
+          - name: page
+            type: int
+            default: 1
+            description: "Page number (page * per_page must be <= 500)."
+          - name: per_page
+            flag_name: per-page
+            type: int
+            default: 20
+            description: "Results per page (3-200)."
+        response:
+          type: array
+          item: VideoHit
+        response_path: hits
+      get:
+        method: GET
+        path: "/api/videos/"
+        description: "Get video(s) by ID"
+        params:
+          - name: id
+            type: string
+            positional: true
+            required: true
+            description: "Video ID (or comma-separated IDs)."
+        response:
+          type: array
+          item: VideoHit
+        response_path: hits
+
+types:
+  ImageHit:
+    fields:
+      - name: id
+        type: int
+      - name: pageURL
+        type: string
+      - name: type
+        type: string
+      - name: tags
+        type: string
+      - name: previewURL
+        type: string
+      - name: previewWidth
+        type: int
+      - name: previewHeight
+        type: int
+      - name: webformatURL
+        type: string
+      - name: webformatWidth
+        type: int
+      - name: webformatHeight
+        type: int
+      - name: largeImageURL
+        type: string
+      - name: fullHDURL
+        type: string
+      - name: imageURL
+        type: string
+      - name: vectorURL
+        type: string
+      - name: imageWidth
+        type: int
+      - name: imageHeight
+        type: int
+      - name: imageSize
+        type: int
+      - name: views
+        type: int
+      - name: downloads
+        type: int
+      - name: likes
+        type: int
+      - name: comments
+        type: int
+      - name: user_id
+        type: int
+      - name: user
+        type: string
+      - name: userImageURL
+        type: string
+
+  VideoHit:
+    fields:
+      - name: id
+        type: int
+      - name: pageURL
+        type: string
+      - name: type
+        type: string
+      - name: tags
+        type: string
+      - name: duration
+        type: int
+      - name: views
+        type: int
+      - name: downloads
+        type: int
+      - name: likes
+        type: int
+      - name: comments
+        type: int
+      - name: user_id
+        type: int
+      - name: user
+        type: string
+      - name: userImageURL
+        type: string

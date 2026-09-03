@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-24T05:04:11.584756Z",
+  "printing_press_version": "4.25.0",
+  "api_name": "pixabay",
+  "display_name": "Pixabay",
+  "cli_name": "pixabay-pp-cli",
+  "creator": {
+    "handle": "vcolombo",
+    "name": "Vincent Colombo"
+  },
+  "owner": "vcolombo",
+  "printer": "vcolombo",
+  "printer_name": "Vincent Colombo",
+  "spec_format": "internal",
+  "spec_checksum": "sha256:99151e8dae5ff04868784e8969f24a129fb3a89c8292fd55b155246951eb6f0b",
+  "run_id": "20260623-122808-afd957b7",
+  "category": "media-and-entertainment",
+  "description": "Every Pixabay search filter the API has — plus a 24-hour local cache, offline search, resumable downloads with built-in attribution, live rate-limit awareness, and agent-native JSON no other Pixabay tool ships.",
+  "mcp_binary": "pixabay-pp-mcp",
+  "mcp_tool_count": 4,
+  "mcp_ready": "full",
+  "api_version": "0.1.0",
+  "auth_type": "api_key",
+  "auth_env_vars": [
+    "PIXABAY_API_KEY"
+  ],
+  "novel_features": [
+    {
+      "name": "Resumable bulk download with attribution",
+      "command": "pull",
+      "description": "Download chosen size variants for a collection with parallel workers, re-resolving 24h-expired URLs by id and writing per-file attribution sidecars; re-runs skip what's already on disk."
+    },
+    {
+      "name": "Live rate-limit awareness",
+      "command": "quota",
+      "description": "Surface the X-RateLimit-Limit/Remaining/Reset headers from your last call (which no other Pixabay tool exposes) and project how many requests a planned batch of requests will cost before it throttles."
+    },
+    {
+      "name": "Unified image + video search",
+      "command": "media search",
+      "description": "Fan one query across both the image and video endpoints in parallel and merge stills and footage into a single ranked, persisted result set."
+    },
+    {
+      "name": "Offline more-like-this",
+      "command": "similar",
+      "description": "Find synced hits that share the most tags with a given id using a local tag-set overlap (Jaccard) score — no API endpoint for this exists."
+    },
+    {
+      "name": "Engagement deltas over time",
+      "command": "trends",
+      "description": "Snapshot views/downloads/likes/comments on each sync and report the deltas per tag or id between sync runs."
+    },
+    {
+      "name": "Contributor ranking",
+      "command": "contributors",
+      "description": "Aggregate synced image and video hits by contributor and rank them by total or average downloads, likes, or views across your store."
+    },
+    {
+      "name": "Named offline collections",
+      "command": "collection",
+      "description": "Group synced hits into named local collections that feed downstream pull, similar, and trends — persistence no Pixabay tool offers."
+    }
+  ]
+}
