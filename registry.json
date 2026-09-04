@@ -15866,9 +15866,7 @@
       "description": "Fetch NSE India quotes, market status, order books, filings, indices, and cached equity analytics from the terminal.",
       "search_terms": [
         "nse-india",
-        "NSE India",
         "nse-india-pp-cli",
-        "Fetch NSE India quotes, market status, order books, filings, indices, and cached equity analytics from the terminal.",
         "Delivery Spike Detector",
         "delivery-spike",
         "Flags stocks where today's delivery-to-traded ratio is significantly above their 20-session rolling average — early signal of institutional accumulation.",
@@ -15902,11 +15900,7 @@
         "source_commit": "40363ac0936c4f406625f8399d8ad9b57673170e"
       },
       "printer": "lavs9",
-      "printer_name": "Mayank Lavania",
-      "creator": {
-        "handle": "lavs9",
-        "name": "Mayank Lavania"
-      }
+      "printer_name": "Mayank Lavania"
     },
     {
       "name": "numista",
@@ -17348,6 +17342,12 @@
         "Shows which Overpass mirrors are currently answering and how many rate-limit slots each has free."
       ],
       "path": "library/travel/overpass",
+      "release": {
+        "cli_name": "overpass-pp-cli",
+        "version": "2026.9.1",
+        "released_at": "2026-09-04T08:30:50Z",
+        "source_commit": "ad250336ba3b41a1f4f7f75f5634e38c7b42413e"
+      },
       "printer": "justinwfu",
       "printer_name": "justinwfu",
       "creator": {
