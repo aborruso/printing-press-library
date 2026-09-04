@@ -1947,9 +1947,9 @@
       "path": "library/developer-tools/apple-search-ads",
       "release": {
         "cli_name": "apple-search-ads-pp-cli",
-        "version": "2026.9.1",
-        "released_at": "2026-09-04T09:20:51Z",
-        "source_commit": "ec36935488862afa86fdf770a7a6923a44a0564f"
+        "version": "2026.9.2",
+        "released_at": "2026-09-04T09:53:44Z",
+        "source_commit": "034866037b490918b29779c8babc358defadc8c3"
       },
       "printer": "rk-labs-tech",
       "printer_name": "Ryan Kelley",
@@ -5602,6 +5602,12 @@
         "Show the top tags and categories that co-occur with a query, to refine the next search."
       ],
       "path": "library/commerce/creativefabrica",
+      "release": {
+        "cli_name": "creativefabrica-pp-cli",
+        "version": "2026.9.1",
+        "released_at": "2026-09-04T09:53:44Z",
+        "source_commit": "b86db4175f728ce97cab7c4888d360772fcd9e46"
+      },
       "printer": "vcolombo",
       "printer_name": "Vincent Colombo",
       "creator": {
@@ -26603,6 +26609,12 @@
         "List the curated Millard County town/ZIP set the sweep uses, so the coverage is transparent and editable."
       ],
       "path": "library/monitoring/utah-pmn",
+      "release": {
+        "cli_name": "utah-pmn-pp-cli",
+        "version": "2026.9.1",
+        "released_at": "2026-09-04T09:53:44Z",
+        "source_commit": "51dbf655f02ad65bf1760e5a08fdceddbd0f73ca"
+      },
       "printer": "pgradeff",
       "printer_name": "Paul Gradeff",
       "creator": {
