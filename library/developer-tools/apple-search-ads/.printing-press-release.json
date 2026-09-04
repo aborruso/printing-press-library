@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "slug": "apple-search-ads",
+  "cli_name": "apple-search-ads-pp-cli",
+  "version": "2026.9.1",
+  "released_at": "2026-09-04T09:20:51Z",
+  "source_commit": "ec36935488862afa86fdf770a7a6923a44a0564f",
+  "printing_press_version": "4.19.0",
+  "run_id": "20260529-060535",
+  "changes": [
+    {
+      "title": "feat(apple-search-ads): add apple-search-ads",
+      "pr": 1396,
+      "url": "https://github.com/mvanhorn/printing-press-library/pull/1396",
+      "commit": "ec36935488862afa86fdf770a7a6923a44a0564f"
+    }
+  ]
+}
