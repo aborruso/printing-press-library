@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "id": "apple-search-ads-roas-delta-output",
+  "applied_at": "2026-07-21",
+  "base_run_id": "20260529-060535",
+  "base_printing_press_version": "4.19.0",
+  "summary": "optimize suggest ROAS path must include expected_cpa_delta in output; delta was computed but never assigned to the suggestion struct.",
+  "reason": "For roas metric, delta (suggested_bid minus current_bid) was computed in buildBidSuggestions but the ExpectedDelta field was only set for cpa, leaving it zero in all ROAS suggestions.",
+  "files": [
+    "internal/cli/optimize_suggest.go"
+  ]
+}

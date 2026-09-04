@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "id": "apple-search-ads-groupby-unsupported-dimensions",
+  "applied_at": "2026-07-21",
+  "base_run_id": "20260529-060535",
+  "base_printing_press_version": "4.19.0",
+  "summary": "analytics query --group-by keyword_text and match_type must error, not silently proxy to campaign_name grouping.",
+  "reason": "The local SQLite cache only holds campaign-level data; proxying keyword_text/match_type to campaign_name produces misleading output with no indication the grouping changed.",
+  "files": [
+    "internal/cli/analytics_query.go"
+  ]
+}

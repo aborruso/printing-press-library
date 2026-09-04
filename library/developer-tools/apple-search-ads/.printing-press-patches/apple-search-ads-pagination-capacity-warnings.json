@@ -1,0 +1,13 @@
+{
+  "schema_version": 2,
+  "id": "apple-search-ads-pagination-capacity-warnings",
+  "applied_at": "2026-07-21",
+  "base_run_id": "20260529-060535",
+  "base_printing_press_version": "4.19.0",
+  "summary": "forecast-spend and optimize suggest must warn on stderr when result sets hit the API pagination limit, signaling possible truncation.",
+  "reason": "Both commands use a fixed limit (200 campaigns / 1000 keywords) with no pagination; silently returning a capped result set could cause users to act on incomplete data. A stderr warning is the minimal signal without requiring full pagination support.",
+  "files": [
+    "internal/cli/campaigns_forecast_spend.go",
+    "internal/cli/optimize_suggest.go"
+  ]
+}

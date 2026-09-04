@@ -1,0 +1,15 @@
+{
+  "schema_version": 2,
+  "id": "apple-search-ads-gosec-security-hardening",
+  "applied_at": "2026-06-28",
+  "base_run_id": "20260529-060535",
+  "base_printing_press_version": "4.19.0",
+  "summary": "Security hardening: path traversal guard, file permissions (0o750/0o600), explicit error discards.",
+  "reason": "gosec scan found G304 path traversal, G301/G306 file permissions, and G104 unhandled errors in hand-authored novel feature files.",
+  "files": [
+    "internal/cli/templates_apply.go",
+    "internal/cli/analytics_query.go",
+    "internal/cli/campaigns_forecast_spend.go",
+    "internal/cli/keywords_auto_promote.go"
+  ]
+}

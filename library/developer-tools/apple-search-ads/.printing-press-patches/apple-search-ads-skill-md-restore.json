@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "id": "apple-search-ads-skill-md-restore",
+  "applied_at": "2026-06-28",
+  "base_run_id": "20260529-060535",
+  "base_printing_press_version": "4.19.0",
+  "summary": "Restored SKILL.md canonical install section with correct Go version and PATH guidance.",
+  "reason": "verify-skill reported SKILL.md Prerequisites section had drifted from canonical generator format.",
+  "files": [
+    "SKILL.md"
+  ]
+}
