@@ -1945,6 +1945,12 @@
         "Version-control campaign structures and apply them across multiple org IDs with a diff preview."
       ],
       "path": "library/developer-tools/apple-search-ads",
+      "release": {
+        "cli_name": "apple-search-ads-pp-cli",
+        "version": "2026.9.1",
+        "released_at": "2026-09-04T09:20:51Z",
+        "source_commit": "ec36935488862afa86fdf770a7a6923a44a0564f"
+      },
       "printer": "rk-labs-tech",
       "printer_name": "Ryan Kelley",
       "creator": {
@@ -5562,6 +5568,64 @@
         "env_vars": [],
         "mcp_ready": "full",
         "spec_format": "openapi3"
+      }
+    },
+    {
+      "name": "creativefabrica",
+      "category": "commerce",
+      "api": "Creative Fabrica",
+      "description": "Search Creative Fabrica's 20-million-plus fonts, graphics, crafts, and POD designs from your terminal — with a local catalog database, file-format and commercial-license filters the web UI lacks, and designer tracking.",
+      "search_terms": [
+        "creativefabrica",
+        "Creative Fabrica",
+        "creativefabrica-pp-cli",
+        "Search Creative Fabrica's 20-million-plus fonts, graphics, crafts, and POD designs from your terminal — with a local catalog database, file-format and commercial-license filters the web UI lacks, and designer tracking.",
+        "File-format filter",
+        "find",
+        "Narrow craft results to a specific cut/print file format (SVG, DXF, PNG, EPS, PES) that Creative Fabrica has no facet for.",
+        "Real-discount ranking",
+        "deals",
+        "Rank on-sale items by their actual regular-to-sale price drop, not just whether they are flagged on sale.",
+        "Designer profile stats",
+        "designer-stats",
+        "Profile a designer's catalog: product-type mix, price band, free count, POD count, and newest release.",
+        "Designer comparison",
+        "designer-compare",
+        "Compare two designers head-to-head: catalog size, type mix, price band, free/POD share, and popularity.",
+        "New-since-snapshot diff",
+        "new-since",
+        "Show only catalog items added since your last sync for a tracked query or designer.",
+        "Subscription-free filter",
+        "Keep only assets usable outside an active subscription.",
+        "Tag and facet explorer",
+        "tags",
+        "Show the top tags and categories that co-occur with a query, to refine the next search."
+      ],
+      "path": "library/commerce/creativefabrica",
+      "printer": "vcolombo",
+      "printer_name": "Vincent Colombo",
+      "creator": {
+        "handle": "vcolombo",
+        "name": "Vincent Colombo"
+      },
+      "contributors": [
+        {
+          "handle": "tmchow",
+          "name": "Trevin Chow"
+        }
+      ],
+      "mcp": {
+        "binary": "creativefabrica-pp-mcp",
+        "transports": [
+          "stdio",
+          "http"
+        ],
+        "tool_count": 1,
+        "public_tool_count": 1,
+        "auth_type": "none",
+        "env_vars": [],
+        "mcp_ready": "full",
+        "spec_format": "internal"
       }
     },
     {
@@ -26507,6 +26571,56 @@
         ],
         "mcp_ready": "full",
         "spec_format": "openapi3"
+      }
+    },
+    {
+      "name": "utah-pmn",
+      "category": "monitoring",
+      "api": "Utah Public Notice Website",
+      "description": "One command to sweep Utah public-meeting notices for land-use approvals — county-wide, agenda-scanned, and diffed against what you've already seen.",
+      "search_terms": [
+        "utah-pmn",
+        "Utah Public Notice Website",
+        "utah-pmn-pp-cli",
+        "One command to sweep Utah public-meeting notices for land-use approvals — county-wide, agenda-scanned, and diffed against what you've already seen.",
+        "Millard County land-use sweep",
+        "millard",
+        "Sweep every Millard County town in one command and keep only land-use approval bodies (planning commissions, councils, county commission, boards).",
+        "Land-use relevance filter",
+        "landuse",
+        "Filter any notice set to meetings whose body or agenda involves zoning, subdivisions, rezones, CUPs, variances, annexations, or plats.",
+        "New-since diff",
+        "since",
+        "Show only notices first seen since the last run, so a scheduled run reports just what changed. The CLI records what it has seen locally; it does not depend on a separate sync step.",
+        "Watch named bodies",
+        "watch",
+        "Track a saved list of public bodies (e.g. Delta City Council, Millard County Planning Commission) and report their upcoming meetings across locations.",
+        "Agenda keyword scan",
+        "agenda scan",
+        "Search the inline agenda text of upcoming notices for arbitrary terms (e.g. a project name, a parcel, an applicant), with surrounding context.",
+        "Location registry",
+        "locations",
+        "List the curated Millard County town/ZIP set the sweep uses, so the coverage is transparent and editable."
+      ],
+      "path": "library/monitoring/utah-pmn",
+      "printer": "pgradeff",
+      "printer_name": "Paul Gradeff",
+      "creator": {
+        "handle": "pgradeff",
+        "name": "Paul Gradeff"
+      },
+      "mcp": {
+        "binary": "utah-pmn-pp-mcp",
+        "transports": [
+          "stdio",
+          "http"
+        ],
+        "tool_count": 2,
+        "public_tool_count": 2,
+        "auth_type": "none",
+        "env_vars": [],
+        "mcp_ready": "full",
+        "spec_format": "internal"
       }
     },
     {
