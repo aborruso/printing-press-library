@@ -9671,6 +9671,64 @@
       }
     },
     {
+      "name": "github",
+      "category": "developer-tools",
+      "api": "GitHub",
+      "description": "Every gh issue, PR, repo, and code-search workflow, plus a local SQLite mirror, offline full-text search, and cross-entity joins no GitHub tool offers.",
+      "search_terms": [
+        "github",
+        "github-pp-cli",
+        "Every gh issue, PR, repo, and code-search workflow, plus a local SQLite mirror, offline full-text search, and cross-entity joins no GitHub tool offers.",
+        "Duplicate-issue finder",
+        "issues dupes",
+        "Find open issues whose title and body match a term, ranked by relevance, so you spot duplicates before re-triaging.",
+        "Cross-entity term hunter",
+        "mentions",
+        "One query across issue bodies, PR comments, and commit messages returning every place a symbol or error string appears, tagged by entity type.",
+        "Agent context bundle",
+        "issues context",
+        "Assemble one JSON envelope for an issue: the issue, its comments, and the recent commits that mention it, ready for an agent to act on.",
+        "Review-backlog by reviewer",
+        "pulls review-load",
+        "Aggregate open PRs by requested reviewer to show who has the largest unactioned review queue.",
+        "Stale-PR detector",
+        "pulls stale",
+        "List open PRs with no new commit, review, or comment in N days, sorted by staleness with last-activity time.",
+        "Release diff by author",
+        "repos changelog",
+        "List every commit between two refs, attach its PR when synced, and group by author for release-note prep.",
+        "File ownership and churn",
+        "repos who-touched",
+        "For a file or directory prefix, rank committers by number of commits touching that path, with first and last touch dates.",
+        "Label coverage report",
+        "labels coverage",
+        "Report each label's open and closed issue and PR counts, and flag labels that are defined but unused and issues that are unlabeled."
+      ],
+      "path": "library/developer-tools/github",
+      "printer": "brandon-charles-novice-developer",
+      "printer_name": "Brandon Nye",
+      "creator": {
+        "handle": "brandon-charles-novice-developer",
+        "name": "Brandon Nye"
+      },
+      "mcp": {
+        "binary": "github-pp-mcp",
+        "transports": [
+          "stdio",
+          "http"
+        ],
+        "tool_count": 183,
+        "public_tool_count": 0,
+        "auth_type": "bearer_token",
+        "env_vars": [
+          "GITHUB_TOKEN",
+          "GH_TOKEN"
+        ],
+        "mcp_ready": "full",
+        "spec_format": "openapi3"
+      }
+    },
+    {
       "name": "github-contents",
       "category": "developer-tools",
       "api": "GitHub Contents",
