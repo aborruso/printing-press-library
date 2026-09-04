@@ -2,9 +2,17 @@
   "schema_version": 1,
   "slug": "utah-pmn",
   "cli_name": "utah-pmn-pp-cli",
-  "version": "",
-  "released_at": "",
-  "source_commit": "",
+  "version": "2026.9.1",
+  "released_at": "2026-09-04T09:53:44Z",
+  "source_commit": "51dbf655f02ad65bf1760e5a08fdceddbd0f73ca",
   "printing_press_version": "4.25.0",
-  "run_id": "20260626-230015-d1a83064"
+  "run_id": "20260626-230015-d1a83064",
+  "changes": [
+    {
+      "title": "feat(utah-pmn): add utah-pmn (leftover from #1382)",
+      "pr": 1930,
+      "url": "https://github.com/mvanhorn/printing-press-library/pull/1930",
+      "commit": "51dbf655f02ad65bf1760e5a08fdceddbd0f73ca"
+    }
+  ]
 }
