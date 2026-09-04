@@ -10833,9 +10833,9 @@
       "path": "library/health/grants",
       "release": {
         "cli_name": "grants-pp-cli",
-        "version": "2026.8.2",
-        "released_at": "2026-08-18T16:37:30Z",
-        "source_commit": "54e65e7ef30ebf00beb1fd204a77b20a68ae6c8c"
+        "version": "2026.9.1",
+        "released_at": "2026-09-04T09:11:15Z",
+        "source_commit": "a914de3dd810f25d9d5f76cf910e6d158ac71050"
       },
       "printer": "laci141",
       "printer_name": "laci141",
@@ -15895,9 +15895,9 @@
       "path": "library/developer-tools/nse-india",
       "release": {
         "cli_name": "nse-india-pp-cli",
-        "version": "2026.8.1",
-        "released_at": "2026-08-17T07:57:07Z",
-        "source_commit": "40363ac0936c4f406625f8399d8ad9b57673170e"
+        "version": "2026.9.2",
+        "released_at": "2026-09-04T09:11:15Z",
+        "source_commit": "c220c79c06dad3cca69d6bdc03826aef1e99fb22"
       },
       "printer": "lavs9",
       "printer_name": "Mayank Lavania"
@@ -16857,31 +16857,42 @@
       "search_terms": [
         "openrouter",
         "openrouter-pp-cli",
-        "Inspect OpenRouter models, providers, credits, activity, and cost attribution with local caching and agent-friendly output.",
-        "Cost-by-cron rollup",
-        "usage cost-by",
-        "Group your OpenRouter spend by which cron/agent fired the call, not just by model. Joins local generations with caller tags from your tool-call logger.",
-        "Models query DSL",
+        "The only OpenRouter CLI built for fleet operations: budgets, anomaly alarms, and failover maps over a local usage ledger — not another chat wrapper.",
+        "Models Query DSL",
         "models query",
-        "Query the model catalog with structured filters (tools=true, cost.completion<1, ctx>=64k) — compiled to SQL over a local SQLite cache. Works offline.",
-        "Providers degraded watch",
-        "providers degraded",
-        "Returns the set of currently-degraded provider/model pairs by polling /providers and per-model /endpoints. Pipe into your router to preempt 429s.",
-        "Generation cost forensics",
-        "generation explain",
-        "For a generation id, returns the cost, latency, prompt/completion token counts, AND a delta vs the cheapest provider for the same model+token-count.",
-        "Cost regression alarm",
+        "Shortlist models by capability, price, and context window with a structured query over the synced catalog — offline and instant.",
+        "Cost-by-Cron Rollup",
+        "usage cost-by",
+        "Attribute spend to the cron, agent, or lineage that incurred it, over any window.",
+        "Cost Regression Alarm",
         "usage anomaly",
-        "Flags days where per-model cost exceeds 2σ of the trailing 7-day mean. Deterministic z-score, no LLM in the loop. Designed for cron.",
-        "Weekly-cap ETA",
-        "key eta",
-        "Projects when your weekly OpenRouter cap will trip, based on /key.limit_reset, current usage, and your trailing 7-day burn rate.",
-        "Per-cron budget contract",
+        "Flag per-model cost spikes against the trailing baseline before they compound.",
+        "Per-Cron Budget Contract",
         "budget",
-        "Set a weekly USD cap per cron job (budget set scan-pipeline 2usd). Pre-flight check returns exit 0 (under cap) or 8 (over) from tagged generations.",
-        "Endpoint failover map",
+        "Set spend caps per cron or agent and enforce them pre-flight with typed exit codes.",
+        "Providers Degraded Watch",
+        "providers degraded",
+        "See which providers or models are currently degraded before dispatching work to them.",
+        "Weekly-Cap ETA",
+        "key eta",
+        "Project the date your key's spend cap trips, from the observed burn rate.",
+        "Endpoint Failover Map",
         "endpoints failover",
-        "For a model id, lists all providers serving it ranked by current status, pricing, and observed p50 latency from local cache. Pipe-feeds routers."
+        "Rank the providers serving one model by status, price, and observed latency for dispatch order.",
+        "Generation Cost Forensics",
+        "generation explain",
+        "Break one generation into its cost anatomy: tokens, latency, and the delta versus the cheapest provider.",
+        "Free-Tier and Cap Headroom",
+        "limits status",
+        "One view of current headroom: key-cap remaining, free-tier daily quota, and today's free-model burn.",
+        "Credits Runway",
+        "Project days-to-zero for prepaid credits at the trailing burn rate — the 402 leading indicator.",
+        "Ledger Reconcile",
+        "usage reconcile",
+        "Verify the local usage mirror against upstream daily totals and flag days that disagree.",
+        "Catalog Churn Watch",
+        "models churn",
+        "See what changed in the model catalog between syncs: additions, removals, and repricings with deltas."
       ],
       "path": "library/ai/openrouter",
       "release": {
@@ -16895,6 +16906,27 @@
       "creator": {
         "handle": "rvdlaar",
         "name": "Rick van de Laar"
+      },
+      "contributors": [
+        {
+          "handle": "Quantman1974",
+          "name": "Quantman1974"
+        }
+      ],
+      "mcp": {
+        "binary": "openrouter-pp-mcp",
+        "transports": [
+          "stdio",
+          "http"
+        ],
+        "tool_count": 101,
+        "public_tool_count": 1,
+        "auth_type": "bearer_token",
+        "env_vars": [
+          "OPENROUTER_API_KEY"
+        ],
+        "mcp_ready": "full",
+        "spec_format": "openapi3"
       }
     },
     {
