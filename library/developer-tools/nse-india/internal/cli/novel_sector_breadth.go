@@ -1,4 +1,5 @@
-// Copyright 2026 Mayank Lavania and contributors. Licensed under Apache-2.0. See LICENSE.
+// Copyright 2026 mayank-lavania. Licensed under Apache-2.0. See LICENSE.
+// pp:data-source local
 
 package cli
 
@@ -8,8 +9,8 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/mvanhorn/printing-press-library/library/developer-tools/nse-india/internal/store"
 	"github.com/spf13/cobra"
+	"github.com/mvanhorn/printing-press-library/library/developer-tools/nse-india/internal/store"
 )
 
 // sectorBreadthResult holds breadth metrics for a named index.
@@ -65,22 +66,22 @@ quote data via 'nse-india-pp-cli equity quote --symbol <SYMBOL>'.`,
 			defer s.Close()
 
 			// Fetch all index constituent rows from the store.
-			// The indices constituents endpoint returns an array of stock objects
-			// each with a symbol, pChange, and meta.indexName.
+			// Rows are written by indices_constituents.go via writeConstituentCache;
+			// each row has camelCase fields (symbol, pChange, indexName, weightage).
 			whereClause := ""
 			var queryArgs []any
 			if sector != "" {
-				whereClause = "AND (UPPER(json_extract(data, '$.meta.indexName')) LIKE UPPER('%' || ? || '%') OR UPPER(json_extract(data, '$.index')) LIKE UPPER('%' || ? || '%'))"
-				queryArgs = append(queryArgs, sector, sector)
+				whereClause = "AND UPPER(json_extract(data, '$.indexName')) LIKE UPPER('%' || ? || '%')"
+				queryArgs = append(queryArgs, sector)
 			}
 
 			query := fmt.Sprintf(`
-				SELECT json_extract(data, '$.meta.indexName') as index_name,
+				SELECT json_extract(data, '$.indexName') as index_name,
 				       json_extract(data, '$.symbol') as symbol,
 				       json_extract(data, '$.pChange') as p_change,
 				       json_extract(data, '$.deliveryToTradedQty') as delivery_pct
 				FROM resources
-				WHERE resource_type IN ('indices', 'index_constituents', 'equity-stockIndices')
+				WHERE resource_type = 'index_constituents'
 				  AND json_extract(data, '$.symbol') IS NOT NULL
 				  AND json_extract(data, '$.pChange') IS NOT NULL
 				  %s
@@ -120,6 +121,9 @@ quote data via 'nse-india-pp-cli equity quote --symbol <SYMBOL>'.`,
 			}
 
 			if len(byIndex) == 0 {
+				if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+					return printOutput(cmd.OutOrStdout(), json.RawMessage(`[]`), true)
+				}
 				fmt.Fprintln(cmd.OutOrStdout(), "No index constituent data found. Run 'nse-india-pp-cli indices constituents --index \"NIFTY 50\"' to populate.")
 				return nil
 			}

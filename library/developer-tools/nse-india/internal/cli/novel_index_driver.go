@@ -1,4 +1,5 @@
-// Copyright 2026 Mayank Lavania and contributors. Licensed under Apache-2.0. See LICENSE.
+// Copyright 2026 mayank-lavania. Licensed under Apache-2.0. See LICENSE.
+// pp:data-source local
 
 package cli
 
@@ -9,8 +10,8 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/mvanhorn/printing-press-library/library/developer-tools/nse-india/internal/store"
 	"github.com/spf13/cobra"
+	"github.com/mvanhorn/printing-press-library/library/developer-tools/nse-india/internal/store"
 )
 
 // indexDriverResult holds one stock's point contribution to an index move.
@@ -52,8 +53,8 @@ Requires: index constituents populated via 'nse-india-pp-cli indices constituent
 				fmt.Fprintln(cmd.OutOrStdout(), `[dry-run] index-driver: would join index weights x pChange in local store`)
 				return nil
 			}
-			if indexName == "" && !flags.dryRun {
-				return usageErr(fmt.Errorf("--index is required (e.g. 'NIFTY 50', 'NIFTY BANK')"))
+			if indexName == "" {
+				return fmt.Errorf("required flag \"index\" not set — specify an index name, e.g. --index \"NIFTY 50\"")
 			}
 
 			if dbPath == "" {
@@ -66,23 +67,23 @@ Requires: index constituents populated via 'nse-india-pp-cli indices constituent
 			defer s.Close()
 
 			// Fetch all constituents from the index, with their weightage and pChange.
-			// The equity-stockIndices endpoint returns weightage and pChange per constituent.
+			// Rows are written by indices_constituents.go via writeConstituentCache;
+			// each row has camelCase fields (symbol, pChange, weightage, indexName).
 			rows, err := s.DB().Query(`
 				SELECT json_extract(data, '$.symbol') as symbol,
-				       COALESCE(json_extract(data, '$.meta.companyName'), json_extract(data, '$.symbol')) as company,
+				       COALESCE(json_extract(data, '$.stockName'), json_extract(data, '$.symbol')) as company,
 				       json_extract(data, '$.weightage') as weightage,
 				       json_extract(data, '$.pChange') as p_change
 				FROM resources
-				WHERE resource_type IN ('indices', 'index_constituents', 'equity-stockIndices')
+				WHERE resource_type = 'index_constituents'
 				  AND json_extract(data, '$.symbol') IS NOT NULL
 				  AND json_extract(data, '$.pChange') IS NOT NULL
 				  AND (
-				        UPPER(json_extract(data, '$.meta.indexName')) LIKE UPPER('%' || ? || '%')
-				     OR UPPER(json_extract(data, '$.index')) LIKE UPPER('%' || ? || '%')
+				        UPPER(json_extract(data, '$.indexName')) LIKE UPPER('%' || ? || '%')
 				     OR ? = ''
 				  )
 				ORDER BY CAST(COALESCE(json_extract(data, '$.weightage'), '0') AS REAL) DESC
-			`, indexName, indexName, indexName)
+			`, indexName, indexName)
 			if err != nil {
 				return fmt.Errorf("querying store: %w\nhint: run 'nse-india-pp-cli indices constituents --index \"%s\"' first", err, indexName)
 			}
@@ -116,7 +117,11 @@ Requires: index constituents populated via 'nse-india-pp-cli indices constituent
 			}
 
 			if len(constituents) == 0 {
-				return fmt.Errorf("no constituent data found for %q\nhint: run 'nse-india-pp-cli indices constituents --index \"%s\"'", indexName, indexName)
+				if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+					return printOutput(cmd.OutOrStdout(), json.RawMessage(`[]`), true)
+				}
+				fmt.Fprintf(cmd.OutOrStdout(), "No constituent data for %q. Run: nse-india-pp-cli indices constituents --index %q\n", indexName, indexName)
+				return nil
 			}
 
 			// Compute point contributions (weight * pChange / 100 approximation)
