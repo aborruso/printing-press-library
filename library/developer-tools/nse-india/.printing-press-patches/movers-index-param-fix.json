@@ -6,6 +6,8 @@
   "base_printing_press_version": "4.0.4",
   "summary": "Fix movers command to use 'volume'/'value' as the index param instead of the dead 'INTRADAY' default; manually unwrap the {data:[...],timestamp} envelope.",
   "reason": "NSE's live-analysis-most-active-securities endpoint uses index=volume or index=value — not INTRADAY. The old default returned HTTP 200 with empty data. Response also has no 'status' field so extractResponseData didn't unwrap it.",
-  "files": ["internal/cli/promoted_movers.go"],
+  "files": [
+    "internal/cli/promoted_movers.go"
+  ],
   "validated_outcome": "movers returns 20 items sorted by volume (IDEA first); movers --by value returns 20 items sorted by traded value."
 }

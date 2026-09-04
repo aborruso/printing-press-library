@@ -6,6 +6,8 @@
   "base_printing_press_version": "4.0.4",
   "summary": "Replace dead /api/search/autocomplete endpoint with NSE archives EQUITY_L.csv fetch + client-side substring search.",
   "reason": "/api/search/autocomplete is completely removed from NSE India. The NSE archives publish EQUITY_L.csv with all 2372 listed equity symbols + company names + ISIN — sufficient for symbol discovery.",
-  "files": ["internal/cli/promoted_symbol-lookup.go"],
+  "files": [
+    "internal/cli/promoted_symbol-lookup.go"
+  ],
   "validated_outcome": "symbol-lookup --query RELIANCE returns 8+ matches including RELIANCE with ISIN INE002A01018; symbol-lookup --query INFOSYS returns INFY (Infosys Limited)."
 }
