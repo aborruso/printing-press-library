@@ -1,0 +1,381 @@
+{
+  "api_name": "openrouter",
+  "novelty_score": 0,
+  "alternatives": [
+    {
+      "name": "mrgoonie/openrouter-cli",
+      "url": "https://github.com/mrgoonie/openrouter-cli",
+      "language": "TypeScript",
+      "install_method": "",
+      "stars": 31,
+      "last_updated": "",
+      "command_count": 24,
+      "has_json_output": false,
+      "has_auth_support": false
+    },
+    {
+      "name": "th3nolo/openrouter-mcp",
+      "url": "https://github.com/th3nolo/openrouter-mcp",
+      "language": "TypeScript",
+      "install_method": "",
+      "stars": 13,
+      "last_updated": "",
+      "command_count": 0,
+      "has_json_output": false,
+      "has_auth_support": false
+    },
+    {
+      "name": "physics91/openrouter-mcp",
+      "url": "https://github.com/physics91/openrouter-mcp",
+      "language": "Python",
+      "install_method": "",
+      "stars": 9,
+      "last_updated": "",
+      "command_count": 0,
+      "has_json_output": false,
+      "has_auth_support": false
+    },
+    {
+      "name": "jwill9999/openrouter-cli",
+      "url": "https://github.com/jwill9999/openrouter-cli",
+      "language": "TypeScript",
+      "install_method": "",
+      "stars": 5,
+      "last_updated": "",
+      "command_count": 0,
+      "has_json_output": false,
+      "has_auth_support": false
+    },
+    {
+      "name": "maxxie114/openrouter-cli",
+      "url": "https://github.com/maxxie114/openrouter-cli",
+      "language": "TypeScript",
+      "install_method": "",
+      "stars": 0,
+      "last_updated": "",
+      "command_count": 0,
+      "has_json_output": false,
+      "has_auth_support": false
+    }
+  ],
+  "gaps": [],
+  "patterns": [],
+  "recommendation": "proceed",
+  "researched_at": "2026-09-01T17:27:57Z",
+  "novel_features": [
+    {
+      "name": "Models Query DSL",
+      "command": "models query",
+      "description": "Shortlist models by capability, price, and context window with a structured query over the synced catalog — offline and instant.",
+      "rationale": "The upstream /models endpoint has no query parameters; a local FTS-indexed catalog is the only way to filter hundreds of models without shipping the whole payload into context.",
+      "example": "openrouter-pp-cli models query \"tools=true cost.completion\u003c5 ctx\u003e=128k\" --agent",
+      "why_it_matters": "Reach for this instead of fetching the full catalog: it answers a shortlist question in ~200 tokens instead of hundreds of KB.",
+      "group": "Catalog intelligence"
+    },
+    {
+      "name": "Cost-by-Cron Rollup",
+      "command": "usage cost-by",
+      "description": "Attribute spend to the cron, agent, or lineage that incurred it, over any window.",
+      "rationale": "Upstream activity groups by model and provider only; joining the local generations mirror with a caller-tag log is the only path to per-cron attribution.",
+      "example": "openrouter-pp-cli usage cost-by --since 7d --agent",
+      "why_it_matters": "Use this when the question is 'which job burned the money', not 'which model'.",
+      "group": "Cost governance for agent fleets"
+    },
+    {
+      "name": "Cost Regression Alarm",
+      "command": "usage anomaly",
+      "description": "Flag per-model cost spikes against the trailing baseline before they compound.",
+      "rationale": "Upstream's only alarm is an absolute low-credits notice; a z-score over the local ledger catches regressions while credits still look healthy.",
+      "example": "openrouter-pp-cli usage anomaly --since 24h --agent",
+      "why_it_matters": "Run this in a daily cron to catch a misbehaving lineage the day it regresses, not at invoice time.",
+      "group": "Cost governance for agent fleets"
+    },
+    {
+      "name": "Per-Cron Budget Contract",
+      "command": "budget",
+      "description": "Set spend caps per cron or agent and enforce them pre-flight with typed exit codes.",
+      "rationale": "Upstream workspace budgets are org-level; per-cron caps require a local contract table joined against tagged generations.",
+      "example": "openrouter-pp-cli budget check nightly-drafter",
+      "why_it_matters": "Gate a scheduled run on exit code 0/8 so an over-budget lineage never fires.",
+      "group": "Cost governance for agent fleets"
+    },
+    {
+      "name": "Providers Degraded Watch",
+      "command": "providers degraded",
+      "description": "See which providers or models are currently degraded before dispatching work to them.",
+      "rationale": "A stateful set-diff against the previous local snapshot turns reactive 429s into a leading indicator no point-in-time API call provides.",
+      "example": "openrouter-pp-cli providers degraded --agent",
+      "why_it_matters": "Check this before dispatch to route around trouble instead of retrying into it.",
+      "group": "Provider health and dispatch"
+    },
+    {
+      "name": "Weekly-Cap ETA",
+      "command": "key eta",
+      "description": "Project the date your key's spend cap trips, from the observed burn rate.",
+      "rationale": "Upstream reports the cap and current usage as points; the projection needs the local history of key snapshots.",
+      "example": "openrouter-pp-cli key eta --agent",
+      "why_it_matters": "Use this to plan the week's runs against the cap instead of discovering it mid-run.",
+      "group": "Runway and rate-limit headroom"
+    },
+    {
+      "name": "Endpoint Failover Map",
+      "command": "endpoints failover",
+      "description": "Rank the providers serving one model by status, price, and observed latency for dispatch order.",
+      "rationale": "The ranking joins the live endpoint list with locally observed per-provider latency — a cross-source ordering no single call returns.",
+      "example": "openrouter-pp-cli endpoints failover deepseek/deepseek-v4 --agent",
+      "why_it_matters": "Feed this to a router to pre-empt degraded providers for a specific model.",
+      "group": "Provider health and dispatch"
+    },
+    {
+      "name": "Generation Cost Forensics",
+      "command": "generation explain",
+      "description": "Break one generation into its cost anatomy: tokens, latency, and the delta versus the cheapest provider.",
+      "rationale": "The cheapest-provider delta requires joining the generation record against locally synced per-provider pricing.",
+      "example": "openrouter-pp-cli generation explain gen-abc123 --agent",
+      "why_it_matters": "The next command after an anomaly fires: it turns 'cost spiked' into 'this call, this provider, this delta'.",
+      "group": "Cost governance for agent fleets"
+    },
+    {
+      "name": "Free-Tier and Cap Headroom",
+      "command": "limits status",
+      "description": "One view of current headroom: key-cap remaining, free-tier daily quota, and today's free-model burn.",
+      "rationale": "Derived from three sources at once — key status, credit purchase tier, and the local count of today's free-variant calls.",
+      "example": "openrouter-pp-cli limits status --agent",
+      "why_it_matters": "Check before a free-tier dev loop or fleet dispatch to avoid opaque 429s.",
+      "group": "Runway and rate-limit headroom"
+    },
+    {
+      "name": "Credits Runway",
+      "command": "credits runway",
+      "description": "Project days-to-zero for prepaid credits at the trailing burn rate — the 402 leading indicator.",
+      "rationale": "Upstream returns the balance as a point value; the projection needs the credits-snapshot series the sync accumulates.",
+      "example": "openrouter-pp-cli credits runway --agent",
+      "why_it_matters": "A daily cron on this answers 'when do we hit 402' while there is still time to top up.",
+      "group": "Runway and rate-limit headroom"
+    },
+    {
+      "name": "Ledger Reconcile",
+      "command": "usage reconcile",
+      "description": "Verify the local usage mirror against upstream daily totals and flag days that disagree.",
+      "rationale": "No single API call answers 'do our books match yours'; the diff joins upstream activity rollups against local mirror sums.",
+      "example": "openrouter-pp-cli usage reconcile --since 7d --agent",
+      "why_it_matters": "Run this before trusting any local cost analysis — it is the trust root for the other usage commands.",
+      "group": "Cost governance for agent fleets"
+    },
+    {
+      "name": "Catalog Churn Watch",
+      "command": "models churn",
+      "description": "See what changed in the model catalog between syncs: additions, removals, and repricings with deltas.",
+      "rationale": "No upstream history endpoint exists; the temporal diff is only possible over sync-kept catalog snapshots.",
+      "example": "openrouter-pp-cli models churn --since 7d --agent",
+      "why_it_matters": "Use this to catch a pinned model repricing or vanishing before the invoice does.",
+      "group": "Catalog intelligence"
+    }
+  ],
+  "novel_features_built": [
+    {
+      "name": "Models Query DSL",
+      "command": "models query",
+      "description": "Shortlist models by capability, price, and context window with a structured query over the synced catalog — offline and instant.",
+      "rationale": "The upstream /models endpoint has no query parameters; a local FTS-indexed catalog is the only way to filter hundreds of models without shipping the whole payload into context.",
+      "example": "openrouter-pp-cli models query \"tools=true cost.completion\u003c5 ctx\u003e=128k\" --agent",
+      "why_it_matters": "Reach for this instead of fetching the full catalog: it answers a shortlist question in ~200 tokens instead of hundreds of KB.",
+      "group": "Catalog intelligence"
+    },
+    {
+      "name": "Cost-by-Cron Rollup",
+      "command": "usage cost-by",
+      "description": "Attribute spend to the cron, agent, or lineage that incurred it, over any window.",
+      "rationale": "Upstream activity groups by model and provider only; joining the local generations mirror with a caller-tag log is the only path to per-cron attribution.",
+      "example": "openrouter-pp-cli usage cost-by --since 7d --agent",
+      "why_it_matters": "Use this when the question is 'which job burned the money', not 'which model'.",
+      "group": "Cost governance for agent fleets"
+    },
+    {
+      "name": "Cost Regression Alarm",
+      "command": "usage anomaly",
+      "description": "Flag per-model cost spikes against the trailing baseline before they compound.",
+      "rationale": "Upstream's only alarm is an absolute low-credits notice; a z-score over the local ledger catches regressions while credits still look healthy.",
+      "example": "openrouter-pp-cli usage anomaly --since 24h --agent",
+      "why_it_matters": "Run this in a daily cron to catch a misbehaving lineage the day it regresses, not at invoice time.",
+      "group": "Cost governance for agent fleets"
+    },
+    {
+      "name": "Per-Cron Budget Contract",
+      "command": "budget",
+      "description": "Set spend caps per cron or agent and enforce them pre-flight with typed exit codes.",
+      "rationale": "Upstream workspace budgets are org-level; per-cron caps require a local contract table joined against tagged generations.",
+      "example": "openrouter-pp-cli budget check nightly-drafter",
+      "why_it_matters": "Gate a scheduled run on exit code 0/8 so an over-budget lineage never fires.",
+      "group": "Cost governance for agent fleets"
+    },
+    {
+      "name": "Providers Degraded Watch",
+      "command": "providers degraded",
+      "description": "See which providers or models are currently degraded before dispatching work to them.",
+      "rationale": "A stateful set-diff against the previous local snapshot turns reactive 429s into a leading indicator no point-in-time API call provides.",
+      "example": "openrouter-pp-cli providers degraded --agent",
+      "why_it_matters": "Check this before dispatch to route around trouble instead of retrying into it.",
+      "group": "Provider health and dispatch"
+    },
+    {
+      "name": "Weekly-Cap ETA",
+      "command": "key eta",
+      "description": "Project the date your key's spend cap trips, from the observed burn rate.",
+      "rationale": "Upstream reports the cap and current usage as points; the projection needs the local history of key snapshots.",
+      "example": "openrouter-pp-cli key eta --agent",
+      "why_it_matters": "Use this to plan the week's runs against the cap instead of discovering it mid-run.",
+      "group": "Runway and rate-limit headroom"
+    },
+    {
+      "name": "Endpoint Failover Map",
+      "command": "endpoints failover",
+      "description": "Rank the providers serving one model by status, price, and observed latency for dispatch order.",
+      "rationale": "The ranking joins the live endpoint list with locally observed per-provider latency — a cross-source ordering no single call returns.",
+      "example": "openrouter-pp-cli endpoints failover deepseek/deepseek-v4 --agent",
+      "why_it_matters": "Feed this to a router to pre-empt degraded providers for a specific model.",
+      "group": "Provider health and dispatch"
+    },
+    {
+      "name": "Generation Cost Forensics",
+      "command": "generation explain",
+      "description": "Break one generation into its cost anatomy: tokens, latency, and the delta versus the cheapest provider.",
+      "rationale": "The cheapest-provider delta requires joining the generation record against locally synced per-provider pricing.",
+      "example": "openrouter-pp-cli generation explain gen-abc123 --agent",
+      "why_it_matters": "The next command after an anomaly fires: it turns 'cost spiked' into 'this call, this provider, this delta'.",
+      "group": "Cost governance for agent fleets"
+    },
+    {
+      "name": "Free-Tier and Cap Headroom",
+      "command": "limits status",
+      "description": "One view of current headroom: key-cap remaining, free-tier daily quota, and today's free-model burn.",
+      "rationale": "Derived from three sources at once — key status, credit purchase tier, and the local count of today's free-variant calls.",
+      "example": "openrouter-pp-cli limits status --agent",
+      "why_it_matters": "Check before a free-tier dev loop or fleet dispatch to avoid opaque 429s.",
+      "group": "Runway and rate-limit headroom"
+    },
+    {
+      "name": "Credits Runway",
+      "command": "credits runway",
+      "description": "Project days-to-zero for prepaid credits at the trailing burn rate — the 402 leading indicator.",
+      "rationale": "Upstream returns the balance as a point value; the projection needs the credits-snapshot series the sync accumulates.",
+      "example": "openrouter-pp-cli credits runway --agent",
+      "why_it_matters": "A daily cron on this answers 'when do we hit 402' while there is still time to top up.",
+      "group": "Runway and rate-limit headroom"
+    },
+    {
+      "name": "Ledger Reconcile",
+      "command": "usage reconcile",
+      "description": "Verify the local usage mirror against upstream daily totals and flag days that disagree.",
+      "rationale": "No single API call answers 'do our books match yours'; the diff joins upstream activity rollups against local mirror sums.",
+      "example": "openrouter-pp-cli usage reconcile --since 7d --agent",
+      "why_it_matters": "Run this before trusting any local cost analysis — it is the trust root for the other usage commands.",
+      "group": "Cost governance for agent fleets"
+    },
+    {
+      "name": "Catalog Churn Watch",
+      "command": "models churn",
+      "description": "See what changed in the model catalog between syncs: additions, removals, and repricings with deltas.",
+      "rationale": "No upstream history endpoint exists; the temporal diff is only possible over sync-kept catalog snapshots.",
+      "example": "openrouter-pp-cli models churn --since 7d --agent",
+      "why_it_matters": "Use this to catch a pinned model repricing or vanishing before the invoice does.",
+      "group": "Catalog intelligence"
+    }
+  ],
+  "auth": {
+    "canonical_env_var": "OPENROUTER_API_KEY"
+  },
+  "narrative": {
+    "display_name": "OpenRouter",
+    "headline": "The only OpenRouter CLI built for fleet operations: budgets, anomaly alarms, and failover maps over a local usage ledger — not another chat wrapper.",
+    "value_prop": "Every other OpenRouter tool wraps chat; this one governs it. A synced local mirror of models, generations, and credits powers per-cron cost attribution (usage cost-by), pre-flight budget gates (budget check), degradation watches (providers degraded), and runway projections (credits runway) that no single API call can answer. The full endpoint surface — catalog, keys admin, activity, analytics — ships alongside as typed commands.",
+    "auth_narrative": "Standard bearer auth with your inference key via OPENROUTER_API_KEY covers models, credits, key status, and chat. Two surfaces need the separate provisioning (management) key created in the dashboard: key administration (/keys) and account-wide usage rollups (/activity, analytics). A 401 or 403 on those commands with an otherwise-working key means you are holding the inference key where the management key is required — not a broken setup. Live-verified 2026-09: /activity returns 403 'Only management keys can fetch activity' on an inference key.",
+    "quickstart": [
+      {
+        "command": "openrouter-pp-cli doctor --dry-run",
+        "comment": "Health check: config, auth presence, and local store — works before any credentials"
+      },
+      {
+        "command": "openrouter-pp-cli sync --resources models,generations --since 7d",
+        "comment": "Build the local mirror the transcendence commands run on"
+      },
+      {
+        "command": "openrouter-pp-cli models query \"tools=true cost.completion\u003c5 ctx\u003e=128k\"",
+        "comment": "Shortlist capable models offline instead of paging the full catalog"
+      },
+      {
+        "command": "openrouter-pp-cli usage cost-by --since 7d",
+        "comment": "Attribute the week's spend to the cron or agent that incurred it"
+      },
+      {
+        "command": "openrouter-pp-cli credits runway",
+        "comment": "Project when prepaid credits hit zero at the current burn rate"
+      }
+    ],
+    "troubleshoots": [
+      {
+        "symptom": "402 Payment Required on inference calls",
+        "fix": "Credits are exhausted — run 'openrouter-pp-cli credits runway' to see the burn that got you here, then top up in the dashboard"
+      },
+      {
+        "symptom": "429 on free-variant models while paid calls work",
+        "fix": "Free-tier daily quota is separate and small — run 'openrouter-pp-cli limits status' to see today's free-model burn and your quota tier"
+      },
+      {
+        "symptom": "401/403 on keys commands while other commands work",
+        "fix": "Key administration needs a provisioning key, not the inference key — create one in the dashboard and set it per the auth docs"
+      },
+      {
+        "symptom": "Local cost numbers look stale or wrong",
+        "fix": "Run 'openrouter-pp-cli sync --resources generations --since 7d' then 'openrouter-pp-cli usage reconcile --since 7d' to verify the mirror against upstream"
+      },
+      {
+        "symptom": "403 'Only management keys can fetch activity' on usage reconcile or activity sync",
+        "fix": "These surfaces need the provisioning/management key, not the inference key — create one in the dashboard, or skip reconcile and rely on the generations ledger"
+      }
+    ],
+    "when_to_use": "Reach for this CLI when the task is operating LLM workloads over OpenRouter: attributing spend to crons or agents, gating scheduled runs on budgets, shortlisting models by capability and price, watching provider health before dispatch, or projecting credit and cap runway. It is the right tool whenever the question spans local history plus the API — anything a single raw HTTP call cannot answer.",
+    "anti_triggers": [
+      "Interactive chat sessions or a conversational playground — use a chat client; the chat command here is agent plumbing, not a UX",
+      "Building application inference paths — use the official OpenRouter SDKs in your app, not shell-outs to a CLI",
+      "Org member management, SCIM provisioning, or SSO setup — use the OpenRouter dashboard",
+      "Real-time token streaming displays — the CLI returns complete responses, not stream renderers"
+    ],
+    "recipes": [
+      {
+        "title": "Monday cost review",
+        "command": "openrouter-pp-cli usage cost-by --since 7d --agent",
+        "explanation": "The weekly attribution pass: spend per cron/agent tag, ready to paste into a review note."
+      },
+      {
+        "title": "Anomaly to root cause in two commands",
+        "command": "openrouter-pp-cli usage anomaly --since 24h --agent",
+        "explanation": "When a model flags, follow with 'generation explain \u003cid\u003e' to get tokens, latency, and the cheapest-provider delta for the offending call."
+      },
+      {
+        "title": "Pre-dispatch health gate",
+        "command": "openrouter-pp-cli providers degraded --agent",
+        "explanation": "Run before firing a lineage; pair with 'endpoints failover \u003cmodel\u003e' to pick the dispatch order for the model you are about to use."
+      },
+      {
+        "title": "Narrow a deep endpoint payload",
+        "command": "openrouter-pp-cli models endpoints list deepseek deepseek-v4 --agent --select data.endpoints.provider_name,data.endpoints.pricing.completion,data.endpoints.status",
+        "explanation": "Per-model provider listings nest deeply; --select keeps the answer to the three fields a router actually needs."
+      },
+      {
+        "title": "Budget-gated cron pattern",
+        "command": "openrouter-pp-cli budget check nightly-drafter",
+        "explanation": "Exit code 0 under cap, 8 over — gate a scheduled run on this before it fires (e.g. 'budget check X \u0026\u0026 systemctl --user start X.service')."
+      }
+    ],
+    "trigger_phrases": [
+      "which model is cheapest for this task",
+      "what did my crons spend on openrouter",
+      "check openrouter credits runway",
+      "is openrouter degraded right now",
+      "why did my openrouter cost spike",
+      "use openrouter",
+      "run openrouter"
+    ]
+  }
+}

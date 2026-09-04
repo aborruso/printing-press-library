@@ -9,8 +9,10 @@ import (
 
 func newModelsEndpointsCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "endpoints",
-		Short: "Endpoint information",
+		Use:         "endpoints",
+		Short:       "List endpoints for models",
+		Annotations: map[string]string{"mcp:read-only": "true", "pp:parent-group": "true", "pp:typed-exit-codes": "0,2"},
+		RunE:        parentNoSubcommandRunE(flags),
 	}
 
 	cmd.AddCommand(newModelsEndpointsListCmd(flags))

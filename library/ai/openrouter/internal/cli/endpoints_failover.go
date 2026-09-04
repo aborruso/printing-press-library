@@ -1,4 +1,5 @@
 // Copyright 2026 Rick van de Laar and contributors. Licensed under Apache-2.0. See LICENSE.
+// pp:data-source computed
 
 package cli
 
@@ -16,8 +17,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newEndpointsFailoverCmd(flags *rootFlags) *cobra.Command {
-	var llm bool
+func newNovelEndpointsFailoverCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:         "failover <author>/<slug>",
@@ -38,9 +38,9 @@ func newEndpointsFailoverCmd(flags *rootFlags) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			data, err := c.Get("/models/"+ref+"/endpoints", nil)
+			data, err := c.Get(cmd.Context(), "/models/"+ref+"/endpoints", nil)
 			if err != nil {
-				return classifyAPIError(err, flags)
+				return classifyAPIError(cmd.OutOrStdout(), err, flags)
 			}
 			var envelope struct {
 				Data map[string]any `json:"data"`
@@ -94,7 +94,7 @@ func newEndpointsFailoverCmd(flags *rootFlags) *cobra.Command {
 			if flags.asJSON {
 				return printJSONFiltered(cmd.OutOrStdout(), parsed, flags)
 			}
-			if llm {
+			if flags.agent {
 				if len(parsed) == 0 {
 					fmt.Fprintln(cmd.OutOrStdout(), "no endpoints")
 					return nil
@@ -118,6 +118,5 @@ func newEndpointsFailoverCmd(flags *rootFlags) *cobra.Command {
 			return flags.printTable(cmd, []string{"PROVIDER", "STATUS", "COST_C", "LAT_P50"}, rows)
 		},
 	}
-	cmd.Flags().BoolVar(&llm, "llm", false, "Terse k:v output")
 	return cmd
 }

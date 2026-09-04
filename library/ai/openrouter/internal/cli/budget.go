@@ -1,4 +1,5 @@
 // Copyright 2026 Rick van de Laar and contributors. Licensed under Apache-2.0. See LICENSE.
+// pp:data-source computed
 
 package cli
 
@@ -55,7 +56,7 @@ func parseBudgetUSD(s string) (float64, error) {
 	return strconv.ParseFloat(s, 64)
 }
 
-func newBudgetCmd(flags *rootFlags) *cobra.Command {
+func newNovelBudgetCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "budget",
 		Short: "Set and check per-cron weekly USD budgets against tool-call log spend",

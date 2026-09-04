@@ -5,6 +5,12 @@ package types
 
 import "encoding/json"
 
+type AABenchmarkEntry struct {
+	AgenticIndex      float64 `json:"agentic_index"`
+	CodingIndex       float64 `json:"coding_index"`
+	IntelligenceIndex float64 `json:"intelligence_index"`
+}
+
 type ActivityItem struct {
 	ByokUsageInference float64 `json:"byok_usage_inference"`
 	CompletionTokens   int     `json:"completion_tokens"`
@@ -17,10 +23,48 @@ type ActivityItem struct {
 	ReasoningTokens    int     `json:"reasoning_tokens"`
 	Requests           int     `json:"requests"`
 	Usage              float64 `json:"usage"`
+	WorkspaceId        string  `json:"workspace_id"`
 }
 
 type ActivityResponse struct {
 	Data json.RawMessage `json:"data"`
+}
+
+type AdditionalToolsItem struct {
+	Id    string          `json:"id"`
+	Role  string          `json:"role"`
+	Tools json.RawMessage `json:"tools"`
+	Type  string          `json:"type"`
+}
+
+type AdvisorReasoning struct {
+	Effort    string `json:"effort"`
+	MaxTokens int    `json:"max_tokens"`
+}
+
+type AdvisorServerToolConfig struct {
+	ForwardTranscript   bool            `json:"forward_transcript"`
+	Instructions        string          `json:"instructions"`
+	MaxCompletionTokens int             `json:"max_completion_tokens"`
+	Model               string          `json:"model"`
+	Name                string          `json:"name"`
+	Reasoning           json.RawMessage `json:"reasoning"`
+	Stream              bool            `json:"stream"`
+	Temperature         float64         `json:"temperature"`
+}
+
+type AdvisorServerTool_OpenRouter struct {
+	Parameters json.RawMessage `json:"parameters"`
+	Type       string          `json:"type"`
+}
+
+type AgentMessageItem struct {
+	Agent     json.RawMessage `json:"agent"`
+	Author    string          `json:"author"`
+	Content   json.RawMessage `json:"content"`
+	Id        string          `json:"id"`
+	Recipient string          `json:"recipient"`
+	Type      string          `json:"type"`
 }
 
 type AnnotationAddedEvent struct {
@@ -31,6 +75,22 @@ type AnnotationAddedEvent struct {
 	OutputIndex     int    `json:"output_index"`
 	SequenceNumber  int    `json:"sequence_number"`
 	Type            string `json:"type"`
+}
+
+type AnthropicAdvisorMessageUsageIteration struct {
+	CacheCreation            json.RawMessage `json:"cache_creation"`
+	CacheCreationInputTokens int             `json:"cache_creation_input_tokens"`
+	CacheReadInputTokens     int             `json:"cache_read_input_tokens"`
+	InputTokens              int             `json:"input_tokens"`
+	Model                    string          `json:"model"`
+	OutputTokens             int             `json:"output_tokens"`
+	Type                     string          `json:"type"`
+}
+
+type AnthropicAdvisorToolResult struct {
+	Content   json.RawMessage `json:"content"`
+	ToolUseId string          `json:"tool_use_id"`
+	Type      string          `json:"type"`
 }
 
 type AnthropicBase64ImageSource struct {
@@ -154,7 +214,25 @@ type AnthropicCitationSearchResultLocation struct {
 	Type              string `json:"type"`
 }
 
+type AnthropicCitationSearchResultLocationParam struct {
+	CitedText         string `json:"cited_text"`
+	EndBlockIndex     int    `json:"end_block_index"`
+	SearchResultIndex int    `json:"search_result_index"`
+	Source            string `json:"source"`
+	StartBlockIndex   int    `json:"start_block_index"`
+	Title             string `json:"title"`
+	Type              string `json:"type"`
+}
+
 type AnthropicCitationWebSearchResultLocation struct {
+	CitedText      string `json:"cited_text"`
+	EncryptedIndex string `json:"encrypted_index"`
+	Title          string `json:"title"`
+	Type           string `json:"type"`
+	Url            string `json:"url"`
+}
+
+type AnthropicCitationWebSearchResultLocationParam struct {
 	CitedText      string `json:"cited_text"`
 	EncryptedIndex string `json:"encrypted_index"`
 	Title          string `json:"title"`
@@ -201,8 +279,9 @@ type AnthropicCodeExecutionToolResultError struct {
 }
 
 type AnthropicCompactionBlock struct {
-	Content string `json:"content"`
-	Type    string `json:"type"`
+	Content          string `json:"content"`
+	EncryptedContent string `json:"encrypted_content"`
+	Type             string `json:"type"`
 }
 
 type AnthropicCompactionUsageIteration struct {
@@ -252,6 +331,33 @@ type AnthropicEncryptedCodeExecutionResult struct {
 	Type            string          `json:"type"`
 }
 
+type AnthropicFile struct {
+	CreatedAt    string `json:"created_at"`
+	Downloadable bool   `json:"downloadable"`
+	Filename     string `json:"filename"`
+	Id           string `json:"id"`
+	MimeType     string `json:"mime_type"`
+	SizeBytes    int    `json:"size_bytes"`
+	Type         string `json:"type"`
+}
+
+type AnthropicFileDeleted struct {
+	Id   string `json:"id"`
+	Type string `json:"type"`
+}
+
+type AnthropicFileDocumentSource struct {
+	FileId string `json:"file_id"`
+	Type   string `json:"type"`
+}
+
+type AnthropicFileList struct {
+	Data    json.RawMessage `json:"data"`
+	FirstId string          `json:"first_id"`
+	HasMore bool            `json:"has_more"`
+	LastId  string          `json:"last_id"`
+}
+
 type AnthropicImageBlockParam struct {
 	CacheControl json.RawMessage `json:"cache_control"`
 	Source       string          `json:"source"`
@@ -278,8 +384,21 @@ type AnthropicMessageUsageIteration struct {
 	CacheCreationInputTokens int             `json:"cache_creation_input_tokens"`
 	CacheReadInputTokens     int             `json:"cache_read_input_tokens"`
 	InputTokens              int             `json:"input_tokens"`
+	Model                    string          `json:"model"`
 	OutputTokens             int             `json:"output_tokens"`
 	Type                     string          `json:"type"`
+}
+
+type AnthropicMessagesErrorResponse struct {
+	Error              json.RawMessage `json:"error"`
+	Metadata           json.RawMessage `json:"metadata"`
+	OpenrouterMetadata json.RawMessage `json:"openrouter_metadata"`
+	RequestId          string          `json:"request_id"`
+	Type               string          `json:"type"`
+}
+
+type AnthropicOutputTokensDetails struct {
+	ThinkingTokens int `json:"thinking_tokens"`
 }
 
 type AnthropicPlainTextSource struct {
@@ -311,14 +430,6 @@ type AnthropicSearchResultBlockParam struct {
 type AnthropicServerToolUsage struct {
 	WebFetchRequests  int `json:"web_fetch_requests"`
 	WebSearchRequests int `json:"web_search_requests"`
-}
-
-type AnthropicServerToolUseBlock struct {
-	Caller string `json:"caller"`
-	Id     string `json:"id"`
-	Input  string `json:"input"`
-	Name   string `json:"name"`
-	Type   string `json:"type"`
 }
 
 type AnthropicTextBlock struct {
@@ -396,6 +507,24 @@ type AnthropicToolSearchResultError struct {
 	Type         string `json:"type"`
 }
 
+type AnthropicToolSearchToolBm25 struct {
+	AllowedCallers json.RawMessage `json:"allowed_callers"`
+	CacheControl   json.RawMessage `json:"cache_control"`
+	DeferLoading   bool            `json:"defer_loading"`
+	Name           string          `json:"name"`
+	Strict         bool            `json:"strict"`
+	Type           string          `json:"type"`
+}
+
+type AnthropicToolSearchToolRegex struct {
+	AllowedCallers json.RawMessage `json:"allowed_callers"`
+	CacheControl   json.RawMessage `json:"cache_control"`
+	DeferLoading   bool            `json:"defer_loading"`
+	Name           string          `json:"name"`
+	Strict         bool            `json:"strict"`
+	Type           string          `json:"type"`
+}
+
 type AnthropicToolSearchToolResult struct {
 	Content   string `json:"content"`
 	ToolUseId string `json:"tool_use_id"`
@@ -446,6 +575,7 @@ type AnthropicUsage struct {
 	InferenceGeo             string          `json:"inference_geo"`
 	InputTokens              int             `json:"input_tokens"`
 	OutputTokens             int             `json:"output_tokens"`
+	OutputTokensDetails      json.RawMessage `json:"output_tokens_details"`
 	ServerToolUse            json.RawMessage `json:"server_tool_use"`
 	ServiceTier              string          `json:"service_tier"`
 }
@@ -505,14 +635,113 @@ type AnthropicWebSearchToolUserLocation struct {
 	Type     string `json:"type"`
 }
 
+type AppRankingsItem struct {
+	AppId         int    `json:"app_id"`
+	AppName       string `json:"app_name"`
+	Rank          int    `json:"rank"`
+	TotalRequests int    `json:"total_requests"`
+	TotalTokens   string `json:"total_tokens"`
+}
+
+type AppRankingsResponse struct {
+	Data json.RawMessage `json:"data"`
+	Meta json.RawMessage `json:"meta"`
+}
+
+type ApplyPatchCallItem struct {
+	CallId    string `json:"call_id"`
+	Id        string `json:"id"`
+	Operation string `json:"operation"`
+	Status    string `json:"status"`
+	Type      string `json:"type"`
+}
+
+type ApplyPatchCallOperationDiffDeltaEvent struct {
+	Delta          string `json:"delta"`
+	ItemId         string `json:"item_id"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
+}
+
+type ApplyPatchCallOperationDiffDoneEvent struct {
+	Diff           string `json:"diff"`
+	ItemId         string `json:"item_id"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
+}
+
+type ApplyPatchCallOutputItem struct {
+	CallId string `json:"call_id"`
+	Id     string `json:"id"`
+	Output string `json:"output"`
+	Status string `json:"status"`
+	Type   string `json:"type"`
+}
+
+type ApplyPatchCreateFileOperation struct {
+	Diff string `json:"diff"`
+	Path string `json:"path"`
+	Type string `json:"type"`
+}
+
+type ApplyPatchDeleteFileOperation struct {
+	Path string `json:"path"`
+	Type string `json:"type"`
+}
+
 type ApplyPatchServerTool struct {
 	Type string `json:"type"`
 }
 
+type ApplyPatchServerToolConfig struct {
+	Engine string `json:"engine"`
+}
+
+type ApplyPatchServerTool_OpenRouter struct {
+	Parameters json.RawMessage `json:"parameters"`
+	Type       string          `json:"type"`
+}
+
+type ApplyPatchUpdateFileOperation struct {
+	Diff string `json:"diff"`
+	Path string `json:"path"`
+	Type string `json:"type"`
+}
+
+type AutoBetaRouterPlugin struct {
+	AllowedModels       json.RawMessage `json:"allowed_models"`
+	CostQualityTradeoff int             `json:"cost_quality_tradeoff"`
+	CostTier            string          `json:"cost_tier"`
+	Enabled             bool            `json:"enabled"`
+	ExcludedModels      json.RawMessage `json:"excluded_models"`
+	Id                  string          `json:"id"`
+}
+
 type AutoRouterPlugin struct {
-	AllowedModels json.RawMessage `json:"allowed_models"`
-	Enabled       bool            `json:"enabled"`
-	Id            string          `json:"id"`
+	AllowedModels       json.RawMessage `json:"allowed_models"`
+	CostQualityTradeoff int             `json:"cost_quality_tradeoff"`
+	CostTier            string          `json:"cost_tier"`
+	Enabled             bool            `json:"enabled"`
+	ExcludedModels      json.RawMessage `json:"excluded_models"`
+	Id                  string          `json:"id"`
+	PinModel            bool            `json:"pin_model"`
+}
+
+type BYOKKey struct {
+	AllowedApiKeyHashes json.RawMessage `json:"allowed_api_key_hashes"`
+	AllowedModels       json.RawMessage `json:"allowed_models"`
+	AllowedUserIds      json.RawMessage `json:"allowed_user_ids"`
+	CreatedAt           string          `json:"created_at"`
+	Disabled            bool            `json:"disabled"`
+	Id                  string          `json:"id"`
+	IsFallback          bool            `json:"is_fallback"`
+	Label               string          `json:"label"`
+	Name                string          `json:"name"`
+	Provider            string          `json:"provider"`
+	SortOrder           int             `json:"sort_order"`
+	WorkspaceId         string          `json:"workspace_id"`
 }
 
 type BadGatewayResponse struct {
@@ -567,6 +796,22 @@ type BaseContentPartDoneEvent struct {
 	Type           string `json:"type"`
 }
 
+type BaseCustomToolCallInputDeltaEvent struct {
+	Delta          string `json:"delta"`
+	ItemId         string `json:"item_id"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
+}
+
+type BaseCustomToolCallInputDoneEvent struct {
+	Input          string `json:"input"`
+	ItemId         string `json:"item_id"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
+}
+
 type BaseErrorEvent struct {
 	Code           string `json:"code"`
 	Message        string `json:"message"`
@@ -606,7 +851,9 @@ type BaseMessagesResult struct {
 }
 
 type BaseReasoningConfig struct {
+	Context string `json:"context"`
 	Effort  string `json:"effort"`
+	Mode    string `json:"mode"`
 	Summary string `json:"summary"`
 }
 
@@ -703,6 +950,7 @@ type BaseResponsesResult struct {
 	PreviousResponseId string          `json:"previous_response_id"`
 	Prompt             json.RawMessage `json:"prompt"`
 	PromptCacheKey     string          `json:"prompt_cache_key"`
+	PromptCacheOptions json.RawMessage `json:"prompt_cache_options"`
 	Reasoning          json.RawMessage `json:"reasoning"`
 	SafetyIdentifier   string          `json:"safety_identifier"`
 	ServiceTier        string          `json:"service_tier"`
@@ -737,6 +985,49 @@ type BaseTextDoneEvent struct {
 	SequenceNumber int             `json:"sequence_number"`
 	Text           string          `json:"text"`
 	Type           string          `json:"type"`
+}
+
+type BashServerTool struct {
+	Parameters json.RawMessage `json:"parameters"`
+	Type       string          `json:"type"`
+}
+
+type BashServerToolConfig struct {
+	Engine            string `json:"engine"`
+	Environment       string `json:"environment"`
+	SleepAfterSeconds int    `json:"sleep_after_seconds"`
+}
+
+type BenchmarksGetItem struct {
+	Accuracy            float64         `json:"accuracy"`
+	AccuracyStddev      float64         `json:"accuracy_stddev"`
+	AgenticIndex        float64         `json:"agentic_index"`
+	Arena               string          `json:"arena"`
+	AvgCostPerTask      float64         `json:"avg_cost_per_task"`
+	AvgGenerationTimeMs float64         `json:"avg_generation_time_ms"`
+	AvgLatencyPerTaskMs float64         `json:"avg_latency_per_task_ms"`
+	BenchmarkType       string          `json:"benchmark_type"`
+	Category            string          `json:"category"`
+	CodingIndex         float64         `json:"coding_index"`
+	DisplayName         string          `json:"display_name"`
+	Elo                 float64         `json:"elo"`
+	IntelligenceIndex   float64         `json:"intelligence_index"`
+	LastRunTimestamp    string          `json:"last_run_timestamp"`
+	ModelPermaslug      string          `json:"model_permaslug"`
+	Pricing             json.RawMessage `json:"pricing"`
+	PrimaryMetric       string          `json:"primary_metric"`
+	PrimaryScore        float64         `json:"primary_score"`
+	RunConfig           json.RawMessage `json:"run_config"`
+	SearchEngine        string          `json:"search_engine"`
+	SearchSurface       string          `json:"search_surface"`
+	Source              string          `json:"source"`
+	TotalTasks          int             `json:"total_tasks"`
+	TournamentStats     json.RawMessage `json:"tournament_stats"`
+	WinRate             float64         `json:"win_rate"`
+}
+
+type BooleanCapability struct {
+	Type string `json:"type"`
 }
 
 type BulkAddWorkspaceMembersRequest struct {
@@ -792,6 +1083,7 @@ type ChatAssistantMessage struct {
 	Audio            json.RawMessage `json:"audio"`
 	Content          string          `json:"content"`
 	Images           json.RawMessage `json:"images"`
+	Model            string          `json:"model"`
 	Name             string          `json:"name"`
 	Reasoning        string          `json:"reasoning"`
 	ReasoningDetails json.RawMessage `json:"reasoning_details"`
@@ -835,9 +1127,10 @@ type ChatContentImage struct {
 }
 
 type ChatContentText struct {
-	CacheControl string `json:"cache_control"`
-	Text         string `json:"text"`
-	Type         string `json:"type"`
+	CacheControl          string          `json:"cache_control"`
+	PromptCacheBreakpoint json.RawMessage `json:"prompt_cache_breakpoint"`
+	Text                  string          `json:"text"`
+	Type                  string          `json:"type"`
 }
 
 type ChatContentVideo struct {
@@ -862,6 +1155,10 @@ type ChatDeveloperMessage struct {
 type ChatFormatGrammarConfig struct {
 	Grammar string `json:"grammar"`
 	Type    string `json:"type"`
+}
+
+type ChatFormatJsonObjectConfig struct {
+	Type string `json:"type"`
 }
 
 type ChatFormatJsonSchemaConfig struct {
@@ -890,7 +1187,7 @@ type ChatNamedToolChoice struct {
 }
 
 type ChatRequest struct {
-	CacheControl        string          `json:"cache_control"`
+	CacheControl        json.RawMessage `json:"cache_control"`
 	Debug               json.RawMessage `json:"debug"`
 	FrequencyPenalty    float64         `json:"frequency_penalty"`
 	ImageConfig         json.RawMessage `json:"image_config"`
@@ -900,25 +1197,34 @@ type ChatRequest struct {
 	MaxTokens           int             `json:"max_tokens"`
 	Messages            json.RawMessage `json:"messages"`
 	Metadata            json.RawMessage `json:"metadata"`
+	MinP                float64         `json:"min_p"`
 	Modalities          json.RawMessage `json:"modalities"`
 	Model               string          `json:"model"`
 	Models              json.RawMessage `json:"models"`
 	ParallelToolCalls   bool            `json:"parallel_tool_calls"`
 	Plugins             json.RawMessage `json:"plugins"`
+	Prediction          json.RawMessage `json:"prediction"`
 	PresencePenalty     float64         `json:"presence_penalty"`
+	PromptCacheKey      string          `json:"prompt_cache_key"`
+	PromptCacheOptions  json.RawMessage `json:"prompt_cache_options"`
 	Provider            json.RawMessage `json:"provider"`
 	Reasoning           json.RawMessage `json:"reasoning"`
+	ReasoningEffort     string          `json:"reasoning_effort"`
+	RepetitionPenalty   float64         `json:"repetition_penalty"`
 	ResponseFormat      string          `json:"response_format"`
 	Route               string          `json:"route"`
 	Seed                int             `json:"seed"`
 	ServiceTier         string          `json:"service_tier"`
 	SessionId           string          `json:"session_id"`
 	Stop                string          `json:"stop"`
+	StopServerToolsWhen json.RawMessage `json:"stop_server_tools_when"`
 	Stream              bool            `json:"stream"`
 	StreamOptions       json.RawMessage `json:"stream_options"`
 	Temperature         float64         `json:"temperature"`
 	ToolChoice          string          `json:"tool_choice"`
 	Tools               json.RawMessage `json:"tools"`
+	TopA                float64         `json:"top_a"`
+	TopK                int             `json:"top_k"`
 	TopLogprobs         int             `json:"top_logprobs"`
 	TopP                float64         `json:"top_p"`
 	Trace               json.RawMessage `json:"trace"`
@@ -940,6 +1246,10 @@ type ChatResult struct {
 type ChatSearchModelsServerTool struct {
 	Parameters json.RawMessage `json:"parameters"`
 	Type       string          `json:"type"`
+}
+
+type ChatServerToolChoice struct {
+	Type string `json:"type"`
 }
 
 type ChatStreamChoice struct {
@@ -1025,6 +1335,7 @@ type ChatUsage struct {
 	IsByok                  bool            `json:"is_byok"`
 	PromptTokens            int             `json:"prompt_tokens"`
 	PromptTokensDetails     json.RawMessage `json:"prompt_tokens_details"`
+	ServerToolUseDetails    json.RawMessage `json:"server_tool_use_details"`
 	TotalTokens             int             `json:"total_tokens"`
 }
 
@@ -1038,12 +1349,52 @@ type ChatWebSearchShorthand struct {
 	AllowedDomains    json.RawMessage `json:"allowed_domains"`
 	Engine            string          `json:"engine"`
 	ExcludedDomains   json.RawMessage `json:"excluded_domains"`
+	MaxCharacters     int             `json:"max_characters"`
 	MaxResults        int             `json:"max_results"`
 	MaxTotalResults   int             `json:"max_total_results"`
+	MaxUses           int             `json:"max_uses"`
+	Mode              string          `json:"mode"`
 	Parameters        json.RawMessage `json:"parameters"`
 	SearchContextSize string          `json:"search_context_size"`
 	Type              string          `json:"type"`
 	UserLocation      json.RawMessage `json:"user_location"`
+}
+
+type CodeInterpreterCallCodeDeltaEvent struct {
+	Delta          string `json:"delta"`
+	ItemId         string `json:"item_id"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
+}
+
+type CodeInterpreterCallCodeDoneEvent struct {
+	Code           string `json:"code"`
+	ItemId         string `json:"item_id"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
+}
+
+type CodeInterpreterCallCompletedEvent struct {
+	ItemId         string `json:"item_id"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
+}
+
+type CodeInterpreterCallInProgressEvent struct {
+	ItemId         string `json:"item_id"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
+}
+
+type CodeInterpreterCallInterpretingEvent struct {
+	ItemId         string `json:"item_id"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
 }
 
 type CodeInterpreterCallItem struct {
@@ -1055,6 +1406,29 @@ type CodeInterpreterCallItem struct {
 	Type        string          `json:"type"`
 }
 
+type CodeInterpreterFileOutput struct {
+	DownloadUrl string `json:"download_url"`
+	ErrorCode   string `json:"error_code"`
+	ExpiresAt   string `json:"expires_at"`
+	Filename    string `json:"filename"`
+	Id          string `json:"id"`
+	MediaType   string `json:"media_type"`
+	Sha256      string `json:"sha256"`
+	SizeBytes   int    `json:"size_bytes"`
+	Status      string `json:"status"`
+	Type        string `json:"type"`
+}
+
+type CodeInterpreterImageOutput struct {
+	Type string `json:"type"`
+	Url  string `json:"url"`
+}
+
+type CodeInterpreterLogsOutput struct {
+	Logs string `json:"logs"`
+	Type string `json:"type"`
+}
+
 type CodeInterpreterServerTool struct {
 	Container string `json:"container"`
 	Type      string `json:"type"`
@@ -1062,6 +1436,12 @@ type CodeInterpreterServerTool struct {
 
 type CodexLocalShellTool struct {
 	Type string `json:"type"`
+}
+
+type CompactionItem struct {
+	EncryptedContent string `json:"encrypted_content"`
+	Id               string `json:"id"`
+	Type             string `json:"type"`
 }
 
 type CompletedEvent struct {
@@ -1094,10 +1474,49 @@ type ConflictResponseErrorData struct {
 	Metadata json.RawMessage `json:"metadata"`
 }
 
+type ContainerAutoEnvironment struct {
+	FileIds       json.RawMessage `json:"file_ids"`
+	NetworkPolicy string          `json:"network_policy"`
+	Type          string          `json:"type"`
+}
+
+type ContainerFile struct {
+	Bytes       int    `json:"bytes"`
+	ContainerId string `json:"container_id"`
+	CreatedAt   int    `json:"created_at"`
+	Id          string `json:"id"`
+	Object      string `json:"object"`
+	Path        string `json:"path"`
+	Source      string `json:"source"`
+}
+
+type ContainerFileListResponse struct {
+	Data    json.RawMessage `json:"data"`
+	FirstId string          `json:"first_id"`
+	HasMore bool            `json:"has_more"`
+	LastId  string          `json:"last_id"`
+	Object  string          `json:"object"`
+}
+
+type ContainerReferenceEnvironment struct {
+	ContainerId   string          `json:"container_id"`
+	FileIds       json.RawMessage `json:"file_ids"`
+	NetworkPolicy string          `json:"network_policy"`
+	Type          string          `json:"type"`
+}
+
 type ContentFilterBuiltinEntry struct {
-	Action string `json:"action"`
-	Label  string `json:"label"`
-	Slug   string `json:"slug"`
+	Action    string `json:"action"`
+	Label     string `json:"label"`
+	ScanScope string `json:"scan_scope"`
+	Slug      string `json:"slug"`
+}
+
+type ContentFilterBuiltinEntryInput struct {
+	Action    string `json:"action"`
+	Label     string `json:"label"`
+	ScanScope string `json:"scan_scope"`
+	Slug      string `json:"slug"`
 }
 
 type ContentFilterEntry struct {
@@ -1115,6 +1534,11 @@ type ContentPartAddedEvent struct {
 	Type           string `json:"type"`
 }
 
+type ContentPartAudio struct {
+	AudioUrl json.RawMessage `json:"audio_url"`
+	Type     string          `json:"type"`
+}
+
 type ContentPartDoneEvent struct {
 	ContentIndex   int    `json:"content_index"`
 	ItemId         string `json:"item_id"`
@@ -1129,6 +1553,32 @@ type ContentPartImage struct {
 	Type     string          `json:"type"`
 }
 
+type ContentPartInputAudio struct {
+	InputAudio json.RawMessage `json:"input_audio"`
+	Type       string          `json:"type"`
+}
+
+type ContentPartInputFile struct {
+	InputFile json.RawMessage `json:"input_file"`
+	Type      string          `json:"type"`
+}
+
+type ContentPartInputVideo struct {
+	InputVideo json.RawMessage `json:"input_video"`
+	Type       string          `json:"type"`
+}
+
+type ContentPartVideo struct {
+	Type     string          `json:"type"`
+	VideoUrl json.RawMessage `json:"video_url"`
+}
+
+type ContextCompactionItem struct {
+	EncryptedContent string `json:"encrypted_content"`
+	Id               string `json:"id"`
+	Type             string `json:"type"`
+}
+
 type ContextCompressionPlugin struct {
 	Enabled bool   `json:"enabled"`
 	Engine  string `json:"engine"`
@@ -1136,28 +1586,87 @@ type ContextCompressionPlugin struct {
 }
 
 type CostDetails struct {
+	ServerToolCost                   float64 `json:"server_tool_cost"`
 	UpstreamInferenceCompletionsCost float64 `json:"upstream_inference_completions_cost"`
 	UpstreamInferenceCost            float64 `json:"upstream_inference_cost"`
 	UpstreamInferencePromptCost      float64 `json:"upstream_inference_prompt_cost"`
 }
 
+type CreateBYOKKeyRequest struct {
+	AllowedApiKeyHashes json.RawMessage `json:"allowed_api_key_hashes"`
+	AllowedModels       json.RawMessage `json:"allowed_models"`
+	AllowedUserIds      json.RawMessage `json:"allowed_user_ids"`
+	Disabled            bool            `json:"disabled"`
+	IsFallback          bool            `json:"is_fallback"`
+	Key                 string          `json:"key"`
+	Name                string          `json:"name"`
+	Provider            string          `json:"provider"`
+	WorkspaceId         string          `json:"workspace_id"`
+}
+
+type CreateBYOKKeyResponse struct {
+	Data string `json:"data"`
+}
+
 type CreateGuardrailRequest struct {
-	AllowedModels         json.RawMessage `json:"allowed_models"`
-	AllowedProviders      json.RawMessage `json:"allowed_providers"`
-	ContentFilterBuiltins json.RawMessage `json:"content_filter_builtins"`
-	ContentFilters        json.RawMessage `json:"content_filters"`
-	Description           string          `json:"description"`
-	EnforceZdr            bool            `json:"enforce_zdr"`
-	IgnoredModels         json.RawMessage `json:"ignored_models"`
-	IgnoredProviders      json.RawMessage `json:"ignored_providers"`
-	LimitUsd              float64         `json:"limit_usd"`
-	Name                  string          `json:"name"`
-	ResetInterval         string          `json:"reset_interval"`
-	WorkspaceId           string          `json:"workspace_id"`
+	AllowedModels              json.RawMessage `json:"allowed_models"`
+	AllowedProviders           json.RawMessage `json:"allowed_providers"`
+	ContentFilterBuiltins      json.RawMessage `json:"content_filter_builtins"`
+	ContentFilters             json.RawMessage `json:"content_filters"`
+	Description                string          `json:"description"`
+	EnableFreeModelPublication bool            `json:"enable_free_model_publication"`
+	EnableFreeModelTraining    bool            `json:"enable_free_model_training"`
+	EnablePaidModelTraining    bool            `json:"enable_paid_model_training"`
+	EnforceZdr                 bool            `json:"enforce_zdr"`
+	EnforceZdrAnthropic        bool            `json:"enforce_zdr_anthropic"`
+	EnforceZdrGoogle           bool            `json:"enforce_zdr_google"`
+	EnforceZdrOpenai           bool            `json:"enforce_zdr_openai"`
+	EnforceZdrOther            bool            `json:"enforce_zdr_other"`
+	EnforceZdrXai              bool            `json:"enforce_zdr_xai"`
+	IgnoredModels              json.RawMessage `json:"ignored_models"`
+	IgnoredProviders           json.RawMessage `json:"ignored_providers"`
+	IncludeByokInBudgets       bool            `json:"include_byok_in_budgets"`
+	LimitUsd                   float64         `json:"limit_usd"`
+	Name                       string          `json:"name"`
+	ResetInterval              string          `json:"reset_interval"`
+	WorkspaceId                string          `json:"workspace_id"`
 }
 
 type CreateGuardrailResponse struct {
 	Data string `json:"data"`
+}
+
+type CreateObservabilityDestinationRequest struct {
+	ApiKeyHashes                      json.RawMessage `json:"api_key_hashes"`
+	BroadcastGenerationCost           bool            `json:"broadcast_generation_cost"`
+	BroadcastGenerationIdentity       bool            `json:"broadcast_generation_identity"`
+	BroadcastGenerationRequestContext bool            `json:"broadcast_generation_request_context"`
+	Config                            json.RawMessage `json:"config"`
+	Enabled                           bool            `json:"enabled"`
+	FilterRules                       json.RawMessage `json:"filter_rules"`
+	Name                              string          `json:"name"`
+	PrivacyMode                       bool            `json:"privacy_mode"`
+	SamplingRate                      float64         `json:"sampling_rate"`
+	Type                              string          `json:"type"`
+	WorkspaceId                       string          `json:"workspace_id"`
+}
+
+type CreateObservabilityDestinationResponse struct {
+	Data string `json:"data"`
+}
+
+type CreatePresetFromInferenceResponse struct {
+	Data string `json:"data"`
+}
+
+type CreateScimGroupMappingRequest struct {
+	Role        string `json:"role"`
+	ScimGroupId string `json:"scim_group_id"`
+	WorkspaceId string `json:"workspace_id"`
+}
+
+type CreateScimGroupMappingResponse struct {
+	Data json.RawMessage `json:"data"`
 }
 
 type CreateWorkspaceRequest struct {
@@ -1195,6 +1704,47 @@ type CustomTool struct {
 	Type        string `json:"type"`
 }
 
+type CustomToolCallInputDeltaEvent struct {
+	Delta          string `json:"delta"`
+	ItemId         string `json:"item_id"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
+}
+
+type CustomToolCallInputDoneEvent struct {
+	Input          string `json:"input"`
+	ItemId         string `json:"item_id"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
+}
+
+type CustomToolCallItem struct {
+	CallId    string `json:"call_id"`
+	Id        string `json:"id"`
+	Input     string `json:"input"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	Status    string `json:"status"`
+	Type      string `json:"type"`
+}
+
+type CustomToolCallOutputItem struct {
+	CallId string `json:"call_id"`
+	Id     string `json:"id"`
+	Output string `json:"output"`
+	Type   string `json:"type"`
+}
+
+type DABenchmarkEntry struct {
+	Arena    string  `json:"arena"`
+	Category string  `json:"category"`
+	Elo      float64 `json:"elo"`
+	Rank     int     `json:"rank"`
+	WinRate  float64 `json:"win_rate"`
+}
+
 type DatetimeServerTool struct {
 	Parameters json.RawMessage `json:"parameters"`
 	Type       string          `json:"type"`
@@ -1202,6 +1752,12 @@ type DatetimeServerTool struct {
 
 type DatetimeServerToolConfig struct {
 	Timezone string `json:"timezone"`
+}
+
+type DebugEvent struct {
+	Debug          json.RawMessage `json:"debug"`
+	SequenceNumber int             `json:"sequence_number"`
+	Type           string          `json:"type"`
 }
 
 type DefaultParameters struct {
@@ -1213,7 +1769,23 @@ type DefaultParameters struct {
 	TopP              float64 `json:"top_p"`
 }
 
+type DeleteBYOKKeyResponse struct {
+	Deleted bool `json:"deleted"`
+}
+
 type DeleteGuardrailResponse struct {
+	Deleted bool `json:"deleted"`
+}
+
+type DeleteObservabilityDestinationResponse struct {
+	Deleted bool `json:"deleted"`
+}
+
+type DeleteScimGroupMappingResponse struct {
+	Deleted bool `json:"deleted"`
+}
+
+type DeleteWorkspaceBudgetResponse struct {
 	Deleted bool `json:"deleted"`
 }
 
@@ -1240,6 +1812,12 @@ type EdgeNetworkTimeoutResponseErrorData struct {
 	Metadata json.RawMessage `json:"metadata"`
 }
 
+type EmbeddingsCreateItem struct {
+	Embedding string `json:"embedding"`
+	Index     int    `json:"index"`
+	Object    string `json:"object"`
+}
+
 type EndpointInfo struct {
 	Model    string `json:"model"`
 	Provider string `json:"provider"`
@@ -1253,6 +1831,11 @@ type EndpointsListResponse struct {
 type EndpointsMetadata struct {
 	Available json.RawMessage `json:"available"`
 	Total     int             `json:"total"`
+}
+
+type EnumCapability struct {
+	Type   string          `json:"type"`
+	Values json.RawMessage `json:"values"`
 }
 
 type ErrorEvent struct {
@@ -1294,6 +1877,14 @@ type FileSearchServerTool struct {
 	RankingOptions json.RawMessage `json:"ranking_options"`
 	Type           string          `json:"type"`
 	VectorStoreIds json.RawMessage `json:"vector_store_ids"`
+}
+
+type FilesServerTool struct {
+	Parameters json.RawMessage `json:"parameters"`
+	Type       string          `json:"type"`
+}
+
+type FilesServerToolConfig struct {
 }
 
 type ForbiddenResponse struct {
@@ -1348,13 +1939,15 @@ type FunctionCallArgsDoneEvent struct {
 }
 
 type FunctionCallItem struct {
-	Arguments string `json:"arguments"`
-	CallId    string `json:"call_id"`
-	Id        string `json:"id"`
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-	Status    string `json:"status"`
-	Type      string `json:"type"`
+	Arguments     string          `json:"arguments"`
+	CallId        string          `json:"call_id"`
+	Id            string          `json:"id"`
+	Name          string          `json:"name"`
+	Namespace     string          `json:"namespace"`
+	Status        string          `json:"status"`
+	SubagentId    string          `json:"subagent_id"`
+	SubagentItems json.RawMessage `json:"subagent_items"`
+	Type          string          `json:"type"`
 }
 
 type FunctionCallOutputItem struct {
@@ -1373,9 +1966,140 @@ type FunctionTool struct {
 	Type        string          `json:"type"`
 }
 
+type FusionAnalysisResult struct {
+	BlindSpots      json.RawMessage `json:"blind_spots"`
+	Consensus       json.RawMessage `json:"consensus"`
+	Contradictions  json.RawMessage `json:"contradictions"`
+	PartialCoverage json.RawMessage `json:"partial_coverage"`
+	UniqueInsights  json.RawMessage `json:"unique_insights"`
+}
+
+type FusionCallAnalysisCompletedEvent struct {
+	Analysis       json.RawMessage `json:"analysis"`
+	ItemId         string          `json:"item_id"`
+	OutputIndex    int             `json:"output_index"`
+	SequenceNumber int             `json:"sequence_number"`
+	Type           string          `json:"type"`
+}
+
+type FusionCallAnalysisInProgressEvent struct {
+	AnalystModel   string `json:"analyst_model"`
+	ItemId         string `json:"item_id"`
+	JudgeModel     string `json:"judge_model"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
+}
+
+type FusionCallCompletedEvent struct {
+	ItemId         string `json:"item_id"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
+}
+
+type FusionCallInProgressEvent struct {
+	ItemId         string `json:"item_id"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
+}
+
+type FusionCallPanelAddedEvent struct {
+	ItemId         string `json:"item_id"`
+	Model          string `json:"model"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
+}
+
+type FusionCallPanelCompletedEvent struct {
+	Content        string `json:"content"`
+	ItemId         string `json:"item_id"`
+	Model          string `json:"model"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
+}
+
+type FusionCallPanelDeltaEvent struct {
+	Delta          string `json:"delta"`
+	ItemId         string `json:"item_id"`
+	Model          string `json:"model"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
+}
+
+type FusionCallPanelFailedEvent struct {
+	Error          string `json:"error"`
+	ItemId         string `json:"item_id"`
+	Model          string `json:"model"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	StatusCode     int    `json:"status_code"`
+	Type           string `json:"type"`
+}
+
+type FusionCallPanelReasoningDeltaEvent struct {
+	Delta          string `json:"delta"`
+	ItemId         string `json:"item_id"`
+	Model          string `json:"model"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
+}
+
+type FusionPlugin struct {
+	AnalysisModels json.RawMessage `json:"analysis_models"`
+	Enabled        bool            `json:"enabled"`
+	Id             string          `json:"id"`
+	MaxToolCalls   int             `json:"max_tool_calls"`
+	Model          string          `json:"model"`
+	Preset         string          `json:"preset"`
+	Tools          json.RawMessage `json:"tools"`
+}
+
+type FusionServerToolConfig struct {
+	AnalysisModels      json.RawMessage `json:"analysis_models"`
+	CacheControl        json.RawMessage `json:"cache_control"`
+	MaxCompletionTokens int             `json:"max_completion_tokens"`
+	MaxToolCalls        int             `json:"max_tool_calls"`
+	Model               string          `json:"model"`
+	Reasoning           json.RawMessage `json:"reasoning"`
+	Temperature         float64         `json:"temperature"`
+	Tools               json.RawMessage `json:"tools"`
+}
+
+type FusionServerTool_OpenRouter struct {
+	Parameters json.RawMessage `json:"parameters"`
+	Type       string          `json:"type"`
+}
+
+type FusionSource struct {
+	Title string `json:"title"`
+	Url   string `json:"url"`
+}
+
 type GenerationContentData struct {
+	Error  json.RawMessage `json:"error"`
 	Input  string          `json:"input"`
 	Output json.RawMessage `json:"output"`
+}
+
+type GenerationContentError struct {
+	Message        string          `json:"message"`
+	PreviousErrors json.RawMessage `json:"previous_errors"`
+	ProviderName   string          `json:"provider_name"`
+	Raw            string          `json:"raw"`
+	Status         int             `json:"status"`
+}
+
+type GenerationContentErrorAttempt struct {
+	Code         int    `json:"code"`
+	Message      string `json:"message"`
+	ProviderName string `json:"provider_name"`
+	Raw          string `json:"raw"`
 }
 
 type GenerationContentResponse struct {
@@ -1386,8 +2110,33 @@ type GenerationResponse struct {
 	Data json.RawMessage `json:"data"`
 }
 
+type GetBYOKKeyResponse struct {
+	Data string `json:"data"`
+}
+
 type GetGuardrailResponse struct {
 	Data string `json:"data"`
+}
+
+type GetObservabilityDestinationResponse struct {
+	Data string `json:"data"`
+}
+
+type GetPresetResponse struct {
+	Data string `json:"data"`
+}
+
+type GetPresetVersionResponse struct {
+	Data json.RawMessage `json:"data"`
+}
+
+type GetScimGroupMappingResponse struct {
+	Data json.RawMessage `json:"data"`
+}
+
+type GetWorkspaceBudgetResponse struct {
+	Data                 string `json:"data"`
+	IncludeByokInBudgets bool   `json:"include_byok_in_budgets"`
 }
 
 type GetWorkspaceResponse struct {
@@ -1407,24 +2156,43 @@ type GoneResponseErrorData struct {
 }
 
 type Guardrail struct {
-	AllowedModels         json.RawMessage `json:"allowed_models"`
-	AllowedProviders      json.RawMessage `json:"allowed_providers"`
-	ContentFilterBuiltins json.RawMessage `json:"content_filter_builtins"`
-	ContentFilters        json.RawMessage `json:"content_filters"`
-	CreatedAt             string          `json:"created_at"`
-	Description           string          `json:"description"`
-	EnforceZdr            bool            `json:"enforce_zdr"`
-	Id                    string          `json:"id"`
-	IgnoredModels         json.RawMessage `json:"ignored_models"`
-	IgnoredProviders      json.RawMessage `json:"ignored_providers"`
-	LimitUsd              float64         `json:"limit_usd"`
-	Name                  string          `json:"name"`
-	ResetInterval         string          `json:"reset_interval"`
-	UpdatedAt             string          `json:"updated_at"`
-	WorkspaceId           string          `json:"workspace_id"`
+	AllowedModels              json.RawMessage `json:"allowed_models"`
+	AllowedProviders           json.RawMessage `json:"allowed_providers"`
+	ContentFilterBuiltins      json.RawMessage `json:"content_filter_builtins"`
+	ContentFilters             json.RawMessage `json:"content_filters"`
+	CreatedAt                  string          `json:"created_at"`
+	Description                string          `json:"description"`
+	EnableFreeModelPublication bool            `json:"enable_free_model_publication"`
+	EnableFreeModelTraining    bool            `json:"enable_free_model_training"`
+	EnablePaidModelTraining    bool            `json:"enable_paid_model_training"`
+	EnforceZdr                 bool            `json:"enforce_zdr"`
+	EnforceZdrAnthropic        bool            `json:"enforce_zdr_anthropic"`
+	EnforceZdrGoogle           bool            `json:"enforce_zdr_google"`
+	EnforceZdrOpenai           bool            `json:"enforce_zdr_openai"`
+	EnforceZdrOther            bool            `json:"enforce_zdr_other"`
+	EnforceZdrXai              bool            `json:"enforce_zdr_xai"`
+	Id                         string          `json:"id"`
+	IgnoredModels              json.RawMessage `json:"ignored_models"`
+	IgnoredProviders           json.RawMessage `json:"ignored_providers"`
+	IncludeByokInBudgets       bool            `json:"include_byok_in_budgets"`
+	LimitUsd                   float64         `json:"limit_usd"`
+	Name                       string          `json:"name"`
+	ResetInterval              string          `json:"reset_interval"`
+	UpdatedAt                  string          `json:"updated_at"`
+	WorkspaceId                string          `json:"workspace_id"`
 }
 
 type ImageConfig struct {
+}
+
+type ImageEndpoint struct {
+	AllowedPassthroughParameters json.RawMessage `json:"allowed_passthrough_parameters"`
+	Pricing                      json.RawMessage `json:"pricing"`
+	ProviderName                 string          `json:"provider_name"`
+	ProviderSlug                 string          `json:"provider_slug"`
+	ProviderTag                  string          `json:"provider_tag"`
+	SupportedParameters          string          `json:"supported_parameters"`
+	SupportsStreaming            bool            `json:"supports_streaming"`
 }
 
 type ImageGenCallCompletedEvent struct {
@@ -1457,6 +2225,64 @@ type ImageGenCallPartialImageEvent struct {
 	Type              string `json:"type"`
 }
 
+type ImageGenCompletedEvent struct {
+	B64Json   string          `json:"b64_json"`
+	Created   int             `json:"created"`
+	MediaType string          `json:"media_type"`
+	Type      string          `json:"type"`
+	Usage     json.RawMessage `json:"usage"`
+}
+
+type ImageGenPartialImageEvent struct {
+	B64Json           string `json:"b64_json"`
+	PartialImageIndex int    `json:"partial_image_index"`
+	Type              string `json:"type"`
+}
+
+type ImageGenStreamErrorEvent struct {
+	Error json.RawMessage `json:"error"`
+	Type  string          `json:"type"`
+}
+
+type ImageGenTextChunkEvent struct {
+	Phase string `json:"phase"`
+	Text  string `json:"text"`
+	Type  string `json:"type"`
+}
+
+type ImageGenerationProviderPreferences struct {
+	AllowFallbacks bool            `json:"allow_fallbacks"`
+	Ignore         json.RawMessage `json:"ignore"`
+	Only           json.RawMessage `json:"only"`
+	Options        string          `json:"options"`
+	Order          json.RawMessage `json:"order"`
+	Sort           string          `json:"sort"`
+}
+
+type ImageGenerationRequest struct {
+	AspectRatio       string          `json:"aspect_ratio"`
+	Background        string          `json:"background"`
+	InputReferences   json.RawMessage `json:"input_references"`
+	Model             string          `json:"model"`
+	N                 int             `json:"n"`
+	OutputCompression int             `json:"output_compression"`
+	OutputFormat      string          `json:"output_format"`
+	Prompt            string          `json:"prompt"`
+	Provider          json.RawMessage `json:"provider"`
+	Quality           string          `json:"quality"`
+	Resolution        string          `json:"resolution"`
+	Seed              int             `json:"seed"`
+	Size              string          `json:"size"`
+	Stream            bool            `json:"stream"`
+	User              string          `json:"user"`
+}
+
+type ImageGenerationResponse struct {
+	Created int             `json:"created"`
+	Data    json.RawMessage `json:"data"`
+	Usage   json.RawMessage `json:"usage"`
+}
+
 type ImageGenerationServerTool struct {
 	Background        string          `json:"background"`
 	InputFidelity     string          `json:"input_fidelity"`
@@ -1478,6 +2304,63 @@ type ImageGenerationServerToolConfig struct {
 type ImageGenerationServerTool_OpenRouter struct {
 	Parameters json.RawMessage `json:"parameters"`
 	Type       string          `json:"type"`
+}
+
+type ImageGenerationUsage struct {
+	CacheCreation           json.RawMessage `json:"cache_creation"`
+	CompletionTokens        int             `json:"completion_tokens"`
+	CompletionTokensDetails json.RawMessage `json:"completion_tokens_details"`
+	Cost                    float64         `json:"cost"`
+	CostDetails             json.RawMessage `json:"cost_details"`
+	IsByok                  bool            `json:"is_byok"`
+	Iterations              json.RawMessage `json:"iterations"`
+	PromptTokens            int             `json:"prompt_tokens"`
+	PromptTokensDetails     json.RawMessage `json:"prompt_tokens_details"`
+	ServerToolUse           json.RawMessage `json:"server_tool_use"`
+	ServiceTier             string          `json:"service_tier"`
+	Speed                   string          `json:"speed"`
+	TotalTokens             int             `json:"total_tokens"`
+}
+
+type ImageModelArchitecture struct {
+	InputModalities  json.RawMessage `json:"input_modalities"`
+	OutputModalities json.RawMessage `json:"output_modalities"`
+}
+
+type ImageModelEndpointsResponse struct {
+	Endpoints json.RawMessage `json:"endpoints"`
+	Id        string          `json:"id"`
+}
+
+type ImageModelListItem struct {
+	Architecture        json.RawMessage `json:"architecture"`
+	Created             int             `json:"created"`
+	Description         string          `json:"description"`
+	Endpoints           string          `json:"endpoints"`
+	Id                  string          `json:"id"`
+	Name                string          `json:"name"`
+	SupportedParameters json.RawMessage `json:"supported_parameters"`
+	SupportsStreaming   bool            `json:"supports_streaming"`
+}
+
+type ImageModelsListResponse struct {
+	Data json.RawMessage `json:"data"`
+}
+
+type ImagePricingEntry struct {
+	Billable string  `json:"billable"`
+	CostUsd  float64 `json:"cost_usd"`
+	Unit     string  `json:"unit"`
+	Variant  string  `json:"variant"`
+}
+
+type ImageStreamingResponse struct {
+	Data string `json:"data"`
+}
+
+type ImagesCreateItem struct {
+	B64Json   string `json:"b64_json"`
+	MediaType string `json:"media_type"`
 }
 
 type InProgressEvent struct {
@@ -1523,8 +2406,9 @@ type InputMessageItem struct {
 }
 
 type InputText struct {
-	Text string `json:"text"`
-	Type string `json:"type"`
+	PromptCacheBreakpoint json.RawMessage `json:"prompt_cache_breakpoint"`
+	Text                  string          `json:"text"`
+	Type                  string          `json:"type"`
 }
 
 type InputVideo struct {
@@ -1542,6 +2426,11 @@ type InternalServerResponseErrorData struct {
 	Code     int             `json:"code"`
 	Message  string          `json:"message"`
 	Metadata json.RawMessage `json:"metadata"`
+}
+
+type ItemReferenceItem struct {
+	Id   string `json:"id"`
+	Type string `json:"type"`
 }
 
 type KeyAssignment struct {
@@ -1580,6 +2469,7 @@ type KeysListItem struct {
 	CreatorUserId      string  `json:"creator_user_id"`
 	Disabled           bool    `json:"disabled"`
 	ExpiresAt          string  `json:"expires_at"`
+	ExternalUser       string  `json:"external_user"`
 	Hash               string  `json:"hash"`
 	IncludeByokInLimit bool    `json:"include_byok_in_limit"`
 	Label              string  `json:"label"`
@@ -1604,13 +2494,24 @@ type Legacy_ChatContentVideo struct {
 	VideoUrl json.RawMessage `json:"video_url"`
 }
 
+type Legacy_ChatContentVideoInput struct {
+	Url string `json:"url"`
+}
+
 type Legacy_WebSearchServerTool struct {
 	Engine            string          `json:"engine"`
 	Filters           json.RawMessage `json:"filters"`
 	MaxResults        int             `json:"max_results"`
+	MaxUses           int             `json:"max_uses"`
+	Mode              string          `json:"mode"`
 	SearchContextSize string          `json:"search_context_size"`
 	Type              string          `json:"type"`
 	UserLocation      json.RawMessage `json:"user_location"`
+}
+
+type ListBYOKKeysResponse struct {
+	Data       json.RawMessage `json:"data"`
+	TotalCount int             `json:"total_count"`
 }
 
 type ListEndpointsResponse struct {
@@ -1637,9 +2538,93 @@ type ListMemberAssignmentsResponse struct {
 	TotalCount int             `json:"total_count"`
 }
 
+type ListObservabilityDestinationsResponse struct {
+	Data       json.RawMessage `json:"data"`
+	TotalCount int             `json:"total_count"`
+}
+
+type ListPresetVersionsResponse struct {
+	Data       json.RawMessage `json:"data"`
+	TotalCount int             `json:"total_count"`
+}
+
+type ListPresetsResponse struct {
+	Data       json.RawMessage `json:"data"`
+	TotalCount int             `json:"total_count"`
+}
+
+type ListScimGroupMappingsResponse struct {
+	Data       json.RawMessage `json:"data"`
+	TotalCount int             `json:"total_count"`
+}
+
+type ListScimGroupsResponse struct {
+	Data       json.RawMessage `json:"data"`
+	TotalCount int             `json:"total_count"`
+}
+
+type ListWorkspaceBudgetsResponse struct {
+	Data                 json.RawMessage `json:"data"`
+	IncludeByokInBudgets bool            `json:"include_byok_in_budgets"`
+}
+
+type ListWorkspaceMembersResponse struct {
+	Data       json.RawMessage `json:"data"`
+	TotalCount int             `json:"total_count"`
+}
+
 type ListWorkspacesResponse struct {
 	Data       json.RawMessage `json:"data"`
 	TotalCount int             `json:"total_count"`
+}
+
+type LocalShellCallItem struct {
+	Action json.RawMessage `json:"action"`
+	CallId string          `json:"call_id"`
+	Id     string          `json:"id"`
+	Status string          `json:"status"`
+	Type   string          `json:"type"`
+}
+
+type LocalShellCallOutputItem struct {
+	Id     string `json:"id"`
+	Output string `json:"output"`
+	Status string `json:"status"`
+	Type   string `json:"type"`
+}
+
+type McpApprovalRequestItem struct {
+	Arguments   string `json:"arguments"`
+	Id          string `json:"id"`
+	Name        string `json:"name"`
+	ServerLabel string `json:"server_label"`
+	Type        string `json:"type"`
+}
+
+type McpApprovalResponseItem struct {
+	ApprovalRequestId string `json:"approval_request_id"`
+	Approve           bool   `json:"approve"`
+	Id                string `json:"id"`
+	Reason            string `json:"reason"`
+	Type              string `json:"type"`
+}
+
+type McpCallItem struct {
+	Arguments   string `json:"arguments"`
+	Error       string `json:"error"`
+	Id          string `json:"id"`
+	Name        string `json:"name"`
+	Output      string `json:"output"`
+	ServerLabel string `json:"server_label"`
+	Type        string `json:"type"`
+}
+
+type McpListToolsItem struct {
+	Error       string          `json:"error"`
+	Id          string          `json:"id"`
+	ServerLabel string          `json:"server_label"`
+	Tools       json.RawMessage `json:"tools"`
+	Type        string          `json:"type"`
 }
 
 type McpServerTool struct {
@@ -1661,6 +2646,20 @@ type MemberAssignment struct {
 	Id             string `json:"id"`
 	OrganizationId string `json:"organization_id"`
 	UserId         string `json:"user_id"`
+}
+
+type MessagesAdvisorToolResultBlock struct {
+	Content   json.RawMessage `json:"content"`
+	ToolUseId string          `json:"tool_use_id"`
+	Type      string          `json:"type"`
+}
+
+type MessagesBashToolResultBlock struct {
+	ContainerId string          `json:"container_id"`
+	Content     json.RawMessage `json:"content"`
+	Files       json.RawMessage `json:"files"`
+	ToolUseId   string          `json:"tool_use_id"`
+	Type        string          `json:"type"`
 }
 
 type MessagesContentBlockDeltaEvent struct {
@@ -1686,19 +2685,14 @@ type MessagesDeltaEvent struct {
 	Usage json.RawMessage `json:"usage"`
 }
 
-type MessagesErrorDetail struct {
-	Message string `json:"message"`
-	Type    string `json:"type"`
-}
-
 type MessagesErrorEvent struct {
-	Error json.RawMessage `json:"error"`
-	Type  string          `json:"type"`
+	Error              json.RawMessage `json:"error"`
+	OpenrouterMetadata json.RawMessage `json:"openrouter_metadata"`
+	Type               string          `json:"type"`
 }
 
-type MessagesErrorResponse struct {
-	Error json.RawMessage `json:"error"`
-	Type  string          `json:"type"`
+type MessagesFallbackParam struct {
+	Model string `json:"model"`
 }
 
 type MessagesMessageParam struct {
@@ -1717,31 +2711,33 @@ type MessagesPingEvent struct {
 }
 
 type MessagesRequest struct {
-	CacheControl      json.RawMessage `json:"cache_control"`
-	ContextManagement json.RawMessage `json:"context_management"`
-	MaxTokens         int             `json:"max_tokens"`
-	Messages          json.RawMessage `json:"messages"`
-	Metadata          json.RawMessage `json:"metadata"`
-	Model             string          `json:"model"`
-	Models            json.RawMessage `json:"models"`
-	OutputConfig      json.RawMessage `json:"output_config"`
-	Plugins           json.RawMessage `json:"plugins"`
-	Provider          json.RawMessage `json:"provider"`
-	Route             string          `json:"route"`
-	ServiceTier       string          `json:"service_tier"`
-	SessionId         string          `json:"session_id"`
-	Speed             string          `json:"speed"`
-	StopSequences     json.RawMessage `json:"stop_sequences"`
-	Stream            bool            `json:"stream"`
-	System            string          `json:"system"`
-	Temperature       float64         `json:"temperature"`
-	Thinking          string          `json:"thinking"`
-	ToolChoice        string          `json:"tool_choice"`
-	Tools             json.RawMessage `json:"tools"`
-	TopK              int             `json:"top_k"`
-	TopP              float64         `json:"top_p"`
-	Trace             json.RawMessage `json:"trace"`
-	User              string          `json:"user"`
+	CacheControl        json.RawMessage `json:"cache_control"`
+	ContextManagement   json.RawMessage `json:"context_management"`
+	Fallbacks           json.RawMessage `json:"fallbacks"`
+	MaxTokens           int             `json:"max_tokens"`
+	Messages            json.RawMessage `json:"messages"`
+	Metadata            json.RawMessage `json:"metadata"`
+	Model               string          `json:"model"`
+	Models              json.RawMessage `json:"models"`
+	OutputConfig        json.RawMessage `json:"output_config"`
+	Plugins             json.RawMessage `json:"plugins"`
+	Provider            json.RawMessage `json:"provider"`
+	Route               string          `json:"route"`
+	ServiceTier         string          `json:"service_tier"`
+	SessionId           string          `json:"session_id"`
+	Speed               string          `json:"speed"`
+	StopSequences       json.RawMessage `json:"stop_sequences"`
+	StopServerToolsWhen json.RawMessage `json:"stop_server_tools_when"`
+	Stream              bool            `json:"stream"`
+	System              string          `json:"system"`
+	Temperature         float64         `json:"temperature"`
+	Thinking            string          `json:"thinking"`
+	ToolChoice          string          `json:"tool_choice"`
+	Tools               json.RawMessage `json:"tools"`
+	TopK                int             `json:"top_k"`
+	TopP                float64         `json:"top_p"`
+	Trace               json.RawMessage `json:"trace"`
+	User                string          `json:"user"`
 }
 
 type MessagesResult struct {
@@ -1760,6 +2756,19 @@ type MessagesResult struct {
 	Usage              string          `json:"usage"`
 }
 
+type MessagesSearchModelsServerTool struct {
+	Parameters json.RawMessage `json:"parameters"`
+	Type       string          `json:"type"`
+}
+
+type MessagesShellToolResultBlock struct {
+	ContainerId string          `json:"container_id"`
+	Content     json.RawMessage `json:"content"`
+	Files       json.RawMessage `json:"files"`
+	ToolUseId   string          `json:"tool_use_id"`
+	Type        string          `json:"type"`
+}
+
 type MessagesStartEvent struct {
 	Message json.RawMessage `json:"message"`
 	Type    string          `json:"type"`
@@ -1775,8 +2784,22 @@ type MessagesStreamingResponse struct {
 	Event string `json:"event"`
 }
 
+type MessagesToolAdditionBlock struct {
+	CacheControl json.RawMessage `json:"cache_control"`
+	Tool         string          `json:"tool"`
+	Type         string          `json:"type"`
+}
+
+type MessagesToolRemovalBlock struct {
+	CacheControl json.RawMessage `json:"cache_control"`
+	Tool         string          `json:"tool"`
+	Type         string          `json:"type"`
+}
+
 type Model struct {
+	AliasTarget         json.RawMessage `json:"alias_target"`
 	Architecture        json.RawMessage `json:"architecture"`
+	Benchmarks          json.RawMessage `json:"benchmarks"`
 	CanonicalSlug       string          `json:"canonical_slug"`
 	ContextLength       int             `json:"context_length"`
 	Created             int             `json:"created"`
@@ -1790,9 +2813,15 @@ type Model struct {
 	Name                string          `json:"name"`
 	PerRequestLimits    json.RawMessage `json:"per_request_limits"`
 	Pricing             json.RawMessage `json:"pricing"`
+	Reasoning           json.RawMessage `json:"reasoning"`
 	SupportedParameters json.RawMessage `json:"supported_parameters"`
 	SupportedVoices     json.RawMessage `json:"supported_voices"`
 	TopProvider         json.RawMessage `json:"top_provider"`
+}
+
+type ModelAliasTarget struct {
+	Name string `json:"name"`
+	Slug string `json:"slug"`
 }
 
 type ModelArchitecture struct {
@@ -1803,8 +2832,25 @@ type ModelArchitecture struct {
 	Tokenizer        string          `json:"tokenizer"`
 }
 
+type ModelBenchmarks struct {
+	ArtificialAnalysis json.RawMessage `json:"artificial_analysis"`
+	DesignArena        json.RawMessage `json:"design_arena"`
+}
+
 type ModelLinks struct {
 	Details string `json:"details"`
+}
+
+type ModelReasoning struct {
+	DefaultEffort     string          `json:"default_effort"`
+	DefaultEnabled    bool            `json:"default_enabled"`
+	Mandatory         bool            `json:"mandatory"`
+	SupportedEfforts  json.RawMessage `json:"supported_efforts"`
+	SupportsMaxTokens bool            `json:"supports_max_tokens"`
+}
+
+type ModelResponse struct {
+	Data json.RawMessage `json:"data"`
 }
 
 type ModelsCountResponse struct {
@@ -1812,11 +2858,36 @@ type ModelsCountResponse struct {
 }
 
 type ModelsListResponse struct {
-	Data json.RawMessage `json:"data"`
+	Data       json.RawMessage `json:"data"`
+	Links      json.RawMessage `json:"links"`
+	TotalCount int             `json:"total_count"`
 }
 
 type ModerationPlugin struct {
 	Id string `json:"id"`
+}
+
+type MultimodalMedia struct {
+	Data   string `json:"data"`
+	Format string `json:"format"`
+}
+
+type NamespaceFunctionTool struct {
+	AllowedCallers json.RawMessage `json:"allowed_callers"`
+	DeferLoading   bool            `json:"defer_loading"`
+	Description    string          `json:"description"`
+	Name           string          `json:"name"`
+	OutputSchema   json.RawMessage `json:"output_schema"`
+	Parameters     json.RawMessage `json:"parameters"`
+	Strict         bool            `json:"strict"`
+	Type           string          `json:"type"`
+}
+
+type NamespaceTool struct {
+	Description string          `json:"description"`
+	Name        string          `json:"name"`
+	Tools       json.RawMessage `json:"tools"`
+	Type        string          `json:"type"`
 }
 
 type NotFoundResponse struct {
@@ -1831,14 +2902,401 @@ type NotFoundResponseErrorData struct {
 	Metadata json.RawMessage `json:"metadata"`
 }
 
-type OpenAIResponseFunctionToolCall struct {
-	Arguments string `json:"arguments"`
+type ORAnthropicBashToolResult struct {
+	ContainerId string          `json:"container_id"`
+	Content     json.RawMessage `json:"content"`
+	Files       json.RawMessage `json:"files"`
+	ToolUseId   string          `json:"tool_use_id"`
+	Type        string          `json:"type"`
+}
+
+type ORAnthropicServerToolUseBlock struct {
+	Caller string `json:"caller"`
+	Id     string `json:"id"`
+	Input  string `json:"input"`
+	Name   string `json:"name"`
+	Type   string `json:"type"`
+}
+
+type ORAnthropicShellToolResult struct {
+	ContainerId string          `json:"container_id"`
+	Content     json.RawMessage `json:"content"`
+	Files       json.RawMessage `json:"files"`
+	ToolUseId   string          `json:"tool_use_id"`
+	Type        string          `json:"type"`
+}
+
+type ObservabilityArizeDestination struct {
+	ApiKeyHashes                      json.RawMessage `json:"api_key_hashes"`
+	BroadcastGenerationCost           bool            `json:"broadcast_generation_cost"`
+	BroadcastGenerationIdentity       bool            `json:"broadcast_generation_identity"`
+	BroadcastGenerationRequestContext bool            `json:"broadcast_generation_request_context"`
+	Config                            json.RawMessage `json:"config"`
+	CreatedAt                         string          `json:"created_at"`
+	Enabled                           bool            `json:"enabled"`
+	FilterRules                       json.RawMessage `json:"filter_rules"`
+	Id                                string          `json:"id"`
+	Name                              string          `json:"name"`
+	PrivacyMode                       bool            `json:"privacy_mode"`
+	SamplingRate                      float64         `json:"sampling_rate"`
+	Type                              string          `json:"type"`
+	UpdatedAt                         string          `json:"updated_at"`
+	WorkspaceId                       string          `json:"workspace_id"`
+}
+
+type ObservabilityBraintrustDestination struct {
+	ApiKeyHashes                      json.RawMessage `json:"api_key_hashes"`
+	BroadcastGenerationCost           bool            `json:"broadcast_generation_cost"`
+	BroadcastGenerationIdentity       bool            `json:"broadcast_generation_identity"`
+	BroadcastGenerationRequestContext bool            `json:"broadcast_generation_request_context"`
+	Config                            json.RawMessage `json:"config"`
+	CreatedAt                         string          `json:"created_at"`
+	Enabled                           bool            `json:"enabled"`
+	FilterRules                       json.RawMessage `json:"filter_rules"`
+	Id                                string          `json:"id"`
+	Name                              string          `json:"name"`
+	PrivacyMode                       bool            `json:"privacy_mode"`
+	SamplingRate                      float64         `json:"sampling_rate"`
+	Type                              string          `json:"type"`
+	UpdatedAt                         string          `json:"updated_at"`
+	WorkspaceId                       string          `json:"workspace_id"`
+}
+
+type ObservabilityClickhouseDestination struct {
+	ApiKeyHashes                      json.RawMessage `json:"api_key_hashes"`
+	BroadcastGenerationCost           bool            `json:"broadcast_generation_cost"`
+	BroadcastGenerationIdentity       bool            `json:"broadcast_generation_identity"`
+	BroadcastGenerationRequestContext bool            `json:"broadcast_generation_request_context"`
+	Config                            json.RawMessage `json:"config"`
+	CreatedAt                         string          `json:"created_at"`
+	Enabled                           bool            `json:"enabled"`
+	FilterRules                       json.RawMessage `json:"filter_rules"`
+	Id                                string          `json:"id"`
+	Name                              string          `json:"name"`
+	PrivacyMode                       bool            `json:"privacy_mode"`
+	SamplingRate                      float64         `json:"sampling_rate"`
+	Type                              string          `json:"type"`
+	UpdatedAt                         string          `json:"updated_at"`
+	WorkspaceId                       string          `json:"workspace_id"`
+}
+
+type ObservabilityDatadogDestination struct {
+	ApiKeyHashes                      json.RawMessage `json:"api_key_hashes"`
+	BroadcastGenerationCost           bool            `json:"broadcast_generation_cost"`
+	BroadcastGenerationIdentity       bool            `json:"broadcast_generation_identity"`
+	BroadcastGenerationRequestContext bool            `json:"broadcast_generation_request_context"`
+	Config                            json.RawMessage `json:"config"`
+	CreatedAt                         string          `json:"created_at"`
+	Enabled                           bool            `json:"enabled"`
+	FilterRules                       json.RawMessage `json:"filter_rules"`
+	Id                                string          `json:"id"`
+	Name                              string          `json:"name"`
+	PrivacyMode                       bool            `json:"privacy_mode"`
+	SamplingRate                      float64         `json:"sampling_rate"`
+	Type                              string          `json:"type"`
+	UpdatedAt                         string          `json:"updated_at"`
+	WorkspaceId                       string          `json:"workspace_id"`
+}
+
+type ObservabilityFilterRuleGroup struct {
+	Logic string          `json:"logic"`
+	Rules json.RawMessage `json:"rules"`
+}
+
+type ObservabilityFilterRulesConfig struct {
+	Enabled bool            `json:"enabled"`
+	Groups  json.RawMessage `json:"groups"`
+}
+
+type ObservabilityFilterRulesConfigNullable struct {
+	Enabled bool            `json:"enabled"`
+	Groups  json.RawMessage `json:"groups"`
+}
+
+type ObservabilityGrafanaDestination struct {
+	ApiKeyHashes                      json.RawMessage `json:"api_key_hashes"`
+	BroadcastGenerationCost           bool            `json:"broadcast_generation_cost"`
+	BroadcastGenerationIdentity       bool            `json:"broadcast_generation_identity"`
+	BroadcastGenerationRequestContext bool            `json:"broadcast_generation_request_context"`
+	Config                            json.RawMessage `json:"config"`
+	CreatedAt                         string          `json:"created_at"`
+	Enabled                           bool            `json:"enabled"`
+	FilterRules                       json.RawMessage `json:"filter_rules"`
+	Id                                string          `json:"id"`
+	Name                              string          `json:"name"`
+	PrivacyMode                       bool            `json:"privacy_mode"`
+	SamplingRate                      float64         `json:"sampling_rate"`
+	Type                              string          `json:"type"`
+	UpdatedAt                         string          `json:"updated_at"`
+	WorkspaceId                       string          `json:"workspace_id"`
+}
+
+type ObservabilityLangfuseDestination struct {
+	ApiKeyHashes                      json.RawMessage `json:"api_key_hashes"`
+	BroadcastGenerationCost           bool            `json:"broadcast_generation_cost"`
+	BroadcastGenerationIdentity       bool            `json:"broadcast_generation_identity"`
+	BroadcastGenerationRequestContext bool            `json:"broadcast_generation_request_context"`
+	Config                            json.RawMessage `json:"config"`
+	CreatedAt                         string          `json:"created_at"`
+	Enabled                           bool            `json:"enabled"`
+	FilterRules                       json.RawMessage `json:"filter_rules"`
+	Id                                string          `json:"id"`
+	Name                              string          `json:"name"`
+	PrivacyMode                       bool            `json:"privacy_mode"`
+	SamplingRate                      float64         `json:"sampling_rate"`
+	Type                              string          `json:"type"`
+	UpdatedAt                         string          `json:"updated_at"`
+	WorkspaceId                       string          `json:"workspace_id"`
+}
+
+type ObservabilityLangsmithDestination struct {
+	ApiKeyHashes                      json.RawMessage `json:"api_key_hashes"`
+	BroadcastGenerationCost           bool            `json:"broadcast_generation_cost"`
+	BroadcastGenerationIdentity       bool            `json:"broadcast_generation_identity"`
+	BroadcastGenerationRequestContext bool            `json:"broadcast_generation_request_context"`
+	Config                            json.RawMessage `json:"config"`
+	CreatedAt                         string          `json:"created_at"`
+	Enabled                           bool            `json:"enabled"`
+	FilterRules                       json.RawMessage `json:"filter_rules"`
+	Id                                string          `json:"id"`
+	Name                              string          `json:"name"`
+	PrivacyMode                       bool            `json:"privacy_mode"`
+	SamplingRate                      float64         `json:"sampling_rate"`
+	Type                              string          `json:"type"`
+	UpdatedAt                         string          `json:"updated_at"`
+	WorkspaceId                       string          `json:"workspace_id"`
+}
+
+type ObservabilityNewrelicDestination struct {
+	ApiKeyHashes                      json.RawMessage `json:"api_key_hashes"`
+	BroadcastGenerationCost           bool            `json:"broadcast_generation_cost"`
+	BroadcastGenerationIdentity       bool            `json:"broadcast_generation_identity"`
+	BroadcastGenerationRequestContext bool            `json:"broadcast_generation_request_context"`
+	Config                            json.RawMessage `json:"config"`
+	CreatedAt                         string          `json:"created_at"`
+	Enabled                           bool            `json:"enabled"`
+	FilterRules                       json.RawMessage `json:"filter_rules"`
+	Id                                string          `json:"id"`
+	Name                              string          `json:"name"`
+	PrivacyMode                       bool            `json:"privacy_mode"`
+	SamplingRate                      float64         `json:"sampling_rate"`
+	Type                              string          `json:"type"`
+	UpdatedAt                         string          `json:"updated_at"`
+	WorkspaceId                       string          `json:"workspace_id"`
+}
+
+type ObservabilityOpikDestination struct {
+	ApiKeyHashes                      json.RawMessage `json:"api_key_hashes"`
+	BroadcastGenerationCost           bool            `json:"broadcast_generation_cost"`
+	BroadcastGenerationIdentity       bool            `json:"broadcast_generation_identity"`
+	BroadcastGenerationRequestContext bool            `json:"broadcast_generation_request_context"`
+	Config                            json.RawMessage `json:"config"`
+	CreatedAt                         string          `json:"created_at"`
+	Enabled                           bool            `json:"enabled"`
+	FilterRules                       json.RawMessage `json:"filter_rules"`
+	Id                                string          `json:"id"`
+	Name                              string          `json:"name"`
+	PrivacyMode                       bool            `json:"privacy_mode"`
+	SamplingRate                      float64         `json:"sampling_rate"`
+	Type                              string          `json:"type"`
+	UpdatedAt                         string          `json:"updated_at"`
+	WorkspaceId                       string          `json:"workspace_id"`
+}
+
+type ObservabilityOtelCollectorDestination struct {
+	ApiKeyHashes                      json.RawMessage `json:"api_key_hashes"`
+	BroadcastGenerationCost           bool            `json:"broadcast_generation_cost"`
+	BroadcastGenerationIdentity       bool            `json:"broadcast_generation_identity"`
+	BroadcastGenerationRequestContext bool            `json:"broadcast_generation_request_context"`
+	Config                            json.RawMessage `json:"config"`
+	CreatedAt                         string          `json:"created_at"`
+	Enabled                           bool            `json:"enabled"`
+	FilterRules                       json.RawMessage `json:"filter_rules"`
+	Id                                string          `json:"id"`
+	Name                              string          `json:"name"`
+	PrivacyMode                       bool            `json:"privacy_mode"`
+	SamplingRate                      float64         `json:"sampling_rate"`
+	Type                              string          `json:"type"`
+	UpdatedAt                         string          `json:"updated_at"`
+	WorkspaceId                       string          `json:"workspace_id"`
+}
+
+type ObservabilityPosthogDestination struct {
+	ApiKeyHashes                      json.RawMessage `json:"api_key_hashes"`
+	BroadcastGenerationCost           bool            `json:"broadcast_generation_cost"`
+	BroadcastGenerationIdentity       bool            `json:"broadcast_generation_identity"`
+	BroadcastGenerationRequestContext bool            `json:"broadcast_generation_request_context"`
+	Config                            json.RawMessage `json:"config"`
+	CreatedAt                         string          `json:"created_at"`
+	Enabled                           bool            `json:"enabled"`
+	FilterRules                       json.RawMessage `json:"filter_rules"`
+	Id                                string          `json:"id"`
+	Name                              string          `json:"name"`
+	PrivacyMode                       bool            `json:"privacy_mode"`
+	SamplingRate                      float64         `json:"sampling_rate"`
+	Type                              string          `json:"type"`
+	UpdatedAt                         string          `json:"updated_at"`
+	WorkspaceId                       string          `json:"workspace_id"`
+}
+
+type ObservabilityRampDestination struct {
+	ApiKeyHashes                      json.RawMessage `json:"api_key_hashes"`
+	BroadcastGenerationCost           bool            `json:"broadcast_generation_cost"`
+	BroadcastGenerationIdentity       bool            `json:"broadcast_generation_identity"`
+	BroadcastGenerationRequestContext bool            `json:"broadcast_generation_request_context"`
+	Config                            json.RawMessage `json:"config"`
+	CreatedAt                         string          `json:"created_at"`
+	Enabled                           bool            `json:"enabled"`
+	FilterRules                       json.RawMessage `json:"filter_rules"`
+	Id                                string          `json:"id"`
+	Name                              string          `json:"name"`
+	PrivacyMode                       bool            `json:"privacy_mode"`
+	SamplingRate                      float64         `json:"sampling_rate"`
+	Type                              string          `json:"type"`
+	UpdatedAt                         string          `json:"updated_at"`
+	WorkspaceId                       string          `json:"workspace_id"`
+}
+
+type ObservabilityS3Destination struct {
+	ApiKeyHashes                      json.RawMessage `json:"api_key_hashes"`
+	BroadcastGenerationCost           bool            `json:"broadcast_generation_cost"`
+	BroadcastGenerationIdentity       bool            `json:"broadcast_generation_identity"`
+	BroadcastGenerationRequestContext bool            `json:"broadcast_generation_request_context"`
+	Config                            json.RawMessage `json:"config"`
+	CreatedAt                         string          `json:"created_at"`
+	Enabled                           bool            `json:"enabled"`
+	FilterRules                       json.RawMessage `json:"filter_rules"`
+	Id                                string          `json:"id"`
+	Name                              string          `json:"name"`
+	PrivacyMode                       bool            `json:"privacy_mode"`
+	SamplingRate                      float64         `json:"sampling_rate"`
+	Type                              string          `json:"type"`
+	UpdatedAt                         string          `json:"updated_at"`
+	WorkspaceId                       string          `json:"workspace_id"`
+}
+
+type ObservabilitySentryDestination struct {
+	ApiKeyHashes                      json.RawMessage `json:"api_key_hashes"`
+	BroadcastGenerationCost           bool            `json:"broadcast_generation_cost"`
+	BroadcastGenerationIdentity       bool            `json:"broadcast_generation_identity"`
+	BroadcastGenerationRequestContext bool            `json:"broadcast_generation_request_context"`
+	Config                            json.RawMessage `json:"config"`
+	CreatedAt                         string          `json:"created_at"`
+	Enabled                           bool            `json:"enabled"`
+	FilterRules                       json.RawMessage `json:"filter_rules"`
+	Id                                string          `json:"id"`
+	Name                              string          `json:"name"`
+	PrivacyMode                       bool            `json:"privacy_mode"`
+	SamplingRate                      float64         `json:"sampling_rate"`
+	Type                              string          `json:"type"`
+	UpdatedAt                         string          `json:"updated_at"`
+	WorkspaceId                       string          `json:"workspace_id"`
+}
+
+type ObservabilitySnowflakeDestination struct {
+	ApiKeyHashes                      json.RawMessage `json:"api_key_hashes"`
+	BroadcastGenerationCost           bool            `json:"broadcast_generation_cost"`
+	BroadcastGenerationIdentity       bool            `json:"broadcast_generation_identity"`
+	BroadcastGenerationRequestContext bool            `json:"broadcast_generation_request_context"`
+	Config                            json.RawMessage `json:"config"`
+	CreatedAt                         string          `json:"created_at"`
+	Enabled                           bool            `json:"enabled"`
+	FilterRules                       json.RawMessage `json:"filter_rules"`
+	Id                                string          `json:"id"`
+	Name                              string          `json:"name"`
+	PrivacyMode                       bool            `json:"privacy_mode"`
+	SamplingRate                      float64         `json:"sampling_rate"`
+	Type                              string          `json:"type"`
+	UpdatedAt                         string          `json:"updated_at"`
+	WorkspaceId                       string          `json:"workspace_id"`
+}
+
+type ObservabilityWeaveDestination struct {
+	ApiKeyHashes                      json.RawMessage `json:"api_key_hashes"`
+	BroadcastGenerationCost           bool            `json:"broadcast_generation_cost"`
+	BroadcastGenerationIdentity       bool            `json:"broadcast_generation_identity"`
+	BroadcastGenerationRequestContext bool            `json:"broadcast_generation_request_context"`
+	Config                            json.RawMessage `json:"config"`
+	CreatedAt                         string          `json:"created_at"`
+	Enabled                           bool            `json:"enabled"`
+	FilterRules                       json.RawMessage `json:"filter_rules"`
+	Id                                string          `json:"id"`
+	Name                              string          `json:"name"`
+	PrivacyMode                       bool            `json:"privacy_mode"`
+	SamplingRate                      float64         `json:"sampling_rate"`
+	Type                              string          `json:"type"`
+	UpdatedAt                         string          `json:"updated_at"`
+	WorkspaceId                       string          `json:"workspace_id"`
+}
+
+type ObservabilityWebhookDestination struct {
+	ApiKeyHashes                      json.RawMessage `json:"api_key_hashes"`
+	BroadcastGenerationCost           bool            `json:"broadcast_generation_cost"`
+	BroadcastGenerationIdentity       bool            `json:"broadcast_generation_identity"`
+	BroadcastGenerationRequestContext bool            `json:"broadcast_generation_request_context"`
+	Config                            json.RawMessage `json:"config"`
+	CreatedAt                         string          `json:"created_at"`
+	Enabled                           bool            `json:"enabled"`
+	FilterRules                       json.RawMessage `json:"filter_rules"`
+	Id                                string          `json:"id"`
+	Name                              string          `json:"name"`
+	PrivacyMode                       bool            `json:"privacy_mode"`
+	SamplingRate                      float64         `json:"sampling_rate"`
+	Type                              string          `json:"type"`
+	UpdatedAt                         string          `json:"updated_at"`
+	WorkspaceId                       string          `json:"workspace_id"`
+}
+
+type OpenAIFile struct {
+	Bytes     int    `json:"bytes"`
+	CreatedAt int    `json:"created_at"`
+	Filename  string `json:"filename"`
+	Id        string `json:"id"`
+	Object    string `json:"object"`
+	Purpose   string `json:"purpose"`
+	Status    string `json:"status"`
+}
+
+type OpenAIFileDeleted struct {
+	Deleted bool   `json:"deleted"`
+	Id      string `json:"id"`
+	Object  string `json:"object"`
+}
+
+type OpenAIFileList struct {
+	Data    json.RawMessage `json:"data"`
+	FirstId string          `json:"first_id"`
+	HasMore bool            `json:"has_more"`
+	LastId  string          `json:"last_id"`
+	Object  string          `json:"object"`
+}
+
+type OpenAIResponseCustomToolCall struct {
 	CallId    string `json:"call_id"`
 	Id        string `json:"id"`
+	Input     string `json:"input"`
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
-	Status    string `json:"status"`
 	Type      string `json:"type"`
+}
+
+type OpenAIResponseCustomToolCallOutput struct {
+	CallId string `json:"call_id"`
+	Id     string `json:"id"`
+	Output string `json:"output"`
+	Type   string `json:"type"`
+}
+
+type OpenAIResponseFunctionToolCall struct {
+	Arguments     string          `json:"arguments"`
+	CallId        string          `json:"call_id"`
+	Id            string          `json:"id"`
+	Name          string          `json:"name"`
+	Namespace     string          `json:"namespace"`
+	Status        string          `json:"status"`
+	SubagentId    string          `json:"subagent_id"`
+	SubagentItems json.RawMessage `json:"subagent_items"`
+	Type          string          `json:"type"`
 }
 
 type OpenAIResponseFunctionToolCallOutput struct {
@@ -1854,6 +3312,43 @@ type OpenAIResponseInputMessageItem struct {
 	Id      string          `json:"id"`
 	Role    string          `json:"role"`
 	Type    string          `json:"type"`
+}
+
+type OpenAIResponsesCodeInterpreterCallCodeDelta struct {
+	Delta          string `json:"delta"`
+	ItemId         string `json:"item_id"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
+}
+
+type OpenAIResponsesCodeInterpreterCallCodeDone struct {
+	Code           string `json:"code"`
+	ItemId         string `json:"item_id"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
+}
+
+type OpenAIResponsesCodeInterpreterCallCompleted struct {
+	ItemId         string `json:"item_id"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
+}
+
+type OpenAIResponsesCodeInterpreterCallInProgress struct {
+	ItemId         string `json:"item_id"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
+}
+
+type OpenAIResponsesCodeInterpreterCallInterpreting struct {
+	ItemId         string `json:"item_id"`
+	OutputIndex    int    `json:"output_index"`
+	SequenceNumber int    `json:"sequence_number"`
+	Type           string `json:"type"`
 }
 
 type OpenAIResponsesImageGenCallCompleted struct {
@@ -1944,6 +3439,7 @@ type OpenResponsesResult struct {
 	CompletedAt        int             `json:"completed_at"`
 	CreatedAt          int             `json:"created_at"`
 	Error              json.RawMessage `json:"error"`
+	ErrorType          string          `json:"error_type"`
 	FrequencyPenalty   float64         `json:"frequency_penalty"`
 	Id                 string          `json:"id"`
 	IncompleteDetails  json.RawMessage `json:"incomplete_details"`
@@ -1961,6 +3457,7 @@ type OpenResponsesResult struct {
 	PreviousResponseId string          `json:"previous_response_id"`
 	Prompt             json.RawMessage `json:"prompt"`
 	PromptCacheKey     string          `json:"prompt_cache_key"`
+	PromptCacheOptions json.RawMessage `json:"prompt_cache_options"`
 	Reasoning          json.RawMessage `json:"reasoning"`
 	SafetyIdentifier   string          `json:"safety_identifier"`
 	ServiceTier        string          `json:"service_tier"`
@@ -1983,6 +3480,29 @@ type OpenResponsesTopLogprobs struct {
 	Token   string          `json:"token"`
 }
 
+type OpenRouterFile struct {
+	CreatedAt    string `json:"created_at"`
+	Downloadable bool   `json:"downloadable"`
+	Filename     string `json:"filename"`
+	Id           string `json:"id"`
+	MimeType     string `json:"mime_type"`
+	SizeBytes    int    `json:"size_bytes"`
+	Type         string `json:"type"`
+}
+
+type OpenRouterFileDeleted struct {
+	Id   string `json:"id"`
+	Type string `json:"type"`
+}
+
+type OpenRouterFileList struct {
+	Cursor  string          `json:"cursor"`
+	Data    json.RawMessage `json:"data"`
+	FirstId string          `json:"first_id"`
+	HasMore bool            `json:"has_more"`
+	LastId  string          `json:"last_id"`
+}
+
 type OpenRouterMetadata struct {
 	Attempt   int             `json:"attempt"`
 	Attempts  json.RawMessage `json:"attempts"`
@@ -2001,6 +3521,14 @@ type OpenRouterWebSearchServerTool struct {
 	Type       string          `json:"type"`
 }
 
+type OpenrouterAnalyticsGetMetaResponse struct {
+	Data json.RawMessage `json:"data"`
+}
+
+type OpenrouterAnalyticsQueryResponse struct {
+	Data json.RawMessage `json:"data"`
+}
+
 type OpenrouterAuthCreateKeysCodeResponse struct {
 	Data json.RawMessage `json:"data"`
 }
@@ -2010,22 +3538,53 @@ type OpenrouterAuthExchangeCodeForApikeyResponse struct {
 	UserId string `json:"user_id"`
 }
 
+type OrganizationListMembersItem struct {
+	Email     string `json:"email"`
+	FirstName string `json:"first_name"`
+	Id        string `json:"id"`
+	LastName  string `json:"last_name"`
+	Role      string `json:"role"`
+}
+
+type OutputAdvisorServerToolItem struct {
+	Advice       string `json:"advice"`
+	Error        string `json:"error"`
+	Id           string `json:"id"`
+	InstanceName string `json:"instance_name"`
+	Model        string `json:"model"`
+	Prompt       string `json:"prompt"`
+	Status       string `json:"status"`
+	Type         string `json:"type"`
+}
+
+type OutputApplyPatchCallItem struct {
+	CallId    string `json:"call_id"`
+	Id        string `json:"id"`
+	Operation string `json:"operation"`
+	Status    string `json:"status"`
+	Type      string `json:"type"`
+}
+
 type OutputApplyPatchServerToolItem struct {
-	FilePath string `json:"filePath"`
-	Id       string `json:"id"`
-	Patch    string `json:"patch"`
-	Status   string `json:"status"`
-	Type     string `json:"type"`
+	CallId    string `json:"call_id"`
+	Id        string `json:"id"`
+	Operation string `json:"operation"`
+	Status    string `json:"status"`
+	Type      string `json:"type"`
 }
 
 type OutputBashServerToolItem struct {
-	Command  string `json:"command"`
-	ExitCode int    `json:"exitCode"`
-	Id       string `json:"id"`
-	Status   string `json:"status"`
-	Stderr   string `json:"stderr"`
-	Stdout   string `json:"stdout"`
-	Type     string `json:"type"`
+	Arguments   string          `json:"arguments"`
+	CallId      string          `json:"call_id"`
+	Command     string          `json:"command"`
+	ContainerId string          `json:"container_id"`
+	ExitCode    int             `json:"exitCode"`
+	Files       json.RawMessage `json:"files"`
+	Id          string          `json:"id"`
+	Status      string          `json:"status"`
+	Stderr      string          `json:"stderr"`
+	Stdout      string          `json:"stdout"`
+	Type        string          `json:"type"`
 }
 
 type OutputBrowserUseServerToolItem struct {
@@ -2065,6 +3624,16 @@ type OutputComputerCallItem struct {
 	Type                string          `json:"type"`
 }
 
+type OutputCustomToolCallItem struct {
+	CallId    string `json:"call_id"`
+	Id        string `json:"id"`
+	Input     string `json:"input"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	Status    string `json:"status"`
+	Type      string `json:"type"`
+}
+
 type OutputDatetimeItem struct {
 	Datetime string `json:"datetime"`
 	Id       string `json:"id"`
@@ -2087,18 +3656,46 @@ type OutputFileSearchServerToolItem struct {
 	Type    string          `json:"type"`
 }
 
-type OutputFunctionCallItem struct {
+type OutputFilesServerToolItem struct {
 	Arguments string `json:"arguments"`
 	CallId    string `json:"call_id"`
+	Error     string `json:"error"`
+	FileId    string `json:"file_id"`
+	Filename  string `json:"filename"`
 	Id        string `json:"id"`
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
+	Operation string `json:"operation"`
+	Result    string `json:"result"`
 	Status    string `json:"status"`
 	Type      string `json:"type"`
 }
 
+type OutputFunctionCallItem struct {
+	Arguments     string          `json:"arguments"`
+	CallId        string          `json:"call_id"`
+	Id            string          `json:"id"`
+	Name          string          `json:"name"`
+	Namespace     string          `json:"namespace"`
+	Status        string          `json:"status"`
+	SubagentId    string          `json:"subagent_id"`
+	SubagentItems json.RawMessage `json:"subagent_items"`
+	Type          string          `json:"type"`
+}
+
+type OutputFusionServerToolItem struct {
+	Analysis      json.RawMessage `json:"analysis"`
+	Error         string          `json:"error"`
+	FailedModels  json.RawMessage `json:"failed_models"`
+	FailureReason string          `json:"failure_reason"`
+	Id            string          `json:"id"`
+	Responses     json.RawMessage `json:"responses"`
+	Sources       json.RawMessage `json:"sources"`
+	Status        string          `json:"status"`
+	Type          string          `json:"type"`
+}
+
 type OutputImageGenerationCallItem struct {
 	Id     string `json:"id"`
+	Prompt string `json:"prompt"`
 	Result string `json:"result"`
 	Status string `json:"status"`
 	Type   string `json:"type"`
@@ -2108,6 +3705,7 @@ type OutputImageGenerationServerToolItem struct {
 	Id            string `json:"id"`
 	ImageB64      string `json:"imageB64"`
 	ImageUrl      string `json:"imageUrl"`
+	Prompt        string `json:"prompt"`
 	Result        string `json:"result"`
 	RevisedPrompt string `json:"revisedPrompt"`
 	Status        string `json:"status"`
@@ -2119,6 +3717,34 @@ type OutputItemAddedEvent struct {
 	OutputIndex    int    `json:"output_index"`
 	SequenceNumber int    `json:"sequence_number"`
 	Type           string `json:"type"`
+}
+
+type OutputItemApplyPatchCall struct {
+	CallId    string `json:"call_id"`
+	CreatedBy string `json:"created_by"`
+	Id        string `json:"id"`
+	Operation string `json:"operation"`
+	Status    string `json:"status"`
+	Type      string `json:"type"`
+}
+
+type OutputItemCodeInterpreterCall struct {
+	Code        string          `json:"code"`
+	ContainerId string          `json:"container_id"`
+	Id          string          `json:"id"`
+	Outputs     json.RawMessage `json:"outputs"`
+	Status      string          `json:"status"`
+	Type        string          `json:"type"`
+}
+
+type OutputItemCustomToolCall struct {
+	CallId    string `json:"call_id"`
+	Id        string `json:"id"`
+	Input     string `json:"input"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	Status    string `json:"status"`
+	Type      string `json:"type"`
 }
 
 type OutputItemDoneEvent struct {
@@ -2222,6 +3848,52 @@ type OutputSearchModelsServerToolItem struct {
 	Type      string `json:"type"`
 }
 
+type OutputShellCallItem struct {
+	Action    json.RawMessage `json:"action"`
+	Arguments string          `json:"arguments"`
+	CallId    string          `json:"call_id"`
+	Id        string          `json:"id"`
+	Status    string          `json:"status"`
+	Type      string          `json:"type"`
+}
+
+type OutputShellCallOutputItem struct {
+	CallId          string          `json:"call_id"`
+	ContainerId     string          `json:"container_id"`
+	Files           json.RawMessage `json:"files"`
+	Id              string          `json:"id"`
+	MaxOutputLength int             `json:"max_output_length"`
+	Output          json.RawMessage `json:"output"`
+	Status          string          `json:"status"`
+	Type            string          `json:"type"`
+}
+
+type OutputShellServerToolItem struct {
+	Action      json.RawMessage `json:"action"`
+	Arguments   string          `json:"arguments"`
+	CallId      string          `json:"call_id"`
+	ContainerId string          `json:"container_id"`
+	Files       json.RawMessage `json:"files"`
+	Id          string          `json:"id"`
+	Output      json.RawMessage `json:"output"`
+	Status      string          `json:"status"`
+	Type        string          `json:"type"`
+}
+
+type OutputSubagentServerToolItem struct {
+	CallId          string `json:"call_id"`
+	Error           string `json:"error"`
+	Id              string `json:"id"`
+	InstanceName    string `json:"instance_name"`
+	Model           string `json:"model"`
+	Name            string `json:"name"`
+	Outcome         string `json:"outcome"`
+	Status          string `json:"status"`
+	TaskDescription string `json:"task_description"`
+	TaskName        string `json:"task_name"`
+	Type            string `json:"type"`
+}
+
 type OutputTextEditorServerToolItem struct {
 	Command  string `json:"command"`
 	FilePath string `json:"filePath"`
@@ -2269,7 +3941,9 @@ type PDFParserOptions struct {
 type ParetoRouterPlugin struct {
 	Enabled        bool    `json:"enabled"`
 	Id             string  `json:"id"`
+	MaxPrice       float64 `json:"max_price"`
 	MinCodingScore float64 `json:"min_coding_score"`
+	PriceSource    string  `json:"price_source"`
 }
 
 type PayloadTooLargeResponse struct {
@@ -2332,10 +4006,62 @@ type PipelineStage struct {
 	Type           string          `json:"type"`
 }
 
+type Prediction struct {
+	Content string `json:"content"`
+	Type    string `json:"type"`
+}
+
+type PredictionContentText struct {
+	Text string `json:"text"`
+	Type string `json:"type"`
+}
+
+type Preset struct {
+	CreatedAt           string `json:"created_at"`
+	CreatorUserId       string `json:"creator_user_id"`
+	Description         string `json:"description"`
+	DesignatedVersionId string `json:"designated_version_id"`
+	Id                  string `json:"id"`
+	Name                string `json:"name"`
+	Slug                string `json:"slug"`
+	Status              string `json:"status"`
+	StatusUpdatedAt     string `json:"status_updated_at"`
+	UpdatedAt           string `json:"updated_at"`
+	WorkspaceId         string `json:"workspace_id"`
+}
+
+type PresetDesignatedVersion struct {
+	Config       json.RawMessage `json:"config"`
+	CreatedAt    string          `json:"created_at"`
+	CreatorId    string          `json:"creator_id"`
+	Id           string          `json:"id"`
+	PresetId     string          `json:"preset_id"`
+	SystemPrompt string          `json:"system_prompt"`
+	UpdatedAt    string          `json:"updated_at"`
+	Version      int             `json:"version"`
+}
+
+type PresetWithDesignatedVersion struct {
+	CreatedAt           string          `json:"created_at"`
+	CreatorUserId       string          `json:"creator_user_id"`
+	Description         string          `json:"description"`
+	DesignatedVersion   json.RawMessage `json:"designated_version"`
+	DesignatedVersionId string          `json:"designated_version_id"`
+	Id                  string          `json:"id"`
+	Name                string          `json:"name"`
+	Slug                string          `json:"slug"`
+	Status              string          `json:"status"`
+	StatusUpdatedAt     string          `json:"status_updated_at"`
+	UpdatedAt           string          `json:"updated_at"`
+	WorkspaceId         string          `json:"workspace_id"`
+}
+
 type Preview_20250311_WebSearchServerTool struct {
 	Engine            string          `json:"engine"`
 	Filters           json.RawMessage `json:"filters"`
 	MaxResults        int             `json:"max_results"`
+	MaxUses           int             `json:"max_uses"`
+	Mode              string          `json:"mode"`
 	SearchContextSize string          `json:"search_context_size"`
 	Type              string          `json:"type"`
 	UserLocation      json.RawMessage `json:"user_location"`
@@ -2345,6 +4071,8 @@ type Preview_WebSearchServerTool struct {
 	Engine            string          `json:"engine"`
 	Filters           json.RawMessage `json:"filters"`
 	MaxResults        int             `json:"max_results"`
+	MaxUses           int             `json:"max_uses"`
+	Mode              string          `json:"mode"`
 	SearchContextSize string          `json:"search_context_size"`
 	Type              string          `json:"type"`
 	UserLocation      json.RawMessage `json:"user_location"`
@@ -2358,117 +4086,168 @@ type Preview_WebSearchUserLocation struct {
 	Type     string `json:"type"`
 }
 
+type PricingOverride struct {
+	Audio             string          `json:"audio"`
+	Completion        string          `json:"completion"`
+	InputAudioCache   string          `json:"input_audio_cache"`
+	InputCacheRead    string          `json:"input_cache_read"`
+	InputCacheWrite   string          `json:"input_cache_write"`
+	InputCacheWrite1h string          `json:"input_cache_write_1h"`
+	MinPromptTokens   float64         `json:"min_prompt_tokens"`
+	Prompt            string          `json:"prompt"`
+	UtcDays           json.RawMessage `json:"utc_days"`
+	UtcEnd            float64         `json:"utc_end"`
+	UtcStart          float64         `json:"utc_start"`
+}
+
+type PromptCacheBreakpoint struct {
+	Mode string `json:"mode"`
+}
+
+type PromptCacheOptions struct {
+	Mode string `json:"mode"`
+	Ttl  string `json:"ttl"`
+}
+
 type ProviderOptions struct {
-	V01ai               json.RawMessage `json:"01ai"`
-	Ai21                json.RawMessage `json:"ai21"`
-	AionLabs            json.RawMessage `json:"aion-labs"`
-	Akashml             json.RawMessage `json:"akashml"`
-	Alibaba             json.RawMessage `json:"alibaba"`
-	AmazonBedrock       json.RawMessage `json:"amazon-bedrock"`
-	AmazonNova          json.RawMessage `json:"amazon-nova"`
-	Ambient             json.RawMessage `json:"ambient"`
-	Anthropic           json.RawMessage `json:"anthropic"`
-	Anyscale            json.RawMessage `json:"anyscale"`
-	ArceeAi             json.RawMessage `json:"arcee-ai"`
-	AtlasCloud          json.RawMessage `json:"atlas-cloud"`
-	Atoma               json.RawMessage `json:"atoma"`
-	Avian               json.RawMessage `json:"avian"`
-	Azure               json.RawMessage `json:"azure"`
-	Baidu               json.RawMessage `json:"baidu"`
-	Baseten             json.RawMessage `json:"baseten"`
-	BlackForestLabs     json.RawMessage `json:"black-forest-labs"`
-	Byteplus            json.RawMessage `json:"byteplus"`
-	Centml              json.RawMessage `json:"centml"`
-	Cerebras            json.RawMessage `json:"cerebras"`
-	Chutes              json.RawMessage `json:"chutes"`
-	Cirrascale          json.RawMessage `json:"cirrascale"`
-	Clarifai            json.RawMessage `json:"clarifai"`
-	Cloudflare          json.RawMessage `json:"cloudflare"`
-	Cohere              json.RawMessage `json:"cohere"`
-	Crofai              json.RawMessage `json:"crofai"`
-	Crusoe              json.RawMessage `json:"crusoe"`
-	Deepinfra           json.RawMessage `json:"deepinfra"`
-	Deepseek            json.RawMessage `json:"deepseek"`
-	Dekallm             json.RawMessage `json:"dekallm"`
-	Enfer               json.RawMessage `json:"enfer"`
-	FakeProvider        json.RawMessage `json:"fake-provider"`
-	Featherless         json.RawMessage `json:"featherless"`
-	Fireworks           json.RawMessage `json:"fireworks"`
-	Friendli            json.RawMessage `json:"friendli"`
-	Gmicloud            json.RawMessage `json:"gmicloud"`
-	GoogleAiStudio      json.RawMessage `json:"google-ai-studio"`
-	GoogleVertex        json.RawMessage `json:"google-vertex"`
-	Gopomelo            json.RawMessage `json:"gopomelo"`
-	Groq                json.RawMessage `json:"groq"`
-	Huggingface         json.RawMessage `json:"huggingface"`
-	Hyperbolic          json.RawMessage `json:"hyperbolic"`
-	HyperbolicQuantized json.RawMessage `json:"hyperbolic-quantized"`
-	Inception           json.RawMessage `json:"inception"`
-	Inceptron           json.RawMessage `json:"inceptron"`
-	InferenceNet        json.RawMessage `json:"inference-net"`
-	Infermatic          json.RawMessage `json:"infermatic"`
-	Inflection          json.RawMessage `json:"inflection"`
-	Inocloud            json.RawMessage `json:"inocloud"`
-	IoNet               json.RawMessage `json:"io-net"`
-	Ionstream           json.RawMessage `json:"ionstream"`
-	Klusterai           json.RawMessage `json:"klusterai"`
-	Lambda              json.RawMessage `json:"lambda"`
-	Lepton              json.RawMessage `json:"lepton"`
-	Liquid              json.RawMessage `json:"liquid"`
-	Lynn                json.RawMessage `json:"lynn"`
-	LynnPrivate         json.RawMessage `json:"lynn-private"`
-	Mancer              json.RawMessage `json:"mancer"`
-	MancerOld           json.RawMessage `json:"mancer-old"`
-	Mara                json.RawMessage `json:"mara"`
-	Meta                json.RawMessage `json:"meta"`
-	Minimax             json.RawMessage `json:"minimax"`
-	Mistral             json.RawMessage `json:"mistral"`
-	Modal               json.RawMessage `json:"modal"`
-	Modelrun            json.RawMessage `json:"modelrun"`
-	Modular             json.RawMessage `json:"modular"`
-	Moonshotai          json.RawMessage `json:"moonshotai"`
-	Morph               json.RawMessage `json:"morph"`
-	Ncompass            json.RawMessage `json:"ncompass"`
-	Nebius              json.RawMessage `json:"nebius"`
-	NexAgi              json.RawMessage `json:"nex-agi"`
-	Nextbit             json.RawMessage `json:"nextbit"`
-	Nineteen            json.RawMessage `json:"nineteen"`
-	Novita              json.RawMessage `json:"novita"`
-	Nvidia              json.RawMessage `json:"nvidia"`
-	Octoai              json.RawMessage `json:"octoai"`
-	OpenInference       json.RawMessage `json:"open-inference"`
-	Openai              json.RawMessage `json:"openai"`
-	Parasail            json.RawMessage `json:"parasail"`
-	Perceptron          json.RawMessage `json:"perceptron"`
-	Perplexity          json.RawMessage `json:"perplexity"`
-	Phala               json.RawMessage `json:"phala"`
-	Poolside            json.RawMessage `json:"poolside"`
-	Recraft             json.RawMessage `json:"recraft"`
-	Recursal            json.RawMessage `json:"recursal"`
-	Reflection          json.RawMessage `json:"reflection"`
-	Reka                json.RawMessage `json:"reka"`
-	Relace              json.RawMessage `json:"relace"`
-	Replicate           json.RawMessage `json:"replicate"`
-	Sambanova           json.RawMessage `json:"sambanova"`
-	SambanovaCloaked    json.RawMessage `json:"sambanova-cloaked"`
-	Seed                json.RawMessage `json:"seed"`
-	SfCompute           json.RawMessage `json:"sf-compute"`
-	Siliconflow         json.RawMessage `json:"siliconflow"`
-	Sourceful           json.RawMessage `json:"sourceful"`
-	Stealth             json.RawMessage `json:"stealth"`
-	Stepfun             json.RawMessage `json:"stepfun"`
-	Streamlake          json.RawMessage `json:"streamlake"`
-	Switchpoint         json.RawMessage `json:"switchpoint"`
-	Targon              json.RawMessage `json:"targon"`
-	Together            json.RawMessage `json:"together"`
-	TogetherLite        json.RawMessage `json:"together-lite"`
-	Ubicloud            json.RawMessage `json:"ubicloud"`
-	Upstage             json.RawMessage `json:"upstage"`
-	Venice              json.RawMessage `json:"venice"`
-	Wandb               json.RawMessage `json:"wandb"`
-	Xai                 json.RawMessage `json:"xai"`
-	Xiaomi              json.RawMessage `json:"xiaomi"`
-	ZAi                 json.RawMessage `json:"z-ai"`
+	V01ai                    json.RawMessage `json:"01ai"`
+	Ai21                     json.RawMessage `json:"ai21"`
+	AionLabs                 json.RawMessage `json:"aion-labs"`
+	Akashml                  json.RawMessage `json:"akashml"`
+	Alibaba                  json.RawMessage `json:"alibaba"`
+	AmazonBedrock            json.RawMessage `json:"amazon-bedrock"`
+	AmazonBedrockClaudeOnAws json.RawMessage `json:"amazon-bedrock/claude-on-aws"`
+	AmazonNova               json.RawMessage `json:"amazon-nova"`
+	Ambient                  json.RawMessage `json:"ambient"`
+	Anthropic                json.RawMessage `json:"anthropic"`
+	Anthropic2               json.RawMessage `json:"anthropic/2"`
+	Anyscale                 json.RawMessage `json:"anyscale"`
+	ArceeAi                  json.RawMessage `json:"arcee-ai"`
+	AtlasCloud               json.RawMessage `json:"atlas-cloud"`
+	Atoma                    json.RawMessage `json:"atoma"`
+	Avian                    json.RawMessage `json:"avian"`
+	Azure                    json.RawMessage `json:"azure"`
+	Baidu                    json.RawMessage `json:"baidu"`
+	Baseten                  json.RawMessage `json:"baseten"`
+	BlackForestLabs          json.RawMessage `json:"black-forest-labs"`
+	Byteplus                 json.RawMessage `json:"byteplus"`
+	Centml                   json.RawMessage `json:"centml"`
+	Cerebras                 json.RawMessage `json:"cerebras"`
+	Chutes                   json.RawMessage `json:"chutes"`
+	Cirrascale               json.RawMessage `json:"cirrascale"`
+	Clarifai                 json.RawMessage `json:"clarifai"`
+	ClaudeOnAws              json.RawMessage `json:"claude-on-aws"`
+	Cloudflare               json.RawMessage `json:"cloudflare"`
+	Cohere                   json.RawMessage `json:"cohere"`
+	Coreweave                json.RawMessage `json:"coreweave"`
+	Cosine                   json.RawMessage `json:"cosine"`
+	Crofai                   json.RawMessage `json:"crofai"`
+	Crucible                 json.RawMessage `json:"crucible"`
+	Crusoe                   json.RawMessage `json:"crusoe"`
+	Darkbloom                json.RawMessage `json:"darkbloom"`
+	Databricks               json.RawMessage `json:"databricks"`
+	Decart                   json.RawMessage `json:"decart"`
+	Deepgram                 json.RawMessage `json:"deepgram"`
+	Deepinfra                json.RawMessage `json:"deepinfra"`
+	Deepseek                 json.RawMessage `json:"deepseek"`
+	Dekallm                  json.RawMessage `json:"dekallm"`
+	Digitalocean             json.RawMessage `json:"digitalocean"`
+	Enfer                    json.RawMessage `json:"enfer"`
+	FakeProvider             json.RawMessage `json:"fake-provider"`
+	Featherless              json.RawMessage `json:"featherless"`
+	Fireworks                json.RawMessage `json:"fireworks"`
+	FishAudio                json.RawMessage `json:"fish-audio"`
+	Friendli                 json.RawMessage `json:"friendli"`
+	Gmicloud                 json.RawMessage `json:"gmicloud"`
+	GoogleAiStudio           json.RawMessage `json:"google-ai-studio"`
+	GoogleVertex             json.RawMessage `json:"google-vertex"`
+	Gopomelo                 json.RawMessage `json:"gopomelo"`
+	Groq                     json.RawMessage `json:"groq"`
+	Heygen                   json.RawMessage `json:"heygen"`
+	Huggingface              json.RawMessage `json:"huggingface"`
+	Hyperbolic               json.RawMessage `json:"hyperbolic"`
+	HyperbolicQuantized      json.RawMessage `json:"hyperbolic-quantized"`
+	Inception                json.RawMessage `json:"inception"`
+	Inceptron                json.RawMessage `json:"inceptron"`
+	InferactVllm             json.RawMessage `json:"inferact-vllm"`
+	InferenceNet             json.RawMessage `json:"inference-net"`
+	Infermatic               json.RawMessage `json:"infermatic"`
+	Inflection               json.RawMessage `json:"inflection"`
+	Inocloud                 json.RawMessage `json:"inocloud"`
+	IoNet                    json.RawMessage `json:"io-net"`
+	Ionstream                json.RawMessage `json:"ionstream"`
+	Klusterai                json.RawMessage `json:"klusterai"`
+	Krea                     json.RawMessage `json:"krea"`
+	Lambda                   json.RawMessage `json:"lambda"`
+	Lepton                   json.RawMessage `json:"lepton"`
+	Liquid                   json.RawMessage `json:"liquid"`
+	Lynn                     json.RawMessage `json:"lynn"`
+	LynnPrivate              json.RawMessage `json:"lynn-private"`
+	Makora                   json.RawMessage `json:"makora"`
+	Mancer                   json.RawMessage `json:"mancer"`
+	MancerOld                json.RawMessage `json:"mancer-old"`
+	Mara                     json.RawMessage `json:"mara"`
+	Meta                     json.RawMessage `json:"meta"`
+	Minimax                  json.RawMessage `json:"minimax"`
+	Mistral                  json.RawMessage `json:"mistral"`
+	Modal                    json.RawMessage `json:"modal"`
+	Modelrun                 json.RawMessage `json:"modelrun"`
+	Modular                  json.RawMessage `json:"modular"`
+	Moonshotai               json.RawMessage `json:"moonshotai"`
+	Morph                    json.RawMessage `json:"morph"`
+	Ncompass                 json.RawMessage `json:"ncompass"`
+	Nebius                   json.RawMessage `json:"nebius"`
+	NexAgi                   json.RawMessage `json:"nex-agi"`
+	Nextbit                  json.RawMessage `json:"nextbit"`
+	Nineteen                 json.RawMessage `json:"nineteen"`
+	Novita                   json.RawMessage `json:"novita"`
+	Nvidia                   json.RawMessage `json:"nvidia"`
+	Octoai                   json.RawMessage `json:"octoai"`
+	Ollama                   json.RawMessage `json:"ollama"`
+	OpenInference            json.RawMessage `json:"open-inference"`
+	Openai                   json.RawMessage `json:"openai"`
+	Parasail                 json.RawMessage `json:"parasail"`
+	Perceptron               json.RawMessage `json:"perceptron"`
+	Perplexity               json.RawMessage `json:"perplexity"`
+	Phala                    json.RawMessage `json:"phala"`
+	Poolside                 json.RawMessage `json:"poolside"`
+	Quiver                   json.RawMessage `json:"quiver"`
+	Recraft                  json.RawMessage `json:"recraft"`
+	Recursal                 json.RawMessage `json:"recursal"`
+	Reflection               json.RawMessage `json:"reflection"`
+	Reka                     json.RawMessage `json:"reka"`
+	Relace                   json.RawMessage `json:"relace"`
+	Replicate                json.RawMessage `json:"replicate"`
+	Runway                   json.RawMessage `json:"runway"`
+	SailResearch             json.RawMessage `json:"sail-research"`
+	Sakana                   json.RawMessage `json:"sakana"`
+	SakanaAi                 json.RawMessage `json:"sakana-ai"`
+	Sambanova                json.RawMessage `json:"sambanova"`
+	SambanovaCloaked         json.RawMessage `json:"sambanova-cloaked"`
+	Seed                     json.RawMessage `json:"seed"`
+	SfCompute                json.RawMessage `json:"sf-compute"`
+	Siliconflow              json.RawMessage `json:"siliconflow"`
+	Sourceful                json.RawMessage `json:"sourceful"`
+	Stealth                  json.RawMessage `json:"stealth"`
+	Stepfun                  json.RawMessage `json:"stepfun"`
+	Streamlake               json.RawMessage `json:"streamlake"`
+	Switchpoint              json.RawMessage `json:"switchpoint"`
+	Targon                   json.RawMessage `json:"targon"`
+	Tencent                  json.RawMessage `json:"tencent"`
+	Tenstorrent              json.RawMessage `json:"tenstorrent"`
+	Thinkingmachines         json.RawMessage `json:"thinkingmachines"`
+	Together                 json.RawMessage `json:"together"`
+	TogetherLite             json.RawMessage `json:"together-lite"`
+	Ubicloud                 json.RawMessage `json:"ubicloud"`
+	Upstage                  json.RawMessage `json:"upstage"`
+	Venice                   json.RawMessage `json:"venice"`
+	Voyageai                 json.RawMessage `json:"voyageai"`
+	Wafer                    json.RawMessage `json:"wafer"`
+	Wandb                    json.RawMessage `json:"wandb"`
+	WandbLegacy              json.RawMessage `json:"wandb-legacy"`
+	Xai                      json.RawMessage `json:"xai"`
+	Xiaomi                   json.RawMessage `json:"xiaomi"`
+	ZAi                      json.RawMessage `json:"z-ai"`
 }
 
 type ProviderOverloadedResponse struct {
@@ -2500,13 +4279,14 @@ type ProviderPreferences struct {
 }
 
 type ProviderResponse struct {
-	EndpointId     string  `json:"endpoint_id"`
-	Id             string  `json:"id"`
-	IsByok         bool    `json:"is_byok"`
-	Latency        float64 `json:"latency"`
-	ModelPermaslug string  `json:"model_permaslug"`
-	ProviderName   string  `json:"provider_name"`
-	Status         float64 `json:"status"`
+	EndpointId        string  `json:"endpoint_id"`
+	Id                string  `json:"id"`
+	IsByok            bool    `json:"is_byok"`
+	Latency           float64 `json:"latency"`
+	ModelPermaslug    string  `json:"model_permaslug"`
+	ProviderName      string  `json:"provider_name"`
+	RoutedServiceTier string  `json:"routed_service_tier"`
+	Status            int     `json:"status"`
 }
 
 type ProviderSortConfig struct {
@@ -2532,12 +4312,15 @@ type PublicEndpoint struct {
 	ModelId                 string          `json:"model_id"`
 	ModelName               string          `json:"model_name"`
 	Name                    string          `json:"name"`
+	PerfLast30mByWorkload   json.RawMessage `json:"perf_last_30m_by_workload"`
 	Pricing                 json.RawMessage `json:"pricing"`
 	ProviderName            string          `json:"provider_name"`
 	Quantization            string          `json:"quantization"`
 	Status                  int             `json:"status"`
 	SupportedParameters     json.RawMessage `json:"supported_parameters"`
 	SupportsImplicitCaching bool            `json:"supports_implicit_caching"`
+	SupportsToolChoice      json.RawMessage `json:"supports_tool_choice"`
+	SupportsVoiceCloning    bool            `json:"supports_voice_cloning"`
 	Tag                     string          `json:"tag"`
 	ThroughputLast30m       string          `json:"throughput_last_30m"`
 	UptimeLast1d            float64         `json:"uptime_last_1d"`
@@ -2546,27 +4329,46 @@ type PublicEndpoint struct {
 }
 
 type PublicPricing struct {
-	Audio             string  `json:"audio"`
-	AudioOutput       string  `json:"audio_output"`
-	Completion        string  `json:"completion"`
-	Discount          float64 `json:"discount"`
-	Image             string  `json:"image"`
-	ImageOutput       string  `json:"image_output"`
-	ImageToken        string  `json:"image_token"`
-	InputAudioCache   string  `json:"input_audio_cache"`
-	InputCacheRead    string  `json:"input_cache_read"`
-	InputCacheWrite   string  `json:"input_cache_write"`
-	InternalReasoning string  `json:"internal_reasoning"`
-	Prompt            string  `json:"prompt"`
-	Request           string  `json:"request"`
-	WebSearch         string  `json:"web_search"`
+	Audio             string          `json:"audio"`
+	AudioOutput       string          `json:"audio_output"`
+	Completion        string          `json:"completion"`
+	Discount          float64         `json:"discount"`
+	Image             string          `json:"image"`
+	ImageOutput       string          `json:"image_output"`
+	ImageToken        string          `json:"image_token"`
+	InputAudioCache   string          `json:"input_audio_cache"`
+	InputCacheRead    string          `json:"input_cache_read"`
+	InputCacheWrite   string          `json:"input_cache_write"`
+	InputCacheWrite1h string          `json:"input_cache_write_1h"`
+	InternalReasoning string          `json:"internal_reasoning"`
+	Overrides         json.RawMessage `json:"overrides"`
+	Prompt            string          `json:"prompt"`
+	Request           string          `json:"request"`
+	WebSearch         string          `json:"web_search"`
 }
 
-type ReasoningConfig struct {
-	Effort    string `json:"effort"`
-	Enabled   bool   `json:"enabled"`
-	MaxTokens int    `json:"max_tokens"`
-	Summary   string `json:"summary"`
+type RangeCapability struct {
+	Max  float64 `json:"max"`
+	Min  float64 `json:"min"`
+	Type string  `json:"type"`
+}
+
+type RankingsDailyItem struct {
+	Date           string `json:"date"`
+	ModelPermaslug string `json:"model_permaslug"`
+	TotalTokens    string `json:"total_tokens"`
+}
+
+type RankingsDailyMeta struct {
+	AsOf      string `json:"as_of"`
+	EndDate   string `json:"end_date"`
+	StartDate string `json:"start_date"`
+	Version   string `json:"version"`
+}
+
+type RankingsDailyResponse struct {
+	Data json.RawMessage `json:"data"`
+	Meta json.RawMessage `json:"meta"`
 }
 
 type ReasoningDeltaEvent struct {
@@ -2584,6 +4386,17 @@ type ReasoningDetailEncrypted struct {
 	Id     string `json:"id"`
 	Index  int    `json:"index"`
 	Type   string `json:"type"`
+}
+
+type ReasoningDetailServerToolCall struct {
+	Arguments  string `json:"arguments"`
+	Format     string `json:"format"`
+	Id         string `json:"id"`
+	Index      int    `json:"index"`
+	Result     string `json:"result"`
+	ToolCallId string `json:"tool_call_id"`
+	ToolName   string `json:"tool_name"`
+	Type       string `json:"type"`
 }
 
 type ReasoningDetailSummary struct {
@@ -2702,6 +4515,12 @@ type RequestTimeoutResponseErrorData struct {
 	Metadata json.RawMessage `json:"metadata"`
 }
 
+type RerankCreateItem struct {
+	Document       json.RawMessage `json:"document"`
+	Index          int             `json:"index"`
+	RelevanceScore float64         `json:"relevance_score"`
+}
+
 type ResponseHealingPlugin struct {
 	Enabled bool   `json:"enabled"`
 	Id      string `json:"id"`
@@ -2720,42 +4539,46 @@ type ResponsesErrorField struct {
 }
 
 type ResponsesRequest struct {
-	Background         bool            `json:"background"`
-	FrequencyPenalty   float64         `json:"frequency_penalty"`
-	ImageConfig        json.RawMessage `json:"image_config"`
-	Include            json.RawMessage `json:"include"`
-	Input              string          `json:"input"`
-	Instructions       string          `json:"instructions"`
-	MaxOutputTokens    int             `json:"max_output_tokens"`
-	MaxToolCalls       int             `json:"max_tool_calls"`
-	Metadata           json.RawMessage `json:"metadata"`
-	Modalities         json.RawMessage `json:"modalities"`
-	Model              string          `json:"model"`
-	Models             json.RawMessage `json:"models"`
-	ParallelToolCalls  bool            `json:"parallel_tool_calls"`
-	Plugins            json.RawMessage `json:"plugins"`
-	PresencePenalty    float64         `json:"presence_penalty"`
-	PreviousResponseId string          `json:"previous_response_id"`
-	Prompt             json.RawMessage `json:"prompt"`
-	PromptCacheKey     string          `json:"prompt_cache_key"`
-	Provider           json.RawMessage `json:"provider"`
-	Reasoning          string          `json:"reasoning"`
-	Route              string          `json:"route"`
-	SafetyIdentifier   string          `json:"safety_identifier"`
-	ServiceTier        string          `json:"service_tier"`
-	SessionId          string          `json:"session_id"`
-	Store              bool            `json:"store"`
-	Stream             bool            `json:"stream"`
-	Temperature        float64         `json:"temperature"`
-	Text               string          `json:"text"`
-	ToolChoice         string          `json:"tool_choice"`
-	Tools              json.RawMessage `json:"tools"`
-	TopK               int             `json:"top_k"`
-	TopLogprobs        int             `json:"top_logprobs"`
-	TopP               float64         `json:"top_p"`
-	Trace              json.RawMessage `json:"trace"`
-	Truncation         string          `json:"truncation"`
-	User               string          `json:"user"`
+	Background          bool            `json:"background"`
+	CacheControl        json.RawMessage `json:"cache_control"`
+	Debug               json.RawMessage `json:"debug"`
+	FrequencyPenalty    float64         `json:"frequency_penalty"`
+	ImageConfig         json.RawMessage `json:"image_config"`
+	Include             json.RawMessage `json:"include"`
+	Input               string          `json:"input"`
+	Instructions        string          `json:"instructions"`
+	MaxOutputTokens     int             `json:"max_output_tokens"`
+	MaxToolCalls        int             `json:"max_tool_calls"`
+	Metadata            json.RawMessage `json:"metadata"`
+	Modalities          json.RawMessage `json:"modalities"`
+	Model               string          `json:"model"`
+	Models              json.RawMessage `json:"models"`
+	ParallelToolCalls   bool            `json:"parallel_tool_calls"`
+	Plugins             json.RawMessage `json:"plugins"`
+	PresencePenalty     float64         `json:"presence_penalty"`
+	PreviousResponseId  string          `json:"previous_response_id"`
+	Prompt              json.RawMessage `json:"prompt"`
+	PromptCacheKey      string          `json:"prompt_cache_key"`
+	PromptCacheOptions  json.RawMessage `json:"prompt_cache_options"`
+	Provider            json.RawMessage `json:"provider"`
+	Reasoning           string          `json:"reasoning"`
+	Route               string          `json:"route"`
+	SafetyIdentifier    string          `json:"safety_identifier"`
+	ServiceTier         string          `json:"service_tier"`
+	SessionId           string          `json:"session_id"`
+	StopServerToolsWhen json.RawMessage `json:"stop_server_tools_when"`
+	Store               bool            `json:"store"`
+	Stream              bool            `json:"stream"`
+	Temperature         float64         `json:"temperature"`
+	Text                string          `json:"text"`
+	ToolChoice          string          `json:"tool_choice"`
+	Tools               json.RawMessage `json:"tools"`
+	TopK                int             `json:"top_k"`
+	TopLogprobs         int             `json:"top_logprobs"`
+	TopP                float64         `json:"top_p"`
+	Trace               json.RawMessage `json:"trace"`
+	Truncation          string          `json:"truncation"`
+	User                string          `json:"user"`
 }
 
 type ResponsesStreamingResponse struct {
@@ -2780,16 +4603,37 @@ type STTInputAudio struct {
 }
 
 type STTRequest struct {
-	InputAudio  json.RawMessage `json:"input_audio"`
-	Language    string          `json:"language"`
-	Model       string          `json:"model"`
-	Provider    json.RawMessage `json:"provider"`
-	Temperature float64         `json:"temperature"`
+	InputAudio             json.RawMessage `json:"input_audio"`
+	Language               string          `json:"language"`
+	Model                  string          `json:"model"`
+	Provider               json.RawMessage `json:"provider"`
+	ResponseFormat         string          `json:"response_format"`
+	Temperature            float64         `json:"temperature"`
+	TimestampGranularities json.RawMessage `json:"timestamp_granularities"`
 }
 
 type STTResponse struct {
-	Text  string          `json:"text"`
-	Usage json.RawMessage `json:"usage"`
+	Duration float64         `json:"duration"`
+	Language string          `json:"language"`
+	Segments json.RawMessage `json:"segments"`
+	Task     string          `json:"task"`
+	Text     string          `json:"text"`
+	Usage    json.RawMessage `json:"usage"`
+	Words    json.RawMessage `json:"words"`
+}
+
+type STTSegment struct {
+	AvgLogprob       float64         `json:"avg_logprob"`
+	CompressionRatio float64         `json:"compression_ratio"`
+	End              float64         `json:"end"`
+	Id               int             `json:"id"`
+	NoSpeechProb     float64         `json:"no_speech_prob"`
+	Seek             int             `json:"seek"`
+	Speaker          int             `json:"speaker"`
+	Start            float64         `json:"start"`
+	Temperature      float64         `json:"temperature"`
+	Text             string          `json:"text"`
+	Tokens           json.RawMessage `json:"tokens"`
 }
 
 type STTUsage struct {
@@ -2800,8 +4644,45 @@ type STTUsage struct {
 	TotalTokens  int     `json:"total_tokens"`
 }
 
+type STTWord struct {
+	End     float64 `json:"end"`
+	Speaker int     `json:"speaker"`
+	Start   float64 `json:"start"`
+	Word    string  `json:"word"`
+}
+
+type ScimGroup struct {
+	CreatedAt      string `json:"created_at"`
+	DisplayName    string `json:"display_name"`
+	ExternalId     string `json:"external_id"`
+	Id             string `json:"id"`
+	OrganizationId string `json:"organization_id"`
+	UpdatedAt      string `json:"updated_at"`
+}
+
+type ScimGroupMapping struct {
+	CreatedAt      string `json:"created_at"`
+	Id             string `json:"id"`
+	OrganizationId string `json:"organization_id"`
+	Role           string `json:"role"`
+	ScimGroupId    string `json:"scim_group_id"`
+	UpdatedAt      string `json:"updated_at"`
+	WorkspaceId    string `json:"workspace_id"`
+}
+
 type SearchModelsServerToolConfig struct {
 	MaxResults int `json:"max_results"`
+}
+
+type SearchModelsServerTool_OpenRouter struct {
+	Parameters json.RawMessage `json:"parameters"`
+	Type       string          `json:"type"`
+}
+
+type ServerToolUseDetails struct {
+	ToolCallsExecuted  int `json:"tool_calls_executed"`
+	ToolCallsRequested int `json:"tool_calls_requested"`
+	WebSearchRequests  int `json:"web_search_requests"`
 }
 
 type ServiceUnavailableResponse struct {
@@ -2816,17 +4697,116 @@ type ServiceUnavailableResponseErrorData struct {
 	Metadata json.RawMessage `json:"metadata"`
 }
 
+type SessionCostItem struct {
+	AppName              string  `json:"app_name"`
+	AppSlug              string  `json:"app_slug"`
+	MedianSessionCostUsd float64 `json:"median_session_cost_usd"`
+	ModelPermaslug       string  `json:"model_permaslug"`
+	TurnRange            string  `json:"turn_range"`
+}
+
+type SessionCostMeta struct {
+	AsOf          string `json:"as_of"`
+	Version       string `json:"version"`
+	WindowDays    int    `json:"window_days"`
+	WindowEndDate string `json:"window_end_date"`
+}
+
+type SessionCostResponse struct {
+	Data json.RawMessage `json:"data"`
+	Meta json.RawMessage `json:"meta"`
+}
+
+type ShellCallItem struct {
+	Action      json.RawMessage `json:"action"`
+	Arguments   string          `json:"arguments"`
+	CallId      string          `json:"call_id"`
+	Environment string          `json:"environment"`
+	Id          string          `json:"id"`
+	Status      string          `json:"status"`
+	Type        string          `json:"type"`
+}
+
+type ShellCallOutputContent struct {
+	Outcome string `json:"outcome"`
+	Stderr  string `json:"stderr"`
+	Stdout  string `json:"stdout"`
+}
+
+type ShellCallOutputItem struct {
+	CallId          string          `json:"call_id"`
+	ContainerId     string          `json:"container_id"`
+	Files           json.RawMessage `json:"files"`
+	Id              string          `json:"id"`
+	MaxOutputLength int             `json:"max_output_length"`
+	Output          json.RawMessage `json:"output"`
+	Status          string          `json:"status"`
+	Type            string          `json:"type"`
+}
+
 type ShellServerTool struct {
 	Type string `json:"type"`
 }
 
+type ShellServerToolConfig struct {
+	Engine            string `json:"engine"`
+	Environment       string `json:"environment"`
+	SleepAfterSeconds int    `json:"sleep_after_seconds"`
+}
+
+type ShellServerTool_OpenRouter struct {
+	Parameters json.RawMessage `json:"parameters"`
+	Type       string          `json:"type"`
+}
+
+type SpeechInputReferenceAudio struct {
+	InputAudio json.RawMessage `json:"input_audio"`
+	Type       string          `json:"type"`
+}
+
+type SpeechInputReferenceAudioInput struct {
+	Data   string `json:"data"`
+	Format string `json:"format"`
+}
+
+type SpeechInputReferenceText struct {
+	Text string `json:"text"`
+	Type string `json:"type"`
+}
+
 type SpeechRequest struct {
-	Input          string          `json:"input"`
-	Model          string          `json:"model"`
-	Provider       json.RawMessage `json:"provider"`
-	ResponseFormat string          `json:"response_format"`
-	Speed          float64         `json:"speed"`
-	Voice          string          `json:"voice"`
+	Input           string          `json:"input"`
+	InputReferences json.RawMessage `json:"input_references"`
+	Model           string          `json:"model"`
+	Provider        json.RawMessage `json:"provider"`
+	ResponseFormat  string          `json:"response_format"`
+	Speed           float64         `json:"speed"`
+	Voice           string          `json:"voice"`
+}
+
+type StopServerToolsWhenFinishReasonIs struct {
+	Reason string `json:"reason"`
+	Type   string `json:"type"`
+}
+
+type StopServerToolsWhenHasToolCall struct {
+	ToolName string `json:"tool_name"`
+	Type     string `json:"type"`
+}
+
+type StopServerToolsWhenMaxCost struct {
+	MaxCostInDollars float64 `json:"max_cost_in_dollars"`
+	Type             string  `json:"type"`
+}
+
+type StopServerToolsWhenMaxTokensUsed struct {
+	MaxTokens int    `json:"max_tokens"`
+	Type      string `json:"type"`
+}
+
+type StopServerToolsWhenStepCountIs struct {
+	StepCount int    `json:"step_count"`
+	Type      string `json:"type"`
 }
 
 type StoredPromptTemplate struct {
@@ -2879,6 +4859,75 @@ type StreamLogprobTopLogprob struct {
 	Token   string          `json:"token"`
 }
 
+type SubagentNestedTool struct {
+	Parameters json.RawMessage `json:"parameters"`
+	Type       string          `json:"type"`
+}
+
+type SubagentReasoning struct {
+	Effort    string `json:"effort"`
+	MaxTokens int    `json:"max_tokens"`
+}
+
+type SubagentServerToolConfig struct {
+	InheritFunctions       bool            `json:"inherit_functions"`
+	InheritedFunctionNames json.RawMessage `json:"inherited_function_names"`
+	Instructions           string          `json:"instructions"`
+	MaxCompletionTokens    int             `json:"max_completion_tokens"`
+	MaxToolCalls           int             `json:"max_tool_calls"`
+	Model                  string          `json:"model"`
+	Name                   string          `json:"name"`
+	Reasoning              json.RawMessage `json:"reasoning"`
+	Temperature            float64         `json:"temperature"`
+	Tools                  json.RawMessage `json:"tools"`
+}
+
+type SubagentServerTool_OpenRouter struct {
+	Parameters json.RawMessage `json:"parameters"`
+	Type       string          `json:"type"`
+}
+
+type SubmitGenerationFeedbackRequest struct {
+	Category     string `json:"category"`
+	Comment      string `json:"comment"`
+	GenerationId string `json:"generation_id"`
+}
+
+type SubmitGenerationFeedbackResponse struct {
+	Data json.RawMessage `json:"data"`
+}
+
+type SupportedParameters struct {
+}
+
+type TaskClassificationItem struct {
+	CategoryTokenShare float64         `json:"category_token_share"`
+	CategoryUsageShare float64         `json:"category_usage_share"`
+	DisplayName        string          `json:"display_name"`
+	MacroCategory      string          `json:"macro_category"`
+	Models             json.RawMessage `json:"models"`
+	Tag                string          `json:"tag"`
+	TokenShare         float64         `json:"token_share"`
+	UsageShare         float64         `json:"usage_share"`
+}
+
+type TaskClassificationMacroCategory struct {
+	Key        string  `json:"key"`
+	Label      string  `json:"label"`
+	TokenShare float64 `json:"token_share"`
+	UsageShare float64 `json:"usage_share"`
+}
+
+type TaskClassificationModel struct {
+	Id            string  `json:"id"`
+	TagTokenShare float64 `json:"tag_token_share"`
+	TagUsageShare float64 `json:"tag_usage_share"`
+}
+
+type TaskClassificationResponse struct {
+	Data json.RawMessage `json:"data"`
+}
+
 type TextConfig struct {
 	Format    string `json:"format"`
 	Verbosity string `json:"verbosity"`
@@ -2927,6 +4976,22 @@ type ToolChoiceAllowed struct {
 	Type  string          `json:"type"`
 }
 
+type ToolChoiceSupport struct {
+	Auto     bool `json:"auto"`
+	Function bool `json:"function"`
+	None     bool `json:"none"`
+	Required bool `json:"required"`
+}
+
+type ToolSearchServerTool struct {
+	Parameters json.RawMessage `json:"parameters"`
+	Type       string          `json:"type"`
+}
+
+type ToolSearchServerToolConfig struct {
+	MaxResults int `json:"max_results"`
+}
+
 type TopProviderInfo struct {
 	ContextLength       int  `json:"context_length"`
 	IsModerated         bool `json:"is_moderated"`
@@ -2942,6 +5007,7 @@ type TraceConfig struct {
 }
 
 type URLCitation struct {
+	Content    string `json:"content"`
 	EndIndex   int    `json:"end_index"`
 	StartIndex int    `json:"start_index"`
 	Title      string `json:"title"`
@@ -2961,6 +5027,83 @@ type UnauthorizedResponseErrorData struct {
 	Metadata json.RawMessage `json:"metadata"`
 }
 
+type UnifiedBenchmarkPricing struct {
+	Completion string `json:"completion"`
+	Prompt     string `json:"prompt"`
+}
+
+type UnifiedBenchmarksAAItem struct {
+	AgenticIndex      float64         `json:"agentic_index"`
+	CodingIndex       float64         `json:"coding_index"`
+	DisplayName       string          `json:"display_name"`
+	IntelligenceIndex float64         `json:"intelligence_index"`
+	ModelPermaslug    string          `json:"model_permaslug"`
+	Pricing           json.RawMessage `json:"pricing"`
+	Source            string          `json:"source"`
+}
+
+type UnifiedBenchmarksDAItem struct {
+	Arena               string          `json:"arena"`
+	AvgGenerationTimeMs float64         `json:"avg_generation_time_ms"`
+	Category            string          `json:"category"`
+	DisplayName         string          `json:"display_name"`
+	Elo                 float64         `json:"elo"`
+	ModelPermaslug      string          `json:"model_permaslug"`
+	Pricing             json.RawMessage `json:"pricing"`
+	Source              string          `json:"source"`
+	TournamentStats     json.RawMessage `json:"tournament_stats"`
+	WinRate             float64         `json:"win_rate"`
+}
+
+type UnifiedBenchmarksMeta struct {
+	AsOf       string `json:"as_of"`
+	Citation   string `json:"citation"`
+	ModelCount int    `json:"model_count"`
+	Source     string `json:"source"`
+	SourceUrl  string `json:"source_url"`
+	TaskType   string `json:"task_type"`
+	Version    string `json:"version"`
+}
+
+type UnifiedBenchmarksORItem struct {
+	Accuracy         float64 `json:"accuracy"`
+	AccuracyStddev   float64 `json:"accuracy_stddev"`
+	AvgCostPerTask   float64 `json:"avg_cost_per_task"`
+	BenchmarkType    string  `json:"benchmark_type"`
+	DisplayName      string  `json:"display_name"`
+	LastRunTimestamp string  `json:"last_run_timestamp"`
+	ModelPermaslug   string  `json:"model_permaslug"`
+	Source           string  `json:"source"`
+	TotalTasks       int     `json:"total_tasks"`
+}
+
+type UnifiedBenchmarksResponse struct {
+	Data json.RawMessage `json:"data"`
+	Meta json.RawMessage `json:"meta"`
+}
+
+type UnifiedBenchmarksSearchItem struct {
+	AvgCostPerTask      float64         `json:"avg_cost_per_task"`
+	AvgLatencyPerTaskMs float64         `json:"avg_latency_per_task_ms"`
+	BenchmarkType       string          `json:"benchmark_type"`
+	DisplayName         string          `json:"display_name"`
+	LastRunTimestamp    string          `json:"last_run_timestamp"`
+	ModelPermaslug      string          `json:"model_permaslug"`
+	PrimaryMetric       string          `json:"primary_metric"`
+	PrimaryScore        float64         `json:"primary_score"`
+	RunConfig           json.RawMessage `json:"run_config"`
+	SearchEngine        string          `json:"search_engine"`
+	SearchSurface       string          `json:"search_surface"`
+	Source              string          `json:"source"`
+	TotalTasks          int             `json:"total_tasks"`
+}
+
+type UnifiedBenchmarksSearchRunConfig struct {
+	MaxAgentTurns   int     `json:"max_agent_turns"`
+	ReasoningEffort string  `json:"reasoning_effort"`
+	Temperature     float64 `json:"temperature"`
+}
+
 type UnprocessableEntityResponse struct {
 	Error              json.RawMessage `json:"error"`
 	OpenrouterMetadata json.RawMessage `json:"openrouter_metadata"`
@@ -2973,22 +5116,70 @@ type UnprocessableEntityResponseErrorData struct {
 	Metadata json.RawMessage `json:"metadata"`
 }
 
+type UpdateBYOKKeyRequest struct {
+	AllowedApiKeyHashes json.RawMessage `json:"allowed_api_key_hashes"`
+	AllowedModels       json.RawMessage `json:"allowed_models"`
+	AllowedUserIds      json.RawMessage `json:"allowed_user_ids"`
+	Disabled            bool            `json:"disabled"`
+	IsFallback          bool            `json:"is_fallback"`
+	Key                 string          `json:"key"`
+	Name                string          `json:"name"`
+}
+
+type UpdateBYOKKeyResponse struct {
+	Data string `json:"data"`
+}
+
 type UpdateGuardrailRequest struct {
-	AllowedModels         json.RawMessage `json:"allowed_models"`
-	AllowedProviders      json.RawMessage `json:"allowed_providers"`
-	ContentFilterBuiltins json.RawMessage `json:"content_filter_builtins"`
-	ContentFilters        json.RawMessage `json:"content_filters"`
-	Description           string          `json:"description"`
-	EnforceZdr            bool            `json:"enforce_zdr"`
-	IgnoredModels         json.RawMessage `json:"ignored_models"`
-	IgnoredProviders      json.RawMessage `json:"ignored_providers"`
-	LimitUsd              float64         `json:"limit_usd"`
-	Name                  string          `json:"name"`
-	ResetInterval         string          `json:"reset_interval"`
+	AllowedModels              json.RawMessage `json:"allowed_models"`
+	AllowedProviders           json.RawMessage `json:"allowed_providers"`
+	ContentFilterBuiltins      json.RawMessage `json:"content_filter_builtins"`
+	ContentFilters             json.RawMessage `json:"content_filters"`
+	Description                string          `json:"description"`
+	EnableFreeModelPublication bool            `json:"enable_free_model_publication"`
+	EnableFreeModelTraining    bool            `json:"enable_free_model_training"`
+	EnablePaidModelTraining    bool            `json:"enable_paid_model_training"`
+	EnforceZdr                 bool            `json:"enforce_zdr"`
+	EnforceZdrAnthropic        bool            `json:"enforce_zdr_anthropic"`
+	EnforceZdrGoogle           bool            `json:"enforce_zdr_google"`
+	EnforceZdrOpenai           bool            `json:"enforce_zdr_openai"`
+	EnforceZdrOther            bool            `json:"enforce_zdr_other"`
+	EnforceZdrXai              bool            `json:"enforce_zdr_xai"`
+	IgnoredModels              json.RawMessage `json:"ignored_models"`
+	IgnoredProviders           json.RawMessage `json:"ignored_providers"`
+	IncludeByokInBudgets       bool            `json:"include_byok_in_budgets"`
+	LimitUsd                   float64         `json:"limit_usd"`
+	Name                       string          `json:"name"`
+	ResetInterval              string          `json:"reset_interval"`
 }
 
 type UpdateGuardrailResponse struct {
 	Data string `json:"data"`
+}
+
+type UpdateObservabilityDestinationRequest struct {
+	ApiKeyHashes                      json.RawMessage `json:"api_key_hashes"`
+	BroadcastGenerationCost           bool            `json:"broadcast_generation_cost"`
+	BroadcastGenerationIdentity       bool            `json:"broadcast_generation_identity"`
+	BroadcastGenerationRequestContext bool            `json:"broadcast_generation_request_context"`
+	Config                            json.RawMessage `json:"config"`
+	Enabled                           bool            `json:"enabled"`
+	FilterRules                       string          `json:"filter_rules"`
+	Name                              string          `json:"name"`
+	PrivacyMode                       bool            `json:"privacy_mode"`
+	SamplingRate                      float64         `json:"sampling_rate"`
+}
+
+type UpdateObservabilityDestinationResponse struct {
+	Data string `json:"data"`
+}
+
+type UpdateScimGroupMappingRequest struct {
+	Role string `json:"role"`
+}
+
+type UpdateScimGroupMappingResponse struct {
+	Data json.RawMessage `json:"data"`
 }
 
 type UpdateWorkspaceRequest struct {
@@ -3009,20 +5200,20 @@ type UpdateWorkspaceResponse struct {
 	Data string `json:"data"`
 }
 
-type Usage struct {
-	Cost                float64         `json:"cost"`
-	CostDetails         json.RawMessage `json:"cost_details"`
-	InputTokens         int             `json:"input_tokens"`
-	InputTokensDetails  json.RawMessage `json:"input_tokens_details"`
-	IsByok              bool            `json:"is_byok"`
-	OutputTokens        int             `json:"output_tokens"`
-	OutputTokensDetails json.RawMessage `json:"output_tokens_details"`
-	TotalTokens         int             `json:"total_tokens"`
+type UpsertWorkspaceBudgetRequest struct {
+	IncludeByokInBudgets bool    `json:"include_byok_in_budgets"`
+	LimitUsd             float64 `json:"limit_usd"`
+}
+
+type UpsertWorkspaceBudgetResponse struct {
+	Data                 string `json:"data"`
+	IncludeByokInBudgets bool   `json:"include_byok_in_budgets"`
 }
 
 type VideoGenerationRequest struct {
 	AspectRatio     string          `json:"aspect_ratio"`
 	CallbackUrl     string          `json:"callback_url"`
+	Creativity      int             `json:"creativity"`
 	Duration        int             `json:"duration"`
 	FrameImages     json.RawMessage `json:"frame_images"`
 	GenerateAudio   bool            `json:"generate_audio"`
@@ -3033,6 +5224,7 @@ type VideoGenerationRequest struct {
 	Resolution      string          `json:"resolution"`
 	Seed            int             `json:"seed"`
 	Size            string          `json:"size"`
+	UpscaleFactor   float64         `json:"upscale_factor"`
 }
 
 type VideoGenerationResponse struct {
@@ -3054,6 +5246,7 @@ type VideoModel struct {
 	AllowedPassthroughParameters json.RawMessage `json:"allowed_passthrough_parameters"`
 	CanonicalSlug                string          `json:"canonical_slug"`
 	Created                      int             `json:"created"`
+	Creativity                   json.RawMessage `json:"creativity"`
 	Description                  string          `json:"description"`
 	GenerateAudio                bool            `json:"generate_audio"`
 	HuggingFaceId                string          `json:"hugging_face_id"`
@@ -3066,10 +5259,19 @@ type VideoModel struct {
 	SupportedFrameImages         json.RawMessage `json:"supported_frame_images"`
 	SupportedResolutions         json.RawMessage `json:"supported_resolutions"`
 	SupportedSizes               json.RawMessage `json:"supported_sizes"`
+	UpscaleFactor                json.RawMessage `json:"upscale_factor"`
 }
 
 type VideoModelsListResponse struct {
 	Data json.RawMessage `json:"data"`
+}
+
+type WebFetchPlugin struct {
+	AllowedDomains   json.RawMessage `json:"allowed_domains"`
+	BlockedDomains   json.RawMessage `json:"blocked_domains"`
+	Id               string          `json:"id"`
+	MaxContentTokens int             `json:"max_content_tokens"`
+	MaxUses          int             `json:"max_uses"`
 }
 
 type WebFetchServerTool struct {
@@ -3110,14 +5312,18 @@ type WebSearchConfig struct {
 	AllowedDomains    json.RawMessage `json:"allowed_domains"`
 	Engine            string          `json:"engine"`
 	ExcludedDomains   json.RawMessage `json:"excluded_domains"`
+	MaxCharacters     int             `json:"max_characters"`
 	MaxResults        int             `json:"max_results"`
 	MaxTotalResults   int             `json:"max_total_results"`
+	MaxUses           int             `json:"max_uses"`
+	Mode              string          `json:"mode"`
 	SearchContextSize string          `json:"search_context_size"`
 	UserLocation      json.RawMessage `json:"user_location"`
 }
 
 type WebSearchDomainFilter struct {
 	AllowedDomains  json.RawMessage `json:"allowed_domains"`
+	BlockedDomains  json.RawMessage `json:"blocked_domains"`
 	ExcludedDomains json.RawMessage `json:"excluded_domains"`
 }
 
@@ -3129,6 +5335,7 @@ type WebSearchPlugin struct {
 	IncludeDomains json.RawMessage `json:"include_domains"`
 	MaxResults     int             `json:"max_results"`
 	MaxUses        int             `json:"max_uses"`
+	Mode           string          `json:"mode"`
 	SearchPrompt   string          `json:"search_prompt"`
 	UserLocation   string          `json:"user_location"`
 }
@@ -3137,6 +5344,8 @@ type WebSearchServerTool struct {
 	Engine            string          `json:"engine"`
 	Filters           json.RawMessage `json:"filters"`
 	MaxResults        int             `json:"max_results"`
+	MaxUses           int             `json:"max_uses"`
+	Mode              string          `json:"mode"`
 	SearchContextSize string          `json:"search_context_size"`
 	Type              string          `json:"type"`
 	UserLocation      json.RawMessage `json:"user_location"`
@@ -3146,8 +5355,11 @@ type WebSearchServerToolConfig struct {
 	AllowedDomains    json.RawMessage `json:"allowed_domains"`
 	Engine            string          `json:"engine"`
 	ExcludedDomains   json.RawMessage `json:"excluded_domains"`
+	MaxCharacters     int             `json:"max_characters"`
 	MaxResults        int             `json:"max_results"`
 	MaxTotalResults   int             `json:"max_total_results"`
+	MaxUses           int             `json:"max_uses"`
+	Mode              string          `json:"mode"`
 	SearchContextSize string          `json:"search_context_size"`
 	UserLocation      json.RawMessage `json:"user_location"`
 }
@@ -3181,11 +5393,13 @@ type WebSearchUserLocationServerTool struct {
 type Workspace struct {
 	CreatedAt                       string          `json:"created_at"`
 	CreatedBy                       string          `json:"created_by"`
+	DefaultGuardrailId              string          `json:"default_guardrail_id"`
 	DefaultImageModel               string          `json:"default_image_model"`
 	DefaultProviderSort             string          `json:"default_provider_sort"`
 	DefaultTextModel                string          `json:"default_text_model"`
 	Description                     string          `json:"description"`
 	Id                              string          `json:"id"`
+	IncludeByokInBudgets            bool            `json:"include_byok_in_budgets"`
 	IoLoggingApiKeyIds              json.RawMessage `json:"io_logging_api_key_ids"`
 	IoLoggingSamplingRate           float64         `json:"io_logging_sampling_rate"`
 	IsDataDiscountLoggingEnabled    bool            `json:"is_data_discount_logging_enabled"`
@@ -3194,6 +5408,15 @@ type Workspace struct {
 	Name                            string          `json:"name"`
 	Slug                            string          `json:"slug"`
 	UpdatedAt                       string          `json:"updated_at"`
+}
+
+type WorkspaceBudget struct {
+	CreatedAt     string  `json:"created_at"`
+	Id            string  `json:"id"`
+	LimitUsd      float64 `json:"limit_usd"`
+	ResetInterval string  `json:"reset_interval"`
+	UpdatedAt     string  `json:"updated_at"`
+	WorkspaceId   string  `json:"workspace_id"`
 }
 
 type WorkspaceMember struct {

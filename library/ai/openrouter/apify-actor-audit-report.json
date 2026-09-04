@@ -1,0 +1,9 @@
+{
+  "dir": "\u003ccli-dir\u003e/openrouter-pp-cli",
+  "research_dir": "\u003ccli-dir\u003e/20260901-171359-a49ee862",
+  "verdict": "pass",
+  "actors": null,
+  "issues": [
+    "no Apify actor references found, skipping"
+  ]
+}

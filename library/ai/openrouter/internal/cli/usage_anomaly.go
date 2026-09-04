@@ -1,4 +1,5 @@
 // Copyright 2026 Rick van de Laar and contributors. Licensed under Apache-2.0. See LICENSE.
+// pp:data-source computed
 
 package cli
 
@@ -16,15 +17,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newUsageAnomalyCmd(flags *rootFlags) *cobra.Command {
+func newNovelUsageAnomalyCmd(flags *rootFlags) *cobra.Command {
 	var since, baseline string
 	var sigma float64
-	var llm bool
 
 	cmd := &cobra.Command{
 		Use:         "anomaly",
 		Short:       "Flag (model, day) pairs whose cost exceeds Nσ of baseline window",
-		Example:     "  openrouter-pp-cli usage anomaly --since 24h --baseline 7d --llm",
+		Example:     "  openrouter-pp-cli usage anomaly --since 24h --baseline 7d --agent",
 		Annotations: map[string]string{"mcp:read-only": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			sinceT, err := parseSinceDuration(since)
@@ -128,7 +128,7 @@ func newUsageAnomalyCmd(flags *rootFlags) *cobra.Command {
 				}
 				return printJSONFiltered(cmd.OutOrStdout(), out, flags)
 			}
-			if llm {
+			if flags.agent {
 				if len(out) == 0 {
 					fmt.Fprintln(cmd.OutOrStdout(), "no anomalies")
 					return nil
@@ -153,7 +153,6 @@ func newUsageAnomalyCmd(flags *rootFlags) *cobra.Command {
 	cmd.Flags().StringVar(&since, "since", "24h", "Recent window to evaluate")
 	cmd.Flags().StringVar(&baseline, "baseline", "7d", "Baseline window for mean/stddev")
 	cmd.Flags().Float64Var(&sigma, "sigma", 2.0, "Z-score threshold for anomaly")
-	cmd.Flags().BoolVar(&llm, "llm", false, "Terse k:v output")
 	// suppress unused warning on time
 	_ = time.Now
 	return cmd

@@ -1,4 +1,5 @@
 // Copyright 2026 Rick van de Laar and contributors. Licensed under Apache-2.0. See LICENSE.
+// pp:data-source computed
 
 package cli
 
@@ -132,15 +133,14 @@ func loadToolCallEntries(since time.Time) ([]toolCallEntry, error) {
 	return out, nil
 }
 
-func newUsageCostByCmd(flags *rootFlags) *cobra.Command {
+func newNovelUsageCostByCmd(flags *rootFlags) *cobra.Command {
 	var group, since string
-	var llm bool
 	var top int
 
 	cmd := &cobra.Command{
 		Use:         "cost-by",
 		Short:       "Group OpenRouter spend by cron/caller/model/provider from local tool-call log",
-		Example:     "  openrouter-pp-cli usage cost-by --group cron --since 7d --llm",
+		Example:     "  openrouter-pp-cli usage cost-by --group cron --since 7d --agent",
 		Annotations: map[string]string{"mcp:read-only": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			validGroups := map[string]bool{"cron": true, "caller": true, "model": true, "provider": true}
@@ -191,7 +191,7 @@ func newUsageCostByCmd(flags *rootFlags) *cobra.Command {
 				}
 				return printJSONFiltered(cmd.OutOrStdout(), rows, flags)
 			}
-			if llm {
+			if flags.agent {
 				if len(rows) == 0 {
 					fmt.Fprintln(cmd.OutOrStdout(), "no data")
 					return nil
@@ -215,7 +215,6 @@ func newUsageCostByCmd(flags *rootFlags) *cobra.Command {
 	}
 	cmd.Flags().StringVar(&group, "group", "cron", "Group by: cron|caller|model|provider")
 	cmd.Flags().StringVar(&since, "since", "7d", "Time window (e.g. 7d, 24h, 1w)")
-	cmd.Flags().BoolVar(&llm, "llm", false, "Terse k:v output for agents")
 	cmd.Flags().IntVar(&top, "top", 0, "Limit to top N groups by cost")
 	return cmd
 }

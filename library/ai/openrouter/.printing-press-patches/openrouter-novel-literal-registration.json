@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "id": "openrouter-novel-literal-registration",
+  "applied_at": "2026-09-03",
+  "base_run_id": "20260901-171359-a49ee862",
+  "base_printing_press_version": "4.31.4",
+  "summary": "Novel subcommand registrations in generated group files use literal cmd.AddCommand(...) instead of addNovelCommandIfAbsent(...).",
+  "reason": "The dogfood novel-features walker and the library's SKILL.md verifier only parse literal AddCommand call sites; helper-based registration makes novel subcommands invisible, producing false command-depth mismatches and flag-attribution errors (e.g. usage --since). The IfAbsent guard is moot for these groups: no generated sibling can collide.",
+  "files": ["internal/cli/usage.go", "internal/cli/models.go", "internal/cli/credits.go", "internal/cli/generation.go", "internal/cli/key.go", "internal/cli/endpoints.go", "internal/cli/providers.go", "internal/cli/limits.go", "internal/cli/root.go"],
+  "validated_outcome": "dogfood novel_features_check 12/12 with zero depth mismatches; SKILL verifier usage/--since error clears.",
+  "upstream_issue": null
+}

@@ -12,9 +12,39 @@ import (
 )
 
 func newModelsGetCmd(flags *rootFlags) *cobra.Command {
+	var flagHTTPReferer string
+	var flagXOpenRouterTitle string
+	var flagXOpenRouterCategories string
+	var flagOffset string
+	var flagLimit int
 	var flagCategory string
 	var flagSupportedParameters string
 	var flagOutputModalities string
+	var flagSort string
+	var flagQ string
+	var flagInputModalities string
+	var flagContext int
+	var flagMinPrice float64
+	var flagMaxPrice float64
+	var flagArch string
+	var flagModelAuthors string
+	var flagProviders string
+	var flagDistillable string
+	var flagZdr string
+	var flagRegion string
+	var flagMinOutputPrice float64
+	var flagMaxOutputPrice float64
+	var flagMinAgeDays int
+	var flagMaxAgeDays int
+	var flagMinIntelligenceIndex float64
+	var flagMaxIntelligenceIndex float64
+	var flagMinCodingIndex float64
+	var flagMaxCodingIndex float64
+	var flagMinAgenticIndex float64
+	var flagMaxAgenticIndex float64
+	var flagMinToolSuccessRate float64
+	var flagMaxToolSuccessRate float64
+	var flagAll bool
 
 	cmd := &cobra.Command{
 		Use:         "get",
@@ -33,46 +63,142 @@ func newModelsGetCmd(flags *rootFlags) *cobra.Command {
 					}
 				}
 				if !validCategory {
-					fmt.Fprintf(os.Stderr, "warning: --%s %q not in allowed set %v\n", "category", flagCategory, allowedCategory)
+					return fmt.Errorf("invalid value %q for --%s: must be one of %v", flagCategory, "category", allowedCategory)
 				}
 			}
+			if cmd.Flags().Changed("sort") {
+				allowedSort := []string{"most-popular", "newest", "top-weekly", "pricing-low-to-high", "pricing-high-to-low", "context-high-to-low", "throughput-high-to-low", "latency-low-to-high", "intelligence-high-to-low", "coding-high-to-low", "agentic-high-to-low", "design-arena-elo-high-to-low"}
+				validSort := false
+				for _, v := range allowedSort {
+					if flagSort == v {
+						validSort = true
+						break
+					}
+				}
+				if !validSort {
+					return fmt.Errorf("invalid value %q for --%s: must be one of %v", flagSort, "sort", allowedSort)
+				}
+			}
+			if cmd.Flags().Changed("distillable") {
+				allowedDistillable := []string{"true", "false"}
+				validDistillable := false
+				for _, v := range allowedDistillable {
+					if flagDistillable == v {
+						validDistillable = true
+						break
+					}
+				}
+				if !validDistillable {
+					return fmt.Errorf("invalid value %q for --%s: must be one of %v", flagDistillable, "distillable", allowedDistillable)
+				}
+			}
+			if cmd.Flags().Changed("zdr") {
+				allowedZdr := []string{"true"}
+				validZdr := false
+				for _, v := range allowedZdr {
+					if flagZdr == v {
+						validZdr = true
+						break
+					}
+				}
+				if !validZdr {
+					return fmt.Errorf("invalid value %q for --%s: must be one of %v", flagZdr, "zdr", allowedZdr)
+				}
+			}
+			if cmd.Flags().Changed("region") {
+				allowedRegion := []string{"eu", "us"}
+				validRegion := false
+				for _, v := range allowedRegion {
+					if flagRegion == v {
+						validRegion = true
+						break
+					}
+				}
+				if !validRegion {
+					return fmt.Errorf("invalid value %q for --%s: must be one of %v", flagRegion, "region", allowedRegion)
+				}
+			}
+			path := "/models"
 			c, err := flags.newClient()
 			if err != nil {
 				return err
 			}
+			headerOverrides := map[string]string{}
 
-			path := "/models"
-			params := map[string]string{}
-			if flagCategory != "" {
-				params["category"] = fmt.Sprintf("%v", flagCategory)
+			if cmd.Flags().Changed("http-referer") || flagHTTPReferer != "" {
+				headerOverrides["HTTP-Referer"] = formatCLIParamValue(flagHTTPReferer)
 			}
-			if flagSupportedParameters != "" {
-				params["supported_parameters"] = fmt.Sprintf("%v", flagSupportedParameters)
+
+			if cmd.Flags().Changed("x-open-router-title") || flagXOpenRouterTitle != "" {
+				headerOverrides["X-OpenRouter-Title"] = formatCLIParamValue(flagXOpenRouterTitle)
 			}
-			if flagOutputModalities != "" {
-				params["output_modalities"] = fmt.Sprintf("%v", flagOutputModalities)
+
+			if cmd.Flags().Changed("x-open-router-categories") || flagXOpenRouterCategories != "" {
+				headerOverrides["X-OpenRouter-Categories"] = formatCLIParamValue(flagXOpenRouterCategories)
 			}
-			data, prov, err := resolveRead(cmd.Context(), c, flags, "models", false, path, params, nil)
+
+			data, prov, err := resolvePaginatedReadWithStrategy(cmd.Context(), c, flags, "auto", "models", path, map[string]string{
+				"offset":                 formatCLIParamValue(flagOffset),
+				"limit":                  formatCLIParamValue(flagLimit),
+				"category":               formatCLIParamValue(flagCategory),
+				"supported_parameters":   formatCLIParamValue(flagSupportedParameters),
+				"output_modalities":      formatCLIParamValue(flagOutputModalities),
+				"sort":                   formatCLIParamValue(flagSort),
+				"q":                      formatCLIParamValue(flagQ),
+				"input_modalities":       formatCLIParamValue(flagInputModalities),
+				"context":                formatCLIParamValue(flagContext),
+				"min_price":              formatCLIParamValue(flagMinPrice),
+				"max_price":              formatCLIParamValue(flagMaxPrice),
+				"arch":                   formatCLIParamValue(flagArch),
+				"model_authors":          formatCLIParamValue(flagModelAuthors),
+				"providers":              formatCLIParamValue(flagProviders),
+				"distillable":            formatCLIParamValue(flagDistillable),
+				"zdr":                    formatCLIParamValue(flagZdr),
+				"region":                 formatCLIParamValue(flagRegion),
+				"min_output_price":       formatCLIParamValue(flagMinOutputPrice),
+				"max_output_price":       formatCLIParamValue(flagMaxOutputPrice),
+				"min_age_days":           formatCLIParamValue(flagMinAgeDays),
+				"max_age_days":           formatCLIParamValue(flagMaxAgeDays),
+				"min_intelligence_index": formatCLIParamValue(flagMinIntelligenceIndex),
+				"max_intelligence_index": formatCLIParamValue(flagMaxIntelligenceIndex),
+				"min_coding_index":       formatCLIParamValue(flagMinCodingIndex),
+				"max_coding_index":       formatCLIParamValue(flagMaxCodingIndex),
+				"min_agentic_index":      formatCLIParamValue(flagMinAgenticIndex),
+				"max_agentic_index":      formatCLIParamValue(flagMaxAgenticIndex),
+				"min_tool_success_rate":  formatCLIParamValue(flagMinToolSuccessRate),
+				"max_tool_success_rate":  formatCLIParamValue(flagMaxToolSuccessRate),
+			}, headerOverrides, flagAll, "offset", "offset", "limit", 500, "", "", "data", cmd.ErrOrStderr())
 			if err != nil {
-				return classifyAPIError(err, flags)
+				return classifyAPIError(cmd.OutOrStdout(), err, flags)
 			}
-			// Print provenance to stderr for human-facing output
-			{
+			outputData := collectionItemsForOutput(data, path)
+			// Print provenance to stderr for human-facing output only.
+			// Machine-format flags (--json, --csv, --compact, --quiet, --plain,
+			// --select) and piped stdout suppress this line; the JSON envelope
+			// already carries meta.source for those consumers.
+			// SYNC: keep this gate aligned with command_promoted.go.tmpl.
+			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var countItems []json.RawMessage
-				_ = json.Unmarshal(data, &countItems)
+				_ = json.Unmarshal(outputData, &countItems)
 				printProvenance(cmd, len(countItems), prov)
 			}
 			// For JSON output, wrap with provenance envelope before passing through flags.
 			// --select wins over --compact when both are set; --compact only runs when
-			// no explicit fields were requested.
-			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+			// no explicit fields were requested. Explicit format flags (--csv, --quiet,
+			// --plain) opt out of the auto-JSON path so piped consumers that asked for
+			// a non-JSON format reach the standard pipeline below.
+			if flags.asJSON || (!isTerminal(cmd.OutOrStdout()) && !flags.csv && !flags.quiet && !flags.plain) {
 				filtered := data
 				if flags.selectFields != "" {
 					filtered = filterFields(filtered, flags.selectFields)
 				} else if flags.compact {
-					filtered = compactFields(filtered)
+					filtered = compactFields(filtered, map[string]bool{"alias_target": true, "architecture": true, "benchmarks": true, "canonical_slug": true, "context_length": true, "created": true, "default_parameters": true, "description": true, "expiration_date": true, "hugging_face_id": true, "id": true, "knowledge_cutoff": true, "links": true, "name": true, "per_request_limits": true, "pricing": true, "reasoning": true, "supported_parameters": true, "supported_voices": true, "top_provider": true})
 				}
 				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				wrapped, wrapErr = wrapPlatformStructuredOutput(wrapped, flags, "results", true)
 				if wrapErr != nil {
 					return wrapErr
 				}
@@ -81,7 +207,7 @@ func newModelsGetCmd(flags *rootFlags) *cobra.Command {
 			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
-				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
+				if json.Unmarshal(outputData, &items) == nil && len(items) > 0 {
 					if err := printAutoTable(cmd.OutOrStdout(), items); err != nil {
 						return err
 					}
@@ -91,12 +217,46 @@ func newModelsGetCmd(flags *rootFlags) *cobra.Command {
 					return nil
 				}
 			}
-			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
+			formatData := data
+			if flags.csv || flags.plain {
+				formatData = outputData
+			}
+			return printOutputWithFlagsMeta(cmd.OutOrStdout(), formatData, flags, map[string]any{"source": "live"}, map[string]bool{"alias_target": true, "architecture": true, "benchmarks": true, "canonical_slug": true, "context_length": true, "created": true, "default_parameters": true, "description": true, "expiration_date": true, "hugging_face_id": true, "id": true, "knowledge_cutoff": true, "links": true, "name": true, "per_request_limits": true, "pricing": true, "reasoning": true, "supported_parameters": true, "supported_voices": true, "top_provider": true})
 		},
 	}
+	cmd.Flags().StringVar(&flagHTTPReferer, "http-referer", "", "The app identifier should be your app's URL and is used as the primary identifier for rankings.")
+	cmd.Flags().StringVar(&flagXOpenRouterTitle, "x-open-router-title", "", "The app display name allows you to customize how your app appears in OpenRouter's dashboard.")
+	cmd.Flags().StringVar(&flagXOpenRouterCategories, "x-open-router-categories", "", "Comma-separated list of app categories (e.g. 'cli-agent,cloud-agent'). Used for marketplace rankings.")
+	cmd.Flags().StringVar(&flagOffset, "offset", "0", "Number of records to skip for pagination. When both offset and limit are omitted, the full list is returned")
+	cmd.Flags().IntVar(&flagLimit, "limit", 500, "Maximum number of records to return (max 1000). When both offset and limit are omitted, the full list is returned")
 	cmd.Flags().StringVar(&flagCategory, "category", "", "Filter models by use case category (one of: programming, roleplay, marketing, marketing/seo, technology, science, translation, legal, finance, health, trivia, academia)")
 	cmd.Flags().StringVar(&flagSupportedParameters, "supported-parameters", "", "Filter models by supported parameter (comma-separated)")
-	cmd.Flags().StringVar(&flagOutputModalities, "output-modalities", "", "Filter models by output modality. Accepts a comma-separated list of modalities (text, image, audio, embeddings) or...")
+	cmd.Flags().StringVar(&flagOutputModalities, "output-modalities", "", "Filter models by output modality.")
+	cmd.Flags().StringVar(&flagSort, "sort", "", "Sort the returned models server-side. Prefer this over fetching the full list and sorting client-side. (one of: most-popular, newest, top-weekly, pricing-low-to-high, pricing-high-to-low, context-high-to-low, throughput-high-to-low, latency-low-to-high, intelligence-high-to-low, coding-high-to-low, agentic-high-to-low, design-arena-elo-high-to-low)")
+	cmd.Flags().StringVar(&flagQ, "q", "", "Free-text search by model name or slug.")
+	cmd.Flags().StringVar(&flagInputModalities, "input-modalities", "", "Filter models by input modality. Comma-separated list of: text, image, audio, file.")
+	cmd.Flags().IntVar(&flagContext, "context", 0, "Minimum context length (tokens). Models with smaller context are excluded.")
+	cmd.Flags().Float64Var(&flagMinPrice, "min-price", 0.0, "Minimum prompt price in $/M tokens.")
+	cmd.Flags().Float64Var(&flagMaxPrice, "max-price", 0.0, "Maximum prompt price in $/M tokens.")
+	cmd.Flags().StringVar(&flagArch, "arch", "", "Filter models by architecture/model family (e.g. GPT, Claude, Gemini, Llama).")
+	cmd.Flags().StringVar(&flagModelAuthors, "model-authors", "", "Filter models by the organization that created the model. Comma-separated list of author slugs.")
+	cmd.Flags().StringVar(&flagProviders, "providers", "", "Filter models by hosting provider. Comma-separated list of provider names.")
+	cmd.Flags().StringVar(&flagDistillable, "distillable", "", "Filter by distillation capability. 'true' returns only distillable models, 'false' excludes them. (one of: true, false)")
+	cmd.Flags().StringVar(&flagZdr, "zdr", "", "When set to 'true', return only models with zero data retention endpoints. (one of: true)")
+	cmd.Flags().StringVar(&flagRegion, "region", "", "Filter to models with endpoints in the given data region ('eu' or 'us'). (one of: eu, us)")
+	cmd.Flags().Float64Var(&flagMinOutputPrice, "min-output-price", 0.0, "Minimum completion (output) price in $/M tokens.")
+	cmd.Flags().Float64Var(&flagMaxOutputPrice, "max-output-price", 0.0, "Maximum completion (output) price in $/M tokens.")
+	cmd.Flags().IntVar(&flagMinAgeDays, "min-age-days", 0, "Minimum model age in days since its creation date.")
+	cmd.Flags().IntVar(&flagMaxAgeDays, "max-age-days", 0, "Maximum model age in days since its creation date.")
+	cmd.Flags().Float64Var(&flagMinIntelligenceIndex, "min-intelligence-index", 0.0, "Minimum Artificial Analysis intelligence index.")
+	cmd.Flags().Float64Var(&flagMaxIntelligenceIndex, "max-intelligence-index", 0.0, "Maximum Artificial Analysis intelligence index.")
+	cmd.Flags().Float64Var(&flagMinCodingIndex, "min-coding-index", 0.0, "Minimum Artificial Analysis coding index.")
+	cmd.Flags().Float64Var(&flagMaxCodingIndex, "max-coding-index", 0.0, "Maximum Artificial Analysis coding index.")
+	cmd.Flags().Float64Var(&flagMinAgenticIndex, "min-agentic-index", 0.0, "Minimum Artificial Analysis agentic index.")
+	cmd.Flags().Float64Var(&flagMaxAgenticIndex, "max-agentic-index", 0.0, "Maximum Artificial Analysis agentic index.")
+	cmd.Flags().Float64Var(&flagMinToolSuccessRate, "min-tool-success-rate", 0.0, "Minimum tool-calling success rate, as a fraction in [0, 1] (e.g. 0.")
+	cmd.Flags().Float64Var(&flagMaxToolSuccessRate, "max-tool-success-rate", 0.0, "Maximum tool-calling success rate, as a fraction in [0, 1].")
+	cmd.Flags().BoolVar(&flagAll, "all", false, "Fetch all pages")
 
 	return cmd
 }

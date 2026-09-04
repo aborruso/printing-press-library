@@ -12,65 +12,106 @@ import (
 )
 
 func newActivityPromotedCmd(flags *rootFlags) *cobra.Command {
+	var flagHTTPReferer string
+	var flagXOpenRouterTitle string
+	var flagXOpenRouterCategories string
 	var flagDate string
 	var flagApiKeyHash string
 	var flagUserId string
+	var flagGroupBy string
+	var flagWorkspaceId string
 
 	cmd := &cobra.Command{
 		Use:         "activity",
-		Short:       "Returns user activity data grouped by endpoint for the last 30 (completed) UTC days. [Management...",
-		Long:        "Shortcut for 'activity get-user'. Returns user activity data grouped by endpoint for the last 30 (completed) UTC days. [Management...",
+		Short:       "Returns user activity data grouped by endpoint for the last 30 (completed) UTC days.",
+		Long:        "Returns user activity data grouped by endpoint for the last 30 (completed) UTC days.",
 		Example:     "  openrouter-pp-cli activity",
 		Annotations: map[string]string{"pp:endpoint": "activity.get-user", "pp:method": "GET", "pp:path": "/activity", "mcp:read-only": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if cmd.Flags().Changed("group-by") {
+				allowedGroupBy := []string{"workspace"}
+				validGroupBy := false
+				for _, v := range allowedGroupBy {
+					if flagGroupBy == v {
+						validGroupBy = true
+						break
+					}
+				}
+				if !validGroupBy {
+					return fmt.Errorf("invalid value %q for --%s: must be one of %v", flagGroupBy, "group-by", allowedGroupBy)
+				}
+			}
 			c, err := flags.newClient()
 			if err != nil {
 				return err
 			}
 
 			path := "/activity"
+			headerOverrides := map[string]string{}
+
+			if cmd.Flags().Changed("http-referer") || flagHTTPReferer != "" {
+				headerOverrides["HTTP-Referer"] = formatCLIParamValue(flagHTTPReferer)
+			}
+
+			if cmd.Flags().Changed("x-open-router-title") || flagXOpenRouterTitle != "" {
+				headerOverrides["X-OpenRouter-Title"] = formatCLIParamValue(flagXOpenRouterTitle)
+			}
+
+			if cmd.Flags().Changed("x-open-router-categories") || flagXOpenRouterCategories != "" {
+				headerOverrides["X-OpenRouter-Categories"] = formatCLIParamValue(flagXOpenRouterCategories)
+			}
+
 			params := map[string]string{}
 			if flagDate != "" {
-				params["date"] = fmt.Sprintf("%v", flagDate)
+				params["date"] = formatCLIParamValue(flagDate)
 			}
 			if flagApiKeyHash != "" {
-				params["api_key_hash"] = fmt.Sprintf("%v", flagApiKeyHash)
+				params["api_key_hash"] = formatCLIParamValue(flagApiKeyHash)
 			}
 			if flagUserId != "" {
-				params["user_id"] = fmt.Sprintf("%v", flagUserId)
+				params["user_id"] = formatCLIParamValue(flagUserId)
 			}
-			data, prov, err := resolveRead(cmd.Context(), c, flags, "activity", false, path, params, nil)
+			if flagGroupBy != "" {
+				params["group_by"] = formatCLIParamValue(flagGroupBy)
+			}
+			if flagWorkspaceId != "" {
+				params["workspace_id"] = formatCLIParamValue(flagWorkspaceId)
+			}
+			data, prov, err := resolveReadWithStrategyAndResponsePath(cmd.Context(), c, flags, "auto", "activity", false, path, params, headerOverrides, "data", cmd.ErrOrStderr())
 			if err != nil {
-				return classifyAPIError(err, flags)
+				return classifyAPIError(cmd.OutOrStdout(), err, flags)
 			}
-			// Unwrap API response envelopes (e.g. {"status":"success","data":[...]})
-			// so output helpers see the inner data, not the wrapper.
-			data = extractResponseData(data)
-
-			// Print provenance to stderr
-			{
+			outputData := data
+			// Print provenance to stderr for human-facing output only.
+			// Machine-format flags (--json, --csv, --compact, --quiet, --plain,
+			// --select) and piped stdout suppress this line; the JSON envelope
+			// already carries meta.source for those consumers.
+			// SYNC: keep this gate aligned with command_endpoint.go.tmpl.
+			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var countItems []json.RawMessage
-				if json.Unmarshal(data, &countItems) != nil {
+				if json.Unmarshal(outputData, &countItems) != nil {
 					// Single object, not an array
-					countItems = []json.RawMessage{data}
+					countItems = []json.RawMessage{outputData}
 				}
 				printProvenance(cmd, len(countItems), prov)
 			}
-			// CSV bypasses JSON pipe path so --csv works when piped
-			if flags.csv {
-				return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
-			}
 			// For JSON output, wrap with provenance envelope. --select wins over
 			// --compact when both are set; --compact only runs when no explicit
-			// fields were requested.
-			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+			// fields were requested. Explicit format flags (--csv, --quiet, --plain)
+			// opt out of the auto-JSON path so piped consumers that asked for a
+			// non-JSON format reach the standard pipeline below.
+			if flags.asJSON || (!isTerminal(cmd.OutOrStdout()) && !flags.csv && !flags.quiet && !flags.plain) {
 				filtered := data
 				if flags.selectFields != "" {
 					filtered = filterFields(filtered, flags.selectFields)
 				} else if flags.compact {
-					filtered = compactFields(filtered)
+					filtered = compactFields(filtered, map[string]bool{"byok_usage_inference": true, "completion_tokens": true, "date": true, "endpoint_id": true, "model": true, "model_permaslug": true, "prompt_tokens": true, "provider_name": true, "reasoning_tokens": true, "requests": true, "usage": true, "workspace_id": true})
 				}
 				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				wrapped, wrapErr = wrapPlatformStructuredOutput(wrapped, flags, "results", true)
 				if wrapErr != nil {
 					return wrapErr
 				}
@@ -78,7 +119,7 @@ func newActivityPromotedCmd(flags *rootFlags) *cobra.Command {
 			}
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
-				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
+				if json.Unmarshal(outputData, &items) == nil && len(items) > 0 {
 					if err := printAutoTable(cmd.OutOrStdout(), items); err != nil {
 						return err
 					}
@@ -88,12 +129,21 @@ func newActivityPromotedCmd(flags *rootFlags) *cobra.Command {
 					return nil
 				}
 			}
-			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
+			formatData := data
+			if flags.csv || flags.plain {
+				formatData = outputData
+			}
+			return printOutputWithFlagsMeta(cmd.OutOrStdout(), formatData, flags, map[string]any{"source": "live"}, map[string]bool{"byok_usage_inference": true, "completion_tokens": true, "date": true, "endpoint_id": true, "model": true, "model_permaslug": true, "prompt_tokens": true, "provider_name": true, "reasoning_tokens": true, "requests": true, "usage": true, "workspace_id": true})
 		},
 	}
+	cmd.Flags().StringVar(&flagHTTPReferer, "http-referer", "", "The app identifier should be your app's URL and is used as the primary identifier for rankings.")
+	cmd.Flags().StringVar(&flagXOpenRouterTitle, "x-open-router-title", "", "The app display name allows you to customize how your app appears in OpenRouter's dashboard.")
+	cmd.Flags().StringVar(&flagXOpenRouterCategories, "x-open-router-categories", "", "Comma-separated list of app categories (e.g. 'cli-agent,cloud-agent'). Used for marketplace rankings.")
 	cmd.Flags().StringVar(&flagDate, "date", "", "Filter by a single UTC date in the last 30 days (YYYY-MM-DD format).")
 	cmd.Flags().StringVar(&flagApiKeyHash, "api-key-hash", "", "Filter by API key hash (SHA-256 hex string, as returned by the keys API).")
 	cmd.Flags().StringVar(&flagUserId, "user-id", "", "Filter by org member user ID. Only applicable for organization accounts.")
+	cmd.Flags().StringVar(&flagGroupBy, "group-by", "", "Set to 'workspace' to split each row per workspace and include `workspace_id` on every item. (one of: workspace)")
+	cmd.Flags().StringVar(&flagWorkspaceId, "workspace-id", "", "Filter by workspace ID (UUID). Returns only activity attributed to that workspace.")
 
 	// Wire sibling endpoints and sub-resources as subcommands
 

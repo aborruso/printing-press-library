@@ -1,4 +1,5 @@
 // Copyright 2026 Rick van de Laar and contributors. Licensed under Apache-2.0. See LICENSE.
+// pp:data-source computed
 
 package cli
 
@@ -16,13 +17,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newGenerationExplainCmd(flags *rootFlags) *cobra.Command {
-	var llm bool
+func newNovelGenerationExplainCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:         "explain <id>",
 		Short:       "Explain a generation: cost, latency, tokens, delta-vs-cheapest-provider",
-		Example:     "  openrouter-pp-cli generation explain gen-abc123 --llm",
+		Example:     "  openrouter-pp-cli generation explain gen-abc123 --agent",
 		Annotations: map[string]string{"mcp:read-only": "true", "pp:method": "GET", "pp:path": "/generation"},
 		Args:        cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -35,9 +35,9 @@ func newGenerationExplainCmd(flags *rootFlags) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			data, err := c.Get("/generation", map[string]string{"id": id})
+			data, err := c.Get(cmd.Context(), "/generation", map[string]string{"id": id})
 			if err != nil {
-				return classifyAPIError(err, flags)
+				return classifyAPIError(cmd.OutOrStdout(), err, flags)
 			}
 			var genEnvelope struct {
 				Data map[string]any `json:"data"`
@@ -117,7 +117,7 @@ func newGenerationExplainCmd(flags *rootFlags) *cobra.Command {
 			if flags.asJSON {
 				return printJSONFiltered(cmd.OutOrStdout(), out, flags)
 			}
-			if llm {
+			if flags.agent {
 				fmt.Fprintf(cmd.OutOrStdout(),
 					"model=%s cost=$%.6f latency=%.0fms tokens.prompt=%.0f tokens.completion=%.0f delta_vs_cheapest=$%.6f (provider=%s)\n",
 					model, cost, latency, promptTokens, completionTokens, deltaUSD, cheapestProvider)
@@ -126,7 +126,6 @@ func newGenerationExplainCmd(flags *rootFlags) *cobra.Command {
 			return printJSONFiltered(cmd.OutOrStdout(), out, flags)
 		},
 	}
-	cmd.Flags().BoolVar(&llm, "llm", false, "Terse k:v output")
 	return cmd
 }
 

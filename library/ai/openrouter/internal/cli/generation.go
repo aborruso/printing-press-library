@@ -3,20 +3,21 @@
 
 package cli
 
-// PATCH transcendence-commands: registers generation explain subcommand on the generated generation parent.
-
 import (
 	"github.com/spf13/cobra"
 )
 
 func newGenerationCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "generation",
-		Short: "Generation history endpoints",
+		Use:         "generation",
+		Short:       "List, get, and submit generation",
+		Annotations: map[string]string{"mcp:read-only": "true", "pp:parent-group": "true", "pp:api-resource": "true", "pp:typed-exit-codes": "0,2"},
+		RunE:        parentNoSubcommandRunE(flags),
 	}
 
 	cmd.AddCommand(newGenerationGetCmd(flags))
 	cmd.AddCommand(newGenerationListContentCmd(flags))
-	cmd.AddCommand(newGenerationExplainCmd(flags))
+	cmd.AddCommand(newGenerationSubmitFeedbackCmd(flags))
+	cmd.AddCommand(newNovelGenerationExplainCmd(flags))
 	return cmd
 }

@@ -1,4 +1,5 @@
 // Copyright 2026 Rick van de Laar and contributors. Licensed under Apache-2.0. See LICENSE.
+// pp:data-source local
 
 package cli
 
@@ -50,9 +51,8 @@ func jsonPathExpr(path string) string {
 	return fmt.Sprintf("json_extract(data, '%s')", jp)
 }
 
-func newModelsQueryCmd(flags *rootFlags) *cobra.Command {
+func newNovelModelsQueryCmd(flags *rootFlags) *cobra.Command {
 	var limit int
-	var llm bool
 
 	cmd := &cobra.Command{
 		Use:         "query <expression>",
@@ -170,7 +170,7 @@ func newModelsQueryCmd(flags *rootFlags) *cobra.Command {
 			if flags.asJSON {
 				return printJSONFiltered(cmd.OutOrStdout(), results, flags)
 			}
-			if llm {
+			if flags.agent {
 				if len(results) == 0 {
 					fmt.Fprintln(cmd.OutOrStdout(), "no matches")
 					return nil
@@ -208,6 +208,5 @@ func newModelsQueryCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().IntVar(&limit, "limit", 25, "Max rows to return")
-	cmd.Flags().BoolVar(&llm, "llm", false, "Terse k:v output")
 	return cmd
 }

@@ -1,0 +1,3026 @@
+{
+  "cli_dir": "/home/halbsure/printing-press/library/openrouter",
+  "fresh_dir": "/home/halbsure/printing-press/.runstate/halbsure-e493335e/runs/20260901-171359-a49ee862/working/openrouter-pp-cli",
+  "applied": false,
+  "files": [
+    {
+      "path": "cmd/openrouter-pp-cli/main.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "main": [
+            "Error",
+            "Fprintln"
+          ]
+        }
+      }
+    },
+    {
+      "path": "cmd/openrouter-pp-mcp/http_auth_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "cmd/openrouter-pp-mcp/main.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "main": [
+            "Start"
+          ]
+        }
+      }
+    },
+    {
+      "path": "go.mod",
+      "verdict": "TEMPLATED-CLEAN",
+      "applied": false
+    },
+    {
+      "path": "go.sum",
+      "verdict": "TEMPLATED-CLEAN",
+      "applied": false
+    },
+    {
+      "path": "internal/cache/cache.go",
+      "verdict": "TEMPLATED-VALUE-DRIFT",
+      "applied": false,
+      "value_drift": {
+        "decls": {
+          "(*Store).Get": {
+            "published": "func (s *Store) Get(key string) (json.RawMessage, bool) {\n\tpath := s.path(key)\n\tinfo, err := os.Stat(path)\n\tif err != ni...",
+            "fresh": "func (s *Store) Get(key string) (json.RawMessage, bool) {\n\tpath := s.path(key)\n\tinfo, err := os.Stat(path)\n\tif err != ni..."
+          },
+          "(*Store).Set": {
+            "published": "func (s *Store) Set(key string, value json.RawMessage) {\n\t_ = os.MkdirAll(s.Dir, 0o755)\n\t_ = os.WriteFile(s.path(key), [...",
+            "fresh": "func (s *Store) Set(key string, value json.RawMessage) {\n\t_ = os.MkdirAll(s.Dir, 0o700)\n\t_ = os.WriteFile(s.path(key), [..."
+          }
+        }
+      }
+    },
+    {
+      "path": "internal/cli/agent_context.go",
+      "verdict": "TEMPLATED-VALUE-DRIFT",
+      "applied": false,
+      "value_drift": {
+        "decls": {
+          "buildAgentContext": {
+            "published": "func buildAgentContext(rootCmd *cobra.Command) agentContext {\n\tenvVars := []agentContextAuthEnvVar{\n\t\t{\n\t\t\tName:        ...",
+            "fresh": "func buildAgentContext(rootCmd *cobra.Command) agentContext {\n\tenvVars := []agentContextAuthEnvVar{\n\t\t{\n\t\t\tName:        ..."
+          },
+          "collectAgentCommands": {
+            "published": "func collectAgentCommands(c *cobra.Command) []agentContextCommand {\n\tchildren := c.Commands()\n\tsort.Slice(children, func...",
+            "fresh": "func collectAgentCommands(c *cobra.Command) []agentContextCommand {\n\tchildren := c.Commands()\n\tsort.Slice(children, func..."
+          },
+          "const:agentContextSchemaVersion": {
+            "published": "const agentContextSchemaVersion = \"3\"",
+            "fresh": "const agentContextSchemaVersion = \"4\""
+          },
+          "type:agentContext": {
+            "published": "type agentContext struct {\n\tSchemaVersion              string                 `json:\"schema_version\"`\n\tCLI              ...",
+            "fresh": "type agentContext struct {\n\tSchemaVersion              string                 `json:\"schema_version\"`\n\tCLI              ..."
+          },
+          "type:agentContextCommand": {
+            "published": "type agentContextCommand struct {\n\tName        string                `json:\"name\"`\n\tUse         string                `j...",
+            "fresh": "type agentContextCommand struct {\n\tName        string                `json:\"name\"`\n\tUse         string                `j..."
+          }
+        }
+      }
+    },
+    {
+      "path": "internal/cli/analytics.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "newAnalyticsCmd": [
+            "Encode",
+            "NewEncoder",
+            "Printf",
+            "Println",
+            "SetIndent"
+          ],
+          "runGroupBy": [
+            "Encode",
+            "NewEncoder",
+            "Printf",
+            "Println",
+            "SetIndent"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/api_discovery.go",
+      "verdict": "TEMPLATED-VALUE-DRIFT",
+      "applied": false,
+      "value_drift": {
+        "decls": {
+          "newAPICmd": {
+            "published": "func newAPICmd(flags *rootFlags) *cobra.Command {\n\tcmd := \u0026cobra.Command{\n\t\tUse:         \"api [interface]\",\n\t\tShort:    ...",
+            "fresh": "func newAPICmd(flags *rootFlags) *cobra.Command {\n\tcmd := \u0026cobra.Command{\n\t\tUse:         \"api [interface]\",\n\t\tShort:    ..."
+          }
+        }
+      }
+    },
+    {
+      "path": "internal/cli/audio.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/audio_create-speech.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/audio_create-transcriptions.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/auth.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "newAuthSetTokenCmd": [
+            "ExactArgs"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/budget.go",
+      "verdict": "TEMPLATED-WITH-ADDITIONS",
+      "applied": false,
+      "decl_set_delta": {
+        "in_published_not_fresh": [
+          "newBudgetCmd"
+        ],
+        "in_fresh_not_published": [
+          "newNovelBudgetCmd"
+        ]
+      }
+    },
+    {
+      "path": "internal/cli/budget_check.go",
+      "verdict": "TEMPLATED-CLEAN",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/budget_set.go",
+      "verdict": "TEMPLATED-CLEAN",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/budget_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/byok.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/byok_create-byokkey.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/byok_delete-byokkey.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/byok_get-byokkey.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/byok_list-byokkeys.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/byok_update-byokkey.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/channel_workflow.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "newWorkflowArchiveCmd": [
+            "Get",
+            "GetSyncState",
+            "Sprintf",
+            "Unmarshal",
+            "Upsert"
+          ],
+          "newWorkflowStatusCmd": [
+            "OpenWithContext"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/containers.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/containers_files.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/containers_files_download-container-content.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/containers_files_get-container.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/containers_files_list-container.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/containers_files_promote-container.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/credits.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/credits_create-coinbase-charge.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/credits_get.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/credits_runway.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/credits_runway_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/data_source.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "openStoreForRead": [
+            "OpenWithContext"
+          ],
+          "resolvePaginatedRead": [
+            "Errorf",
+            "attachFreshness",
+            "isNetworkError",
+            "paginatedGet",
+            "resolveLocal",
+            "writeThroughCache"
+          ],
+          "resolveRead": [
+            "Errorf",
+            "GetWithHeaders",
+            "attachFreshness",
+            "isNetworkError",
+            "resolveLocal",
+            "writeThroughCache"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/datasets.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/datasets_get-app-rankings.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/datasets_get-rankings-daily.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/datasets_get-session-cost.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/deliver.go",
+      "verdict": "TEMPLATED-VALUE-DRIFT",
+      "applied": false,
+      "value_drift": {
+        "decls": {
+          "deliverFile": {
+            "published": "func deliverFile(path string, body []byte) error {\n\tdir := filepath.Dir(path)\n\tif dir != \"\" \u0026\u0026 dir != \".\" {\n\t\tif err := ...",
+            "fresh": "func deliverFile(path string, body []byte) error {\n\tdir := filepath.Dir(path)\n\tif dir != \"\" \u0026\u0026 dir != \".\" {\n\t\tif err := ..."
+          },
+          "deliverWebhook": {
+            "published": "func deliverWebhook(url string, body []byte, compact bool) error {\n\tcontentType := \"application/json\"\n\tif compact {\n\t\tco...",
+            "fresh": "func deliverWebhook(url string, body []byte, compact bool) error {\n\tcontentType := \"application/json\"\n\tif compact {\n\t\tco..."
+          }
+        }
+      }
+    },
+    {
+      "path": "internal/cli/doctor.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "collectCacheReport": [
+            "len"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/embeddings.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/embeddings_create.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/embeddings_list-models.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/endpoints_failover.go",
+      "verdict": "NOVEL-COLLISION",
+      "applied": false,
+      "decl_set_delta": {
+        "in_published_not_fresh": [
+          "newEndpointsFailoverCmd"
+        ],
+        "in_fresh_not_published": [
+          "newNovelEndpointsFailoverCmd"
+        ]
+      }
+    },
+    {
+      "path": "internal/cli/endpoints_failover_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/export.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "newExportCmd": [
+            "MinimumNArgs"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/feedback.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "feedbackFilePath": [
+            "UserHomeDir"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/files.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/files_content.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/files_content_download-file.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/files_delete.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/files_get-metadata.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/files_list.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/files_upload.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/generation.go",
+      "verdict": "TEMPLATED-VALUE-DRIFT",
+      "applied": false,
+      "value_drift": {
+        "decls": {
+          "newGenerationCmd": {
+            "published": "func newGenerationCmd(flags *rootFlags) *cobra.Command {\n\tcmd := \u0026cobra.Command{\n\t\tUse:   \"generation\",\n\t\tShort: \"Genera...",
+            "fresh": "func newGenerationCmd(flags *rootFlags) *cobra.Command {\n\tcmd := \u0026cobra.Command{\n\t\tUse:         \"generation\",\n\t\tShort:  ..."
+          }
+        }
+      }
+    },
+    {
+      "path": "internal/cli/generation_explain.go",
+      "verdict": "TEMPLATED-WITH-ADDITIONS",
+      "applied": false,
+      "decl_set_delta": {
+        "in_published_not_fresh": [
+          "newGenerationExplainCmd"
+        ],
+        "in_fresh_not_published": [
+          "newNovelGenerationExplainCmd"
+        ]
+      }
+    },
+    {
+      "path": "internal/cli/generation_explain_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/generation_get.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "newGenerationGetCmd": [
+            "Sprintf",
+            "printOutputWithFlags",
+            "resolveRead"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/generation_list-content.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "newGenerationListContentCmd": [
+            "Sprintf",
+            "printOutputWithFlags",
+            "resolveRead"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/generation_submit-feedback.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/guardrails.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/guardrails_assignments.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/guardrails_assignments_bulk-assign-keys-to-guardrail.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/guardrails_assignments_bulk-assign-members-to-guardrail.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/guardrails_assignments_bulk-unassign-keys-from-guardrail.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/guardrails_assignments_bulk-unassign-members-from-guardrail.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/guardrails_assignments_list-guardrail-key.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/guardrails_assignments_list-guardrail-member.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/guardrails_create.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/guardrails_delete.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/guardrails_get.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/guardrails_list-key-assignments.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/guardrails_list-member-assignments.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/guardrails_list.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/guardrails_update.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/helpers.go",
+      "verdict": "TEMPLATED-WITH-ADDITIONS",
+      "applied": false,
+      "decl_set_delta": {
+        "in_published_not_fresh": [
+          "extractResponseData"
+        ],
+        "in_fresh_not_published": [
+          "(*noopWriteError).Error",
+          "(*noopWriteError).Unwrap",
+          "(*selectMatchState).merge",
+          "(*syncUserParams).applyTo",
+          "(*syncUserParams).validateResourceNames",
+          "(responsePathPaginatedClient).GetWithHeaders",
+          "(responsePathPaginatedClient).IsDryRun",
+          "applyResponsePath",
+          "argumentMissingPatterns",
+          "assertLiveJSONBody",
+          "boundCtx",
+          "canonicalPaginationCollectionKeys",
+          "classifyAPIErrorOnly",
+          "cloneRawObject",
+          "collectionItemsForOutput",
+          "compactListEnvelopeObjectAtDepth",
+          "compactObjectArrayValue",
+          "compactVerboseListFields",
+          "compactVerboseObjectFields",
+          "configureDefaultDBScope",
+          "currentDefaultDBScopeHash",
+          "declarePlatformAnalytics",
+          "defaultDBPathInDir",
+          "defaultDBScopeHashLen",
+          "defaultDBScopeState",
+          "deleteRawPath",
+          "detectPartialFailure",
+          "dryRunResult",
+          "emitMissingPaginationCursorWarning",
+          "emitMissingPaginationSignalWarning",
+          "emitPaginatedGetMaxPagesWarning",
+          "emitPaginatedGetRepeatedPageWarning",
+          "emitPlatformOutputMetadata",
+          "emitTruncationWarning",
+          "envelopeMetadataArrayKeys",
+          "envelopeMetadataKeys",
+          "extractPaginatedItemsFromObject",
+          "extractPaginatedItemsMatchingPath",
+          "extractPaginatedObjectArray",
+          "filterFieldsRecAtDepth",
+          "filterListEnvelopeFields",
+          "filterNestedListEnvelopeFields",
+          "formatCLIParamValue",
+          "harnessRefusalResult",
+          "hasChangedLocalFlags",
+          "isCompactScalar",
+          "isDryRunResponse",
+          "isDryRunResponseForClient",
+          "isJSONArray",
+          "looksLikeArgumentMissing",
+          "looksLikeJSONComposite",
+          "maxListEnvelopeDepth",
+          "maxSecretFromStdin",
+          "nextClientSidePaginationCursor",
+          "nextFullPageOffsetCursor",
+          "nonJSONPayloadError",
+          "noopWriteError",
+          "paginatedCollectionEnvelopeField",
+          "paginatedGetMaxPages",
+          "paginatedGetWithResponsePath",
+          "paginatedItemsEqual",
+          "paginationCursorToken",
+          "parentNoSubcommandRunE",
+          "parseSyncKVFlags",
+          "parseSyncUserParams",
+          "partialFailureErr",
+          "partialFailureReport",
+          "pathParamSegmentValue",
+          "plainCellValue",
+          "platformStructuredOutputSelected",
+          "printOutputWithFlagsMeta",
+          "printPlain",
+          "readSecretFromStdin",
+          "replaceURLIDPathParam",
+          "resolvePlatformWindow",
+          "responsePathItemsKey",
+          "responsePathPaginatedClient",
+          "responsePayloadAtPath",
+          "responsePayloadParentAtPath",
+          "selectFieldKeys",
+          "selectMatchState",
+          "setDefaultDBScopeCredential",
+          "successfulNoop",
+          "syncErrorJSON",
+          "syncUserParams",
+          "syncWarningJSON",
+          "unwrapSingleKeyArray",
+          "validatePlatformAnalytics",
+          "wantsMachineOutput",
+          "wrapAgentOutput",
+          "wrapPlatformStructuredOutput",
+          "writeDryRun",
+          "writeHarnessRefusal"
+        ]
+      }
+    },
+    {
+      "path": "internal/cli/images.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/images_create.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/images_list-model-endpoints.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/images_list-models.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/import.go",
+      "verdict": "TEMPLATED-VALUE-DRIFT",
+      "applied": false,
+      "value_drift": {
+        "decls": {
+          "newImportCmd": {
+            "published": "func newImportCmd(flags *rootFlags) *cobra.Command {\n\tvar inputFile string\n\tvar dryRun bool\n\tvar batchSize int\n\tcmd := \u0026...",
+            "fresh": "func newImportCmd(flags *rootFlags) *cobra.Command {\n\tvar inputFile string\n\tvar dryRun bool\n\tvar batchSize int\n\tcmd := \u0026..."
+          }
+        }
+      }
+    },
+    {
+      "path": "internal/cli/key_eta.go",
+      "verdict": "NOVEL-COLLISION",
+      "applied": false,
+      "decl_set_delta": {
+        "in_published_not_fresh": [
+          "newKeyEtaCmd"
+        ],
+        "in_fresh_not_published": [
+          "newNovelKeyEtaCmd"
+        ]
+      }
+    },
+    {
+      "path": "internal/cli/key_eta_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/keys.go",
+      "verdict": "TEMPLATED-VALUE-DRIFT",
+      "applied": false,
+      "value_drift": {
+        "decls": {
+          "newKeysCmd": {
+            "published": "func newKeysCmd(flags *rootFlags) *cobra.Command {\n\tcmd := \u0026cobra.Command{\n\t\tUse:   \"keys\",\n\t\tShort: \"Manage keys\",\n\t}\n\t...",
+            "fresh": "func newKeysCmd(flags *rootFlags) *cobra.Command {\n\tcmd := \u0026cobra.Command{\n\t\tUse:         \"keys\",\n\t\tShort:       \"List, ..."
+          }
+        }
+      }
+    },
+    {
+      "path": "internal/cli/keys_create.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "newKeysCreateCmd": [
+            "Post"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/keys_delete.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "newKeysDeleteCmd": [
+            "Delete",
+            "Help"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/keys_get.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "newKeysGetCmd": [
+            "Help",
+            "printOutputWithFlags",
+            "resolveRead"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/keys_list.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "newKeysListCmd": [
+            "Sprintf",
+            "printOutputWithFlags",
+            "resolvePaginatedRead"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/keys_update.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "newKeysUpdateCmd": [
+            "Help",
+            "Patch"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/learn_init.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/learn_init_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/learnings_candidates.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/learnings_candidates_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/learnings_stats.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/learnings_stats_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/limits.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/limits_status.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/limits_status_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/models.go",
+      "verdict": "TEMPLATED-VALUE-DRIFT",
+      "applied": false,
+      "value_drift": {
+        "decls": {
+          "newModelsCmd": {
+            "published": "func newModelsCmd(flags *rootFlags) *cobra.Command {\n\tcmd := \u0026cobra.Command{\n\t\tUse:   \"models\",\n\t\tShort: \"Model informat...",
+            "fresh": "func newModelsCmd(flags *rootFlags) *cobra.Command {\n\tcmd := \u0026cobra.Command{\n\t\tUse:         \"models\",\n\t\tShort:       \"Li..."
+          }
+        }
+      }
+    },
+    {
+      "path": "internal/cli/models_churn.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/models_churn_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/models_endpoints.go",
+      "verdict": "TEMPLATED-VALUE-DRIFT",
+      "applied": false,
+      "value_drift": {
+        "decls": {
+          "newModelsEndpointsCmd": {
+            "published": "func newModelsEndpointsCmd(flags *rootFlags) *cobra.Command {\n\tcmd := \u0026cobra.Command{\n\t\tUse:   \"endpoints\",\n\t\tShort: \"En...",
+            "fresh": "func newModelsEndpointsCmd(flags *rootFlags) *cobra.Command {\n\tcmd := \u0026cobra.Command{\n\t\tUse:         \"endpoints\",\n\t\tShor..."
+          }
+        }
+      }
+    },
+    {
+      "path": "internal/cli/models_endpoints_list.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "newModelsEndpointsListCmd": [
+            "Help",
+            "printOutputWithFlags",
+            "resolveRead"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/models_get.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "newModelsGetCmd": [
+            "Sprintf",
+            "printOutputWithFlags",
+            "resolveRead"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/models_list-count.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "newModelsListCountCmd": [
+            "Sprintf",
+            "printOutputWithFlags",
+            "resolveRead"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/models_list-user.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "newModelsListUserCmd": [
+            "printOutputWithFlags",
+            "resolveRead"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/models_query.go",
+      "verdict": "TEMPLATED-WITH-ADDITIONS",
+      "applied": false,
+      "decl_set_delta": {
+        "in_published_not_fresh": [
+          "newModelsQueryCmd"
+        ],
+        "in_fresh_not_published": [
+          "newNovelModelsQueryCmd"
+        ]
+      }
+    },
+    {
+      "path": "internal/cli/models_query_test.go",
+      "verdict": "TEMPLATED-CLEAN",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/observability.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/observability_create-destination.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/observability_delete-destination.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/observability_get-destination.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/observability_list-destinations.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/observability_update-destination.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/openrouter-analytics.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/openrouter-analytics_get-meta.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/openrouter-analytics_query.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/openrouter-auth.go",
+      "verdict": "TEMPLATED-VALUE-DRIFT",
+      "applied": false,
+      "value_drift": {
+        "decls": {
+          "newOpenrouterAuthCmd": {
+            "published": "func newOpenrouterAuthCmd(flags *rootFlags) *cobra.Command {\n\tcmd := \u0026cobra.Command{\n\t\tUse:   \"openrouter-auth\",\n\t\tShort...",
+            "fresh": "func newOpenrouterAuthCmd(flags *rootFlags) *cobra.Command {\n\tcmd := \u0026cobra.Command{\n\t\tUse:         \"openrouter-auth\",\n\t..."
+          }
+        }
+      }
+    },
+    {
+      "path": "internal/cli/openrouter-auth_create-keys-code.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "newOpenrouterAuthCreateKeysCodeCmd": [
+            "Post"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/openrouter-auth_exchange-code-for-apikey.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "newOpenrouterAuthExchangeCodeForApikeyCmd": [
+            "Post"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/platform_cli_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/platform_client.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/platform_window.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/platform_window_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/playbook_init.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/playbook_init_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/playbooks/embed.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/presets.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/presets_chat.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/presets_chat_create-presets-completions.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/presets_get.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/presets_list.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/presets_messages.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/presets_messages_create-presets.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/presets_responses.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/presets_responses_create-presets.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/presets_versions.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/presets_versions_get-preset.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/presets_versions_list-preset.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/profile.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "loadProfileStore": [
+            "ReadFile"
+          ],
+          "profileStorePath": [
+            "UserHomeDir"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/promoted_activity.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "newActivityPromotedCmd": [
+            "Sprintf",
+            "extractResponseData",
+            "printOutputWithFlags",
+            "resolveRead"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/promoted_benchmarks.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/promoted_chat.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/promoted_classifications.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/promoted_credits.go",
+      "verdict": "PUBLISHED-ONLY-TEMPLATED",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/promoted_endpoints.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "newEndpointsPromotedCmd": [
+            "extractResponseData",
+            "printOutputWithFlags",
+            "resolveRead"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/promoted_key.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "newKeyPromotedCmd": [
+            "extractResponseData",
+            "printOutputWithFlags",
+            "resolveRead"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/promoted_messages.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/promoted_model.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/promoted_organization.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/promoted_providers.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "newProvidersPromotedCmd": [
+            "extractResponseData",
+            "printOutputWithFlags",
+            "resolveRead"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/promoted_rerank.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/promoted_responses.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/providers_degraded.go",
+      "verdict": "TEMPLATED-WITH-ADDITIONS",
+      "applied": false,
+      "decl_set_delta": {
+        "in_published_not_fresh": [
+          "newProvidersDegradedCmd"
+        ],
+        "in_fresh_not_published": [
+          "newNovelProvidersDegradedCmd"
+        ]
+      }
+    },
+    {
+      "path": "internal/cli/providers_degraded_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/resource_paths.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/root.go",
+      "verdict": "TEMPLATED-WITH-ADDITIONS",
+      "applied": false,
+      "decl_set_delta": {
+        "in_published_not_fresh": [
+          "newVersionCliCmd",
+          "version"
+        ],
+        "in_fresh_not_published": [
+          "addNovelCommandIfAbsent",
+          "argsDisableLearn",
+          "commandTreeHasFlag",
+          "deriveFlagCorrections",
+          "findSubcommand",
+          "isCobraUsageError",
+          "isNovelScaffoldCommand",
+          "journalInvocation",
+          "journalVerbChain",
+          "learnFamilyCommands",
+          "learnHookSkipList",
+          "novelCommandHooks",
+          "novelScaffoldAnnotation",
+          "preferImplementedNovelCommands",
+          "registerNovelCommand",
+          "shouldSkipLearnHook",
+          "timeoutExplicitFrom",
+          "writeCredentialSaveErrorEnvelope"
+        ]
+      }
+    },
+    {
+      "path": "internal/cli/root_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/scim.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/scim_create-group-mapping.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/scim_delete-group-mapping.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/scim_get-group-mapping.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/scim_list-group-mappings.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/scim_list-groups.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/scim_update-group-mapping.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/search.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "isNilOrEmpty": [
+            "TrimSpace"
+          ],
+          "outputSearchResults": [
+            "isTerminal",
+            "printOutput"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/sync.go",
+      "verdict": "TEMPLATED-WITH-ADDITIONS",
+      "applied": false,
+      "decl_set_delta": {
+        "in_published_not_fresh": [
+          "determineSinceParam",
+          "genericIDFieldFallbacks"
+        ],
+        "in_fresh_not_published": [
+          "(*lockedWriter).Write",
+          "cursorFromNextURL",
+          "cursorPageHasContinuation",
+          "cursorValue",
+          "dataEnvelopeKeys",
+          "dependentParentFields",
+          "dependentParentKeyValue",
+          "dependentParentRows",
+          "dependentPathParamDef",
+          "dependentResourceDef",
+          "dependentResourceDefs",
+          "dependentSyncResourceNames",
+          "describeCriticalFailedResources",
+          "describeFailedResources",
+          "describeResourceFailure",
+          "dogfoodMaxParentRows",
+          "emitParentAnomaly",
+          "emitSyncMissingPaginationCursorWarning",
+          "envelopeExplicitHasMore",
+          "envelopeReportsFailure",
+          "extractItemsByKnownKeys",
+          "extractItemsByKnownKeysWithMetadata",
+          "extractItemsFromEnvelope",
+          "extractJSONItemsArray",
+          "extractObjectArray",
+          "extractPageItemsWithPagination",
+          "extractSingleMapKeyedSibling",
+          "extractSingleObjectArraySibling",
+          "flatReconcileDef",
+          "flatReconcileDefT",
+          "flatReconcileDefs",
+          "flatReconcileModes",
+          "flatSyncResources",
+          "formatSyncSinceValue",
+          "hasExactlyOneEmptyArray",
+          "hasExactlyOneNullArrayWithZeroCount",
+          "hydrateScalarItems",
+          "hydratedItemPath",
+          "isEmptyPageEnvelope",
+          "isEmptyPageResponse",
+          "isFollowableNextURL",
+          "isJSONNull",
+          "isJSONResponse",
+          "isNullOrEmptyJSON",
+          "isNullPageItemCandidateKey",
+          "isSyncStatePersistenceError",
+          "isZeroCountField",
+          "itemHydrationConfig",
+          "itemHydrationPaths",
+          "knownSyncResourceNames",
+          "lockedWriter",
+          "lookupRefreshEntityFields",
+          "mapKeyedPagination",
+          "nextCursorFromTopLevelURL",
+          "normalizeRestSyncTimestampField",
+          "pageAllowsPageIntFallback",
+          "pageEnvelopeMetadataKeys",
+          "pageExplicitHasMore",
+          "pageItemKeys",
+          "pageMayHaveMore",
+          "pageMetadataArrayKeys",
+          "paginationEndUnprovable",
+          "paginationLinkURL",
+          "parentAnomaly",
+          "parentFKColumnName",
+          "parentReport",
+          "parentTenantScopeColumns",
+          "parseRestSyncTimestamp",
+          "partitionOutcome",
+          "reconcileTypedTable",
+          "reconcileTypedTables",
+          "refreshLookupsFromSyncedStore",
+          "replaceDependentPathParam",
+          "resolveTenantID",
+          "resourceIsFlatReconcilable",
+          "resourceReconcileMode",
+          "resourceSupportsPagination",
+          "resourceURLIDPathParam",
+          "responseDeclaresFailure",
+          "responsePathForResource",
+          "restSyncTimestamp",
+          "restSyncTimestampField",
+          "scalarItemID",
+          "shortPageEndsPagination",
+          "syncDependentResource",
+          "syncDependentResources",
+          "syncGet",
+          "syncHTMLRequestHeaders",
+          "syncOneParent",
+          "syncPageItemsEqual",
+          "syncPaginationPageIsStuck",
+          "syncResourceParamDefaults",
+          "syncResourceSinceParam",
+          "syncResourceSinceParamFormat",
+          "syncResourceSortField",
+          "syncResourceSortParam",
+          "syncResourceSortValue",
+          "syncWatermarkOverlap",
+          "unresolvedPathKeyRE",
+          "urlIDFieldName"
+        ]
+      }
+    },
+    {
+      "path": "internal/cli/sync_hint.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/sync_hint_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/sync_numeric_id_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/tail.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "fetchAndEmit": [
+            "Unmarshal"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cli/teach.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/teach_playbook.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/teach_playbook_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/teach_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/usage.go",
+      "verdict": "NOVEL-COLLISION",
+      "applied": false,
+      "decl_set_delta": {
+        "in_published_not_fresh": [
+          "newUsageCmd"
+        ],
+        "in_fresh_not_published": [
+          "newNovelUsageCmd"
+        ]
+      }
+    },
+    {
+      "path": "internal/cli/usage_anomaly.go",
+      "verdict": "NOVEL-COLLISION",
+      "applied": false,
+      "decl_set_delta": {
+        "in_published_not_fresh": [
+          "newUsageAnomalyCmd"
+        ],
+        "in_fresh_not_published": [
+          "newNovelUsageAnomalyCmd"
+        ]
+      }
+    },
+    {
+      "path": "internal/cli/usage_anomaly_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/usage_cost_by.go",
+      "verdict": "TEMPLATED-WITH-ADDITIONS",
+      "applied": false,
+      "decl_set_delta": {
+        "in_published_not_fresh": [
+          "newUsageCostByCmd"
+        ],
+        "in_fresh_not_published": [
+          "newNovelUsageCostByCmd"
+        ]
+      }
+    },
+    {
+      "path": "internal/cli/usage_cost_by_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/usage_reconcile.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/usage_reconcile_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/version.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/videos.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/videos_content.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/videos_content_list-videos.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/videos_create.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/videos_get.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/videos_list-models.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/which.go",
+      "verdict": "TEMPLATED-CLEAN",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/which_test.go",
+      "verdict": "TEMPLATED-CLEAN",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/workspaces.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/workspaces_budgets.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/workspaces_budgets_delete-workspace.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/workspaces_budgets_get-workspace.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/workspaces_budgets_list-workspace.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/workspaces_budgets_upsert-workspace.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/workspaces_create.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/workspaces_delete.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/workspaces_get.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/workspaces_list.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/workspaces_members.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/workspaces_members_bulk-add-workspace.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/workspaces_members_bulk-remove-workspace.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/workspaces_members_list-workspace.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cli/workspaces_update.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/client/client.go",
+      "verdict": "TEMPLATED-WITH-ADDITIONS",
+      "applied": false,
+      "decl_set_delta": {
+        "in_published_not_fresh": [
+          "(*Client).invalidateCache",
+          "(*Client).refreshAccessToken"
+        ],
+        "in_fresh_not_published": [
+          "(*Client).BindPlatformSession",
+          "(*Client).DeleteWithBody",
+          "(*Client).DeleteWithBodyAndHeaders",
+          "(*Client).DeleteWithParams",
+          "(*Client).DeleteWithParamsAndBody",
+          "(*Client).DeleteWithParamsAndBodyAndHeaders",
+          "(*Client).DeleteWithParamsAndHeaders",
+          "(*Client).GetMutating",
+          "(*Client).GetMutatingWithHeaders",
+          "(*Client).GetNoCache",
+          "(*Client).GetWithHeadersNoCache",
+          "(*Client).GetWithHeadersNoCacheValues",
+          "(*Client).GetWithHeadersValues",
+          "(*Client).IsDryRun",
+          "(*Client).PatchMultipart",
+          "(*Client).PatchMultipartWithHeaders",
+          "(*Client).PatchMultipartWithParams",
+          "(*Client).PatchMultipartWithParamsAndHeaders",
+          "(*Client).PatchQueryMultipartWithParams",
+          "(*Client).PatchQueryMultipartWithParamsAndHeaders",
+          "(*Client).PatchQueryWithParams",
+          "(*Client).PatchQueryWithParamsAndHeaders",
+          "(*Client).PatchWithParams",
+          "(*Client).PatchWithParamsAndHeaders",
+          "(*Client).PostMultipart",
+          "(*Client).PostMultipartWithHeaders",
+          "(*Client).PostMultipartWithParams",
+          "(*Client).PostMultipartWithParamsAndHeaders",
+          "(*Client).PostQueryWithParams",
+          "(*Client).PostQueryWithParamsAndHeaders",
+          "(*Client).PostWithParams",
+          "(*Client).PostWithParamsAndHeaders",
+          "(*Client).PutMultipart",
+          "(*Client).PutMultipartWithHeaders",
+          "(*Client).PutMultipartWithParams",
+          "(*Client).PutMultipartWithParamsAndHeaders",
+          "(*Client).PutQueryMultipartWithParams",
+          "(*Client).PutQueryMultipartWithParamsAndHeaders",
+          "(*Client).PutQueryWithParams",
+          "(*Client).PutQueryWithParamsAndHeaders",
+          "(*Client).PutWithParams",
+          "(*Client).PutWithParamsAndHeaders",
+          "(*Client).RequestBaseURL",
+          "(*Client).SetPlatformEndpointBudget",
+          "(*Client).SetTimeoutExplicit",
+          "(*Client).bindOperationDeadline",
+          "(*Client).cacheKeyFor",
+          "(*Client).cacheResourceDir",
+          "(*Client).displayURL",
+          "(*Client).doInternal",
+          "(*Client).doMutation",
+          "(*Client).doRead",
+          "(*Client).invalidateCacheAfterMutation",
+          "(*Client).invalidateCacheResource",
+          "(*Client).maskCredentialText",
+          "(*Client).maskError",
+          "(*Client).platformBudgetLocked",
+          "(*Client).platformCacheMetadataMatches",
+          "(*Client).platformRetryPolicy",
+          "(*Client).readCacheWithHeaders",
+          "(*Client).responseCacheEnabled",
+          "(*Client).validateCachedRequestAuth",
+          "(*Client).waitForPlatformBudget",
+          "(*Client).waitForRateLimitRefill",
+          "(*Client).wantsBinaryResponse",
+          "(*Client).writeCacheWithHeaders",
+          "(*Client).writePlatformCacheMetadata",
+          "(maskedError).Error",
+          "BinaryResponseHeader",
+          "ErrPlaceholderCredential",
+          "HTMLResponseHeader",
+          "RateLimitAuto",
+          "StreamingHTTPClient",
+          "authHeaderLooksLikePlaceholderCredential",
+          "authPlaceholderCredentialError",
+          "authPlaceholderCredentialErrorWithSetup",
+          "binaryResponseEnvelope",
+          "binaryResponseHeaderValue",
+          "cacheResourceTag",
+          "canonicalRepresentationHeaders",
+          "canonicalStringMap",
+          "clientMaxRetries",
+          "collapseHTMLErrorBody",
+          "defaultAutoStartRate",
+          "encodeMultipartBody",
+          "ensureCachePerms",
+          "escapeMultipartQuotes",
+          "extractHTMLTitle",
+          "findHTMLCloseTag",
+          "htmlTagEnd",
+          "htmlTagName",
+          "isBinaryResponseContentType",
+          "isHTMLSpace",
+          "isHTMLTagNameByte",
+          "isMutatingVerb",
+          "isPathPlaceholderName",
+          "isPermanentDNSError",
+          "looksLikeCredentialPlaceholder",
+          "looksLikeHTMLBody",
+          "maskedError",
+          "maxErrorBodyBytes",
+          "maxIdleConnsPerHost",
+          "multipartFileContentType",
+          "multipartRequestBody",
+          "newRateLimiter",
+          "numericVersionSegment",
+          "pathWithQueryValues",
+          "platformCacheMetadata",
+          "redirectLeavesOrigin",
+          "rejectUnresolvedPathParams",
+          "requestIdempotencyKey",
+          "safeEndpointClass",
+          "sleepContext",
+          "stripControlCharacters",
+          "stripHTMLTags",
+          "summarizeHTMLBody",
+          "summarizeHTMLDocument",
+          "truncateRunes",
+          "verifyShortCircuitEnvelope",
+          "wrapBinaryResponse"
+        ]
+      }
+    },
+    {
+      "path": "internal/client/client_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/client/client_verify_short_circuit_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/client/platform_budget_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/client/platform_rate_limit_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/cliutil_test.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "TestAdaptiveLimiter_RampsUpAfterSuccesses": [
+            "NewAdaptiveLimiter"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cliutil/credentials.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/credentials_perms_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/credentials_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/creds_perms_eval.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/creds_perms_eval_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/creds_perms_unix.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/creds_perms_windows.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/csv.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/duration.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/duration_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/extractnumber.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/extractnumber_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/fanout.go",
+      "verdict": "TEMPLATED-CLEAN",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/jwtshape.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/jwtshape_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/odata_date.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/odata_date_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/paths.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/paths_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/probe.go",
+      "verdict": "TEMPLATED-CLEAN",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/ratelimit.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "(*AdaptiveLimiter).Wait": [
+            "Sleep"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/cliutil/testenv/sandbox_unix.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/testenv/sandbox_windows.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/testenv/testenv.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/cliutil/text.go",
+      "verdict": "TEMPLATED-VALUE-DRIFT",
+      "applied": false,
+      "value_drift": {
+        "decls": {
+          "ParseStoredTime": {
+            "published": "func ParseStoredTime(s string) time.Time {\n\ts = strings.TrimSpace(s)\n\tif s == \"\" {\n\t\treturn time.Time{}\n\t}\n\tfor _, layou...",
+            "fresh": "func ParseStoredTime(s string) time.Time {\n\ts = strings.TrimSpace(s)\n\tif s == \"\" {\n\t\treturn time.Time{}\n\t}\n\tfor _, layou..."
+          },
+          "SanitizeErrorBody": {
+            "published": "func SanitizeErrorBody(msg string) string {\n\tif len(msg) \u003e 200 {\n\t\tmsg = msg[:200] + \"...\"\n\t}\n\tcredPatterns := regexp.Mu...",
+            "fresh": "func SanitizeErrorBody(msg string) string {\n\tif len(msg) \u003e 200 {\n\t\tmsg = msg[:200] + \"...\"\n\t}\n\tcredPatterns := regexp.Mu..."
+          }
+        }
+      }
+    },
+    {
+      "path": "internal/cliutil/verifyenv.go",
+      "verdict": "TEMPLATED-CLEAN",
+      "applied": false
+    },
+    {
+      "path": "internal/config/config.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "(*Config).save": [
+            "Dir",
+            "MkdirAll",
+            "WriteFile"
+          ],
+          "Load": [
+            "Errorf",
+            "ReadFile",
+            "Unmarshal",
+            "UserHomeDir"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/config/config_perms_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/derive.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/derive_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/doc.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/entities/config.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/entities/config_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/entities/extract.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/entities/extract_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/journal.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/journal_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/lookups/seeds.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/lookups/seeds_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/lookups/store.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/lookups/store_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/match.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/match_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/normalize.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/normalize_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/patterns/apply.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/patterns/apply_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/patterns/doc.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/patterns/extract.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/patterns/extract_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/patterns/store.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/patterns/store_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/playbooks.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/playbooks_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/preseed.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/preseed_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/promote.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/promote_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/protocol.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/recall.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/recall_canonical_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/recall_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/synthesize.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/synthesize_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/teach.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/teach_log.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/teach_log_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/learn/teach_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/mcp/bound/bound.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/mcp/bound/bound_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/mcp/cobratree/classify.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "classify": [
+            "Name"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/mcp/cobratree/cli_path.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "SiblingCLIPath": [
+            "Dir",
+            "Join"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/mcp/cobratree/names.go",
+      "verdict": "TEMPLATED-CLEAN",
+      "applied": false
+    },
+    {
+      "path": "internal/mcp/cobratree/shellout.go",
+      "verdict": "TEMPLATED-WITH-ADDITIONS",
+      "applied": false,
+      "decl_set_delta": {
+        "in_published_not_fresh": [
+          "splitShellArgs"
+        ],
+        "in_fresh_not_published": [
+          "(*cappedCapture).String",
+          "(*cappedCapture).Write",
+          "CLICommandResult",
+          "RunCLICommand",
+          "SplitShellArgs",
+          "ToolResultFromCLICommand",
+          "blockedDestinationFlags",
+          "blockedRootFlags",
+          "boundedToolResultError",
+          "cappedCapture",
+          "newCappedCapture",
+          "positionalArgsFromMCP",
+          "positionalArgsFromRawArgsField",
+          "quoteMCPParameterNames",
+          "reservedStructuredArgs",
+          "shelloutCaptureLimit",
+          "stderrHintLines",
+          "validateMCPArgumentNames",
+          "validatePositionalArgsForMCP",
+          "validatePositionalArgsForMCPAtOffset"
+        ]
+      }
+    },
+    {
+      "path": "internal/mcp/cobratree/shellout_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/mcp/cobratree/typemap.go",
+      "verdict": "TEMPLATED-VALUE-DRIFT",
+      "applied": false,
+      "value_drift": {
+        "decls": {
+          "toolOptionsForFlags": {
+            "published": "func toolOptionsForFlags(cmd *cobra.Command) []mcplib.ToolOption {\n\tvar opts []mcplib.ToolOption\n\tseen := map[string]boo...",
+            "fresh": "func toolOptionsForFlags(cmd *cobra.Command, blocked map[string]bool, positionals []positionalArg) []mcplib.ToolOption {..."
+          }
+        }
+      }
+    },
+    {
+      "path": "internal/mcp/cobratree/walker.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "walk": [
+            "classify"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/mcp/code_orch.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/mcp/code_orch_writebody_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/mcp/intents.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/mcp/platform_gate.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/mcp/platform_gate_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/mcp/recipe_intents_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/mcp/tools.go",
+      "verdict": "TEMPLATED-WITH-ADDITIONS",
+      "applied": false,
+      "decl_set_delta": {
+        "in_published_not_fresh": [
+          "dbPath"
+        ],
+        "in_fresh_not_published": [
+          "coerceMCPBodyValue",
+          "defaultMCPRateLimit",
+          "formatMCPParamValue",
+          "hasTrailingSQLStatement",
+          "looksLikeMCPJSONComposite",
+          "mcpDBPath",
+          "mcpEmptyStoreNextStep",
+          "mcpMissingStoreMessage",
+          "mcpMultipartFieldValue",
+          "mcpPageConfig",
+          "mcpPathValue",
+          "mcpSQLEnvelope",
+          "mcpSQLQueryError",
+          "mcpSearchEnvelope",
+          "mcpStoreStatus",
+          "mcpStoreStatusEmpty",
+          "mcpStoreStatusKind",
+          "mcpStoreStatusReady",
+          "mcpToolError",
+          "mcpToolPageResultText",
+          "mcpToolPageResultTextWithPlatform",
+          "mcpToolResultText",
+          "mcpToolResultTextWithPlatform",
+          "mcpToolTextWithPlatform",
+          "newMCPClientFromConfig",
+          "newMCPConfig",
+          "openMCPReadOnlyStore",
+          "setNestedBodyArg",
+          "toolResultJSON"
+        ]
+      }
+    },
+    {
+      "path": "internal/mcp/tools_test.go",
+      "verdict": "TEMPLATED-VALUE-DRIFT",
+      "applied": false,
+      "value_drift": {
+        "decls": {
+          "TestValidateReadOnlyQuery_AllowsSelectAndWITH": {
+            "published": "func TestValidateReadOnlyQuery_AllowsSelectAndWITH(t *testing.T) {\n\tallowed := []string{\n\t\t\"SELECT 1\",\n\t\t\"select * from ...",
+            "fresh": "func TestValidateReadOnlyQuery_AllowsSelectAndWITH(t *testing.T) {\n\tallowed := []string{\n\t\t\"SELECT 1\",\n\t\t\"select * from ..."
+          },
+          "TestValidateReadOnlyQuery_RejectsBypassVectors": {
+            "published": "func TestValidateReadOnlyQuery_RejectsBypassVectors(t *testing.T) {\n\trejected := []string{\n\t\t\"VACUUM INTO '/tmp/x.db'\",\n...",
+            "fresh": "func TestValidateReadOnlyQuery_RejectsBypassVectors(t *testing.T) {\n\trejected := []string{\n\t\t\"VACUUM INTO '/tmp/x.db'\",\n..."
+          }
+        }
+      }
+    },
+    {
+      "path": "internal/platform/conformance_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/platform/doctor.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/platform/gate.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/platform/metadata.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/platform/migration.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/platform/perms_unix.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/platform/perms_windows.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/platform/profile.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/platform/ratelimit.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/platform/receipt.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/store/candidates.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/store/candidates_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/store/events.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/store/events_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/store/extras.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/store/learnings.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/store/learnings_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/store/playbooks.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/store/playbooks_test.go",
+      "verdict": "NEW-TEMPLATE-EMISSION",
+      "applied": false
+    },
+    {
+      "path": "internal/store/schema_version_test.go",
+      "verdict": "TEMPLATED-VALUE-DRIFT",
+      "applied": false,
+      "value_drift": {
+        "decls": {
+          "TestMigrate_AddsColumnsOnUpgrade_Activity": {
+            "published": "func TestMigrate_AddsColumnsOnUpgrade_Activity(t *testing.T) {\n\tdbPath := filepath.Join(t.TempDir(), \"data.db\")\n\traw, er...",
+            "fresh": "func TestMigrate_AddsColumnsOnUpgrade_Activity(t *testing.T) {\n\tdbPath := filepath.Join(t.TempDir(), \"data.db\")\n\traw, er..."
+          },
+          "TestMigrate_AddsColumnsOnUpgrade_Endpoints": {
+            "published": "func TestMigrate_AddsColumnsOnUpgrade_Endpoints(t *testing.T) {\n\tdbPath := filepath.Join(t.TempDir(), \"data.db\")\n\traw, e...",
+            "fresh": "func TestMigrate_AddsColumnsOnUpgrade_Endpoints(t *testing.T) {\n\tdbPath := filepath.Join(t.TempDir(), \"data.db\")\n\traw, e..."
+          },
+          "TestMigrate_AddsColumnsOnUpgrade_Keys": {
+            "published": "func TestMigrate_AddsColumnsOnUpgrade_Keys(t *testing.T) {\n\tdbPath := filepath.Join(t.TempDir(), \"data.db\")\n\traw, err :=...",
+            "fresh": "func TestMigrate_AddsColumnsOnUpgrade_Keys(t *testing.T) {\n\tdbPath := filepath.Join(t.TempDir(), \"data.db\")\n\traw, err :=..."
+          },
+          "TestMigrate_AddsColumnsOnUpgrade_Models": {
+            "published": "func TestMigrate_AddsColumnsOnUpgrade_Models(t *testing.T) {\n\tdbPath := filepath.Join(t.TempDir(), \"data.db\")\n\traw, err ...",
+            "fresh": "func TestMigrate_AddsColumnsOnUpgrade_Models(t *testing.T) {\n\tdbPath := filepath.Join(t.TempDir(), \"data.db\")\n\traw, err ..."
+          },
+          "TestMigrate_AddsColumnsOnUpgrade_ModelsEndpoints": {
+            "published": "func TestMigrate_AddsColumnsOnUpgrade_ModelsEndpoints(t *testing.T) {\n\tdbPath := filepath.Join(t.TempDir(), \"data.db\")\n\t...",
+            "fresh": "func TestMigrate_AddsColumnsOnUpgrade_ModelsEndpoints(t *testing.T) {\n\tdbPath := filepath.Join(t.TempDir(), \"data.db\")\n\t..."
+          },
+          "TestMigrate_AddsColumnsOnUpgrade_OpenrouterAuth": {
+            "published": "func TestMigrate_AddsColumnsOnUpgrade_OpenrouterAuth(t *testing.T) {\n\tdbPath := filepath.Join(t.TempDir(), \"data.db\")\n\tr...",
+            "fresh": "func TestMigrate_AddsColumnsOnUpgrade_OpenrouterAuth(t *testing.T) {\n\tdbPath := filepath.Join(t.TempDir(), \"data.db\")\n\tr..."
+          },
+          "TestMigrate_AddsColumnsOnUpgrade_Providers": {
+            "published": "func TestMigrate_AddsColumnsOnUpgrade_Providers(t *testing.T) {\n\tdbPath := filepath.Join(t.TempDir(), \"data.db\")\n\traw, e...",
+            "fresh": "func TestMigrate_AddsColumnsOnUpgrade_Providers(t *testing.T) {\n\tdbPath := filepath.Join(t.TempDir(), \"data.db\")\n\traw, e..."
+          },
+          "TestMigrate_AddsColumnsOnUpgrade_SyncState": {
+            "published": "func TestMigrate_AddsColumnsOnUpgrade_SyncState(t *testing.T) {\n\tdbPath := filepath.Join(t.TempDir(), \"data.db\")\n\traw, e...",
+            "fresh": "func TestMigrate_AddsColumnsOnUpgrade_SyncState(t *testing.T) {\n\tdbPath := filepath.Join(t.TempDir(), \"data.db\")\n\traw, e..."
+          },
+          "holdWriteLock": {
+            "published": "func holdWriteLock(t *testing.T, dbPath string) (cleanup func()) {\n\tt.Helper()\n\tholder, err := sql.Open(\"sqlite\", dbPath...",
+            "fresh": "func holdWriteLock(t *testing.T, dbPath string) (cleanup func()) {\n\tt.Helper()\n\tholder, err := sql.Open(\"sqlite\", dbPath..."
+          }
+        }
+      }
+    },
+    {
+      "path": "internal/store/store.go",
+      "verdict": "TEMPLATED-BODY-DRIFT",
+      "applied": false,
+      "body_drift": {
+        "functions": {
+          "(*Store).ClearSyncCursors": [
+            "Lock",
+            "Unlock"
+          ],
+          "(*Store).SaveSyncCursor": [
+            "Lock",
+            "Unlock"
+          ],
+          "(*Store).SaveSyncState": [
+            "Exec",
+            "Lock",
+            "Unlock"
+          ],
+          "(*Store).Upsert": [
+            "Lock",
+            "Unlock"
+          ],
+          "(*Store).UpsertActivity": [
+            "Lock",
+            "Unlock",
+            "Unmarshal",
+            "extractObjectID"
+          ],
+          "(*Store).UpsertBatch": [
+            "Begin",
+            "Commit",
+            "Errorf",
+            "Fprintf",
+            "Lock",
+            "Rollback",
+            "Sprintf",
+            "Unlock",
+            "Unmarshal",
+            "len",
+            "lookupFieldValue",
+            "upsertActivityTx",
+            "upsertEndpointsTx",
+            "upsertGenericResourceTx",
+            "upsertKeysTx",
+            "upsertModelsEndpointsTx",
+            "upsertModelsTx",
+            "upsertOpenrouterAuthTx",
+            "upsertProvidersTx"
+          ],
+          "(*Store).UpsertEndpoints": [
+            "Lock",
+            "Unlock",
+            "Unmarshal",
+            "extractObjectID"
+          ],
+          "(*Store).UpsertKeys": [
+            "Lock",
+            "Unlock",
+            "Unmarshal",
+            "extractObjectID"
+          ],
+          "(*Store).UpsertModels": [
+            "Lock",
+            "Unlock",
+            "Unmarshal",
+            "extractObjectID"
+          ],
+          "(*Store).UpsertModelsEndpoints": [
+            "Lock",
+            "Unlock",
+            "Unmarshal",
+            "extractObjectID"
+          ],
+          "(*Store).UpsertOpenrouterAuth": [
+            "Lock",
+            "Unlock",
+            "Unmarshal",
+            "extractObjectID"
+          ],
+          "(*Store).UpsertProviders": [
+            "Lock",
+            "Unlock",
+            "Unmarshal",
+            "extractObjectID"
+          ],
+          "(*Store).ensureColumn": [
+            "Close",
+            "Err",
+            "Next",
+            "QueryContext"
+          ],
+          "LookupFieldValue": [
+            "Join",
+            "Split",
+            "ToUpper",
+            "len"
+          ],
+          "OpenReadOnly": [
+            "Errorf",
+            "Open",
+            "SetMaxOpenConns"
+          ],
+          "extractObjectID": [
+            "Sprintf"
+          ],
+          "ftsRowID": [
+            "uint64"
+          ]
+        }
+      }
+    },
+    {
+      "path": "internal/store/upsert_batch_test.go",
+      "verdict": "TEMPLATED-VALUE-DRIFT",
+      "applied": false,
+      "value_drift": {
+        "decls": {
+          "TestUpsertBatch_GenericFallbackList": {
+            "published": "func TestUpsertBatch_GenericFallbackList(t *testing.T) {\n\tdbPath := filepath.Join(t.TempDir(), \"data.db\")\n\ts, err := Ope...",
+            "fresh": "func TestUpsertBatch_GenericFallbackList(t *testing.T) {\n\tdbPath := filepath.Join(t.TempDir(), \"data.db\")\n\ts, err := Ope..."
+          },
+          "TestUpsertBatch_PopulatesModelsEndpointsTable": {
+            "published": "func TestUpsertBatch_PopulatesModelsEndpointsTable(t *testing.T) {\n\tdbPath := filepath.Join(t.TempDir(), \"data.db\")\n\ts, ...",
+            "fresh": "func TestUpsertBatch_PopulatesModelsEndpointsTable(t *testing.T) {\n\tdbPath := filepath.Join(t.TempDir(), \"data.db\")\n\ts, ..."
+          },
+          "TestUpsertBatch_PopulatesOpenrouterAuthTable": {
+            "published": "func TestUpsertBatch_PopulatesOpenrouterAuthTable(t *testing.T) {\n\tdbPath := filepath.Join(t.TempDir(), \"data.db\")\n\ts, e...",
+            "fresh": "func TestUpsertBatch_PopulatesOpenrouterAuthTable(t *testing.T) {\n\tdbPath := filepath.Join(t.TempDir(), \"data.db\")\n\ts, e..."
+          }
+        }
+      }
+    },
+    {
+      "path": "internal/types/types.go",
+      "verdict": "TEMPLATED-WITH-ADDITIONS",
+      "applied": false,
+      "decl_set_delta": {
+        "in_published_not_fresh": [
+          "AnthropicServerToolUseBlock",
+          "MessagesErrorDetail",
+          "MessagesErrorResponse",
+          "ReasoningConfig",
+          "Usage"
+        ],
+        "in_fresh_not_published": [
+          "AABenchmarkEntry",
+          "AdditionalToolsItem",
+          "AdvisorReasoning",
+          "AdvisorServerToolConfig",
+          "AdvisorServerTool_OpenRouter",
+          "AgentMessageItem",
+          "AnthropicAdvisorMessageUsageIteration",
+          "AnthropicAdvisorToolResult",
+          "AnthropicCitationSearchResultLocationParam",
+          "AnthropicCitationWebSearchResultLocationParam",
+          "AnthropicFile",
+          "AnthropicFileDeleted",
+          "AnthropicFileDocumentSource",
+          "AnthropicFileList",
+          "AnthropicMessagesErrorResponse",
+          "AnthropicOutputTokensDetails",
+          "AnthropicToolSearchToolBm25",
+          "AnthropicToolSearchToolRegex",
+          "AppRankingsItem",
+          "AppRankingsResponse",
+          "ApplyPatchCallItem",
+          "ApplyPatchCallOperationDiffDeltaEvent",
+          "ApplyPatchCallOperationDiffDoneEvent",
+          "ApplyPatchCallOutputItem",
+          "ApplyPatchCreateFileOperation",
+          "ApplyPatchDeleteFileOperation",
+          "ApplyPatchServerToolConfig",
+          "ApplyPatchServerTool_OpenRouter",
+          "ApplyPatchUpdateFileOperation",
+          "AutoBetaRouterPlugin",
+          "BYOKKey",
+          "BaseCustomToolCallInputDeltaEvent",
+          "BaseCustomToolCallInputDoneEvent",
+          "BashServerTool",
+          "BashServerToolConfig",
+          "BenchmarksGetItem",
+          "BooleanCapability",
+          "ChatFormatJsonObjectConfig",
+          "ChatServerToolChoice",
+          "CodeInterpreterCallCodeDeltaEvent",
+          "CodeInterpreterCallCodeDoneEvent",
+          "CodeInterpreterCallCompletedEvent",
+          "CodeInterpreterCallInProgressEvent",
+          "CodeInterpreterCallInterpretingEvent",
+          "CodeInterpreterFileOutput",
+          "CodeInterpreterImageOutput",
+          "CodeInterpreterLogsOutput",
+          "CompactionItem",
+          "ContainerAutoEnvironment",
+          "ContainerFile",
+          "ContainerFileListResponse",
+          "ContainerReferenceEnvironment",
+          "ContentFilterBuiltinEntryInput",
+          "ContentPartAudio",
+          "ContentPartInputAudio",
+          "ContentPartInputFile",
+          "ContentPartInputVideo",
+          "ContentPartVideo",
+          "ContextCompactionItem",
+          "CreateBYOKKeyRequest",
+          "CreateBYOKKeyResponse",
+          "CreateObservabilityDestinationRequest",
+          "CreateObservabilityDestinationResponse",
+          "CreatePresetFromInferenceResponse",
+          "CreateScimGroupMappingRequest",
+          "CreateScimGroupMappingResponse",
+          "CustomToolCallInputDeltaEvent",
+          "CustomToolCallInputDoneEvent",
+          "CustomToolCallItem",
+          "CustomToolCallOutputItem",
+          "DABenchmarkEntry",
+          "DebugEvent",
+          "DeleteBYOKKeyResponse",
+          "DeleteObservabilityDestinationResponse",
+          "DeleteScimGroupMappingResponse",
+          "DeleteWorkspaceBudgetResponse",
+          "EmbeddingsCreateItem",
+          "EnumCapability",
+          "FilesServerTool",
+          "FilesServerToolConfig",
+          "FusionAnalysisResult",
+          "FusionCallAnalysisCompletedEvent",
+          "FusionCallAnalysisInProgressEvent",
+          "FusionCallCompletedEvent",
+          "FusionCallInProgressEvent",
+          "FusionCallPanelAddedEvent",
+          "FusionCallPanelCompletedEvent",
+          "FusionCallPanelDeltaEvent",
+          "FusionCallPanelFailedEvent",
+          "FusionCallPanelReasoningDeltaEvent",
+          "FusionPlugin",
+          "FusionServerToolConfig",
+          "FusionServerTool_OpenRouter",
+          "FusionSource",
+          "GenerationContentError",
+          "GenerationContentErrorAttempt",
+          "GetBYOKKeyResponse",
+          "GetObservabilityDestinationResponse",
+          "GetPresetResponse",
+          "GetPresetVersionResponse",
+          "GetScimGroupMappingResponse",
+          "GetWorkspaceBudgetResponse",
+          "ImageEndpoint",
+          "ImageGenCompletedEvent",
+          "ImageGenPartialImageEvent",
+          "ImageGenStreamErrorEvent",
+          "ImageGenTextChunkEvent",
+          "ImageGenerationProviderPreferences",
+          "ImageGenerationRequest",
+          "ImageGenerationResponse",
+          "ImageGenerationUsage",
+          "ImageModelArchitecture",
+          "ImageModelEndpointsResponse",
+          "ImageModelListItem",
+          "ImageModelsListResponse",
+          "ImagePricingEntry",
+          "ImageStreamingResponse",
+          "ImagesCreateItem",
+          "ItemReferenceItem",
+          "Legacy_ChatContentVideoInput",
+          "ListBYOKKeysResponse",
+          "ListObservabilityDestinationsResponse",
+          "ListPresetVersionsResponse",
+          "ListPresetsResponse",
+          "ListScimGroupMappingsResponse",
+          "ListScimGroupsResponse",
+          "ListWorkspaceBudgetsResponse",
+          "ListWorkspaceMembersResponse",
+          "LocalShellCallItem",
+          "LocalShellCallOutputItem",
+          "McpApprovalRequestItem",
+          "McpApprovalResponseItem",
+          "McpCallItem",
+          "McpListToolsItem",
+          "MessagesAdvisorToolResultBlock",
+          "MessagesBashToolResultBlock",
+          "MessagesFallbackParam",
+          "MessagesSearchModelsServerTool",
+          "MessagesShellToolResultBlock",
+          "MessagesToolAdditionBlock",
+          "MessagesToolRemovalBlock",
+          "ModelAliasTarget",
+          "ModelBenchmarks",
+          "ModelReasoning",
+          "ModelResponse",
+          "MultimodalMedia",
+          "NamespaceFunctionTool",
+          "NamespaceTool",
+          "ORAnthropicBashToolResult",
+          "ORAnthropicServerToolUseBlock",
+          "ORAnthropicShellToolResult",
+          "ObservabilityArizeDestination",
+          "ObservabilityBraintrustDestination",
+          "ObservabilityClickhouseDestination",
+          "ObservabilityDatadogDestination",
+          "ObservabilityFilterRuleGroup",
+          "ObservabilityFilterRulesConfig",
+          "ObservabilityFilterRulesConfigNullable",
+          "ObservabilityGrafanaDestination",
+          "ObservabilityLangfuseDestination",
+          "ObservabilityLangsmithDestination",
+          "ObservabilityNewrelicDestination",
+          "ObservabilityOpikDestination",
+          "ObservabilityOtelCollectorDestination",
+          "ObservabilityPosthogDestination",
+          "ObservabilityRampDestination",
+          "ObservabilityS3Destination",
+          "ObservabilitySentryDestination",
+          "ObservabilitySnowflakeDestination",
+          "ObservabilityWeaveDestination",
+          "ObservabilityWebhookDestination",
+          "OpenAIFile",
+          "OpenAIFileDeleted",
+          "OpenAIFileList",
+          "OpenAIResponseCustomToolCall",
+          "OpenAIResponseCustomToolCallOutput",
+          "OpenAIResponsesCodeInterpreterCallCodeDelta",
+          "OpenAIResponsesCodeInterpreterCallCodeDone",
+          "OpenAIResponsesCodeInterpreterCallCompleted",
+          "OpenAIResponsesCodeInterpreterCallInProgress",
+          "OpenAIResponsesCodeInterpreterCallInterpreting",
+          "OpenRouterFile",
+          "OpenRouterFileDeleted",
+          "OpenRouterFileList",
+          "OpenrouterAnalyticsGetMetaResponse",
+          "OpenrouterAnalyticsQueryResponse",
+          "OrganizationListMembersItem",
+          "OutputAdvisorServerToolItem",
+          "OutputApplyPatchCallItem",
+          "OutputCustomToolCallItem",
+          "OutputFilesServerToolItem",
+          "OutputFusionServerToolItem",
+          "OutputItemApplyPatchCall",
+          "OutputItemCodeInterpreterCall",
+          "OutputItemCustomToolCall",
+          "OutputShellCallItem",
+          "OutputShellCallOutputItem",
+          "OutputShellServerToolItem",
+          "OutputSubagentServerToolItem",
+          "Prediction",
+          "PredictionContentText",
+          "Preset",
+          "PresetDesignatedVersion",
+          "PresetWithDesignatedVersion",
+          "PricingOverride",
+          "PromptCacheBreakpoint",
+          "PromptCacheOptions",
+          "RangeCapability",
+          "RankingsDailyItem",
+          "RankingsDailyMeta",
+          "RankingsDailyResponse",
+          "ReasoningDetailServerToolCall",
+          "RerankCreateItem",
+          "STTSegment",
+          "STTWord",
+          "ScimGroup",
+          "ScimGroupMapping",
+          "SearchModelsServerTool_OpenRouter",
+          "ServerToolUseDetails",
+          "SessionCostItem",
+          "SessionCostMeta",
+          "SessionCostResponse",
+          "ShellCallItem",
+          "ShellCallOutputContent",
+          "ShellCallOutputItem",
+          "ShellServerToolConfig",
+          "ShellServerTool_OpenRouter",
+          "SpeechInputReferenceAudio",
+          "SpeechInputReferenceAudioInput",
+          "SpeechInputReferenceText",
+          "StopServerToolsWhenFinishReasonIs",
+          "StopServerToolsWhenHasToolCall",
+          "StopServerToolsWhenMaxCost",
+          "StopServerToolsWhenMaxTokensUsed",
+          "StopServerToolsWhenStepCountIs",
+          "SubagentNestedTool",
+          "SubagentReasoning",
+          "SubagentServerToolConfig",
+          "SubagentServerTool_OpenRouter",
+          "SubmitGenerationFeedbackRequest",
+          "SubmitGenerationFeedbackResponse",
+          "SupportedParameters",
+          "TaskClassificationItem",
+          "TaskClassificationMacroCategory",
+          "TaskClassificationModel",
+          "TaskClassificationResponse",
+          "ToolChoiceSupport",
+          "ToolSearchServerTool",
+          "ToolSearchServerToolConfig",
+          "UnifiedBenchmarkPricing",
+          "UnifiedBenchmarksAAItem",
+          "UnifiedBenchmarksDAItem",
+          "UnifiedBenchmarksMeta",
+          "UnifiedBenchmarksORItem",
+          "UnifiedBenchmarksResponse",
+          "UnifiedBenchmarksSearchItem",
+          "UnifiedBenchmarksSearchRunConfig",
+          "UpdateBYOKKeyRequest",
+          "UpdateBYOKKeyResponse",
+          "UpdateObservabilityDestinationRequest",
+          "UpdateObservabilityDestinationResponse",
+          "UpdateScimGroupMappingRequest",
+          "UpdateScimGroupMappingResponse",
+          "UpsertWorkspaceBudgetRequest",
+          "UpsertWorkspaceBudgetResponse",
+          "WebFetchPlugin",
+          "WorkspaceBudget"
+        ]
+      }
+    },
+    {
+      "path": "spec.json",
+      "verdict": "TEMPLATED-CLEAN",
+      "applied": false
+    }
+  ],
+  "go_mod": {
+    "merged": false,
+    "preserved_module_path": "openrouter-pp-cli",
+    "added_requires": [
+      "golang.org/x/text v0.39.0",
+      "github.com/santhosh-tekuri/jsonschema/v6 v6.0.2"
+    ]
+  }
+}

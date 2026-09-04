@@ -1,4 +1,5 @@
 // Copyright 2026 Rick van de Laar and contributors. Licensed under Apache-2.0. See LICENSE.
+// pp:data-source computed
 
 package cli
 
@@ -24,8 +25,7 @@ func degradedSnapshotPath() string {
 	return filepath.Join(home, ".local", "share", "openrouter-pp-cli", "providers-prev.json")
 }
 
-func newProvidersDegradedCmd(flags *rootFlags) *cobra.Command {
-	var llm bool
+func newNovelProvidersDegradedCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:         "degraded",
@@ -116,7 +116,7 @@ func newProvidersDegradedCmd(flags *rootFlags) *cobra.Command {
 			if flags.asJSON {
 				return printJSONFiltered(cmd.OutOrStdout(), result, flags)
 			}
-			if llm {
+			if flags.agent {
 				if len(cur) == 0 {
 					fmt.Fprintln(cmd.OutOrStdout(), "no degraded endpoints")
 					return nil
@@ -138,6 +138,5 @@ func newProvidersDegradedCmd(flags *rootFlags) *cobra.Command {
 			return flags.printTable(cmd, []string{"PROVIDER", "MODEL", "STATUS", "UPTIME_30M"}, rs)
 		},
 	}
-	cmd.Flags().BoolVar(&llm, "llm", false, "Terse k:v output")
 	return cmd
 }

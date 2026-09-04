@@ -13,6 +13,9 @@ import (
 )
 
 func newKeysUpdateCmd(flags *rootFlags) *cobra.Command {
+	var flagHTTPReferer string
+	var flagXOpenRouterTitle string
+	var flagXOpenRouterCategories string
 	var bodyDisabled bool
 	var bodyIncludeByokInLimit bool
 	var bodyLimit float64
@@ -22,23 +25,52 @@ func newKeysUpdateCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:         "update <hash>",
-		Short:       "Update an existing API key. [Management key](/docs/guides/overview/auth/management-api-keys) required.",
-		Example:     "  openrouter-pp-cli keys update example-value",
+		Short:       "Update an existing API key.",
+		Example:     "  openrouter-pp-cli keys update f01d52606dc8f0a8303a7b5cc3fa07109c2e346cec7c0a16b40de462992ce943",
 		Annotations: map[string]string{"pp:endpoint": "keys.update", "pp:method": "PATCH", "pp:path": "/keys/{hash}"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				return cmd.Help()
+				// A missing required positional is a usage error in every output
+				// mode (matches command_promoted.go.tmpl). Machine callers
+				// (--json/--agent) also get a JSON error envelope on stdout;
+				// usageErr sets exit 2.
+				if flags.asJSON {
+					if printErr := printJSONFiltered(cmd.OutOrStdout(), map[string]any{
+						"error": "missing required argument",
+						"usage": fmt.Sprintf("%s%s", cmd.CommandPath(), " <hash>"),
+					}, flags); printErr != nil {
+						return printErr
+					}
+				}
+				return usageErr(fmt.Errorf("missing required argument\nUsage: %s%s", cmd.CommandPath(), " <hash>"))
 			}
 			if !stdinBody {
 			}
+			path := "/keys/{hash}"
+			if len(args) < 1 || args[0] == "" {
+				return usageErr(fmt.Errorf("hash is required\nUsage: %s <%s>", cmd.CommandPath(), "hash"))
+			}
+			path = replacePathParam(path, "hash", args[0])
 			c, err := flags.newClient()
 			if err != nil {
 				return err
 			}
+			headerOverrides := map[string]string{}
 
-			path := "/keys/{hash}"
-			path = replacePathParam(path, "hash", args[0])
-			var body map[string]any
+			if cmd.Flags().Changed("http-referer") || flagHTTPReferer != "" {
+				headerOverrides["HTTP-Referer"] = formatCLIParamValue(flagHTTPReferer)
+			}
+
+			if cmd.Flags().Changed("x-open-router-title") || flagXOpenRouterTitle != "" {
+				headerOverrides["X-OpenRouter-Title"] = formatCLIParamValue(flagXOpenRouterTitle)
+			}
+
+			if cmd.Flags().Changed("x-open-router-categories") || flagXOpenRouterCategories != "" {
+				headerOverrides["X-OpenRouter-Categories"] = formatCLIParamValue(flagXOpenRouterCategories)
+			}
+
+			params := map[string]string{}
+			var body any
 			if stdinBody {
 				stdinData, err := io.ReadAll(os.Stdin)
 				if err != nil {
@@ -50,26 +82,48 @@ func newKeysUpdateCmd(flags *rootFlags) *cobra.Command {
 				}
 				body = jsonBody
 			} else {
-				body = map[string]any{}
-				if bodyDisabled != false {
-					body["disabled"] = bodyDisabled
+				bodyMap := map[string]any{}
+				body = bodyMap
+				if cmd.Flags().Changed("disabled") {
+					bodyMap["disabled"] = bodyDisabled
 				}
-				if bodyIncludeByokInLimit != false {
-					body["include_byok_in_limit"] = bodyIncludeByokInLimit
+				if cmd.Flags().Changed("include-byok-in-limit") {
+					bodyMap["include_byok_in_limit"] = bodyIncludeByokInLimit
 				}
-				if bodyLimit != 0.0 {
-					body["limit"] = bodyLimit
+				if cmd.Flags().Changed("limit") || bodyLimit != 0.0 {
+					bodyMap["limit"] = bodyLimit
 				}
-				if bodyLimitReset != "" {
-					body["limit_reset"] = bodyLimitReset
+				if cmd.Flags().Changed("limit-reset") || bodyLimitReset != "" {
+					bodyMap["limit_reset"] = bodyLimitReset
 				}
-				if bodyName != "" {
-					body["name"] = bodyName
+				if cmd.Flags().Changed("name") || bodyName != "" {
+					bodyMap["name"] = bodyName
 				}
 			}
-			data, statusCode, err := c.Patch(path, body)
+			data, statusCode, err := c.PatchWithParamsAndHeaders(cmd.Context(), path, params, body, headerOverrides)
 			if err != nil {
-				return classifyAPIError(err, flags)
+				return classifyAPIError(cmd.OutOrStdout(), err, flags)
+			}
+			// Inspect the mutate response body for a partial-failure-shaped
+			// field (e.g. Google Ads `partialFailureError`). Several Google
+			// APIs return 200 OK with a partial-failure field when some
+			// operations in the batch failed; ignoring it silently swallows
+			// real failures. Detection runs before output-mode selection so
+			// the exit code is consistent regardless of how stdout is
+			// rendered. --dry-run short-circuits because no real request
+			// was sent.
+			var partialFailure *partialFailureReport
+			if !flags.dryRun && statusCode >= 200 && statusCode < 300 {
+				partialFailure = detectPartialFailure(data)
+				if partialFailure != nil {
+					fmt.Fprintf(os.Stderr, "warning: partial failure detected in %s response: %s\n", "keys", partialFailure.Message)
+					if len(partialFailure.ResourceNames) > 0 {
+						fmt.Fprintf(os.Stderr, "         succeeded: %d operation(s)\n", len(partialFailure.ResourceNames))
+					}
+				}
+			}
+			if !flags.dryRun && statusCode >= 200 && statusCode < 300 && (partialFailure == nil || flags.allowPartialFailure) {
+				writeMutationResponseToStore(cmd.Context(), "keys", data, "")
 			}
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				// Check if response contains an array (directly or wrapped in "data")
@@ -78,6 +132,9 @@ func newKeysUpdateCmd(flags *rootFlags) *cobra.Command {
 					if err := printAutoTable(cmd.OutOrStdout(), items); err != nil {
 						fmt.Fprintf(os.Stderr, "warning: table rendering failed, falling back to JSON: %v\n", err)
 					} else {
+						if partialFailure != nil && !flags.allowPartialFailure {
+							return partialFailureErr(fmt.Errorf("partial failure in %s response: %s", "keys", partialFailure.Message))
+						}
 						return nil
 					}
 				} else {
@@ -88,56 +145,124 @@ func newKeysUpdateCmd(flags *rootFlags) *cobra.Command {
 						if err := printAutoTable(cmd.OutOrStdout(), wrapped.Data); err != nil {
 							fmt.Fprintf(os.Stderr, "warning: table rendering failed, falling back to JSON: %v\n", err)
 						} else {
+							if partialFailure != nil && !flags.allowPartialFailure {
+								return partialFailureErr(fmt.Errorf("partial failure in %s response: %s", "keys", partialFailure.Message))
+							}
 							return nil
 						}
 					}
 				}
 			}
-			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+			if flags.asJSON || (!isTerminal(cmd.OutOrStdout()) && !flags.csv && !flags.quiet && !flags.plain) {
 				if flags.quiet {
+					if partialFailure != nil && !flags.allowPartialFailure {
+						return partialFailureErr(fmt.Errorf("partial failure in %s response: %s", "keys", partialFailure.Message))
+					}
 					return nil
-				}
-				// Apply --compact and --select to the API response before wrapping.
-				// --select wins when both are set: explicit field choice trumps the
-				// generic high-gravity allow-list. Otherwise --compact still applies
-				// when --agent is on but the user did not name fields.
-				filtered := data
-				if flags.selectFields != "" {
-					filtered = filterFields(filtered, flags.selectFields)
-				} else if flags.compact {
-					filtered = compactFields(filtered)
 				}
 				envelope := map[string]any{
 					"action":   "patch",
 					"resource": "keys",
 					"path":     path,
 					"status":   statusCode,
-					"success":  statusCode >= 200 && statusCode < 300,
+					"success":  statusCode >= 200 && statusCode < 300 && (partialFailure == nil || flags.allowPartialFailure),
+				}
+				if flags.agent {
+					envelope["meta"] = map[string]any{"source": "live"}
+				}
+				if partialFailure != nil {
+					envelope["partial_failure"] = partialFailure
 				}
 				if flags.dryRun {
 					envelope["dry_run"] = true
 					envelope["status"] = 0
 					envelope["success"] = false
 				}
+				// Verify-mode synthetic envelope detection runs against RAW data
+				// (before --compact/--select filtering) so the sentinel field is
+				// guaranteed to be visible even if the operator passes a filter
+				// flag that would otherwise strip it. Surfaces a top-level
+				// verify_noop signal + flips success to false. Mirrors the dry_run
+				// shape above.
+				if len(data) > 0 {
+					var rawParsed any
+					if err := json.Unmarshal(data, &rawParsed); err == nil {
+						if m, ok := rawParsed.(map[string]any); ok {
+							if v, ok := m["__pp_verify_synthetic__"].(bool); ok && v {
+								envelope["verify_noop"] = true
+								envelope["success"] = false
+							}
+						}
+					}
+				}
+				// Mutation-riding reads (POST search, RPC-over-POST lists) return
+				// the same single-key collection envelopes as GET reads. Unwrap
+				// before filtering so rows nest once under the result key and
+				// --select filters rows, not envelope keys; plain created-object
+				// responses pass through unwrapSingleKeyArray untouched.
+				// Apply --compact and --select to the API response before wrapping.
+				// --select wins when both are set: explicit field choice trumps the
+				// generic high-gravity allow-list. Otherwise --compact still applies
+				// when --agent is on but the user did not name fields.
+				filtered := unwrapSingleKeyArray(data)
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				} else if flags.compact {
+					filtered = compactFields(filtered, map[string]bool{"data": true})
+				}
 				if len(filtered) > 0 {
 					var parsed any
 					if err := json.Unmarshal(filtered, &parsed); err == nil {
-						envelope["data"] = parsed
+						if flags.agent {
+							envelope["results"] = parsed
+						} else {
+							envelope["data"] = parsed
+						}
 					}
 				}
 				envelopeJSON, err := json.Marshal(envelope)
 				if err != nil {
 					return err
 				}
-				return printOutput(cmd.OutOrStdout(), json.RawMessage(envelopeJSON), true)
+				resultKey := "data"
+				if flags.agent {
+					resultKey = "results"
+				}
+				structured, err := wrapPlatformStructuredOutput(json.RawMessage(envelopeJSON), flags, resultKey, true)
+				if err != nil {
+					return err
+				}
+				if perr := printOutput(cmd.OutOrStdout(), structured, true); perr != nil {
+					return perr
+				}
+				if partialFailure != nil && !flags.allowPartialFailure {
+					return partialFailureErr(fmt.Errorf("partial failure in %s response: %s", "keys", partialFailure.Message))
+				}
+				return nil
 			}
-			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
+			// Fall-through for mutate paths that did not hit the table or
+			// asJSON branches: --quiet, --csv, --plain, and default terminal
+			// raw output. printOutputWithFlags renders the body, then the
+			// typed partial-failure exit fires unless --allow-partial-failure
+			// downgrades it. Without this guard a partial failure would exit
+			// 0 for these output modes — the exact silent-swallow regression
+			// the surrounding patch is preventing for asJSON / piped output.
+			if perr := printOutputWithFlags(cmd.OutOrStdout(), data, flags); perr != nil {
+				return perr
+			}
+			if partialFailure != nil && !flags.allowPartialFailure {
+				return partialFailureErr(fmt.Errorf("partial failure in %s response: %s", "keys", partialFailure.Message))
+			}
+			return nil
 		},
 	}
+	cmd.Flags().StringVar(&flagHTTPReferer, "http-referer", "", "The app identifier should be your app's URL and is used as the primary identifier for rankings.")
+	cmd.Flags().StringVar(&flagXOpenRouterTitle, "x-open-router-title", "", "The app display name allows you to customize how your app appears in OpenRouter's dashboard.")
+	cmd.Flags().StringVar(&flagXOpenRouterCategories, "x-open-router-categories", "", "Comma-separated list of app categories (e.g. 'cli-agent,cloud-agent'). Used for marketplace rankings.")
 	cmd.Flags().BoolVar(&bodyDisabled, "disabled", false, "Whether to disable the API key")
 	cmd.Flags().BoolVar(&bodyIncludeByokInLimit, "include-byok-in-limit", false, "Whether to include BYOK usage in the limit")
 	cmd.Flags().Float64Var(&bodyLimit, "limit", 0.0, "New spending limit for the API key in USD")
-	cmd.Flags().StringVar(&bodyLimitReset, "limit-reset", "", "New limit reset type for the API key (daily, weekly, monthly, or null for no reset). Resets happen automatically at...")
+	cmd.Flags().StringVar(&bodyLimitReset, "limit-reset", "", "New limit reset type for the API key (daily, weekly, monthly, or null for no reset).")
 	cmd.Flags().StringVar(&bodyName, "name", "", "New name for the API key")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 

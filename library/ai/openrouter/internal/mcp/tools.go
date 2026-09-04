@@ -5,10 +5,13 @@ package mcp
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,209 +21,28 @@ import (
 	"github.com/mvanhorn/printing-press-library/library/ai/openrouter/internal/client"
 	"github.com/mvanhorn/printing-press-library/library/ai/openrouter/internal/cliutil"
 	"github.com/mvanhorn/printing-press-library/library/ai/openrouter/internal/config"
+	"github.com/mvanhorn/printing-press-library/library/ai/openrouter/internal/learn"
+	"github.com/mvanhorn/printing-press-library/library/ai/openrouter/internal/mcp/bound"
 	"github.com/mvanhorn/printing-press-library/library/ai/openrouter/internal/mcp/cobratree"
+	"github.com/mvanhorn/printing-press-library/library/ai/openrouter/internal/platform"
 	"github.com/mvanhorn/printing-press-library/library/ai/openrouter/internal/store"
+)
+
+const (
+	// MCP hosts can fan out tool calls faster than a human CLI session.
+	// Keep them on the same polite-client limiter path instead of disabling
+	// pacing with rate=0; users can still tune human CLI calls with --rate-limit.
+	defaultMCPRateLimit = 2
 )
 
 // RegisterTools registers all API operations as MCP tools.
 func RegisterTools(s *server.MCPServer) {
-	s.AddTool(
-		mcplib.NewTool("activity_get-user",
-			mcplib.WithDescription("Returns user activity data grouped by endpoint for the last 30 (completed) UTC days. [Management key](/docs/guides/overview/auth/management-api-keys) required. Optional: date, api_key_hash, user_id."),
-			mcplib.WithString("date", mcplib.Description("Filter by a single UTC date in the last 30 days (YYYY-MM-DD format).")),
-			mcplib.WithString("api_key_hash", mcplib.Description("Filter by API key hash (SHA-256 hex string, as returned by the keys API).")),
-			mcplib.WithString("user_id", mcplib.Description("Filter by org member user ID. Only applicable for organization accounts.")),
-			mcplib.WithReadOnlyHintAnnotation(true),
-			mcplib.WithDestructiveHintAnnotation(false),
-			mcplib.WithOpenWorldHintAnnotation(true),
-		),
-		makeAPIHandler("GET", "/activity", []mcpParamBinding{{PublicName: "date", WireName: "date", Location: "query"}, {PublicName: "api_key_hash", WireName: "api_key_hash", Location: "query"}, {PublicName: "user_id", WireName: "user_id", Location: "query"}}, []string{}),
-	)
-	s.AddTool(
-		mcplib.NewTool("credits_get",
-			mcplib.WithDescription("Get total credits purchased and used for the authenticated user. [Management key](/docs/guides/overview/auth/management-api-keys) required. Returns the CreditsGetResponse."),
-			mcplib.WithReadOnlyHintAnnotation(true),
-			mcplib.WithDestructiveHintAnnotation(false),
-			mcplib.WithOpenWorldHintAnnotation(true),
-		),
-		makeAPIHandler("GET", "/credits", []mcpParamBinding{}, []string{}),
-	)
-	s.AddTool(
-		mcplib.NewTool("endpoints_list-zdr",
-			mcplib.WithDescription("Preview the impact of ZDR on the available endpoints. Returns array of PublicEndpoint."),
-			mcplib.WithReadOnlyHintAnnotation(true),
-			mcplib.WithDestructiveHintAnnotation(false),
-			mcplib.WithOpenWorldHintAnnotation(true),
-		),
-		makeAPIHandler("GET", "/endpoints/zdr", []mcpParamBinding{}, []string{}),
-	)
-	s.AddTool(
-		mcplib.NewTool("generation_get",
-			mcplib.WithDescription("Get request & usage metadata for a generation. Required: id. Returns the GenerationResponse."),
-			mcplib.WithString("id", mcplib.Required(), mcplib.Description("The generation ID")),
-			mcplib.WithReadOnlyHintAnnotation(true),
-			mcplib.WithDestructiveHintAnnotation(false),
-			mcplib.WithOpenWorldHintAnnotation(true),
-		),
-		makeAPIHandler("GET", "/generation", []mcpParamBinding{{PublicName: "id", WireName: "id", Location: "query"}}, []string{}),
-	)
-	s.AddTool(
-		mcplib.NewTool("generation_list-content",
-			mcplib.WithDescription("Get stored prompt and completion content for a generation. Required: id. Returns the GenerationContentResponse."),
-			mcplib.WithString("id", mcplib.Required(), mcplib.Description("The generation ID")),
-			mcplib.WithReadOnlyHintAnnotation(true),
-			mcplib.WithDestructiveHintAnnotation(false),
-			mcplib.WithOpenWorldHintAnnotation(true),
-		),
-		makeAPIHandler("GET", "/generation/content", []mcpParamBinding{{PublicName: "id", WireName: "id", Location: "query"}}, []string{}),
-	)
-	s.AddTool(
-		mcplib.NewTool("key_get-current",
-			mcplib.WithDescription("Get information on the API key associated with the current authentication session. Returns the KeyGetCurrentResponse."),
-			mcplib.WithReadOnlyHintAnnotation(true),
-			mcplib.WithDestructiveHintAnnotation(false),
-			mcplib.WithOpenWorldHintAnnotation(true),
-		),
-		makeAPIHandler("GET", "/key", []mcpParamBinding{}, []string{}),
-	)
-	s.AddTool(
-		mcplib.NewTool("keys_create",
-			mcplib.WithDescription("Create a new API key for the authenticated user. [Management key](/docs/guides/overview/auth/management-api-keys) required. Required: name. Optional: creator_user_id, expires_at, include_byok_in_limit (plus 3 more). Returns the new KeysCreateResponse."),
-			mcplib.WithString("creator_user_id", mcplib.Description("Optional user ID of the key creator. Only meaningful for organization-owned keys where a specific member is creating...")),
-			mcplib.WithString("expires_at", mcplib.Description("Optional ISO 8601 UTC timestamp when the API key should expire. Must be UTC, other timezones will be rejected")),
-			mcplib.WithString("include_byok_in_limit", mcplib.Description("Whether to include BYOK usage in the limit")),
-			mcplib.WithString("limit", mcplib.Description("Optional spending limit for the API key in USD")),
-			mcplib.WithString("limit_reset", mcplib.Description("Type of limit reset for the API key (daily, weekly, monthly, or null for no reset). Resets happen automatically at...")),
-			mcplib.WithString("name", mcplib.Required(), mcplib.Description("Name for the new API key")),
-			mcplib.WithString("workspace_id", mcplib.Description("The workspace to create the API key in. Defaults to the default workspace if not provided.")),
-			mcplib.WithDestructiveHintAnnotation(false),
-			mcplib.WithOpenWorldHintAnnotation(true),
-		),
-		makeAPIHandler("POST", "/keys", []mcpParamBinding{{PublicName: "creator_user_id", WireName: "creator_user_id", Location: "body"}, {PublicName: "expires_at", WireName: "expires_at", Location: "body"}, {PublicName: "include_byok_in_limit", WireName: "include_byok_in_limit", Location: "body"}, {PublicName: "limit", WireName: "limit", Location: "body"}, {PublicName: "limit_reset", WireName: "limit_reset", Location: "body"}, {PublicName: "name", WireName: "name", Location: "body"}, {PublicName: "workspace_id", WireName: "workspace_id", Location: "body"}}, []string{}),
-	)
-	s.AddTool(
-		mcplib.NewTool("keys_delete",
-			mcplib.WithDescription("Delete an existing API key. [Management key](/docs/guides/overview/auth/management-api-keys) required. Required: hash. Returns the KeysDeleteResponse. Destructive."),
-			mcplib.WithString("hash", mcplib.Required(), mcplib.Description("The hash identifier of the API key to delete")),
-			mcplib.WithDestructiveHintAnnotation(true),
-			mcplib.WithOpenWorldHintAnnotation(true),
-		),
-		makeAPIHandler("DELETE", "/keys/{hash}", []mcpParamBinding{{PublicName: "hash", WireName: "hash", Location: "path"}}, []string{"hash"}),
-	)
-	s.AddTool(
-		mcplib.NewTool("keys_get",
-			mcplib.WithDescription("Get a single API key by hash. [Management key](/docs/guides/overview/auth/management-api-keys) required. Required: hash. Returns the KeysGetResponse."),
-			mcplib.WithString("hash", mcplib.Required(), mcplib.Description("The hash identifier of the API key to retrieve")),
-			mcplib.WithReadOnlyHintAnnotation(true),
-			mcplib.WithDestructiveHintAnnotation(false),
-			mcplib.WithOpenWorldHintAnnotation(true),
-		),
-		makeAPIHandler("GET", "/keys/{hash}", []mcpParamBinding{{PublicName: "hash", WireName: "hash", Location: "path"}}, []string{"hash"}),
-	)
-	s.AddTool(
-		mcplib.NewTool("keys_list",
-			mcplib.WithDescription("List all API keys for the authenticated user. [Management key](/docs/guides/overview/auth/management-api-keys) required. Optional: include_disabled, offset, workspace_id. Returns array of KeysListItem."),
-			mcplib.WithString("include_disabled", mcplib.Description("Whether to include disabled API keys in the response")),
-			mcplib.WithString("offset", mcplib.Description("Number of API keys to skip for pagination")),
-			mcplib.WithString("workspace_id", mcplib.Description("Filter API keys by workspace ID. By default, keys in the default workspace are returned.")),
-			mcplib.WithReadOnlyHintAnnotation(true),
-			mcplib.WithDestructiveHintAnnotation(false),
-			mcplib.WithOpenWorldHintAnnotation(true),
-		),
-		makeAPIHandler("GET", "/keys", []mcpParamBinding{{PublicName: "include_disabled", WireName: "include_disabled", Location: "query"}, {PublicName: "offset", WireName: "offset", Location: "query"}, {PublicName: "workspace_id", WireName: "workspace_id", Location: "query"}}, []string{}),
-	)
-	s.AddTool(
-		mcplib.NewTool("keys_update",
-			mcplib.WithDescription("Update an existing API key. [Management key](/docs/guides/overview/auth/management-api-keys) required. Required: hash. Optional: disabled, include_byok_in_limit, limit (plus 2 more). Returns the updated KeysUpdateResponse."),
-			mcplib.WithString("hash", mcplib.Required(), mcplib.Description("The hash identifier of the API key to update")),
-			mcplib.WithString("disabled", mcplib.Description("Whether to disable the API key")),
-			mcplib.WithString("include_byok_in_limit", mcplib.Description("Whether to include BYOK usage in the limit")),
-			mcplib.WithString("limit", mcplib.Description("New spending limit for the API key in USD")),
-			mcplib.WithString("limit_reset", mcplib.Description("New limit reset type for the API key (daily, weekly, monthly, or null for no reset). Resets happen automatically at...")),
-			mcplib.WithString("name", mcplib.Description("New name for the API key")),
-			mcplib.WithOpenWorldHintAnnotation(true),
-		),
-		makeAPIHandler("PATCH", "/keys/{hash}", []mcpParamBinding{{PublicName: "hash", WireName: "hash", Location: "path"}, {PublicName: "disabled", WireName: "disabled", Location: "body"}, {PublicName: "include_byok_in_limit", WireName: "include_byok_in_limit", Location: "body"}, {PublicName: "limit", WireName: "limit", Location: "body"}, {PublicName: "limit_reset", WireName: "limit_reset", Location: "body"}, {PublicName: "name", WireName: "name", Location: "body"}}, []string{"hash"}),
-	)
-	s.AddTool(
-		mcplib.NewTool("models_get",
-			mcplib.WithDescription("List all models and their properties. Optional: category, supported_parameters, output_modalities. Returns array of Model."),
-			mcplib.WithString("category", mcplib.Description("Filter models by use case category")),
-			mcplib.WithString("supported_parameters", mcplib.Description("Filter models by supported parameter (comma-separated)")),
-			mcplib.WithString("output_modalities", mcplib.Description("Filter models by output modality. Accepts a comma-separated list of modalities (text, image, audio, embeddings) or...")),
-			mcplib.WithReadOnlyHintAnnotation(true),
-			mcplib.WithDestructiveHintAnnotation(false),
-			mcplib.WithOpenWorldHintAnnotation(true),
-		),
-		makeAPIHandler("GET", "/models", []mcpParamBinding{{PublicName: "category", WireName: "category", Location: "query"}, {PublicName: "supported_parameters", WireName: "supported_parameters", Location: "query"}, {PublicName: "output_modalities", WireName: "output_modalities", Location: "query"}}, []string{}),
-	)
-	s.AddTool(
-		mcplib.NewTool("models_list-count",
-			mcplib.WithDescription("Get total count of available models. Optional: output_modalities. Returns the ModelsCountResponse."),
-			mcplib.WithString("output_modalities", mcplib.Description("Filter models by output modality. Accepts a comma-separated list of modalities (text, image, audio, embeddings) or...")),
-			mcplib.WithReadOnlyHintAnnotation(true),
-			mcplib.WithDestructiveHintAnnotation(false),
-			mcplib.WithOpenWorldHintAnnotation(true),
-		),
-		makeAPIHandler("GET", "/models/count", []mcpParamBinding{{PublicName: "output_modalities", WireName: "output_modalities", Location: "query"}}, []string{}),
-	)
-	s.AddTool(
-		mcplib.NewTool("models_list-user",
-			mcplib.WithDescription("List models filtered by user provider preferences, [privacy settings](https://openrouter.ai/docs/guides/privacy/provider-logging), and [guardrails](https://openrouter.ai/docs/guides/features/guardrails). If requesting through `eu.openrouter.ai/api/v1/...` the results will be filtered to models that satisfy [EU in-region routing](https://openrouter.ai/docs/guides/privacy/provider-logging#enterprise-eu-in-region-routing). Returns array of Model."),
-			mcplib.WithReadOnlyHintAnnotation(true),
-			mcplib.WithDestructiveHintAnnotation(false),
-			mcplib.WithOpenWorldHintAnnotation(true),
-		),
-		makeAPIHandler("GET", "/models/user", []mcpParamBinding{}, []string{}),
-	)
-	s.AddTool(
-		mcplib.NewTool("models_endpoints_list",
-			mcplib.WithDescription("List all endpoints for a model. Required: author, slug. Returns the EndpointsListResponse."),
-			mcplib.WithString("author", mcplib.Required(), mcplib.Description("The author/organization of the model")),
-			mcplib.WithString("slug", mcplib.Required(), mcplib.Description("The model slug")),
-			mcplib.WithReadOnlyHintAnnotation(true),
-			mcplib.WithDestructiveHintAnnotation(false),
-			mcplib.WithOpenWorldHintAnnotation(true),
-		),
-		makeAPIHandler("GET", "/models/{author}/{slug}/endpoints", []mcpParamBinding{{PublicName: "author", WireName: "author", Location: "path"}, {PublicName: "slug", WireName: "slug", Location: "path"}}, []string{"author", "slug"}),
-	)
-	s.AddTool(
-		mcplib.NewTool("openrouter-auth_create-keys-code",
-			mcplib.WithDescription("Create an authorization code for the PKCE flow to generate a user-controlled API key. Required: callback_url. Optional: code_challenge, code_challenge_method, expires_at (plus 5 more). Returns the new OpenrouterAuthCreateKeysCodeResponse."),
-			mcplib.WithString("callback_url", mcplib.Required(), mcplib.Description("The callback URL to redirect to after authorization. Note, only https URLs on ports 443 and 3000 are allowed.")),
-			mcplib.WithString("code_challenge", mcplib.Description("PKCE code challenge for enhanced security")),
-			mcplib.WithString("code_challenge_method", mcplib.Description("The method used to generate the code challenge")),
-			mcplib.WithString("expires_at", mcplib.Description("Optional expiration time for the API key to be created")),
-			mcplib.WithString("key_label", mcplib.Description("Optional custom label for the API key. Defaults to the app name if not provided.")),
-			mcplib.WithString("limit", mcplib.Description("Credit limit for the API key to be created")),
-			mcplib.WithString("spawn_agent", mcplib.Description("Agent identifier for spawn telemetry")),
-			mcplib.WithString("spawn_cloud", mcplib.Description("Cloud identifier for spawn telemetry")),
-			mcplib.WithString("usage_limit_type", mcplib.Description("Optional credit limit reset interval. When set, the credit limit resets on this interval.")),
-			mcplib.WithDestructiveHintAnnotation(false),
-			mcplib.WithOpenWorldHintAnnotation(true),
-		),
-		makeAPIHandler("POST", "/auth/keys/code", []mcpParamBinding{{PublicName: "callback_url", WireName: "callback_url", Location: "body"}, {PublicName: "code_challenge", WireName: "code_challenge", Location: "body"}, {PublicName: "code_challenge_method", WireName: "code_challenge_method", Location: "body"}, {PublicName: "expires_at", WireName: "expires_at", Location: "body"}, {PublicName: "key_label", WireName: "key_label", Location: "body"}, {PublicName: "limit", WireName: "limit", Location: "body"}, {PublicName: "spawn_agent", WireName: "spawn_agent", Location: "body"}, {PublicName: "spawn_cloud", WireName: "spawn_cloud", Location: "body"}, {PublicName: "usage_limit_type", WireName: "usage_limit_type", Location: "body"}}, []string{}),
-	)
-	s.AddTool(
-		mcplib.NewTool("openrouter-auth_exchange-code-for-apikey",
-			mcplib.WithDescription("Exchange an authorization code from the PKCE flow for a user-controlled API key. Required: code. Optional: code_challenge_method, code_verifier. Returns the new OpenrouterAuthExchangeCodeForApikeyResponse."),
-			mcplib.WithString("code", mcplib.Required(), mcplib.Description("The authorization code received from the OAuth redirect")),
-			mcplib.WithString("code_challenge_method", mcplib.Description("The method used to generate the code challenge")),
-			mcplib.WithString("code_verifier", mcplib.Description("The code verifier if code_challenge was used in the authorization request")),
-			mcplib.WithDestructiveHintAnnotation(false),
-			mcplib.WithOpenWorldHintAnnotation(true),
-		),
-		makeAPIHandler("POST", "/auth/keys", []mcpParamBinding{{PublicName: "code", WireName: "code", Location: "body"}, {PublicName: "code_challenge_method", WireName: "code_challenge_method", Location: "body"}, {PublicName: "code_verifier", WireName: "code_verifier", Location: "body"}}, []string{}),
-	)
-	s.AddTool(
-		mcplib.NewTool("providers_list",
-			mcplib.WithDescription("List all providers. Returns array of ProvidersListItem."),
-			mcplib.WithReadOnlyHintAnnotation(true),
-			mcplib.WithDestructiveHintAnnotation(false),
-			mcplib.WithOpenWorldHintAnnotation(true),
-		),
-		makeAPIHandler("GET", "/providers", []mcpParamBinding{}, []string{}),
-	)
+	installFreshTenantGate(s)
+	// Code-orchestration mode — the full surface is covered by registry tools
+	// (<api>_search, <api>_get, and <api>_execute). Endpoint-mirror tools are suppressed.
+	RegisterCodeOrchestrationTools(s)
+	// Intent tools — higher-level compositions declared in the spec or lifted from recipes.
+	RegisterIntents(s)
 	// Search tool — faster than iterating list endpoints for finding specific items
 	s.AddTool(
 		mcplib.NewTool("search",
@@ -236,7 +58,7 @@ func RegisterTools(s *server.MCPServer) {
 	s.AddTool(
 		mcplib.NewTool("sql",
 			mcplib.WithDescription("Run read-only SQL against local database. Use for ad-hoc analysis, aggregations, and joins across synced resources. Requires sync first."),
-			mcplib.WithString("query", mcplib.Required(), mcplib.Description("SQL query (SELECT or WITH...SELECT). Tables match resource names.")),
+			mcplib.WithString("query", mcplib.Required(), mcplib.Description("SQL query (SELECT or WITH...SELECT). Synced records live in resources(resource_type, id, data); filter by resource_type and use json_extract on data, e.g. SELECT json_extract(data,'$.name') FROM resources WHERE resource_type='activity'.")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
 		),
@@ -260,23 +82,125 @@ func RegisterTools(s *server.MCPServer) {
 }
 
 type mcpParamBinding struct {
-	PublicName string
-	WireName   string
-	Location   string
+	PublicName         string
+	WireName           string
+	Location           string
+	BodyPath           []string
+	Format             string
+	RequestContentType string
+	Default            string
+}
+
+type mcpPageConfig struct {
+	CursorParam    string
+	NextCursorPath string
+}
+
+func formatMCPParamValue(v any) string {
+	switch tv := v.(type) {
+	case string:
+		return tv
+	case bool:
+		return strconv.FormatBool(tv)
+	case float64:
+		if math.IsNaN(tv) || math.IsInf(tv, 0) {
+			return strconv.FormatFloat(tv, 'f', -1, 64)
+		}
+		if math.Trunc(tv) == tv && math.Abs(tv) < 1e15 {
+			return strconv.FormatInt(int64(tv), 10)
+		}
+		return strconv.FormatFloat(tv, 'f', -1, 64)
+	case float32:
+		f := float64(tv)
+		if math.IsNaN(f) || math.IsInf(f, 0) {
+			return strconv.FormatFloat(f, 'f', -1, 32)
+		}
+		if math.Trunc(f) == f && math.Abs(f) < 1e15 {
+			return strconv.FormatInt(int64(f), 10)
+		}
+		return strconv.FormatFloat(f, 'f', -1, 32)
+	default:
+		// Composite values (a native []any / map[string]any from an array or
+		// object param) reach this path when bound to a query or path slot;
+		// JSON-encode them so the wire value is valid JSON rather than Go's
+		// "[a b c]" / "map[...]" rendering. Body params never come through
+		// here — they are stored natively in bodyArgs and marshalled there.
+		if b, err := json.Marshal(v); err == nil {
+			return string(b)
+		}
+		return fmt.Sprintf("%v", v)
+	}
+}
+
+func mcpPathValue(v any) string {
+	return cliutil.EscapePathParam(formatMCPParamValue(v))
+}
+func mcpMultipartFieldValue(v any) string {
+	if s, ok := v.(string); ok {
+		return s
+	}
+	if data, err := json.Marshal(v); err == nil {
+		return string(data)
+	}
+	return fmt.Sprintf("%v", v)
+}
+func setNestedBodyArg(body map[string]any, path []string, value any) {
+	if len(path) == 0 {
+		return
+	}
+	if len(path) == 1 {
+		body[path[0]] = value
+		return
+	}
+	current := body
+	for _, key := range path[:len(path)-1] {
+		next, ok := current[key].(map[string]any)
+		if !ok {
+			next = map[string]any{}
+			current[key] = next
+		}
+		current = next
+	}
+	current[path[len(path)-1]] = value
+}
+func coerceMCPBodyValue(binding mcpParamBinding, value any) (any, error) {
+	if binding.Format != "json_or_scalar" {
+		return value, nil
+	}
+	s, ok := value.(string)
+	if !ok || !looksLikeMCPJSONComposite(s) {
+		return value, nil
+	}
+	var parsed any
+	if err := json.Unmarshal([]byte(s), &parsed); err != nil {
+		return nil, fmt.Errorf("parsing %s JSON: %w", binding.PublicName, err)
+	}
+	return parsed, nil
+}
+
+func looksLikeMCPJSONComposite(input string) bool {
+	input = strings.TrimSpace(input)
+	return strings.HasPrefix(input, "{") || strings.HasPrefix(input, "[")
 }
 
 // makeAPIHandler creates a generic MCP tool handler for an API endpoint.
-func makeAPIHandler(method, pathTemplate string, bindings []mcpParamBinding, positionalParams []string) server.ToolHandlerFunc {
+func makeAPIHandler(method, pathTemplate string, readOnly bool, binaryResponse bool, headerOverrides map[string]string, pageConfig mcpPageConfig, bindings []mcpParamBinding, positionalParams []string) server.ToolHandlerFunc {
 	return func(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
-		c, err := newMCPClient()
+		c, platformSession, err := newMCPClient(ctx)
 		if err != nil {
-			return mcplib.NewToolResultError(err.Error()), nil
+			return mcpToolError(err.Error()), nil
+		}
+		if platformSession != nil {
+			defer platformSession.ZeroCredentials()
 		}
 
 		// mcp-go v0.47+ made CallToolParams.Arguments an `any` to support
 		// non-map payloads; GetArguments() returns the map[string]any shape
 		// we rely on here (or an empty map when the payload is something else).
 		args := req.GetArguments()
+		if err := cli.AdoptMCPOutputSemantics(platformSession, args); err != nil {
+			return mcpToolError(err.Error()), nil
+		}
 
 		// positionalParams mixes real URL path params with CLI positional
 		// args that map to query params (e.g. `search <query>` -> ?query=);
@@ -286,21 +210,82 @@ func makeAPIHandler(method, pathTemplate string, bindings []mcpParamBinding, pos
 		pathParams := make(map[string]bool, len(positionalParams))
 		params := make(map[string]string)
 		bodyArgs := make(map[string]any)
+		mcpCursor := ""
+		if pageConfig.CursorParam != "" {
+			knownArgs["cursor"] = true
+			if v, ok := args["cursor"]; ok {
+				s, ok := v.(string)
+				if !ok {
+					return mcpToolError("cursor must be an opaque string returned by a previous MCP response"), nil
+				}
+				mcpCursor = s
+				upstreamCursor, err := bound.UpstreamCursor(s)
+				if err != nil {
+					return mcpToolError(err.Error()), nil
+				}
+				if upstreamCursor != "" {
+					params[pageConfig.CursorParam] = upstreamCursor
+				}
+			}
+		}
+		var headers map[string]string
+		if len(headerOverrides) > 0 {
+			headers = make(map[string]string, len(headerOverrides)+1)
+			for k, v := range headerOverrides {
+				headers[k] = v
+			}
+		}
+		if binaryResponse {
+			if headers == nil {
+				headers = map[string]string{}
+			}
+			headers[client.BinaryResponseHeader] = "true"
+		}
+		multipartFields := make(map[string]string)
+		multipartFileFields := make(map[string]string)
+		multipart := false
 		for _, binding := range bindings {
 			knownArgs[binding.PublicName] = true
+			if strings.EqualFold(binding.RequestContentType, "multipart/form-data") {
+				multipart = true
+			}
 			v, ok := args[binding.PublicName]
 			if !ok {
-				continue
+				if binding.Default != "" {
+					v = binding.Default
+				} else {
+					continue
+				}
 			}
 			switch binding.Location {
 			case "path":
 				placeholder := "{" + binding.WireName + "}"
 				pathParams[binding.PublicName] = true
-				path = strings.Replace(path, placeholder, fmt.Sprintf("%v", v), 1)
+				path = strings.Replace(path, placeholder, mcpPathValue(v), 1)
+			case "header":
+				if headers == nil {
+					headers = map[string]string{}
+				}
+				headers[binding.WireName] = formatMCPParamValue(v)
 			case "body":
-				bodyArgs[binding.WireName] = v
+				bodyValue, err := coerceMCPBodyValue(binding, v)
+				if err != nil {
+					return mcpToolError(err.Error()), nil
+				}
+				if len(binding.BodyPath) > 0 {
+					setNestedBodyArg(bodyArgs, binding.BodyPath, bodyValue)
+				} else {
+					bodyArgs[binding.WireName] = bodyValue
+				}
+				if multipart {
+					if strings.EqualFold(binding.Format, "binary") {
+						multipartFileFields[binding.WireName] = fmt.Sprintf("%v", v)
+					} else {
+						multipartFields[binding.WireName] = mcpMultipartFieldValue(v)
+					}
+				}
 			default:
-				params[binding.WireName] = fmt.Sprintf("%v", v)
+				params[binding.WireName] = formatMCPParamValue(v)
 			}
 		}
 		for _, p := range positionalParams {
@@ -310,7 +295,7 @@ func makeAPIHandler(method, pathTemplate string, bindings []mcpParamBinding, pos
 			}
 			pathParams[p] = true
 			if v, ok := args[p]; ok {
-				path = strings.Replace(path, placeholder, fmt.Sprintf("%v", v), 1)
+				path = strings.Replace(path, placeholder, mcpPathValue(v), 1)
 			}
 		}
 
@@ -321,105 +306,300 @@ func makeAPIHandler(method, pathTemplate string, bindings []mcpParamBinding, pos
 			switch method {
 			case "POST", "PUT", "PATCH":
 				bodyArgs[k] = v
+				if multipart {
+					multipartFields[k] = mcpMultipartFieldValue(v)
+				}
 			default:
-				params[k] = fmt.Sprintf("%v", v)
+				params[k] = formatMCPParamValue(v)
 			}
 		}
 
 		var data json.RawMessage
 		switch method {
 		case "GET":
-			data, err = c.Get(path, params)
+			if len(headers) > 0 {
+				if readOnly {
+					data, err = c.GetWithHeaders(ctx, path, params, headers)
+				} else {
+					data, err = c.GetMutatingWithHeaders(ctx, path, params, headers)
+				}
+				break
+			}
+			if readOnly {
+				data, err = c.Get(ctx, path, params)
+			} else {
+				data, err = c.GetMutating(ctx, path, params)
+			}
 		case "POST":
-			body, _ := json.Marshal(bodyArgs)
-			data, _, err = c.Post(path, body)
+			if multipart {
+				if len(headers) > 0 {
+					data, _, err = c.PostMultipartWithParamsAndHeaders(ctx, path, params, multipartFields, multipartFileFields, headers)
+					break
+				}
+				data, _, err = c.PostMultipartWithParams(ctx, path, params, multipartFields, multipartFileFields)
+				break
+			}
+			if len(headers) > 0 {
+				if readOnly {
+					data, _, err = c.PostQueryWithParamsAndHeaders(ctx, path, params, bodyArgs, headers)
+				} else {
+					data, _, err = c.PostWithParamsAndHeaders(ctx, path, params, bodyArgs, headers)
+				}
+				break
+			}
+			if readOnly {
+				data, _, err = c.PostQueryWithParams(ctx, path, params, bodyArgs)
+			} else {
+				data, _, err = c.PostWithParams(ctx, path, params, bodyArgs)
+			}
 		case "PUT":
-			body, _ := json.Marshal(bodyArgs)
-			data, _, err = c.Put(path, body)
+			if multipart {
+				if len(headers) > 0 {
+					if readOnly {
+						data, _, err = c.PutQueryMultipartWithParamsAndHeaders(ctx, path, params, multipartFields, multipartFileFields, headers)
+						break
+					}
+					data, _, err = c.PutMultipartWithParamsAndHeaders(ctx, path, params, multipartFields, multipartFileFields, headers)
+					break
+				}
+				if readOnly {
+					data, _, err = c.PutQueryMultipartWithParams(ctx, path, params, multipartFields, multipartFileFields)
+					break
+				}
+				data, _, err = c.PutMultipartWithParams(ctx, path, params, multipartFields, multipartFileFields)
+				break
+			}
+			if len(headers) > 0 {
+				if readOnly {
+					data, _, err = c.PutQueryWithParamsAndHeaders(ctx, path, params, bodyArgs, headers)
+				} else {
+					data, _, err = c.PutWithParamsAndHeaders(ctx, path, params, bodyArgs, headers)
+				}
+				break
+			}
+			if readOnly {
+				data, _, err = c.PutQueryWithParams(ctx, path, params, bodyArgs)
+			} else {
+				data, _, err = c.PutWithParams(ctx, path, params, bodyArgs)
+			}
 		case "PATCH":
-			body, _ := json.Marshal(bodyArgs)
-			data, _, err = c.Patch(path, body)
+			if multipart {
+				if len(headers) > 0 {
+					if readOnly {
+						data, _, err = c.PatchQueryMultipartWithParamsAndHeaders(ctx, path, params, multipartFields, multipartFileFields, headers)
+						break
+					}
+					data, _, err = c.PatchMultipartWithParamsAndHeaders(ctx, path, params, multipartFields, multipartFileFields, headers)
+					break
+				}
+				if readOnly {
+					data, _, err = c.PatchQueryMultipartWithParams(ctx, path, params, multipartFields, multipartFileFields)
+					break
+				}
+				data, _, err = c.PatchMultipartWithParams(ctx, path, params, multipartFields, multipartFileFields)
+				break
+			}
+			if len(headers) > 0 {
+				if readOnly {
+					data, _, err = c.PatchQueryWithParamsAndHeaders(ctx, path, params, bodyArgs, headers)
+				} else {
+					data, _, err = c.PatchWithParamsAndHeaders(ctx, path, params, bodyArgs, headers)
+				}
+				break
+			}
+			if readOnly {
+				data, _, err = c.PatchQueryWithParams(ctx, path, params, bodyArgs)
+			} else {
+				data, _, err = c.PatchWithParams(ctx, path, params, bodyArgs)
+			}
 		case "DELETE":
-			data, _, err = c.Delete(path)
+			if len(headers) > 0 {
+				data, _, err = c.DeleteWithParamsAndHeaders(ctx, path, params, headers)
+				break
+			}
+			data, _, err = c.DeleteWithParams(ctx, path, params)
 		default:
-			return mcplib.NewToolResultError("unsupported method: " + method), nil
+			return mcpToolError("unsupported method: " + method), nil
 		}
 
 		if err != nil {
 			msg := err.Error()
 			switch {
 			case strings.Contains(msg, "HTTP 409"):
-				return mcplib.NewToolResultText("already exists (no-op)"), nil
+				return mcpToolTextWithPlatform("already exists (no-op)", platformSession), nil
 			case strings.Contains(msg, "HTTP 400") && cliutil.LooksLikeAuthError(msg):
-				return mcplib.NewToolResultError("authentication error: " + cliutil.SanitizeErrorBody(msg) +
+				return mcpToolError("authentication error: " + cliutil.SanitizeErrorBody(msg) +
 					"\nhint: the API rejected the request — this usually means auth is missing or invalid." +
-					"\n      Set your API key: export OPENROUTER_API_KEY=<your-key>" +
+					"\n      Set it with: echo \"$TOKEN\" | openrouter-pp-cli auth set-token or export OPENROUTER_API_KEY=\"your-token-here\"" +
+					"\n      See API docs: https://openrouter.ai/docs" +
 					"\n      Run 'openrouter-pp-cli doctor' to check auth status."), nil
 			case strings.Contains(msg, "HTTP 401"):
-				return mcplib.NewToolResultError("authentication failed: " + cliutil.SanitizeErrorBody(msg) +
+				return mcpToolError("authentication failed: " + cliutil.SanitizeErrorBody(msg) +
 					"\nhint: check your token." +
-					"\n      Set it with: export OPENROUTER_API_KEY=<your-key>" +
+					"\n      Set it with: echo \"$TOKEN\" | openrouter-pp-cli auth set-token or export OPENROUTER_API_KEY=\"your-token-here\"" +
+					"\n      See API docs: https://openrouter.ai/docs" +
 					"\n      Run 'openrouter-pp-cli doctor' to check auth status."), nil
 			case strings.Contains(msg, "HTTP 403"):
-				return mcplib.NewToolResultError("permission denied: " + cliutil.SanitizeErrorBody(msg) +
-					"\nhint: your credentials are valid but lack access to this resource." +
-					"\n      Set it with: export OPENROUTER_API_KEY=<your-key>" +
+				return mcpToolError("permission denied: " + cliutil.SanitizeErrorBody(msg) +
+					"\nhint: your credentials are valid but lack access to this resource. Check that they have the required permissions and match the API's expected auth scheme." +
+					"\n      Set it with: echo \"$TOKEN\" | openrouter-pp-cli auth set-token or export OPENROUTER_API_KEY=\"your-token-here\"" +
+					"\n      See API docs: https://openrouter.ai/docs" +
 					"\n      Run 'openrouter-pp-cli doctor' to check auth status."), nil
 			case strings.Contains(msg, "HTTP 404"):
 				if method == "DELETE" {
-					return mcplib.NewToolResultText("already deleted (no-op)"), nil
+					return mcpToolTextWithPlatform("already deleted (no-op)", platformSession), nil
 				}
-				return mcplib.NewToolResultError("not found: " + msg), nil
+				return mcpToolError("not found: " + msg), nil
 			case strings.Contains(msg, "HTTP 429"):
-				return mcplib.NewToolResultError("rate limited: " + msg), nil
+				return mcpToolError("rate limited: " + msg), nil
 			default:
-				return mcplib.NewToolResultError(msg), nil
+				return mcpToolError(msg), nil
 			}
 		}
 
-		// For GET responses, wrap bare arrays with count metadata
-		if method == "GET" {
-			trimmed := strings.TrimSpace(string(data))
-			if len(trimmed) > 0 && trimmed[0] == '[' {
-				var items []json.RawMessage
-				if json.Unmarshal(data, &items) == nil {
-					wrapped := map[string]any{
-						"count": len(items),
-						"items": items,
-					}
-					out, _ := json.Marshal(wrapped)
-					return mcplib.NewToolResultText(string(out)), nil
-				}
+		if binaryResponse {
+			encoded := base64.StdEncoding.EncodeToString(data)
+			out, err := json.Marshal(map[string]any{
+				"content_encoding": "base64",
+				"data_base64":      encoded,
+				"byte_count":       len(data),
+			})
+			if err != nil {
+				return mcpToolError(fmt.Sprintf("encoding binary result: %v", err)), nil
 			}
+			if len(out) > bound.MaxBytes {
+				return mcpToolError(fmt.Sprintf("binary response is too large for MCP text output: %d response bytes encode to %d base64 bytes and %d MCP result bytes, exceeding the %d byte budget. Use the companion CLI command with --output <file> to save the payload locally.", len(data), len(encoded), len(out), bound.MaxBytes)), nil
+			}
+			result := string(out)
+			if platformSession != nil {
+				result = bound.WithMetadata(result, platformSession.OutputMetadata())
+			}
+			return mcplib.NewToolResultText(result), nil
 		}
-		return mcplib.NewToolResultText(string(data)), nil
+		if pageConfig.CursorParam != "" {
+			return mcpToolPageResultTextWithPlatform(method, data, pageConfig, mcpCursor, platformSession), nil
+		}
+		return mcpToolResultTextWithPlatform(method, data, platformSession), nil
 	}
 }
 
-func newMCPClient() (*client.Client, error) {
-	home, _ := os.UserHomeDir()
-	cfgPath := filepath.Join(home, ".config", "openrouter-pp-cli", "config.toml")
-	cfg, err := config.Load(cfgPath)
+func mcpToolResultText(method string, data json.RawMessage) *mcplib.CallToolResult {
+	return mcpToolResultTextWithPlatform(method, data, nil)
+}
+
+func mcpToolTextWithPlatform(result string, platformSession *platform.Session) *mcplib.CallToolResult {
+	if platformSession != nil {
+		result = bound.WithMetadata(result, platformSession.OutputMetadata())
+	}
+	return mcplib.NewToolResultText(result)
+}
+
+func mcpToolResultTextWithPlatform(method string, data json.RawMessage, platformSession *platform.Session) *mcplib.CallToolResult {
+	result := bound.EndpointResponse(method, data)
+	return mcpToolTextWithPlatform(result, platformSession)
+}
+
+// mcpToolError keeps provider-controlled typed endpoint errors within the MCP
+// text-result budget just like successful endpoint results.
+func mcpToolError(message string) *mcplib.CallToolResult {
+	return mcplib.NewToolResultError(bound.Text(message))
+}
+
+func mcpToolPageResultText(method string, data json.RawMessage, pageConfig mcpPageConfig, cursor string) *mcplib.CallToolResult {
+	return mcpToolPageResultTextWithPlatform(method, data, pageConfig, cursor, nil)
+}
+
+func mcpToolPageResultTextWithPlatform(method string, data json.RawMessage, pageConfig mcpPageConfig, cursor string, platformSession *platform.Session) *mcplib.CallToolResult {
+	result := bound.EndpointPageResponse(method, data, bound.PageOptions{
+		Cursor:         cursor,
+		CursorParam:    pageConfig.CursorParam,
+		NextCursorPath: pageConfig.NextCursorPath,
+	})
+	if platformSession != nil {
+		result = bound.WithMetadata(result, platformSession.OutputMetadata())
+	}
+	return mcplib.NewToolResultText(result)
+}
+
+func newMCPClient(ctx context.Context) (*client.Client, *platform.Session, error) {
+	cfg, err := newMCPConfig()
+	if err != nil {
+		return nil, nil, err
+	}
+	c := newMCPClientFromConfig(cfg)
+	session, err := cli.BindMCPClient(ctx, c)
+	if err != nil {
+		return nil, nil, err
+	}
+	return c, session, nil
+}
+
+func newMCPConfig() (*config.Config, error) {
+	cfg, err := config.Load("")
 	if err != nil {
 		return nil, fmt.Errorf("loading config: %w", err)
 	}
-	c := client.New(cfg, 30*time.Second, 0)
+	return cfg, nil
+}
+
+func newMCPClientFromConfig(cfg *config.Config) *client.Client {
+	c := client.New(cfg, 60*time.Second, defaultMCPRateLimit)
 	// Agents calling through MCP need fresh data every call. The on-disk
 	// response cache survives across MCP server invocations, so a
 	// DELETE/PATCH followed by a GET would otherwise return the
 	// pre-mutation snapshot for up to the cache TTL. The interactive CLI
 	// constructs its own client and is unaffected.
 	c.NoCache = true
-	return c, nil
+	return c
 }
 
-func dbPath() string {
-	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".local", "share", "openrouter-pp-cli", "data.db")
+func mcpDBPath() (string, error) {
+	dir, err := cliutil.DataDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "data.db"), nil
 }
 
-// Note: MCP tools use their own dbPath() because they are in a separate package (main, not cli).
-// The CLI's defaultDBPath() in the cli package uses the same canonical path.
+type mcpStoreStatusKind string
+
+const (
+	mcpStoreStatusEmpty mcpStoreStatusKind = "empty"
+	mcpStoreStatusReady mcpStoreStatusKind = "ready"
+)
+
+func openMCPReadOnlyStore(path string) (*store.Store, *mcplib.CallToolResult) {
+	if _, err := os.Stat(path); err != nil {
+		if os.IsNotExist(err) {
+			return nil, mcplib.NewToolResultError(mcpMissingStoreMessage(path))
+		}
+		return nil, mcplib.NewToolResultError(fmt.Sprintf("checking local data store %s: %v", path, err))
+	}
+	db, err := store.OpenReadOnly(path)
+	if err != nil {
+		return nil, mcplib.NewToolResultError(fmt.Sprintf("opening local data store %s: %v. Run openrouter-pp-cli sync to refresh the store, or use live endpoint MCP tools for unsynced data.", path, err))
+	}
+	return db, nil
+}
+
+func mcpMissingStoreMessage(path string) string {
+	return fmt.Sprintf("No local data store found at %s. Run openrouter-pp-cli sync before using MCP search/sql, or use live endpoint MCP tools for unsynced data.", path)
+}
+
+func mcpStoreStatus(db *store.Store) (mcpStoreStatusKind, error) {
+	status, err := db.Status()
+	if err != nil {
+		return "", err
+	}
+	if len(status) == 0 {
+		return mcpStoreStatusEmpty, nil
+	}
+	return mcpStoreStatusReady, nil
+}
+
+func mcpEmptyStoreNextStep() string {
+	return "Run openrouter-pp-cli sync to populate the local SQLite store before using MCP search/sql."
+}
 
 func handleSearch(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
 	args := req.GetArguments()
@@ -433,9 +613,13 @@ func handleSearch(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.Call
 		limit = int(v)
 	}
 
-	db, err := store.OpenReadOnly(dbPath())
+	path, err := mcpDBPath()
 	if err != nil {
-		return mcplib.NewToolResultError(fmt.Sprintf("opening database: %v", err)), nil
+		return mcplib.NewToolResultError(fmt.Sprintf("resolving database: %v", err)), nil
+	}
+	db, toolErr := openMCPReadOnlyStore(path)
+	if toolErr != nil {
+		return toolErr, nil
 	}
 	defer db.Close()
 
@@ -443,9 +627,32 @@ func handleSearch(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.Call
 	if err != nil {
 		return mcplib.NewToolResultError(fmt.Sprintf("search failed: %v", err)), nil
 	}
+	storeStatus, err := mcpStoreStatus(db)
+	if err != nil {
+		return mcplib.NewToolResultError(fmt.Sprintf("reading store status: %v", err)), nil
+	}
 
-	data, _ := json.MarshalIndent(results, "", "  ")
-	return mcplib.NewToolResultText(string(data)), nil
+	return toolResultJSON(mcpSearchEnvelope(results, storeStatus))
+}
+
+func mcpSearchEnvelope(results []json.RawMessage, storeStatus mcpStoreStatusKind) map[string]any {
+	if results == nil {
+		results = []json.RawMessage{}
+	}
+	out := map[string]any{
+		"count":        len(results),
+		"results":      results,
+		"store_status": storeStatus,
+		"resumable":    false,
+	}
+	if len(results) == 0 {
+		if storeStatus == mcpStoreStatusEmpty {
+			out["next_step"] = mcpEmptyStoreNextStep()
+		} else {
+			out["next_step"] = "No local search matches. Try a broader query, a lower-specificity FTS expression, or sync again if data may be stale."
+		}
+	}
+	return out
 }
 
 // validateReadOnlyQuery gates the MCP sql tool. The agent contract advertised
@@ -453,22 +660,27 @@ func handleSearch(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.Call
 // mutating tool lets MCP hosts auto-approve writes and is treated as a real
 // bug per the project's agent-native security model.
 //
-// The gate is an allowlist (SELECT or WITH only) applied AFTER stripping the
-// leading whitespace, line comments, block comments, and semicolons that
-// SQLite itself ignores before parsing. A naive HasPrefix check on a
-// keyword blocklist is bypassable by prefixing the dangerous statement with
-// "/* x */" or "-- x\n" — TrimSpace strips outer whitespace but does not
-// understand SQL comment syntax. Combined with the empirical fact that
-// modernc.org/sqlite's mode=ro does NOT block VACUUM INTO (writes a snapshot
-// to a new file) or ATTACH DATABASE (opens a separate writable handle),
-// such a bypass produces silent exfiltration to an attacker-chosen path.
+// The gate rejects multi-statement input, then applies an allowlist (SELECT or
+// WITH only) AFTER stripping the leading whitespace, line comments, block
+// comments, and semicolons that SQLite itself ignores before parsing. A naive
+// HasPrefix check on a keyword blocklist is bypassable by prefixing the
+// dangerous statement with "/* x */" or "-- x\n"; a naive leading-keyword
+// allowlist is bypassable by appending "; ATTACH DATABASE ...". Combined with
+// the empirical fact that modernc.org/sqlite's mode=ro does NOT block VACUUM
+// INTO (writes a snapshot to a new file) or ATTACH DATABASE (opens a separate
+// writable handle), either bypass produces silent exfiltration to an
+// attacker-chosen path.
 //
 // SELECT and WITH are the only allowed leading keywords. WITH supports
 // SELECT-form CTEs; CTE-wrapped writes ("WITH x AS (...) INSERT ...") are
 // caught by OpenReadOnly's mode=ro one layer down. PRAGMA, ATTACH, VACUUM,
 // and every other DDL/DML keyword fail at this gate before reaching SQLite.
 func validateReadOnlyQuery(query string) error {
-	upper := strings.ToUpper(stripLeadingSQLNoise(query))
+	stripped := stripLeadingSQLNoise(query)
+	if hasTrailingSQLStatement(stripped) {
+		return fmt.Errorf("only a single SELECT or WITH statement is allowed")
+	}
+	upper := strings.ToUpper(stripped)
 	if !strings.HasPrefix(upper, "SELECT") && !strings.HasPrefix(upper, "WITH") {
 		return fmt.Errorf("only SELECT queries are allowed")
 	}
@@ -502,6 +714,97 @@ func stripLeadingSQLNoise(query string) string {
 	}
 }
 
+// hasTrailingSQLStatement reports whether query contains a statement
+// terminator followed by more executable SQL. A trailing semicolon is allowed;
+// a second statement is not. Semicolons inside string literals, quoted
+// identifiers, bracket identifiers, and comments are ignored to match SQLite's
+// parser shape closely enough for this security gate.
+func hasTrailingSQLStatement(query string) bool {
+	inSingle := false
+	inDouble := false
+	inBacktick := false
+	inBracket := false
+	inLineComment := false
+	inBlockComment := false
+
+	for i := 0; i < len(query); i++ {
+		ch := query[i]
+		next := byte(0)
+		if i+1 < len(query) {
+			next = query[i+1]
+		}
+
+		switch {
+		case inLineComment:
+			if ch == '\n' {
+				inLineComment = false
+			}
+			continue
+		case inBlockComment:
+			if ch == '*' && next == '/' {
+				inBlockComment = false
+				i++
+			}
+			continue
+		case inSingle:
+			if ch == '\'' {
+				if next == '\'' {
+					i++
+					continue
+				}
+				inSingle = false
+			}
+			continue
+		case inDouble:
+			if ch == '"' {
+				if next == '"' {
+					i++
+					continue
+				}
+				inDouble = false
+			}
+			continue
+		case inBacktick:
+			if ch == '`' {
+				if next == '`' {
+					i++
+					continue
+				}
+				inBacktick = false
+			}
+			continue
+		case inBracket:
+			if ch == ']' {
+				inBracket = false
+			}
+			continue
+		}
+
+		switch {
+		case ch == '-' && next == '-':
+			inLineComment = true
+			i++
+		case ch == '/' && next == '*':
+			inBlockComment = true
+			i++
+		case ch == '\'':
+			inSingle = true
+		case ch == '"':
+			inDouble = true
+		case ch == '`':
+			inBacktick = true
+		case ch == '[':
+			inBracket = true
+		case ch == ';':
+			if stripLeadingSQLNoise(query[i+1:]) != "" {
+				return true
+			}
+			return false
+		}
+	}
+	return false
+}
+
 func handleSQL(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
 	args := req.GetArguments()
 	query, ok := args["query"].(string)
@@ -513,19 +816,26 @@ func handleSQL(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToo
 		return mcplib.NewToolResultError(err.Error()), nil
 	}
 
-	db, err := store.OpenReadOnly(dbPath())
+	path, err := mcpDBPath()
 	if err != nil {
-		return mcplib.NewToolResultError(fmt.Sprintf("opening database: %v", err)), nil
+		return mcplib.NewToolResultError(fmt.Sprintf("resolving database: %v", err)), nil
+	}
+	db, toolErr := openMCPReadOnlyStore(path)
+	if toolErr != nil {
+		return toolErr, nil
 	}
 	defer db.Close()
 
-	rows, err := db.Query(query)
+	rows, err := db.DB().QueryContext(ctx, query)
 	if err != nil {
-		return mcplib.NewToolResultError(fmt.Sprintf("query failed: %v", err)), nil
+		return mcplib.NewToolResultError(mcpSQLQueryError(err)), nil
 	}
 	defer rows.Close()
 
-	cols, _ := rows.Columns()
+	cols, err := rows.Columns()
+	if err != nil {
+		return mcplib.NewToolResultError(fmt.Sprintf("reading columns: %v", err)), nil
+	}
 	var results []map[string]any
 	for rows.Next() {
 		values := make([]any, len(cols))
@@ -533,26 +843,94 @@ func handleSQL(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToo
 		for i := range values {
 			ptrs[i] = &values[i]
 		}
-		rows.Scan(ptrs...)
+		if err := rows.Scan(ptrs...); err != nil {
+			return mcplib.NewToolResultError(fmt.Sprintf("scanning row: %v", err)), nil
+		}
 		row := make(map[string]any)
 		for i, col := range cols {
 			row[col] = values[i]
 		}
 		results = append(results, row)
 	}
+	// rows.Next() stops on a mid-iteration error without failing the loop, so
+	// skipping rows.Err() would return a truncated result set as success.
+	if err := rows.Err(); err != nil {
+		return mcplib.NewToolResultError(fmt.Sprintf("reading rows: %v", err)), nil
+	}
+	storeStatus, err := mcpStoreStatus(db)
+	if err != nil {
+		return mcplib.NewToolResultError(fmt.Sprintf("reading store status: %v", err)), nil
+	}
 
-	data, _ := json.MarshalIndent(results, "", "  ")
-	return mcplib.NewToolResultText(string(data)), nil
+	return toolResultJSON(mcpSQLEnvelope(results, cols, storeStatus))
+}
+
+func mcpSQLEnvelope(rows []map[string]any, columns []string, storeStatus mcpStoreStatusKind) map[string]any {
+	if rows == nil {
+		rows = []map[string]any{}
+	}
+	out := map[string]any{
+		"count":        len(rows),
+		"columns":      columns,
+		"rows":         rows,
+		"store_status": storeStatus,
+		"resumable":    false,
+	}
+	if len(rows) == 0 {
+		if storeStatus == mcpStoreStatusEmpty {
+			out["next_step"] = mcpEmptyStoreNextStep()
+		} else {
+			out["next_step"] = "The read-only SQL query returned no rows. Check resource_type filters, json_extract paths, or run sync again if data may be stale."
+		}
+	}
+	return out
+}
+
+func mcpSQLQueryError(err error) string {
+	msg := err.Error()
+	if strings.Contains(strings.ToLower(msg), "no such table") {
+		return fmt.Sprintf("query failed: %v. Synced records live in resources(resource_type, id, data), not one SQL table per resource. Filter by resource_type, for example resource_type='activity', and read JSON fields with json_extract(data,'$.field').", err)
+	}
+	return fmt.Sprintf("query failed: %v", err)
+}
+
+// toolResultJSON renders v as the indented JSON body of an MCP text result,
+// surfacing a marshal failure as a tool error instead of empty content.
+func toolResultJSON(v any) (*mcplib.CallToolResult, error) {
+	text, err := bound.JSON(v)
+	if err != nil {
+		return mcplib.NewToolResultError(fmt.Sprintf("encoding result: %v", err)), nil
+	}
+	return mcplib.NewToolResultText(text), nil
 }
 
 func handleContext(_ context.Context, _ mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
+	paths := map[string]string{}
+	if dir, err := cliutil.ConfigDir(); err == nil {
+		paths["config_dir"] = dir
+	}
+	if dir, err := cliutil.DataDir(); err == nil {
+		paths["data_dir"] = dir
+	}
+	if dir, err := cliutil.StateDir(); err == nil {
+		paths["state_dir"] = dir
+	}
+	if dir, err := cliutil.CacheDir(); err == nil {
+		paths["cache_dir"] = dir
+	}
 	ctx := map[string]any{
 		"api":         "openrouter",
-		"description": "Agent-first OpenRouter introspection — terse output for cron and AI agents (--agent and --llm modes), local SQLite...",
-		"archetype":   "generic",
-		"tool_count":  18,
+		"description": "The only OpenRouter CLI built for fleet operations: budgets, anomaly alarms, and failover maps over a local usage ledger — not another chat wrapper.",
+		"archetype":   "communication",
+		"tool_count":  101,
+		"paths":       paths,
 		// tool_surface tells agents which surface a capability lives on.
 		"tool_surface": "MCP exposes typed endpoint tools plus a runtime mirror of user-facing CLI commands. Endpoint tools keep typed schemas; command-mirror tools shell out to the companion openrouter-pp-cli binary.",
+		// learn_protocol is generated from the single shared source of
+		// truth (the exported constant internal/learn.RecallFirstProtocol)
+		// also consumed by the CLI agent-context command, so the MCP and
+		// CLI agent surfaces cannot drift.
+		"learn_protocol": learn.RecallFirstProtocol,
 		"auth": map[string]any{
 			"type": "bearer_token",
 			"env_vars": []map[string]any{
@@ -564,6 +942,7 @@ func handleContext(_ context.Context, _ mcplib.CallToolRequest) (*mcplib.CallToo
 					"description": "Set to your API credential.",
 				},
 			},
+			"docs_url": "https://openrouter.ai/docs",
 		},
 		"resources": []map[string]any{
 			{
@@ -574,10 +953,72 @@ func handleContext(_ context.Context, _ mcplib.CallToolRequest) (*mcplib.CallToo
 				"searchable":  true,
 			},
 			{
-				"name":        "credits",
-				"description": "Credit management endpoints",
+				"name":        "audio",
+				"description": "Manage audio",
+				"endpoints":   []string{"create-speech", "create-transcriptions"},
+				"searchable":  true,
+				"writable":    true,
+			},
+			{
+				"name":        "benchmarks",
+				"description": "Benchmarks endpoints",
 				"endpoints":   []string{"get"},
 				"syncable":    true,
+				"searchable":  true,
+			},
+			{
+				"name":        "byok",
+				"description": "BYOK endpoints",
+				"endpoints":   []string{"create-byokkey", "delete-byokkey", "get-byokkey", "list-byokkeys", "update-byokkey"},
+				"syncable":    true,
+				"searchable":  true,
+				"writable":    true,
+			},
+			{
+				"name":        "chat",
+				"description": "Chat completion endpoints",
+				"endpoints":   []string{"send-completion-request"},
+				"searchable":  true,
+				"writable":    true,
+			},
+			{
+				"name":        "classifications",
+				"description": "Task classification market-share endpoints",
+				"endpoints":   []string{"get-task"},
+				"searchable":  true,
+			},
+			{
+				"name":        "containers",
+				"description": "Containers endpoints",
+				"endpoints":   []string{},
+			},
+			{
+				"name":        "containers.files",
+				"description": "Files endpoints",
+				"endpoints":   []string{"download-container-content", "get-container", "list-container", "promote-container"},
+				"writable":    true,
+			},
+			{
+				"name":        "credits",
+				"description": "Credit management endpoints",
+				"endpoints":   []string{"create-coinbase-charge", "get"},
+				"searchable":  true,
+				"writable":    true,
+			},
+			{
+				"name":        "datasets",
+				"description": "Public OpenRouter usage datasets. Data returned by these endpoints is licensed under CC BY 4.0 (https://creativecommons.",
+				"endpoints":   []string{"get-app-rankings", "get-rankings-daily", "get-session-cost"},
+				"syncable":    true,
+				"searchable":  true,
+			},
+			{
+				"name":        "embeddings",
+				"description": "Text embedding endpoints",
+				"endpoints":   []string{"create", "list-models"},
+				"syncable":    true,
+				"searchable":  true,
+				"writable":    true,
 			},
 			{
 				"name":        "endpoints",
@@ -587,22 +1028,73 @@ func handleContext(_ context.Context, _ mcplib.CallToolRequest) (*mcplib.CallToo
 				"searchable":  true,
 			},
 			{
+				"name":        "files",
+				"description": "Files endpoints",
+				"endpoints":   []string{"delete", "get-metadata", "list", "upload"},
+				"syncable":    true,
+				"searchable":  true,
+				"writable":    true,
+			},
+			{
+				"name":        "files.content",
+				"description": "Manage content",
+				"endpoints":   []string{"download-file"},
+			},
+			{
 				"name":        "generation",
 				"description": "Generation history endpoints",
-				"endpoints":   []string{"get", "list-content"},
+				"endpoints":   []string{"get", "list-content", "submit-feedback"},
+				"syncable":    true,
 				"searchable":  true,
+				"writable":    true,
+			},
+			{
+				"name":        "guardrails",
+				"description": "Guardrails endpoints",
+				"endpoints":   []string{"create", "delete", "get", "list", "list-key-assignments", "list-member-assignments", "update"},
+				"syncable":    true,
+				"searchable":  true,
+				"writable":    true,
+			},
+			{
+				"name":        "guardrails.assignments",
+				"description": "Manage assignments",
+				"endpoints":   []string{"bulk-assign-keys-to-guardrail", "bulk-assign-members-to-guardrail", "bulk-unassign-keys-from-guardrail", "bulk-unassign-members-from-guardrail", "list-guardrail-key", "list-guardrail-member"},
+				"writable":    true,
+			},
+			{
+				"name":        "images",
+				"description": "Images endpoints",
+				"endpoints":   []string{"create", "list-model-endpoints", "list-models"},
+				"syncable":    true,
+				"searchable":  true,
+				"writable":    true,
 			},
 			{
 				"name":        "key",
 				"description": "Manage key",
 				"endpoints":   []string{"get-current"},
-				"syncable":    true,
+				"searchable":  true,
 			},
 			{
 				"name":        "keys",
 				"description": "Manage keys",
 				"endpoints":   []string{"create", "delete", "get", "list", "update"},
 				"syncable":    true,
+				"searchable":  true,
+				"writable":    true,
+			},
+			{
+				"name":        "messages",
+				"description": "Manage messages",
+				"endpoints":   []string{"create"},
+				"searchable":  true,
+				"writable":    true,
+			},
+			{
+				"name":        "model",
+				"description": "Model information endpoints",
+				"endpoints":   []string{"get"},
 				"searchable":  true,
 			},
 			{
@@ -613,21 +1105,135 @@ func handleContext(_ context.Context, _ mcplib.CallToolRequest) (*mcplib.CallToo
 				"searchable":  true,
 			},
 			{
+				"name":        "models.endpoints",
+				"description": "Endpoint information",
+				"endpoints":   []string{"list"},
+			},
+			{
+				"name":        "observability",
+				"description": "Observability endpoints",
+				"endpoints":   []string{"create-destination", "delete-destination", "get-destination", "list-destinations", "update-destination"},
+				"syncable":    true,
+				"searchable":  true,
+				"writable":    true,
+			},
+			{
+				"name":        "openrouter-analytics",
+				"description": "Manage openrouter analytics",
+				"endpoints":   []string{"get-meta", "query"},
+				"searchable":  true,
+			},
+			{
 				"name":        "openrouter-auth",
 				"description": "Manage openrouter auth",
 				"endpoints":   []string{"create-keys-code", "exchange-code-for-apikey"},
 				"searchable":  true,
+				"writable":    true,
+			},
+			{
+				"name":        "organization",
+				"description": "Organization endpoints",
+				"endpoints":   []string{"list-members"},
+				"syncable":    true,
+				"searchable":  true,
+			},
+			{
+				"name":        "presets",
+				"description": "Presets endpoints",
+				"endpoints":   []string{"get", "list"},
+				"syncable":    true,
+				"searchable":  true,
+			},
+			{
+				"name":        "presets.chat",
+				"description": "Chat completion endpoints",
+				"endpoints":   []string{"create-presets-completions"},
+				"writable":    true,
+			},
+			{
+				"name":        "presets.messages",
+				"description": "Manage messages",
+				"endpoints":   []string{"create-presets"},
+				"writable":    true,
+			},
+			{
+				"name":        "presets.responses",
+				"description": "OpenAI-compatible Responses API endpoints",
+				"endpoints":   []string{"create-presets"},
+				"writable":    true,
+			},
+			{
+				"name":        "presets.versions",
+				"description": "Manage versions",
+				"endpoints":   []string{"get-preset", "list-preset"},
 			},
 			{
 				"name":        "providers",
 				"description": "Provider information endpoints",
 				"endpoints":   []string{"list"},
 				"syncable":    true,
+				"searchable":  true,
+			},
+			{
+				"name":        "rerank",
+				"description": "Rerank endpoints",
+				"endpoints":   []string{"create"},
+				"searchable":  true,
+				"writable":    true,
+			},
+			{
+				"name":        "responses",
+				"description": "OpenAI-compatible Responses API endpoints",
+				"endpoints":   []string{"create"},
+				"searchable":  true,
+				"writable":    true,
+			},
+			{
+				"name":        "scim",
+				"description": "SCIM endpoints",
+				"endpoints":   []string{"create-group-mapping", "delete-group-mapping", "get-group-mapping", "list-group-mappings", "list-groups", "update-group-mapping"},
+				"syncable":    true,
+				"searchable":  true,
+				"writable":    true,
+			},
+			{
+				"name":        "videos",
+				"description": "Manage videos",
+				"endpoints":   []string{"create", "get", "list-models"},
+				"syncable":    true,
+				"searchable":  true,
+				"writable":    true,
+			},
+			{
+				"name":        "videos.content",
+				"description": "Manage content",
+				"endpoints":   []string{"list-videos"},
+			},
+			{
+				"name":        "workspaces",
+				"description": "Workspaces endpoints",
+				"endpoints":   []string{"create", "delete", "get", "list", "update"},
+				"syncable":    true,
+				"searchable":  true,
+				"writable":    true,
+			},
+			{
+				"name":        "workspaces.budgets",
+				"description": "Manage budgets",
+				"endpoints":   []string{"delete-workspace", "get-workspace", "list-workspace", "upsert-workspace"},
+				"writable":    true,
+			},
+			{
+				"name":        "workspaces.members",
+				"description": "Manage members",
+				"endpoints":   []string{"bulk-add-workspace", "bulk-remove-workspace", "list-workspace"},
+				"writable":    true,
 			},
 		},
 		"query_tips": []string{
 			"Pagination uses cursor-based paging. Pass offset parameter for subsequent pages.",
 			"Control page size with the limit parameter (default 100).",
+			"Use start_date for incremental fetches (filter by modification time).",
 			"Use the sql tool for ad-hoc analysis on synced data. Run sync first to populate the local database.",
 			"Use the search tool for full-text search across all synced resources. Faster than iterating list endpoints.",
 			"Prefer sql/search over repeated API calls when the data is already synced.",
@@ -635,28 +1241,37 @@ func handleContext(_ context.Context, _ mcplib.CallToolRequest) (*mcplib.CallToo
 		// Command-mirror capabilities are exposed through MCP by shelling out
 		// to the companion CLI binary.
 		"command_mirror_capabilities": []map[string]string{
-			{"name": "Cost-by-cron rollup", "command": "usage cost-by", "description": "Group your OpenRouter spend by which cron/agent fired the call, not just by model. Joins local generations with...", "rationale": "OpenRouter's /activity groups by model+provider only. Per-caller attribution requires a local join across...", "via": "mcp-command-mirror"},
-			{"name": "Models query DSL", "command": "models query", "description": "Query the model catalog with structured filters (tools=true, cost.completion<1, ctx>=64k) — compiled to SQL over a...", "rationale": "/models has no query parameters. The full catalog is ~425KB JSON; LLM agents run out of context parsing it. A local...", "via": "mcp-command-mirror"},
-			{"name": "Providers degraded watch", "command": "providers degraded", "description": "Returns the set of currently-degraded provider/model pairs by polling /providers and per-model /endpoints. Pipe into...", "rationale": "Without this, providers are only learned-bad reactively after a 429. The status signal exists upstream but no other...", "via": "mcp-command-mirror"},
-			{"name": "Generation cost forensics", "command": "generation explain", "description": "For a generation id, returns the cost, latency, prompt/completion token counts, AND a delta vs the cheapest provider...", "rationale": "Mrgoonie's CLI returns raw /generation JSON. The cost-vs-baseline delta requires joining the generation record...", "via": "mcp-command-mirror"},
-			{"name": "Cost regression alarm", "command": "usage anomaly", "description": "Flags days where per-model cost exceeds 2σ of the trailing 7-day mean. Deterministic z-score, no LLM in the loop....", "rationale": "OpenRouter's only built-in alarm is 'credits low' — reactive on absolute balance. This is the leading indicator:...", "via": "mcp-command-mirror"},
-			{"name": "Weekly-cap ETA", "command": "key eta", "description": "Projects when your weekly OpenRouter cap will trip, based on /key.limit_reset, current usage, and your trailing...", "rationale": "OpenRouter shows current usage but doesn't project. Mid-week cap-trips are a known failure mode that this surfaces...", "via": "mcp-command-mirror"},
-			{"name": "Per-cron budget contract", "command": "budget", "description": "Set a weekly USD cap per cron job (budget set scan-pipeline 2usd). Pre-flight check returns exit 0 (under cap) or 8...", "rationale": "Quotas in env vars are aspirational. A local contract table + tagged generations makes per-agent budgets structural...", "via": "mcp-command-mirror"},
-			{"name": "Endpoint failover map", "command": "endpoints failover", "description": "For a model id, lists all providers serving it ranked by current status, pricing, and observed p50 latency from...", "rationale": "Multi-provider routing is OpenRouter's defining pattern. /models/{a}/{s}/endpoints returns the list; nothing ranks...", "via": "mcp-command-mirror"},
+			{"name": "Models Query DSL", "command": "models query", "description": "Shortlist models by capability, price", "rationale": "The upstream /models endpoint has no query parameters", "via": "mcp-command-mirror"},
+			{"name": "Cost-by-Cron Rollup", "command": "usage cost-by", "description": "Attribute spend to the cron, agent, or lineage that incurred it, over any window.", "rationale": "Upstream activity groups by model and provider only", "via": "mcp-command-mirror"},
+			{"name": "Cost Regression Alarm", "command": "usage anomaly", "description": "Flag per-model cost spikes against the trailing baseline before they compound.", "rationale": "Upstream's only alarm is an absolute low-credits notice", "via": "mcp-command-mirror"},
+			{"name": "Per-Cron Budget Contract", "command": "budget", "description": "Set spend caps per cron or agent and enforce them pre-flight with typed exit codes.", "rationale": "Upstream workspace budgets are org-level", "via": "mcp-command-mirror"},
+			{"name": "Providers Degraded Watch", "command": "providers degraded", "description": "See which providers or models are currently degraded before dispatching work to them.", "rationale": "A stateful set-diff against the previous local snapshot turns reactive 429s into a leading indicator no point-in-time", "via": "mcp-command-mirror"},
+			{"name": "Weekly-Cap ETA", "command": "key eta", "description": "Project the date your key's spend cap trips, from the observed burn rate.", "rationale": "Upstream reports the cap and current usage as points; the projection needs the local history of key snapshots.", "via": "mcp-command-mirror"},
+			{"name": "Endpoint Failover Map", "command": "endpoints failover", "description": "Rank the providers serving one model by status, price, and observed latency for dispatch order.", "rationale": "The ranking joins the live endpoint list with locally observed per-provider latency — a cross-source ordering no single", "via": "mcp-command-mirror"},
+			{"name": "Generation Cost Forensics", "command": "generation explain", "description": "Break one generation into its cost anatomy: tokens, latency, and the delta versus the cheapest provider.", "rationale": "The cheapest-provider delta requires joining the generation record against locally synced per-provider pricing.", "via": "mcp-command-mirror"},
+			{"name": "Free-Tier and Cap Headroom", "command": "limits status", "description": "One view of current headroom: key-cap remaining, free-tier daily quota, and today's free-model burn.", "rationale": "Derived from three sources at once — key status, credit purchase tier", "via": "mcp-command-mirror"},
+			{"name": "Credits Runway", "command": "credits runway", "description": "Project days-to-zero for prepaid credits at the trailing burn rate — the 402 leading indicator.", "rationale": "Upstream returns the balance as a point value; the projection needs the credits-snapshot series the sync accumulates.", "via": "mcp-command-mirror"},
+			{"name": "Ledger Reconcile", "command": "usage reconcile", "description": "Verify the local usage mirror against upstream daily totals and flag days that disagree.", "rationale": "No single API call answers 'do our books match yours'", "via": "mcp-command-mirror"},
+			{"name": "Catalog Churn Watch", "command": "models churn", "description": "See what changed in the model catalog between syncs: additions, removals, and repricings with deltas.", "rationale": "No upstream history endpoint exists; the temporal diff is only possible over sync-kept catalog snapshots.", "via": "mcp-command-mirror"},
 		},
 		"playbook": []map[string]string{
-			{"topic": "Cost-by-cron rollup", "insight": "OpenRouter's /activity groups by model+provider only. Per-caller attribution requires a local join across generations and a caller-tag table that no upstream endpoint provides."},
-			{"topic": "Models query DSL", "insight": "/models has no query parameters. The full catalog is ~425KB JSON; LLM agents run out of context parsing it. A local FTS5+structured DSL turns a 425KB read into a 200-token answer."},
-			{"topic": "Providers degraded watch", "insight": "Without this, providers are only learned-bad reactively after a 429. The status signal exists upstream but no other CLI surfaces it as a degraded set."},
-			{"topic": "Generation cost forensics", "insight": "Mrgoonie's CLI returns raw /generation JSON. The cost-vs-baseline delta requires joining the generation record against the local /models pricing table."},
-			{"topic": "Cost regression alarm", "insight": "OpenRouter's only built-in alarm is 'credits low' — reactive on absolute balance. This is the leading indicator: catches a runaway loop before it depletes credits."},
-			{"topic": "Weekly-cap ETA", "insight": "OpenRouter shows current usage but doesn't project. Mid-week cap-trips are a known failure mode that this surfaces 1-3 days in advance."},
-			{"topic": "Per-cron budget contract", "insight": "Quotas in env vars are aspirational. A local contract table + tagged generations makes per-agent budgets structural and pipe-composable."},
-			{"topic": "Endpoint failover map", "insight": "Multi-provider routing is OpenRouter's defining pattern. /models/{a}/{s}/endpoints returns the list; nothing ranks it for router consumption."},
+			{"topic": "Models Query DSL", "insight": "The upstream /models endpoint has no query parameters; a local FTS-indexed catalog is the only way to filter hundreds of models without shipping the whole payload into context."},
+			{"topic": "Cost-by-Cron Rollup", "insight": "Upstream activity groups by model and provider only; joining the local generations mirror with a caller-tag log is the only path to per-cron attribution."},
+			{"topic": "Cost Regression Alarm", "insight": "Upstream's only alarm is an absolute low-credits notice; a z-score over the local ledger catches regressions while credits still look healthy."},
+			{"topic": "Per-Cron Budget Contract", "insight": "Upstream workspace budgets are org-level; per-cron caps require a local contract table joined against tagged generations."},
+			{"topic": "Providers Degraded Watch", "insight": "A stateful set-diff against the previous local snapshot turns reactive 429s into a leading indicator no point-in-time API call provides."},
+			{"topic": "Weekly-Cap ETA", "insight": "Upstream reports the cap and current usage as points; the projection needs the local history of key snapshots."},
+			{"topic": "Endpoint Failover Map", "insight": "The ranking joins the live endpoint list with locally observed per-provider latency — a cross-source ordering no single call returns."},
+			{"topic": "Generation Cost Forensics", "insight": "The cheapest-provider delta requires joining the generation record against locally synced per-provider pricing."},
+			{"topic": "Free-Tier and Cap Headroom", "insight": "Derived from three sources at once — key status, credit purchase tier, and the local count of today's free-variant calls."},
+			{"topic": "Credits Runway", "insight": "Upstream returns the balance as a point value; the projection needs the credits-snapshot series the sync accumulates."},
+			{"topic": "Ledger Reconcile", "insight": "No single API call answers 'do our books match yours'; the diff joins upstream activity rollups against local mirror sums."},
+			{"topic": "Catalog Churn Watch", "insight": "No upstream history endpoint exists; the temporal diff is only possible over sync-kept catalog snapshots."},
+			{"topic": "Message search", "insight": "Use the search tool on synced data rather than paginating through message history. Message APIs often have aggressive rate limits."},
+			{"topic": "Channel health", "insight": "When analyzing channel activity, use the channel-health command or sql aggregation on synced messages. Don't iterate individual messages via API."},
 		},
 	}
-	data, _ := json.MarshalIndent(ctx, "", "  ")
-	return mcplib.NewToolResultText(string(data)), nil
+	return toolResultJSON(ctx)
 }
 
 // RegisterNovelFeatureTools is kept as a compatibility no-op for older MCP

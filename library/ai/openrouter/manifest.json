@@ -1,9 +1,9 @@
 {
   "manifest_version": "0.3",
   "name": "openrouter-pp-mcp",
-  "display_name": "Openrouter",
-  "version": "4.2.0",
-  "description": "Openrouter API surface as MCP tools.",
+  "display_name": "OpenRouter",
+  "version": "1.0.0",
+  "description": "The only OpenRouter CLI built for fleet operations: budgets, anomaly alarms, and failover maps over a local usage ledger — not another chat wrapper.",
   "author": {
     "name": "CLI Printing Press"
   },
@@ -15,7 +15,9 @@
       "command": "${__dirname}/bin/openrouter-pp-mcp",
       "args": [],
       "env": {
-        "OPENROUTER_API_KEY": "${user_config.openrouter_api_key}"
+        "OPENROUTER_API_KEY": "${user_config.openrouter_api_key}",
+        "OPENROUTER_BASE_URL": "${user_config.openrouter_base_url}",
+        "OPENROUTER_USER_AGENT": "${user_config.openrouter_user_agent}"
       }
     }
   },
@@ -23,9 +25,19 @@
     "openrouter_api_key": {
       "type": "string",
       "title": "OPENROUTER_API_KEY",
-      "description": "Sets OPENROUTER_API_KEY for the Openrouter MCP server.",
+      "description": "Sets OPENROUTER_API_KEY for the OpenRouter MCP server.",
       "sensitive": true,
       "required": true
+    },
+    "openrouter_base_url": {
+      "type": "string",
+      "title": "OPENROUTER_BASE_URL",
+      "description": "Optional. Sets OPENROUTER_BASE_URL for the OpenRouter MCP server. Per-instance, non-secret setting; not a credential."
+    },
+    "openrouter_user_agent": {
+      "type": "string",
+      "title": "OPENROUTER_USER_AGENT",
+      "description": "Optional. Sets OPENROUTER_USER_AGENT for the OpenRouter MCP server. Per-instance, non-secret setting; not a credential."
     }
   },
   "compatibility": {

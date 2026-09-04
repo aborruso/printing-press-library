@@ -12,50 +12,92 @@ import (
 )
 
 func newModelsEndpointsListCmd(flags *rootFlags) *cobra.Command {
+	var flagHTTPReferer string
+	var flagXOpenRouterTitle string
+	var flagXOpenRouterCategories string
 
 	cmd := &cobra.Command{
 		Use:         "list <author> <slug>",
 		Aliases:     []string{"get"},
 		Short:       "List all endpoints for a model",
-		Example:     "  openrouter-pp-cli models endpoints list example-value example-value",
+		Example:     "  openrouter-pp-cli models endpoints list deepseek deepseek-v4 --agent --select data.endpoints.provider_name,data.endpoints.pricing.completion,data.endpoints.status",
 		Annotations: map[string]string{"pp:endpoint": "endpoints.list", "pp:method": "GET", "pp:path": "/models/{author}/{slug}/endpoints", "mcp:read-only": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				return cmd.Help()
+				// A missing required positional is a usage error in every output
+				// mode (matches command_promoted.go.tmpl). Machine callers
+				// (--json/--agent) also get a JSON error envelope on stdout;
+				// usageErr sets exit 2.
+				if flags.asJSON {
+					if printErr := printJSONFiltered(cmd.OutOrStdout(), map[string]any{
+						"error": "missing required argument",
+						"usage": fmt.Sprintf("%s%s", cmd.CommandPath(), " <author> <slug>"),
+					}, flags); printErr != nil {
+						return printErr
+					}
+				}
+				return usageErr(fmt.Errorf("missing required argument\nUsage: %s%s", cmd.CommandPath(), " <author> <slug>"))
 			}
+			path := "/models/{author}/{slug}/endpoints"
+			if len(args) < 1 || args[0] == "" {
+				return usageErr(fmt.Errorf("author is required\nUsage: %s <%s>", cmd.CommandPath(), "author"))
+			}
+			path = replacePathParam(path, "author", args[0])
+			if len(args) < 2 || args[1] == "" {
+				return usageErr(fmt.Errorf("slug is required\nUsage: %s <%s>", cmd.CommandPath(), "slug"))
+			}
+			path = replacePathParam(path, "slug", args[1])
 			c, err := flags.newClient()
 			if err != nil {
 				return err
 			}
+			headerOverrides := map[string]string{}
 
-			path := "/models/{author}/{slug}/endpoints"
-			path = replacePathParam(path, "author", args[0])
-			if len(args) < 2 {
-				return usageErr(fmt.Errorf("slug is required\nUsage: %s <%s>", cmd.CommandPath(), "slug"))
+			if cmd.Flags().Changed("http-referer") || flagHTTPReferer != "" {
+				headerOverrides["HTTP-Referer"] = formatCLIParamValue(flagHTTPReferer)
 			}
-			path = replacePathParam(path, "slug", args[1])
+
+			if cmd.Flags().Changed("x-open-router-title") || flagXOpenRouterTitle != "" {
+				headerOverrides["X-OpenRouter-Title"] = formatCLIParamValue(flagXOpenRouterTitle)
+			}
+
+			if cmd.Flags().Changed("x-open-router-categories") || flagXOpenRouterCategories != "" {
+				headerOverrides["X-OpenRouter-Categories"] = formatCLIParamValue(flagXOpenRouterCategories)
+			}
+
 			params := map[string]string{}
-			data, prov, err := resolveRead(cmd.Context(), c, flags, "endpoints", false, path, params, nil)
+			data, prov, err := resolveReadWithStrategyAndResponsePath(cmd.Context(), c, flags, "live", "endpoints", false, path, params, headerOverrides, "", cmd.ErrOrStderr())
 			if err != nil {
-				return classifyAPIError(err, flags)
+				return classifyAPIError(cmd.OutOrStdout(), err, flags)
 			}
-			// Print provenance to stderr for human-facing output
-			{
+			outputData := data
+			// Print provenance to stderr for human-facing output only.
+			// Machine-format flags (--json, --csv, --compact, --quiet, --plain,
+			// --select) and piped stdout suppress this line; the JSON envelope
+			// already carries meta.source for those consumers.
+			// SYNC: keep this gate aligned with command_promoted.go.tmpl.
+			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var countItems []json.RawMessage
-				_ = json.Unmarshal(data, &countItems)
+				_ = json.Unmarshal(outputData, &countItems)
 				printProvenance(cmd, len(countItems), prov)
 			}
 			// For JSON output, wrap with provenance envelope before passing through flags.
 			// --select wins over --compact when both are set; --compact only runs when
-			// no explicit fields were requested.
-			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+			// no explicit fields were requested. Explicit format flags (--csv, --quiet,
+			// --plain) opt out of the auto-JSON path so piped consumers that asked for
+			// a non-JSON format reach the standard pipeline below.
+			if flags.asJSON || (!isTerminal(cmd.OutOrStdout()) && !flags.csv && !flags.quiet && !flags.plain) {
 				filtered := data
 				if flags.selectFields != "" {
 					filtered = filterFields(filtered, flags.selectFields)
 				} else if flags.compact {
-					filtered = compactFields(filtered)
+					filtered = compactFields(filtered, map[string]bool{"data": true})
 				}
 				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				wrapped, wrapErr = wrapPlatformStructuredOutput(wrapped, flags, "results", true)
 				if wrapErr != nil {
 					return wrapErr
 				}
@@ -64,7 +106,7 @@ func newModelsEndpointsListCmd(flags *rootFlags) *cobra.Command {
 			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
-				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
+				if json.Unmarshal(outputData, &items) == nil && len(items) > 0 {
 					if err := printAutoTable(cmd.OutOrStdout(), items); err != nil {
 						return err
 					}
@@ -74,9 +116,16 @@ func newModelsEndpointsListCmd(flags *rootFlags) *cobra.Command {
 					return nil
 				}
 			}
-			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
+			formatData := data
+			if flags.csv || flags.plain {
+				formatData = outputData
+			}
+			return printOutputWithFlagsMeta(cmd.OutOrStdout(), formatData, flags, map[string]any{"source": "live"}, map[string]bool{"data": true})
 		},
 	}
+	cmd.Flags().StringVar(&flagHTTPReferer, "http-referer", "", "The app identifier should be your app's URL and is used as the primary identifier for rankings.")
+	cmd.Flags().StringVar(&flagXOpenRouterTitle, "x-open-router-title", "", "The app display name allows you to customize how your app appears in OpenRouter's dashboard.")
+	cmd.Flags().StringVar(&flagXOpenRouterCategories, "x-open-router-categories", "", "Comma-separated list of app categories (e.g. 'cli-agent,cloud-agent'). Used for marketplace rankings.")
 
 	return cmd
 }

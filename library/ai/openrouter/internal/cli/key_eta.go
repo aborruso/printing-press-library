@@ -1,4 +1,5 @@
 // Copyright 2026 Rick van de Laar and contributors. Licensed under Apache-2.0. See LICENSE.
+// pp:data-source computed
 
 package cli
 
@@ -16,13 +17,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newKeyEtaCmd(flags *rootFlags) *cobra.Command {
-	var llm bool
+func newNovelKeyEtaCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:         "eta",
 		Short:       "Project when the OpenRouter cap will trip from /key + 7d burn rate",
-		Example:     "  openrouter-pp-cli key eta --llm",
+		Example:     "  openrouter-pp-cli key eta --agent",
 		Annotations: map[string]string{"mcp:read-only": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if cliutil.IsVerifyEnv() {
@@ -33,9 +33,9 @@ func newKeyEtaCmd(flags *rootFlags) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			data, err := c.Get("/key", nil)
+			data, err := c.Get(cmd.Context(), "/key", nil)
 			if err != nil {
-				return classifyAPIError(err, flags)
+				return classifyAPIError(cmd.OutOrStdout(), err, flags)
 			}
 			var keyEnvelope struct {
 				Data map[string]any `json:"data"`
@@ -106,7 +106,7 @@ func newKeyEtaCmd(flags *rootFlags) *cobra.Command {
 			if flags.asJSON {
 				return printJSONFiltered(cmd.OutOrStdout(), out, flags)
 			}
-			if llm {
+			if flags.agent {
 				fmt.Fprintf(cmd.OutOrStdout(),
 					"limit=$%.2f used=$%.2f remaining=$%.2f burn_rate=$%.2f/day eta=%s reset=%s\n",
 					limit, usage, remaining, burnPerDay, etaStr, resetStr)
@@ -115,6 +115,5 @@ func newKeyEtaCmd(flags *rootFlags) *cobra.Command {
 			return printJSONFiltered(cmd.OutOrStdout(), out, flags)
 		},
 	}
-	cmd.Flags().BoolVar(&llm, "llm", false, "Terse k:v output")
 	return cmd
 }

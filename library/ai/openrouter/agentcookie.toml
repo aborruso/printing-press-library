@@ -1,0 +1,16 @@
+# agentcookie.toml: secrets-bus adoption manifest v2
+# See docs/spec-agentcookie-secrets-bus-v2-adoption.md
+schema_version = 2
+name = "openrouter-pp-cli"
+display_name = "OpenRouter"
+description = "The only OpenRouter CLI built for fleet operations: budgets, anomaly alarms, and failover maps over a local usage ledger — not another chat wrapper."
+project_kind = "cli"
+
+[secrets.file]
+path = "~/.config/openrouter-pp-cli/config.toml"
+
+[sync]
+default = false
+
+[sync.keys]
+OPENROUTER_API_KEY = true

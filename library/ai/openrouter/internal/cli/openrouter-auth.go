@@ -9,8 +9,10 @@ import (
 
 func newOpenrouterAuthCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "openrouter-auth",
-		Short: "Manage openrouter auth",
+		Use:         "openrouter-auth",
+		Short:       "Manage openrouter auth command groups",
+		Annotations: map[string]string{"mcp:read-only": "true", "pp:parent-group": "true", "pp:api-resource": "true", "pp:typed-exit-codes": "0,2"},
+		RunE:        parentNoSubcommandRunE(flags),
 	}
 
 	cmd.AddCommand(newOpenrouterAuthCreateKeysCodeCmd(flags))

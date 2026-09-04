@@ -23,7 +23,7 @@ builds:
     env:
       - CGO_ENABLED=0
     ldflags:
-      - -s -w
+      - -s -w -X main.version={{ .Version }}
     targets:
       - darwin_amd64
       - darwin_arm64
@@ -42,10 +42,10 @@ checksum:
 brews:
   - name: openrouter-pp-cli
     repository:
-      owner: rick-van-de-laar
+      owner: rvdlaar
       name: homebrew-tap
     homepage: "https://github.com/mvanhorn/printing-press-library"
-    description: "Inspect OpenRouter models, providers, credits, activity, and cost attribution with local caching and agent-friendly output."
+    description: "The only OpenRouter CLI built for fleet operations: budgets, anomaly alarms, and failover maps over a local usage ledger — not another chat wrapper."
     install: |
       bin.install "openrouter-pp-cli"
       bin.install "openrouter-pp-mcp"

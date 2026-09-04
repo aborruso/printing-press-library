@@ -3,22 +3,23 @@
 
 package cli
 
-// PATCH transcendence-commands: registers models query subcommand on the generated models parent.
-
 import (
 	"github.com/spf13/cobra"
 )
 
 func newModelsCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "models",
-		Short: "Model information endpoints",
+		Use:         "models",
+		Short:       "List and get models",
+		Annotations: map[string]string{"mcp:read-only": "true", "pp:parent-group": "true", "pp:api-resource": "true", "pp:typed-exit-codes": "0,2"},
+		RunE:        parentNoSubcommandRunE(flags),
 	}
 
 	cmd.AddCommand(newModelsGetCmd(flags))
 	cmd.AddCommand(newModelsListCountCmd(flags))
 	cmd.AddCommand(newModelsListUserCmd(flags))
 	cmd.AddCommand(newModelsEndpointsCmd(flags))
-	cmd.AddCommand(newModelsQueryCmd(flags))
+	cmd.AddCommand(newNovelModelsChurnCmd(flags))
+	cmd.AddCommand(newNovelModelsQueryCmd(flags))
 	return cmd
 }
