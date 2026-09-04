@@ -17323,6 +17323,52 @@
       }
     },
     {
+      "name": "overpass",
+      "category": "travel",
+      "api": "Overpass",
+      "description": "Find things worth photographing by name instead of by OpenStreetMap tag, with automatic failover across Overpass mirrors.",
+      "search_terms": [
+        "overpass",
+        "overpass-pp-cli",
+        "Find things worth photographing by name instead of by OpenStreetMap tag, with automatic failover across Overpass mirrors.",
+        "Find photographic subjects near a place",
+        "near",
+        "Finds things worth photographing near a place — water towers, lighthouses, brutalist buildings, piers, viewpoints — by name rather than by OpenStreetMap tag.",
+        "Browse the subject taxonomy",
+        "types",
+        "Lists every subject type the CLI knows how to find, with the OpenStreetMap tags behind each one.",
+        "Subjects along a drive",
+        "route",
+        "Finds subjects inside a corridor between two places, so a drive can be planned around what is worth stopping for.",
+        "Export to GeoJSON",
+        "geojson",
+        "Writes results as GeoJSON for opening in a map, a Leaflet page, or any GIS tool.",
+        "Mirror health",
+        "mirrors",
+        "Shows which Overpass mirrors are currently answering and how many rate-limit slots each has free."
+      ],
+      "path": "library/travel/overpass",
+      "printer": "justinwfu",
+      "printer_name": "justinwfu",
+      "creator": {
+        "handle": "justinwfu",
+        "name": "justinwfu"
+      },
+      "mcp": {
+        "binary": "overpass-pp-mcp",
+        "transports": [
+          "stdio",
+          "http"
+        ],
+        "tool_count": 3,
+        "public_tool_count": 3,
+        "auth_type": "none",
+        "env_vars": [],
+        "mcp_ready": "full",
+        "spec_format": "openapi3"
+      }
+    },
+    {
       "name": "pagliacci",
       "category": "food-and-dining",
       "api": "Pagliacci Pizza",
@@ -18205,6 +18251,12 @@
         "Group synced hits into named local collections that feed downstream pull, similar, and trends — persistence no Pixabay tool offers."
       ],
       "path": "library/media-and-entertainment/pixabay",
+      "release": {
+        "cli_name": "pixabay-pp-cli",
+        "version": "2026.9.1",
+        "released_at": "2026-09-03T15:25:21Z",
+        "source_commit": "8720142dad4c0444fe59ae1843d244fa07074687"
+      },
       "printer": "vcolombo",
       "printer_name": "Vincent Colombo",
       "creator": {
