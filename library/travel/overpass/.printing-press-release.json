@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "slug": "overpass",
+  "cli_name": "overpass-pp-cli",
+  "version": "2026.9.1",
+  "released_at": "2026-09-04T08:30:50Z",
+  "source_commit": "ad250336ba3b41a1f4f7f75f5634e38c7b42413e",
+  "printing_press_version": "4.29.0",
+  "run_id": "20260726-090225",
+  "changes": [
+    {
+      "title": "feat(overpass): add overpass",
+      "pr": 1612,
+      "url": "https://github.com/mvanhorn/printing-press-library/pull/1612",
+      "commit": "ad250336ba3b41a1f4f7f75f5634e38c7b42413e"
+    }
+  ]
+}
