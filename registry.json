@@ -1919,6 +1919,55 @@
       }
     },
     {
+      "name": "apple-search-ads",
+      "category": "developer-tools",
+      "api": "Apple Search Ads",
+      "description": "Every Apple Search Ads feature, plus local cost analytics, bid optimization, and cross-org templating no Python CLI offers.",
+      "search_terms": [
+        "apple-search-ads",
+        "Apple Search Ads",
+        "apple-search-ads-pp-cli",
+        "Every Apple Search Ads feature, plus local cost analytics, bid optimization, and cross-org templating no Python CLI offers.",
+        "Local Cost Analytics",
+        "analytics query",
+        "Query locally cached reporting data without API rate limit friction.",
+        "Bid Optimization Suggestions",
+        "optimize suggest",
+        "Get CPA/ROAS-driven bid adjustment suggestions with revenue impact forecast before applying.",
+        "Search Term Auto-Promotion",
+        "keywords auto-promote",
+        "Batch analyze high-converting search terms and promote them to keywords with smart match-type routing.",
+        "Budget Burn Forecasting",
+        "campaigns forecast-spend",
+        "Predict daily/monthly spend and flag campaigns on track to overshoot budget caps.",
+        "Cross-Org Campaign Templates",
+        "templates apply",
+        "Version-control campaign structures and apply them across multiple org IDs with a diff preview."
+      ],
+      "path": "library/developer-tools/apple-search-ads",
+      "printer": "rk-labs-tech",
+      "printer_name": "Ryan Kelley",
+      "creator": {
+        "handle": "rk-labs-tech",
+        "name": "Ryan Kelley"
+      },
+      "mcp": {
+        "binary": "apple-search-ads-pp-mcp",
+        "transports": [
+          "stdio",
+          "http"
+        ],
+        "tool_count": 64,
+        "public_tool_count": 0,
+        "auth_type": "bearer_token",
+        "env_vars": [
+          "APPLE_SEARCH_ADS_TOKEN"
+        ],
+        "mcp_ready": "full",
+        "spec_format": "internal"
+      }
+    },
+    {
       "name": "archive-is",
       "category": "media-and-entertainment",
       "api": "Archive.today",
@@ -4456,9 +4505,9 @@
       "path": "library/health/clinical-trials",
       "release": {
         "cli_name": "clinical-trials-pp-cli",
-        "version": "2026.9.1",
-        "released_at": "2026-09-03T09:05:37Z",
-        "source_commit": "1422d2019d9b20114ad2461062a457fc7c5de1f0"
+        "version": "2026.9.2",
+        "released_at": "2026-09-04T09:12:13Z",
+        "source_commit": "cdb82d44879717d53b854d803fdacbb0984fa689"
       },
       "printer": "laci141",
       "printer_name": "laci141",
@@ -16897,9 +16946,9 @@
       "path": "library/ai/openrouter",
       "release": {
         "cli_name": "openrouter-pp-cli",
-        "version": "2026.8.1",
-        "released_at": "2026-08-17T07:57:07Z",
-        "source_commit": "40363ac0936c4f406625f8399d8ad9b57673170e"
+        "version": "2026.9.1",
+        "released_at": "2026-09-04T09:13:04Z",
+        "source_commit": "67f919bca591b1beeb50154d7c435cfc5b4bc2eb"
       },
       "printer": "rvdlaar",
       "printer_name": "Rick van de Laar",
