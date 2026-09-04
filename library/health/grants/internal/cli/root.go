@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-var version = "2026.8.2"
+var version = "2026.9.1"
 
 const usage = `grants-pp-cli %s — open research grants, keyless
 

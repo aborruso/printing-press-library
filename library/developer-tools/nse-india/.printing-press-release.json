@@ -2,17 +2,15 @@
   "schema_version": 1,
   "slug": "nse-india",
   "cli_name": "nse-india-pp-cli",
-  "version": "2026.9.1",
-  "released_at": "2026-09-04T08:36:00Z",
-  "source_commit": "1ff812aa5e422438ca667e213bbdc8137dd3709c",
+  "version": "2026.9.2",
+  "released_at": "2026-09-04T09:11:15Z",
+  "source_commit": "c220c79c06dad3cca69d6bdc03826aef1e99fb22",
   "printing_press_version": "4.0.4",
   "run_id": "20260508-113209",
   "changes": [
     {
-      "title": "fix(nse-india): fix movers, symbol-lookup, and live dogfood gate",
-      "pr": 1346,
-      "url": "https://github.com/mvanhorn/printing-press-library/pull/1346",
-      "commit": "1ff812aa5e422438ca667e213bbdc8137dd3709c"
+      "title": "chore(patches): normalize patches manifests to per-patch dirs [skip ci]",
+      "commit": "c220c79c06dad3cca69d6bdc03826aef1e99fb22"
     }
   ]
 }
