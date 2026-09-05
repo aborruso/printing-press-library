@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"context"
+	"errors"
 	"io"
 	"strings"
 	"testing"
@@ -513,7 +515,7 @@ func TestSedutePluriGiorno(t *testing.T) {
 	// dell'evento non e' quella con cui l'archivio indicizza la seduta.
 	cmd := &cobra.Command{}
 	cmd.SetErr(io.Discard)
-	incoerenti, avviso := marcaEventiIncoerenti(cmd, 17, evs)
+	incoerenti, avviso := marcaEventiIncoerenti(cmd, context.Background(), nil, 17, evs)
 	if avviso == "" {
 		t.Fatal("seduta pluri-giorno: l'avviso non deve essere vuoto")
 	}
@@ -541,6 +543,12 @@ func TestSedutePluriGiorno(t *testing.T) {
 	if evs[4].DataApertura != "28 apr 2020" {
 		t.Errorf("evento di ripresa: data_apertura = %q, want %q", evs[4].DataApertura, "28 apr 2020")
 	}
+	// Senza client la verifica sull'archivio non parte: il marcatore resta, ma
+	// l'avviso deve dire che la data d'apertura e' quella dichiarata dalla
+	// fonte e non una data d'archivio.
+	if !strings.Contains(avviso, "non verificata") {
+		t.Errorf("verifica non eseguita: l'avviso deve dirlo, invece e' %q", avviso)
+	}
 
 	// La stessa data scritta nelle due forme della fonte e' la stessa data: una
 	// seduta di un giorno solo non va marcata solo perche' il portale alterna i
@@ -565,7 +573,7 @@ func TestAnomaliaRestaSuStessaDataSeduteDiverse(t *testing.T) {
 	}
 	cmd := &cobra.Command{}
 	cmd.SetErr(io.Discard)
-	incoerenti, avviso := marcaEventiIncoerenti(cmd, 17, evs)
+	incoerenti, avviso := marcaEventiIncoerenti(cmd, context.Background(), nil, 17, evs)
 	if !incoerenti["19 feb 2020"] {
 		t.Error("la data con due sedute deve restare fra le incoerenti: e' quella che sopprime il link")
 	}
@@ -596,7 +604,7 @@ func TestMarcaEventiIncoerentiIterSano(t *testing.T) {
 	}
 	cmd := &cobra.Command{}
 	cmd.SetErr(io.Discard)
-	incoerenti, avviso := marcaEventiIncoerenti(cmd, 18, evs)
+	incoerenti, avviso := marcaEventiIncoerenti(cmd, context.Background(), nil, 18, evs)
 	if avviso != "" {
 		t.Errorf("iter coerente: avviso = %q, want vuoto", avviso)
 	}
@@ -679,6 +687,36 @@ func TestFaseIterConSeduta(t *testing.T) {
 	for _, c := range cases {
 		if got := faseIterConSeduta(c.action, c.sedeSuffisso, c.sedutaAula); got != c.want {
 			t.Errorf("faseIterConSeduta(%q, %q, %v) = %q, want %q", c.action, c.sedeSuffisso, c.sedutaAula, got, c.want)
+		}
+	}
+}
+
+// La regola con cui si legge la risposta dell'archivio, provata senza rete. E'
+// il cuore del rilievo di review: un numero riusato per errore non deve
+// ricevere il marcatore di seduta pluri-giorno.
+func TestEsitoVerificaSeduta(t *testing.T) {
+	cases := []struct {
+		nome, apertura, dataArchivio string
+		err                          error
+		want                         esitoSeduta
+	}{
+		// La 187 della L.R. 9/2020: l'archivio la apre il giorno che l'iter
+		// dichiara per primo.
+		{"apertura combaciante", "28 apr 2020", "28.04.20", nil, sedutaConfermata},
+		// Stessa data, forma diversa: e' la stessa data.
+		{"forme diverse della stessa data", "28 apr 2020", "28/04/2020", nil, sedutaConfermata},
+		// Il caso che la verifica esiste per prendere: numero che nell'archivio
+		// non c'e'. Non e' una risposta mancante, e' una risposta negativa.
+		{"seduta inesistente", "28 apr 2020", "", nil, sedutaSmentita},
+		// Esiste ma si apre altrove: la coppia non torna.
+		{"apertura diversa", "28 apr 2020", "12.05.20", nil, sedutaSmentita},
+		// L'archivio non ha risposto: non si conclude nulla, e non si torna ad
+		// anomalia — un marcatore che cambia con la rete e' peggio.
+		{"archivio irraggiungibile", "28 apr 2020", "", errors.New("dial tcp: timeout"), sedutaNonVerificata},
+	}
+	for _, c := range cases {
+		if got := esitoVerificaSeduta(c.apertura, c.dataArchivio, c.err); got != c.want {
+			t.Errorf("%s: esitoVerificaSeduta(%q, %q, %v) = %v, want %v", c.nome, c.apertura, c.dataArchivio, c.err, got, c.want)
 		}
 	}
 }
