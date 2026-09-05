@@ -472,6 +472,9 @@ Add `--agent` to any command. Expands to: `--json --compact --no-input --no-colo
   ```bash
   ars-sicilia-pp-cli resoconti cerca --legisl 17 --data 2019-10-01:2019-12-31 --agent --envelope --limit 10
   ```
+
+- **Un `cerca` vuoto con `--data` che arriva agli ultimi 45 giorni avvisa che può essere latenza della fonte** — prima `interrogazioni cerca --data 2026-08-15:2026-09-04` tornava `[]` e basta, con l'archivio fermo un mese prima. L'hint (stderr e dentro `--envelope`) dice che il portale pubblica con 9-45 giorni di ritardo e rimanda a `sync coverage --resources <archivio>` per l'ultima data vera. Nessuna richiesta in più; una finestra che finisce mesi fa resta muta.
+- **`--select` con nomi che non esistono da nessuna parte viene ignorato davvero** — l'avviso lo diceva già, ma la proiezione partiva lo stesso e ogni array annidato usciva come oggetti vuoti (`ddl get 18 779 --select iter` → `firmatari: [{}, {}]`; `--select pippo` faceva lo stesso a `eventi`, `atti`, `sezioni` e a ogni riga di un `cerca`). Ora se nessun nome esiste esce il payload intero e l'avviso dice il nome giusto (`fields.Iter`). Un selettore misto (`numero,pippo`) filtra sui nomi buoni, come prima.
 - **List titles are cut at 256 characters: never conclude an act is off-topic from its title alone** ⚠️ — the acts with the longest titles (`Schema di progetto di legge costituzionale…`, `Disegno di legge voto…`) are the ones whose subject falls past the cut. XVII-legislature bill 199 is titled "…riconoscimento degli svantaggi derivanti dalla **condizione di insularità**", but the list shows "…svantaggi deriva". Search results whose title hits the cap without matching are ranked between the proven matches and the off-topic rows, and the "no relevant title" hint reports how many titles were cut — when it does, open the document (`ddl get`) for the full title instead of raising `--limit`.
 
   ```bash

@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/mvanhorn/printing-press-library/library/other/ars-sicilia/internal/cliutil"
@@ -179,6 +180,7 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 	omonHint := omonimiHint(recs, arc.Slug)
 	spezzHint := spezzatoHint(spezzato)
 	sommHint := sommariHint(truncated, arc.Slug, p.Params, termini)
+	latHint := latenzaHint(recs, arc.Slug, p.Params, time.Now())
 
 	if envelopeWanted(cmd.OutOrStdout(), flags) {
 		// L'avviso resta anche su stderr: la busta serve a chi legge il JSON,
@@ -189,8 +191,9 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 		warnPertinenza(pertHint)
 		warnPertinenza(omonHint)
 		warnPertinenza(sommHint)
+		warnPertinenza(latHint)
 		return emitEnvelope(cmd.OutOrStdout(), flatRecords(recs, firm), truncated,
-			uniscoHint(truncatedHint(truncated, len(recs), arc.Slug), frHint, spezzHint, pertHint, omonHint, sommHint), flags)
+			uniscoHint(truncatedHint(truncated, len(recs), arc.Slug), frHint, spezzHint, pertHint, omonHint, sommHint, latHint), flags)
 	}
 	if err := emitRecords(cmd, flags, *arc, recs, firm); err != nil {
 		return err
@@ -201,7 +204,40 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 	warnPertinenza(pertHint)
 	warnPertinenza(omonHint)
 	warnPertinenza(sommHint)
+	warnPertinenza(latHint)
 	return nil
+}
+
+// latenzaFonteGiorni è il ritardo massimo di pubblicazione osservato su questa
+// fonte (misurato con `sync coverage`: 9-45 giorni a seconda dell'archivio).
+// Sotto questa distanza da oggi un vuoto non prova che l'atto non esista.
+const latenzaFonteGiorni = 45
+
+// latenzaHint avvisa quando una ricerca con --data che arriva a ridosso di
+// oggi non trova nulla. Il vuoto e la copertura della fonte viaggiano su due
+// comandi: chi cerca l'interrogazione di due giorni fa ottiene `[]` e non sa
+// che l'archivio si ferma a un mese prima. Non si interroga la fonte (`sync
+// coverage` costa una richiesta per archivio): si dice solo che il vuoto può
+// essere latenza, e dove si misura. Un --data che finisce mesi o anni fa
+// resta muto: lì il vuoto è un vuoto.
+func latenzaHint(recs []icaro.Record, slug string, params map[string]string, now time.Time) string {
+	if len(recs) > 0 {
+		return ""
+	}
+	v := strings.TrimSpace(params["data"])
+	if v == "" {
+		return ""
+	}
+	parti := strings.Split(v, ":")
+	fine, err := time.Parse("2006-01-02", strings.TrimSpace(parti[len(parti)-1]))
+	if err != nil {
+		return ""
+	}
+	soglia := time.Date(now.Year(), now.Month(), now.Day()-latenzaFonteGiorni, 0, 0, 0, 0, time.UTC)
+	if fine.Before(soglia) {
+		return ""
+	}
+	return fmt.Sprintf("hint: nessun risultato, ma il periodo chiesto arriva a ridosso di oggi e questa fonte pubblica con 9-45 giorni di ritardo: il vuoto può essere latenza, non assenza. `sync coverage --resources %s` dice l'ultima data che l'archivio ha davvero.", slug)
 }
 
 // spezzatoHint dichiara che la risposta è stata ricomposta da sottorange.
@@ -593,7 +629,11 @@ func emitEnvelope(w io.Writer, payload any, troncato bool, hint string, flags *r
 	raw = iniettaDataISO(raw)
 	if flags.selectFields != "" {
 		warnUnknownSelectFields(raw, flags.selectFields)
-		raw = filterFields(raw, flags.selectFields)
+		// Stessa regola di printOutputWithFlags: nomi tutti sconosciuti →
+		// selettore ignorato davvero, non righe ridotte a `{}`.
+		if !selettoreTuttoIgnoto(raw, flags.selectFields) {
+			raw = filterFields(raw, flags.selectFields)
+		}
 	} else if flags.compact {
 		raw = compactFields(raw)
 	}

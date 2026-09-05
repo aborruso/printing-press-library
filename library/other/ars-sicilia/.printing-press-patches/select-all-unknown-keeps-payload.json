@@ -1,0 +1,11 @@
+{
+  "schema_version": 2,
+  "id": "select-all-unknown-keeps-payload",
+  "applied_at": "2026-09-05",
+  "base_run_id": "20260528-181840",
+  "base_printing_press_version": "4.30.3",
+  "summary": "A --select whose names all resolve to nothing is skipped instead of gutting every nested array to `{}`.",
+  "reason": "The stderr hint promised «will be ignored», but filterFieldsRec's envelope fallback still applied the selector inside every child array: `ddl get 18 779 --select iter` printed firmatari:[{},{}], and the same happened to eventi/atti/sezioni and to every cerca row, with or without --envelope.",
+  "files": ["internal/cli/helpers.go", "internal/cli/icaro_helpers.go"],
+  "validated_outcome": "selettoreTuttoIgnoto gates filterFields in printOutputWithFlags and emitEnvelope; unit tests cover object-with-array, bare list, envelope and mixed selectors; live: ddl get/mozioni get/ddl iter/commissione dossier/ddl cerca keep full arrays with --select pippo."
+}

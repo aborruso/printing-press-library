@@ -726,6 +726,25 @@ func doveVivono(data json.RawMessage, unknown []string) []string {
 	return out
 }
 
+// selettoreTuttoIgnoto dice se NESSUNO dei nomi passati a --select esiste nel
+// payload. Solo allora la proiezione si salta: con un selettore misto i nomi
+// buoni bastano a produrre un output sensato, ed è il caso già coperto.
+// Su payload non ispezionabili (lista vuota, scalare) torna false: lì la
+// proiezione è innocua e non c'è nulla da decidere.
+func selettoreTuttoIgnoto(data json.RawMessage, fields string) bool {
+	unknown := unknownSelectNames(data, fields)
+	if len(unknown) == 0 {
+		return false
+	}
+	chiesti := 0
+	for _, f := range strings.Split(fields, ",") {
+		if strings.TrimSpace(f) != "" {
+			chiesti++
+		}
+	}
+	return len(unknown) == chiesti
+}
+
 // unknownSelectNames torna i nomi richiesti a --select che non corrispondono a
 // nessun campo del payload, nell'ordine in cui l'utente li ha scritti. Torna
 // nil quando il payload non è ispezionabile (lista vuota, scalare): in dubbio
@@ -871,7 +890,15 @@ func printOutputWithFlags(w io.Writer, data json.RawMessage, flags *rootFlags) e
 	// must not strip those fields out before --select can pick them. When
 	// only --compact is set (e.g., --agent without --select), the allow-list
 	// still runs.
-	if flags.selectFields != "" {
+	if flags.selectFields != "" && selettoreTuttoIgnoto(data, flags.selectFields) {
+		// L'avviso promette «verrà ignorato»: se nessun nome esiste, il
+		// selettore va ignorato davvero. Prima la proiezione partiva lo
+		// stesso e il fallback envelope di filterFieldsRec la applicava
+		// dentro ogni array figlio, che usciva come `[{},{}]`: su `ddl get
+		// --select iter` i firmatari sparivano, e con `--select pippo` lo
+		// stesso capitava a eventi, atti, sezioni e a ogni lista di cerca.
+		warnUnknownSelectFields(data, flags.selectFields)
+	} else if flags.selectFields != "" {
 		warnUnknownSelectFields(data, flags.selectFields)
 		originale := data
 		data = filterFields(data, flags.selectFields)
