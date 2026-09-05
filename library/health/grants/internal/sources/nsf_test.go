@@ -1,6 +1,7 @@
 package sources
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 )
@@ -78,7 +79,7 @@ func TestNSFScore(t *testing.T) {
 	}{
 		{
 			name:     "both terms in title",
-			award:    nsfAwardRaw{NSFAward{Title: "A Novel Gene Therapy Platform", ID: "1"}, "delivery vectors"},
+			award:    nsfAwardRaw{NSFAward: NSFAward{Title: "A Novel Gene Therapy Platform", ID: "1"}, Abstract: "delivery vectors"},
 			query:    "gene therapy",
 			wantOK:   true,
 			wantHit:  true,
@@ -86,7 +87,7 @@ func TestNSFScore(t *testing.T) {
 		},
 		{
 			name:     "one term in title, one in abstract",
-			award:    nsfAwardRaw{NSFAward{Title: "Gene Editing in Zebrafish", ID: "2"}, "a therapeutic approach"},
+			award:    nsfAwardRaw{NSFAward: NSFAward{Title: "Gene Editing in Zebrafish", ID: "2"}, Abstract: "a therapeutic approach"},
 			query:    "gene therapy",
 			wantOK:   true,
 			wantHit:  true,
@@ -94,14 +95,14 @@ func TestNSFScore(t *testing.T) {
 		},
 		{
 			name:    "missing a term is rejected",
-			award:   nsfAwardRaw{NSFAward{Title: "Squid Hydrodynamics", ID: "3"}, "artificial neural networks are used"},
+			award:   nsfAwardRaw{NSFAward: NSFAward{Title: "Squid Hydrodynamics", ID: "3"}, Abstract: "artificial neural networks are used"},
 			query:   "artificial intelligence",
 			wantOK:  false,
 			wantHit: false,
 		},
 		{
 			name:     "empty query keeps everything",
-			award:    nsfAwardRaw{NSFAward{Title: "Anything", ID: "4"}, ""},
+			award:    nsfAwardRaw{NSFAward: NSFAward{Title: "Anything", ID: "4"}, Abstract: ""},
 			query:    "",
 			wantOK:   true,
 			wantHit:  false,
@@ -119,18 +120,18 @@ func TestNSFScore(t *testing.T) {
 
 func TestNSFRank(t *testing.T) {
 	pool := []nsfAwardRaw{
-		{NSFAward{ID: "1", Title: "Squid Hydrodynamics", FundsObligated: "900000"},
-			"artificial neural sampling, no second term here"},
-		{NSFAward{ID: "2", Title: "Graduate Fellowship", FundsObligated: "100000"},
-			"supports the artificial intelligence priority area"},
-		{NSFAward{ID: "3", Title: "Artificial Intelligence for Robotics", FundsObligated: "500000"},
-			"an artificial intelligence system"},
+		{NSFAward: NSFAward{ID: "1", Title: "Squid Hydrodynamics", FundsObligated: "900000"},
+			Abstract: "artificial neural sampling, no second term here"},
+		{NSFAward: NSFAward{ID: "2", Title: "Graduate Fellowship", FundsObligated: "100000"},
+			Abstract: "supports the artificial intelligence priority area"},
+		{NSFAward: NSFAward{ID: "3", Title: "Artificial Intelligence for Robotics", FundsObligated: "500000"},
+			Abstract: "an artificial intelligence system"},
 		// Same collaborative award, registered per institution: different IDs,
 		// identical titles. The larger fundsObligatedAmt must win.
-		{NSFAward{ID: "4a", Title: "Collaborative Research: AI and Intelligence Testing", FundsObligated: "200000"},
-			"artificial methods"},
-		{NSFAward{ID: "4b", Title: "collaborative research:  AI and Intelligence Testing ", FundsObligated: "800000"},
-			"artificial methods"},
+		{NSFAward: NSFAward{ID: "4a", Title: "Collaborative Research: AI and Intelligence Testing", FundsObligated: "200000"},
+			Abstract: "artificial methods"},
+		{NSFAward: NSFAward{ID: "4b", Title: "collaborative research:  AI and Intelligence Testing ", FundsObligated: "800000"},
+			Abstract: "artificial methods"},
 	}
 
 	awards, stats := nsfRank(pool, nsfTerms("artificial intelligence"), 5)
@@ -156,9 +157,9 @@ func TestNSFRank(t *testing.T) {
 
 func TestNSFRankLimitsRows(t *testing.T) {
 	pool := []nsfAwardRaw{
-		{NSFAward{ID: "1", Title: "Cancer A"}, "cancer"},
-		{NSFAward{ID: "2", Title: "Cancer B"}, "cancer"},
-		{NSFAward{ID: "3", Title: "Cancer C"}, "cancer"},
+		{NSFAward: NSFAward{ID: "1", Title: "Cancer A"}, Abstract: "cancer"},
+		{NSFAward: NSFAward{ID: "2", Title: "Cancer B"}, Abstract: "cancer"},
+		{NSFAward: NSFAward{ID: "3", Title: "Cancer C"}, Abstract: "cancer"},
 	}
 	awards, stats := nsfRank(pool, nsfTerms("cancer"), 2)
 	if len(awards) != 2 {
@@ -166,5 +167,132 @@ func TestNSFRankLimitsRows(t *testing.T) {
 	}
 	if stats.Matched != 3 {
 		t.Errorf("Matched = %d, want 3 (stats count matches, not shown rows)", stats.Matched)
+	}
+}
+
+// The PI must reach the normalised output in the NIH path's
+// "SURNAME, FIRSTNAME" shape, built from the split pair. The measured hazard is
+// a multi-word surname: reading the combined pdPIName instead and taking its
+// last word as the surname misfiles "Emma A Elliott Smith" (9 of 236 awards
+// measured 2026-09-04).
+func TestNSFRankEmitsPI(t *testing.T) {
+	pool := []nsfAwardRaw{
+		{NSFAward: NSFAward{ID: "1", Title: "Isotope Ecology"}, Abstract: "ecology",
+			PIFirstName: "Emma", PILastName: "Elliott Smith"},
+	}
+	awards, _ := nsfRank(pool, nsfTerms("ecology"), 5)
+	if len(awards) != 1 {
+		t.Fatalf("len(awards) = %d, want 1", len(awards))
+	}
+	if got, want := awards[0].PI, "Elliott Smith, Emma"; got != want {
+		t.Errorf("PI = %q, want %q", got, want)
+	}
+}
+
+func TestNSFPIName(t *testing.T) {
+	cases := []struct{ first, last, want string }{
+		{"Jenny", "Ouyang", "Ouyang, Jenny"},
+		{"Emma", "Elliott Smith", "Elliott Smith, Emma"},
+		{" Emma ", " Elliott Smith ", "Elliott Smith, Emma"},
+		{"", "Ouyang", "Ouyang"}, // no stray leading comma
+		{"Jenny", "", "Jenny"},   // no stray trailing comma
+		{"", "", ""},
+	}
+	for _, c := range cases {
+		if got := nsfPIName(c.first, c.last); got != c.want {
+			t.Errorf("nsfPIName(%q, %q) = %q, want %q", c.first, c.last, got, c.want)
+		}
+	}
+}
+
+// nsfLiveBody is a verbatim trimmed response from the NSF Awards API, measured
+// 2026-09-04 for the keyword "isotope ecology" with the printFields this
+// package requests. It exists because TestNSFRankEmitsPI sets PIFirstName and
+// PILastName by hand and therefore proves only the formatting: a wrong JSON tag
+// would leave that test green while the app emitted an empty contact_pi_name.
+// Decoding this body through the real nsfResp/nsfAwardRaw structs is what pins
+// the tags. The second award carries a multi-word surname on purpose.
+//
+// What this fixture cannot cover: the request is never made, so a printFields
+// typo that stops the API returning piFirstName/piLastName at all is invisible
+// here. That gap is real and is not claimed to be covered.
+const nsfLiveBody = `{
+  "response": {
+    "award": [
+      {
+        "id": "2628024",
+        "title": "RAPID: Reproductive Ecology of Antarctic Krill",
+        "fundsObligatedAmt": "168531",
+        "awardeeName": "Oregon State University",
+        "startDate": "09/01/2026",
+        "expDate": "08/31/2027",
+        "abstractText": "Stable isotope work on krill ecology.",
+        "piFirstName": "Kim",
+        "piLastName": "Bernard"
+      },
+      {
+        "id": "2606140",
+        "title": "Anaerobic Fungi in Digestion",
+        "fundsObligatedAmt": "419981",
+        "awardeeName": "University of Texas at Austin",
+        "startDate": "09/01/2026",
+        "expDate": "08/31/2029",
+        "abstractText": "Isotope tracing informs the ecology of the digester community.",
+        "piFirstName": "Xavier",
+        "piLastName": "Fonoll Almansa"
+      }
+    ]
+  }
+}`
+
+// TestNSFDecodeEmitsPI runs a real API response body through the actual decode
+// path and out to JSON, so the input tags (piFirstName, piLastName), the
+// struct wiring and the output key (contact_pi_name) are all pinned by one
+// test. Asserting on the marshalled output rather than the Go field is
+// deliberate: the field name is ours, but contact_pi_name is the contract the
+// NIH path already publishes and the web app reads.
+func TestNSFDecodeEmitsPI(t *testing.T) {
+	var resp nsfResp
+	if err := json.Unmarshal([]byte(nsfLiveBody), &resp); err != nil {
+		t.Fatalf("decoding the measured NSF body: %v", err)
+	}
+	if len(resp.Response.Award) != 2 {
+		t.Fatalf("decoded %d awards, want 2", len(resp.Response.Award))
+	}
+	if got := resp.Response.Award[0].PIFirstName; got != "Kim" {
+		t.Errorf("PIFirstName = %q, want %q — check the json tag", got, "Kim")
+	}
+	if got := resp.Response.Award[1].PILastName; got != "Fonoll Almansa" {
+		t.Errorf("PILastName = %q, want %q — check the json tag", got, "Fonoll Almansa")
+	}
+
+	awards, _ := nsfRank(resp.Response.Award, nsfTerms("isotope ecology"), 5)
+	if len(awards) != 2 {
+		t.Fatalf("ranked %d awards, want 2", len(awards))
+	}
+
+	out, err := json.Marshal(awards)
+	if err != nil {
+		t.Fatalf("marshalling awards: %v", err)
+	}
+	var decoded []map[string]any
+	if err := json.Unmarshal(out, &decoded); err != nil {
+		t.Fatalf("re-decoding awards: %v", err)
+	}
+	byID := map[string]string{}
+	for _, a := range decoded {
+		pi, ok := a["contact_pi_name"].(string)
+		if !ok {
+			t.Fatalf("award %v has no string contact_pi_name — check the output json tag", a["id"])
+		}
+		byID[a["id"].(string)] = pi
+	}
+	for id, want := range map[string]string{
+		"2628024": "Bernard, Kim",
+		"2606140": "Fonoll Almansa, Xavier",
+	} {
+		if got := byID[id]; got != want {
+			t.Errorf("award %s contact_pi_name = %q, want %q", id, got, want)
+		}
 	}
 }
