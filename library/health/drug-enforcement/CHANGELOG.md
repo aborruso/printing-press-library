@@ -2,6 +2,10 @@
 
 This file is maintained by printing-press-library release automation. Do not hand-edit release sections in normal PRs.
 
+## 2026.9.1 - 2026-09-05
+
+- feat(drug-enforcement): emit full code_info as wrapped Lots/Expiry (#1942).
+
 ## 2026.8.2 - 2026-08-17
 
 - fix(cli): remove redundant toolchain directives (#1737).

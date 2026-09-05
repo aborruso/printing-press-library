@@ -2,17 +2,17 @@
   "schema_version": 1,
   "slug": "ars-sicilia",
   "cli_name": "ars-sicilia-pp-cli",
-  "version": "2026.9.1",
-  "released_at": "2026-09-02T09:26:47Z",
-  "source_commit": "5d0ab8327e37afa2b30749755cf2cda7a19cf9c4",
+  "version": "2026.9.2",
+  "released_at": "2026-09-05T09:20:11Z",
+  "source_commit": "842355e8484cb683c8fd04872698b322d390c723",
   "printing_press_version": "4.30.3",
   "run_id": "20260528-181840",
   "changes": [
     {
-      "title": "fix(ars-sicilia): --frase conjunction rewrite + aggregated-laws warning (leftover from #1900)",
-      "pr": 1905,
-      "url": "https://github.com/mvanhorn/printing-press-library/pull/1905",
-      "commit": "5d0ab8327e37afa2b30749755cf2cda7a19cf9c4"
+      "title": "fix(ars-sicilia): a multi-day sitting is not an anomaly, plus five fixes from the news-driven checks",
+      "pr": 1941,
+      "url": "https://github.com/mvanhorn/printing-press-library/pull/1941",
+      "commit": "842355e8484cb683c8fd04872698b322d390c723"
     }
   ]
 }

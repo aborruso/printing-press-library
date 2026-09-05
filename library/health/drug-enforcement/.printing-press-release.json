@@ -2,17 +2,17 @@
   "schema_version": 1,
   "slug": "drug-enforcement",
   "cli_name": "drug-enforcement-pp-cli",
-  "version": "2026.8.2",
-  "released_at": "2026-08-17T08:21:18Z",
-  "source_commit": "bc4b586302c2f3040178080f61960f98fff3529d",
+  "version": "2026.9.1",
+  "released_at": "2026-09-05T09:20:11Z",
+  "source_commit": "3392f5e1df18c08d6a8519e227b51dfa17190a8e",
   "printing_press_version": "4.25.0",
   "run_id": "20260707-200719-bf61d987",
   "changes": [
     {
-      "title": "fix(cli): remove redundant toolchain directives",
-      "pr": 1737,
-      "url": "https://github.com/mvanhorn/printing-press-library/pull/1737",
-      "commit": "bc4b586302c2f3040178080f61960f98fff3529d"
+      "title": "feat(drug-enforcement): emit full code_info as wrapped Lots/Expiry",
+      "pr": 1942,
+      "url": "https://github.com/mvanhorn/printing-press-library/pull/1942",
+      "commit": "3392f5e1df18c08d6a8519e227b51dfa17190a8e"
     }
   ]
 }
