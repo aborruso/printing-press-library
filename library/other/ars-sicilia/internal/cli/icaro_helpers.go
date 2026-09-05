@@ -229,12 +229,27 @@ func latenzaHint(recs []icaro.Record, slug string, params map[string]string, now
 		return ""
 	}
 	parti := strings.Split(v, ":")
+	inizio, err := time.Parse("2006-01-02", strings.TrimSpace(parti[0]))
+	if err != nil {
+		return ""
+	}
 	fine, err := time.Parse("2006-01-02", strings.TrimSpace(parti[len(parti)-1]))
 	if err != nil {
 		return ""
 	}
-	soglia := time.Date(now.Year(), now.Month(), now.Day()-latenzaFonteGiorni, 0, 0, 0, 0, time.UTC)
-	if fine.Before(soglia) {
+	oggi := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	// Una finestra tutta nel futuro non è latenza: lì il vuoto è ovvio (le
+	// convocazioni a parte, che annunciano sedute da tenere, e per le quali
+	// «la fonte è in ritardo» sarebbe comunque la diagnosi sbagliata). Una
+	// finestra a cavallo di oggi invece copre giorni recenti: si valuta
+	// come se finisse oggi.
+	if inizio.After(oggi) {
+		return ""
+	}
+	if fine.After(oggi) {
+		fine = oggi
+	}
+	if fine.Before(oggi.AddDate(0, 0, -latenzaFonteGiorni)) {
 		return ""
 	}
 	return fmt.Sprintf("hint: nessun risultato, ma il periodo chiesto arriva a ridosso di oggi e questa fonte pubblica con 9-45 giorni di ritardo: il vuoto può essere latenza, non assenza. `sync coverage --resources %s` dice l'ultima data che l'archivio ha davvero.", slug)

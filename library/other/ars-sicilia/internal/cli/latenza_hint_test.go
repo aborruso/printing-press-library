@@ -26,6 +26,10 @@ func TestLatenzaHint(t *testing.T) {
 		{"senza --data", nil, "", false},
 		{"con risultati", []icaro.Record{{}}, "2026-09-02", false},
 		{"data non ISO", nil, "260902", false},
+		{"finestra tutta nel futuro", nil, "2027-01-01:2027-12-31", false},
+		{"data singola futura", nil, "2026-09-10", false},
+		{"a cavallo di oggi: copre giorni recenti", nil, "2026-08-15:2026-09-30", true},
+		{"inizio vecchio, fine futura: si valuta su oggi", nil, "2026-07-01:2026-12-31", true},
 	}
 	for _, c := range cases {
 		got := latenzaHint(c.recs, "interrogazioni", map[string]string{"data": c.data}, now)

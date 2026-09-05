@@ -11,7 +11,7 @@
   "auth_context": {
     "type": "none"
   },
-  "source_fingerprint": "5c5c19e3de4db6fa5b7c4c02d7df9a00a891144ee3b66c139737552f424ce8cc",
+  "source_fingerprint": "da6fc9907a6d086d52546bf54f28e8ca0d4329ae348eaddce55e2fbd6b2387c9",
   "source_files": {
     "cmd/ars-sicilia-pp-cli/main.go": "c0dfc303980570f5c430e6eb920798649f3825d25b3691778e19507229430b0c",
     "cmd/ars-sicilia-pp-mcp/main.go": "f181e27a68985fa073ecdaec19a264e69a0af84075b1460c097dc0dc4ea4b5db",
@@ -66,7 +66,7 @@
     "internal/cli/gruppi.go": "d561c302effefdf42ec8c31e62e66fb2b51701b42c4bb693f2a25410e6e9df93",
     "internal/cli/helpers.go": "4ed3f79f295b877f753c77d311e9906baf540e19906700661054d4a587c4dc79",
     "internal/cli/html_extract.go": "7355bbacae707a4112fee80a70d01f84c9327170cf2351c88ac6a3a6e930943b",
-    "internal/cli/icaro_helpers.go": "b68ea97d40de1b7345c8f60bc442e6cde057f2fe9a7d9fae6c4908e788748879",
+    "internal/cli/icaro_helpers.go": "c170a1f133bb4853b28cded49517b2019882fba5919f8fe1302e0e19f1d3f4f0",
     "internal/cli/icaro_helpers_test.go": "178d3f172dea8e3e61e5de056d605b498e9a3838b6ac6904b9bd02315db4d555",
     "internal/cli/import.go": "6e2ccefc32e31cf11ffe7cc5bd98d1d019cd5a81d1f63b976f4eddea77da03fc",
     "internal/cli/interpellanze.go": "6247903bf71e3137909aa93a978a18fef8d888a2e9f6add068e47ee5fff4d6c5",
@@ -75,7 +75,7 @@
     "internal/cli/interrogazioni.go": "eb90a58710655241b3b0deb7ef5cab7c9e116177776fda882f505d1a5c8818c2",
     "internal/cli/interrogazioni_cerca.go": "d83bebc767e1114447bffc89833d4dfa65c73f2fcd9fb2ade55c5c1198db9606",
     "internal/cli/interrogazioni_get.go": "cdffa4338c736d69ba64531bb0f13b7548a4a0e91ec26f996200f48773fa979f",
-    "internal/cli/latenza_hint_test.go": "f65a84f0c4946eada040261a9f1c1904738e855d618028a9e798158650ac6e8a",
+    "internal/cli/latenza_hint_test.go": "d35dfda59ad624abfaf3b564d52931ff0df084581b24c7e2dac07db4d5dc586b",
     "internal/cli/legge.go": "bc7fcbc55924c9b76ee6fdebefd7727065924466fbb7992efee1ec2c226bcd29",
     "internal/cli/legge_cronologia.go": "515e8dc3383b4d4bfa9afd97e286472d4ef733176ad9da7c35d508f311ac310f",
     "internal/cli/legge_cronologia_test.go": "cb56912fd79dd2f9806297be6924a92a0b7e1718b4c1aa048270a9d62e4afc02",
