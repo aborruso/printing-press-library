@@ -1,0 +1,11 @@
+{
+  "schema_version": 2,
+  "id": "ars-sicilia-cronologia-link-resoconto",
+  "applied_at": "2026-09-05",
+  "base_run_id": "20260528-181840",
+  "base_printing_press_version": "4.30.3",
+  "summary": "`legge cronologia` now points an Aula event's `url` at the sitting record, as `ddl iter` already did.",
+  "reason": "The command never called resocontoSchedaURL at all: every event carried the bill's own page, healthy sittings included (sitting 186 of L.R. 9/2020 among them). A law's chronology is where one goes for the final vote, and the resoconto of that vote - the document you cite - was left to be found by hand. The gap was hidden behind the anomalia marker, which looked like the reason the link was missing on the approval event; it was not, the link was never built here.",
+  "files": ["internal/cli/legge_cronologia.go"],
+  "validated_outcome": "`legge cronologia 17 9 --anno 2020` and `18 1 --anno 2025` now carry /bd/resoconti/scheda links on every Aula event (186, 187 and 145, 146, 147). The same three conditions as `ddl iter` gate it - Aula marker, no same-date contradiction, no anomalia - so a contradicted event keeps the bill page. go test ./... green."
+}

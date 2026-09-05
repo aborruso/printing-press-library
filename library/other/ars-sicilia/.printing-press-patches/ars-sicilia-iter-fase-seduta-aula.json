@@ -1,0 +1,11 @@
+{
+  "schema_version": 2,
+  "id": "ars-sicilia-iter-fase-seduta-aula",
+  "applied_at": "2026-09-05",
+  "base_run_id": "20260528-181840",
+  "base_printing_press_version": "4.30.3",
+  "summary": "The declared sitting settles an iter event's `fase` in both directions: a committee verb on an Aula sitting is now `aula`, as an Aula verb on a committee sitting was already `commissione`.",
+  "reason": "ars-sicilia-iter-fase-esitato-per-aula fixed one direction and its own note argued the mirror case needed no fixing. It does: «Rinviato Commissione 0400 Seduta n. 255 AULA» is the referral back to committee decided in the chamber - sitting 255 is the Aula record of 10 June 2026, and the CLI itself builds the resoconto link on it - yet the row came out `fase: commissione`, so filtering `fase == \"aula\"` dropped an Aula passage. That is the same damage the first direction was fixed for, in reverse. The rule stays confined to the two pairs that assert two places at once: a verb naming a destination against a sitting naming the place. Phases whose verb names no place (`legge`, `iter`, `presentazione`) are untouched.",
+  "files": ["internal/cli/ddl_iter.go", "internal/cli/ddl_iter_parse_test.go", "SKILL.md", "README.md"],
+  "validated_outcome": "`ddl iter 18 6030`, row of 10 Jun 2026: `fase: aula`, `sede: Commissione QUARTA`, sitting 255, resoconto link unchanged; the other five Aula events of that iter are unchanged. `ddl iter 17 733` and the three other budget bills show no phase change. TestFaseIterConSeduta gains the new pair plus its negative (same verb without the Aula marker stays `commissione`) and pins that «Promulgata legge regionale» stays `legge` even on a declared sitting. The event `titolo` keeps the raw `0400` on purpose: it is the verbatim source, and the resolved committee is what `sede` is for. go test ./... green."
+}

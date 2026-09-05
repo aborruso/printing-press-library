@@ -206,12 +206,27 @@ func runLeggeCronologia(cmd *cobra.Command, flags *rootFlags, legisl, numero, an
 						// aprile) senza alcun segnale, e chi incrociava per
 						// data concludeva «resoconto mancante».
 						evs := docIterEvents(doc)
-						_, avviso := marcaEventiIncoerenti(cmd, legisl, evs)
+						incoerenti, avviso := marcaEventiIncoerenti(cmd, legisl, evs)
 						report.Note = uniscoNote(report.Note, avviso)
 						for _, ev := range evs {
 							ev.URL = r.URL
 							ev.ArchiveID = arcDdl.ID
 							ev.DocID = r.DocID
+							// Come in `ddl iter`: dove il resoconto esiste è la
+							// fonte giusta dell'evento e prende il posto della
+							// scheda del ddl, che resta nella radice del report.
+							// Qui non si costruiva affatto, nemmeno sulle sedute
+							// sane: la cronologia di una legge dava ogni
+							// passaggio d'Aula con l'URL del ddl, e il resoconto
+							// del voto finale — quello che si cita — restava da
+							// cercare a mano.
+							if ev.sedutaAula && !incoerenti[ev.Data] && !ev.Anomalia {
+								if u := resocontoSchedaURL(legisl, ev.Seduta); u != "" {
+									ev.URL = u
+									ev.ArchiveID = ""
+									ev.DocID = 0
+								}
+							}
 							report.Eventi = append(report.Eventi, ev)
 						}
 					}

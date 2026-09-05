@@ -328,8 +328,13 @@ func fraseHint(params map[string]string) string {
 	if len(scartati) == 0 {
 		return ""
 	}
+	// --testo prima di --isis-query, ed è l'ordine giusto: quando la distanza
+	// non basta perché il titolo vero infila fra le due parole più articoli di
+	// quanti se ne possano prevedere, la via che trova l'atto è la ricerca a
+	// testo libero, non l'espressione scritta a mano — che è la più cara delle
+	// due e chiede di conoscere la sintassi del portale.
 	return fmt.Sprintf(
-		"hint: %s in «%s» collide con il vocabolario di ricerca del portale e non può stare dentro una locuzione: la ricerca è partita come `%s`, cioè le parole vicine entro quella distanza, non la locuzione esatta. Per scrivere l'espressione a mano usa --isis-query.",
+		"hint: %s in «%s» collide con il vocabolario di ricerca del portale e non può stare dentro una locuzione: la ricerca è partita come `%s`, cioè le parole vicine entro quella distanza, non la locuzione esatta. Se torna vuota, riprova con --testo (le stesse parole, senza vincolo di ordine); per scrivere l'espressione a mano usa --isis-query.",
 		paroleHint(scartati), v, expr)
 }
 

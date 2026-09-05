@@ -1,0 +1,11 @@
+{
+  "schema_version": 2,
+  "id": "ars-sicilia-frase-congiunzione-distanza",
+  "applied_at": "2026-09-05",
+  "base_run_id": "20260528-181840",
+  "base_printing_press_version": "4.30.3",
+  "summary": "A dropped conjunction widens the adjacency by two positions instead of one, and the degradation hint names --testo before --isis-query.",
+  "reason": "In an Italian title the conjunction brings along the article nobody types when searching: bill 1200 is «Disposizioni per la coesione e la crescita», three words between the two searched terms, so `--frase \"coesione e crescita\"` - the name the press uses for that budget - degraded to `coesione adj2 crescita` and returned nothing. The hint explained the degradation and offered --isis-query, the most expensive route, while --testo finds the act in first position. Measured on the portal on 2026-09-05: adj2 -> 0 rows, adj3 -> bill 1200 first. The precision cost is measured too, on the case the code already documented: «prevenzione e contrasto» goes from 130 to 170 rows in legislature 18, with ddl 969 inside either way.",
+  "files": ["internal/icaroclient/query.go", "internal/icaroclient/query_test.go", "internal/cli/icaro_helpers.go", "internal/cli/icaro_helpers_test.go", "README.md"],
+  "validated_outcome": "`ddl cerca --legisl 18 --frase \"coesione e crescita\" --envelope` returns bill 1200 as its only row, with the hint reporting `coesione adj3 crescita` and naming --testo. Existing expectations updated in place (adj2 -> adj3, «case e cura o salute» -> `case adj3 cura adj3 salute`, all-caps «SVILUPPO E COESIONE» -> adj3). go test ./... green."
+}
