@@ -664,7 +664,7 @@ func TestFraseHint(t *testing.T) {
 	if got == "" {
 		t.Fatal("frase degradata: atteso un avviso")
 	}
-	for _, want := range []string{"«e»", "coesione adj2 crescita", "--isis-query"} {
+	for _, want := range []string{"«e»", "coesione adj3 crescita", "--testo", "--isis-query"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("avviso %q: manca %q", got, want)
 		}

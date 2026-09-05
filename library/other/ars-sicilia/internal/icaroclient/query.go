@@ -174,11 +174,21 @@ func congiunzioneCollidente(tok string) bool {
 // chi sta citando un titolo.
 //
 // Le stopword si scartano e la distanza le tiene in conto: «coesione e
-// crescita» diventa `coesione adj2 crescita`, non `coesione adj crescita`.
+// crescita» diventa `coesione adj3 crescita`, non `coesione adj crescita`.
 // Misurato sul portale: ISIS indicizza la congiunzione come posizione, quindi
 // l'adiacenza stretta fra le due parole superstiti non aggancia la locuzione
 // vera (sul ddl 969, «prevenzione e contrasto», `adj` torna 3 risultati e non
 // lo comprende, `adj2` ne torna 41 e lo comprende, l'AND 144).
+//
+// La congiunzione vale DUE posizioni, non una: in un titolo italiano si porta
+// dietro l'articolo che chi cerca non scrive. Il ddl 1200 si intitola
+// «Disposizioni per la coesione e la crescita», e fra le due parole cercate ce
+// ne sono tre: con `adj2` la ricerca del nome con cui i giornali chiamano la
+// manovra tornava vuota. Misurato sul portale il 2026-09-05: `coesione adj2
+// crescita` → 0 risultati, `adj3` → il ddl 1200 in prima posizione. Il costo
+// in precisione è quello: sul caso documentato qui sopra, «prevenzione e
+// contrasto» passa da 130 a 170 risultati, e il ddl 969 resta dentro in
+// entrambi.
 func adjExpr(v string) (string, []string, []string) {
 	if strings.ContainsAny(v, "()") {
 		return v, nil, nil
@@ -216,7 +226,8 @@ func adjExpr(v string) (string, []string, []string) {
 	for _, f := range fields {
 		if congiunzioneCollidente(f) {
 			scartati = append(scartati, f)
-			distanza++
+			// Due posizioni: la congiunzione e l'articolo che la accompagna.
+			distanza += 2
 			continue
 		}
 		if len(parti) > 0 {

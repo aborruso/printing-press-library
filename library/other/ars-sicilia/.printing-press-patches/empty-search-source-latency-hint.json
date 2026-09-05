@@ -1,0 +1,11 @@
+{
+  "schema_version": 2,
+  "id": "empty-search-source-latency-hint",
+  "applied_at": "2026-09-05",
+  "base_run_id": "20260528-181840",
+  "base_printing_press_version": "4.30.3",
+  "summary": "An empty cerca whose --data upper bound falls within the last 45 days warns that the gap may be source latency and points to `sync coverage`.",
+  "reason": "The empty result and the source coverage lived in two commands: `interrogazioni cerca --data 2026-08-15:2026-09-04` returned [] with no signal while the archive stopped on 2026-08-03. Attaching `sync coverage` itself would cost a live request per call (~7s), so the hint is static and names the command.",
+  "files": ["internal/cli/icaro_helpers.go"],
+  "validated_outcome": "latenzaHint fires only on zero rows with an ISO --data whose window touches the last 45 days: a window starting in the future stays silent and one straddling today is clamped to today (unit test with fixed clock); live: the hint appears on stderr and inside --envelope for interrogazioni/resoconti, stays silent on a 2020 window and on a 2027 window."
+}

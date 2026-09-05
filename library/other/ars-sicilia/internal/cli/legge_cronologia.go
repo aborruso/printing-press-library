@@ -198,20 +198,35 @@ func runLeggeCronologia(cmd *cobra.Command, flags *rootFlags, legisl, numero, an
 					// "<numero> <parola> <4 cifre>" quando il taglio di fine
 					// iter non li esclude.
 					if doc, gerr := c2.GetDoc(ctx, *arcDdl, r.DocID); gerr == nil {
-						// Le stesse guardie di coerenza seduta↔data di `ddl
-						// iter`: gli eventi sono letti dallo stesso iter e
-						// portano le stesse contraddizioni della fonte. Senza,
-						// la cronologia della L.R. 9/2020 dava il voto finale
-						// al 2 maggio 2020 con la seduta 187 (che è del 28
-						// aprile) senza alcun segnale, e chi incrociava per
-						// data concludeva «resoconto mancante».
+						// Le stesse letture della coppia seduta↔data di
+						// `ddl iter`: gli eventi sono letti dallo stesso iter e
+						// portano gli stessi tranelli. Senza, la cronologia
+						// della L.R. 9/2020 dava il voto finale al 2 maggio
+						// 2020 con la seduta 187 senza alcun segnale, e chi
+						// incrociava per data concludeva «resoconto mancante»
+						// (la 187 e' aperta il 28 aprile e ripresa il 2).
 						evs := docIterEvents(doc)
-						_, avviso := marcaEventiIncoerenti(cmd, legisl, evs)
+						incoerenti, avviso := marcaEventiIncoerenti(cmd, ctx, c2, legisl, evs)
 						report.Note = uniscoNote(report.Note, avviso)
 						for _, ev := range evs {
 							ev.URL = r.URL
 							ev.ArchiveID = arcDdl.ID
 							ev.DocID = r.DocID
+							// Come in `ddl iter`: dove il resoconto esiste è la
+							// fonte giusta dell'evento e prende il posto della
+							// scheda del ddl, che resta nella radice del report.
+							// Qui non si costruiva affatto, nemmeno sulle sedute
+							// sane: la cronologia di una legge dava ogni
+							// passaggio d'Aula con l'URL del ddl, e il resoconto
+							// del voto finale — quello che si cita — restava da
+							// cercare a mano.
+							if ev.sedutaAula && !incoerenti[ev.Data] && !ev.Anomalia {
+								if u := resocontoSchedaURL(legisl, ev.Seduta); u != "" {
+									ev.URL = u
+									ev.ArchiveID = ""
+									ev.DocID = 0
+								}
+							}
 							report.Eventi = append(report.Eventi, ev)
 						}
 					}

@@ -80,12 +80,22 @@ type iterEvent struct {
 	Seduta  int    `json:"seduta,omitempty"`
 	Oratori string `json:"oratori,omitempty"`
 	// Anomalia marca un evento la cui coppia seduta↔data non può essere giusta
-	// come la fonte la dichiara: vedi sedutePerDataIncoerenti (stessa data,
-	// sedute diverse) e seduteConDateIncoerenti (stessa seduta, date diverse).
-	// Senza il marcatore l'evento esce indistinguibile da uno sano, e chi lo
-	// incrocia per data nell'archivio resoconti conclude «resoconto mancante»
-	// invece di «la fonte si contraddice»: un falso buco a valle.
+	// come la fonte la dichiara: vedi sedutePerDataIncoerenti, l'unica guardia
+	// che la produce (stessa data, numeri di seduta diversi). Senza il
+	// marcatore l'evento esce indistinguibile da uno sano, e chi lo incrocia
+	// per data nell'archivio resoconti conclude «resoconto mancante» invece di
+	// «la fonte si contraddice»: un falso buco a valle.
 	Anomalia bool `json:"anomalia,omitempty"`
+	// SedutaPluriGiorno marca un evento che cade in una seduta d'Aula aperta un
+	// giorno e ripresa in un altro: è la prassi dell'Assemblea sulle manovre,
+	// non una contraddizione della fonte. Vedi sedutePluriGiorno.
+	SedutaPluriGiorno bool `json:"seduta_pluri_giorno,omitempty"`
+	// DataApertura è la prima data che la fonte dichiara per quella seduta,
+	// cioè il giorno in cui è stata aperta: è quella con cui l'archivio
+	// resoconti la indicizza, mentre la data dell'evento è il giorno della
+	// ripresa in cui il passaggio è avvenuto. Esce solo sugli eventi
+	// pluri-giorno, dove le due date divergono.
+	DataApertura string `json:"data_apertura,omitempty"`
 	// URL è la fonte PIÙ SPECIFICA che si conosce per questo evento: per un
 	// passaggio in Aula di cui si sa la seduta, la scheda del resoconto; per
 	// tutti gli altri, la scheda dell'atto da cui l'evento è stato letto.
@@ -182,10 +192,10 @@ func runDdlIter(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error 
 			report.Stralcio = s
 		}
 		evs := docIterEvents(doc)
-		// L'Aula tiene una seduta per data e una seduta ha una data sola:
-		// entrambi i versi della coerenza seduta↔data si controllano qui,
+		// L'Aula tiene una seduta per data, ma una seduta può stare su più
+		// giorni: le due letture della coppia seduta↔data si separano qui,
 		// vedi marcaEventiIncoerenti.
-		incoerenti, avviso := marcaEventiIncoerenti(cmd, legisl, evs)
+		incoerenti, avviso := marcaEventiIncoerenti(cmd, ctx, c, legisl, evs)
 		report.Note = uniscoNote(report.Note, avviso)
 		for _, ev := range evs {
 			ev.URL = recs[0].URL
@@ -200,6 +210,8 @@ func runDdlIter(cmd *cobra.Command, flags *rootFlags, legisl, numero int) error 
 			// d'Aula n. 260, che è un'altra cosa.
 			// Dove il resoconto esiste è la fonte giusta dell'evento e prende
 			// il posto della scheda del ddl, che resta nella radice del report.
+			// Una seduta pluri-giorno il link ce l'ha: nasce dal numero, che
+			// su quegli eventi è uno solo. Resta fuori solo l'anomalia vera.
 			if ev.sedutaAula && !incoerenti[ev.Data] && !ev.Anomalia {
 				if u := resocontoSchedaURL(legisl, ev.Seduta); u != "" {
 					ev.URL = u
@@ -390,7 +402,7 @@ func parseIterFromBody(body string) []iterEvent {
 			dopoLr = ""
 		}
 		events = append(events, iterEvent{
-			Fase:       faseIterConSeduta(action, sedeSuffisso),
+			Fase:       faseIterConSeduta(action, sedeSuffisso, sedutaAula),
 			Data:       data,
 			Sede:       iterSedeRisolta(sedeSuffisso, action),
 			Titolo:     action,
@@ -525,25 +537,37 @@ func avvisoSedutaIncoerente(legisl int, incoerenti map[string]bool) string {
 		strings.Join(date, ", "), legisl)
 }
 
-// seduteConDateIncoerenti è il verso inverso di sedutePerDataIncoerenti: le
-// sedute d'Aula che l'iter dichiara su più di una data.
+// sedutePluriGiorno riporta le sedute d'Aula che questo iter dichiara su più
+// di una data, con la prima data dichiarata per ciascuna: sono le sedute
+// aperte un giorno e riprese in un altro.
 //
-// Una seduta ha una data sola, quindi un numero che compare su due date non
-// può essere giusto su entrambe. Succede davvero: l'iter del ddl 733 della XVII
-// (la stabilità 2020/2022, poi L.R. 9/2020) dà «28 apr 2020 — Esaminato in Aula
-// — Seduta n. 187» e «02 mag 2020 — Approvato dall'Assemblea — Seduta n. 187»,
-// ma il 2 maggio 2020 l'Aula non ha tenuto seduta alcuna (`resoconti cerca
-// --legisl 17 --data 2020-05-02` torna vuoto; la 187 è del 28 aprile e la 188
-// del 6 maggio).
+// È la prassi dell'Assemblea sulle manovre: la seduta si apre, si sospende e
+// si riprende finché il testo passa, e l'archivio resoconti la indicizza al
+// giorno di apertura. Misurato su quattro finanziarie e due legislature — L.R.
+// 1/2019 (seduta 98, aperta il 31 gennaio, voto finale il 15 febbraio), L.R.
+// 9/2020 (187, 28 aprile → 2 maggio), L.R. 28/2024 (142, 5 → 7 novembre), L.R.
+// 1/2025 (147, 18 → 28 dicembre): in tutti e quattro il numero di seduta è
+// quello giusto e il resoconto esiste, alla prima delle due date.
 //
-// La distinzione è la stessa della guardia gemella: si guardano solo le sedute
-// d'Aula, perché le due numerazioni sono indipendenti e la seduta 187 di
-// commissione (20 apr 2020, SECONDA) non c'entra nulla con la 187 d'Aula. La
-// data si normalizza con iterDateKey: la stessa data la fonte la scrive in due
-// forme ("28.04.20" nella short-list, "28 apr 2020" nell'iter) e confrontare le
-// stringhe grezze marcherebbe come incoerente un iter sano.
-func seduteConDateIncoerenti(evs []iterEvent) map[int]bool {
+// Prima questi eventi uscivano con `anomalia: true` e senza link al resoconto,
+// per simmetria con la guardia gemella. La simmetria non regge: là la stessa
+// data porta due numeri diversi e almeno un link sarebbe sbagliato, qui il
+// numero è uno solo e l'URL si costruisce da quello (vedi resocontoSchedaURL),
+// quindi non può puntare al giorno sbagliato — punta alla seduta, che è il
+// documento che si vuole. E ogni altro evento d'Aula viene già linkato sulla
+// sola fede nel numero dichiarato, senza verifica: sopprimere il link proprio
+// qui chiedeva a questi eventi una prova che a nessun altro è chiesta, e la
+// toglieva sull'unico evento che si vuole citare, «Approvato dall'Assemblea».
+//
+// La data si normalizza con iterDateKey: la stessa data la fonte la scrive in
+// due forme ("28.04.20" nella short-list, "28 apr 2020" nell'iter) e
+// confrontare le stringhe grezze darebbe per pluri-giorno una seduta di un
+// giorno solo. Si guardano solo le sedute d'Aula: le due numerazioni sono
+// indipendenti, e la seduta 187 di commissione (20 apr 2020, SECONDA) non
+// c'entra nulla con la 187 d'Aula.
+func sedutePluriGiorno(evs []iterEvent) map[int]string {
 	datePerSeduta := map[int]map[string]bool{}
+	primaData := map[int]string{}
 	for _, ev := range evs {
 		if !ev.sedutaAula || ev.Seduta <= 0 {
 			continue
@@ -552,55 +576,253 @@ func seduteConDateIncoerenti(evs []iterEvent) map[int]bool {
 			datePerSeduta[ev.Seduta] = map[string]bool{}
 		}
 		datePerSeduta[ev.Seduta][iterDateKey(ev.Data)] = true
+		if p, visto := primaData[ev.Seduta]; !visto || iterDateKey(ev.Data) < iterDateKey(p) {
+			primaData[ev.Seduta] = ev.Data
+		}
 	}
-	out := map[int]bool{}
+	out := map[int]string{}
 	for seduta, date := range datePerSeduta {
 		if len(date) > 1 {
-			out[seduta] = true
+			out[seduta] = primaData[seduta]
 		}
 	}
 	return out
 }
 
-// marcaEventiIncoerenti applica a un iter tutte e due le guardie di coerenza
-// seduta↔data, marca gli eventi che non tornano e torna l'insieme delle date
-// incoerenti (che il chiamante usa per non costruire il link al resoconto) e il
-// testo dell'avviso, o "" quando l'iter è coerente.
+// dataSedutaArchivio legge dall'archivio resoconti la data con cui il portale
+// indicizza una seduta d'Aula. Torna ("", nil) quando la seduta non esiste —
+// che sul numero di una seduta e' un fatto, non un vuoto da interpretare: una
+// scheda inesistente risponde 404 e la ricerca per numero torna zero righe.
+func dataSedutaArchivio(ctx context.Context, c *icaro.Client, legisl, seduta int) (string, error) {
+	arc := icaro.BySlug("resoconti")
+	if arc == nil {
+		return "", fmt.Errorf("archivio resoconti non registrato")
+	}
+	recs, err := c.Search(ctx, *arc, icaro.SearchOptions{
+		// Grezzi: gli archivi /bd/ non passano da normalizeParams (vedi
+		// bdSchedaFallback).
+		Params: map[string]string{"legisl": itoa(legisl), "numero": itoa(seduta)},
+		Limit:  1,
+	})
+	if err != nil {
+		return "", err
+	}
+	if len(recs) == 0 {
+		return "", nil
+	}
+	// L'archivio scrive la data in una forma sua (28/04/2020, o 28.04.20 su
+	// `get`): esce in ISO, come ogni altra data che questa CLI aggiunge di
+	// suo. Le date degli eventi restano invece quelle della fonte, con il
+	// `data_iso` accanto.
+	d := strings.TrimSpace(recs[0].Fields["Data"])
+	if iso := dataISO(d); iso != "" {
+		return iso, nil
+	}
+	return d, nil
+}
+
+// verificaPluriGiorno chiede all'archivio resoconti se le sedute candidate a
+// pluri-giorno esistono davvero e si aprono nel giorno che l'iter dichiara per
+// primo. Torna le sedute confermate con la data autorevole, quelle smentite, e
+// quelle su cui la verifica non e' riuscita.
 //
-// L'avviso esce due volte, e non è una ripetizione: su stderr per chi legge, e
-// come `note` nella radice del report per chi legge in `--json` — è il nome
-// che iterReport dà al campo, mentre il resto della CLI lo chiama `nota`, e
-// campiAvviso li tiene entrambi. È un campo di avviso, quindi sopravvive a --select — e --select
-// è proprio il modo in cui l'iter si legge di solito, dove un marcatore
+// La verifica esiste per una ragione precisa, sollevata in review: senza,
+// `seduta_pluri_giorno` afferma una ricostruzione — «aperta il X e ripresa il
+// Y» — che dall'iter da solo non si dimostra, e un numero riusato per errore su
+// un'altra data riceverebbe quel marcatore, una `data_apertura` inventata e il
+// link al resoconto di una seduta che non c'entra. Il marcatore precedente
+// (`anomalia`) diceva una cosa piu' debole e sempre vera; sostituirlo con una
+// piu' forte obbliga a poggiarla su qualcosa.
+//
+// Costa una richiesta per seduta candidata, e le candidate esistono solo negli
+// iter dove un numero d'Aula compare su piu' date: sul campione, le sole
+// manovre. Un errore di rete NON riporta ad `anomalia`: un marcatore che cambia
+// con la qualita' della connessione e' peggio di uno che dichiara di non aver
+// potuto verificare.
+func verificaPluriGiorno(ctx context.Context, c *icaro.Client, legisl int, candidate map[int]string) (confermate map[int]string, smentite map[int]string, nonVerificate map[int]string) {
+	confermate, smentite, nonVerificate = map[int]string{}, map[int]string{}, map[int]string{}
+	for seduta, apertura := range candidate {
+		dataArchivio, err := dataSedutaArchivio(ctx, c, legisl, seduta)
+		switch esitoVerificaSeduta(apertura, dataArchivio, err) {
+		case sedutaConfermata:
+			confermate[seduta] = dataArchivio
+		case sedutaSmentita:
+			smentite[seduta] = dataArchivio
+		default:
+			nonVerificate[seduta] = apertura
+		}
+	}
+	return confermate, smentite, nonVerificate
+}
+
+// esitoVerificaSeduta e' la regola con cui si legge la risposta dell'archivio,
+// tenuta separata dalla richiesta per poterla provare senza rete.
+type esitoSeduta int
+
+const (
+	sedutaNonVerificata esitoSeduta = iota
+	sedutaConfermata
+	sedutaSmentita
+)
+
+// esitoVerificaSeduta decide se la seduta candidata e' davvero pluri-giorno.
+//
+// Una data d'archivio vuota senza errore NON e' un'assenza di risposta: la
+// ricerca per numero e' andata a buon fine e non ha trovato quella seduta,
+// cioe' il numero non esiste. E' il caso che il rilievo di review descriveva —
+// un numero riusato per errore — e va a `anomalia`, non a pluri-giorno.
+func esitoVerificaSeduta(apertura, dataArchivio string, err error) esitoSeduta {
+	if err != nil {
+		return sedutaNonVerificata
+	}
+	if dataArchivio == "" {
+		return sedutaSmentita
+	}
+	if iterDateKey(dataArchivio) == iterDateKey(apertura) {
+		return sedutaConfermata
+	}
+	// Esiste, ma si apre in un giorno che l'iter non dichiara.
+	return sedutaSmentita
+}
+
+// marcaEventiIncoerenti applica a un iter le letture della coppia seduta↔data,
+// marca gli eventi di conseguenza e torna l'insieme delle date incoerenti (che
+// il chiamante usa per non costruire il link al resoconto) e il testo
+// dell'avviso, o "" quando non c'e' niente da dire.
+//
+// Le letture non ricevono lo stesso trattamento. Stessa data con numeri diversi
+// e' un dato che non puo' essere vero e porta `anomalia` senza link, e non c'e'
+// niente da chiedere all'archivio: la fonte si contraddice da sola. Stessa
+// seduta su piu' date e' una candidata seduta pluri-giorno, e viene verificata
+// sull'archivio resoconti prima di dichiararla tale (vedi verificaPluriGiorno):
+// confermata porta `seduta_pluri_giorno` con la data d'apertura autorevole e
+// tiene il link; smentita torna a `anomalia`, che e' il caso del numero
+// sbagliato.
+//
+// L'avviso esce due volte, e non e' una ripetizione: su stderr per chi legge, e
+// come `note` nella radice del report per chi legge in `--json` — e' il nome
+// che iterReport da' al campo, mentre il resto della CLI lo chiama `nota`, e
+// campiAvviso li tiene entrambi. E' un campo di avviso, quindi sopravvive a --select — e --select
+// e' proprio il modo in cui l'iter si legge di solito, dove un marcatore
 // per-evento verrebbe filtrato via insieme ai campi non chiesti.
-func marcaEventiIncoerenti(cmd *cobra.Command, legisl int, evs []iterEvent) (map[string]bool, string) {
+func marcaEventiIncoerenti(cmd *cobra.Command, ctx context.Context, c *icaro.Client, legisl int, evs []iterEvent) (map[string]bool, string) {
 	incoerentiPerData := sedutePerDataIncoerenti(evs)
-	seduteIncoerenti := seduteConDateIncoerenti(evs)
+	candidate := sedutePluriGiorno(evs)
+	confermate, smentite, nonVerificate := map[int]string{}, map[int]string{}, map[int]string{}
+	if len(candidate) > 0 && c != nil {
+		confermate, smentite, nonVerificate = verificaPluriGiorno(ctx, c, legisl, candidate)
+	} else {
+		// Senza client non si verifica nulla: la lettura resta quella
+		// dichiarata, e l'avviso dice che non e' stata confermata.
+		nonVerificate = candidate
+	}
 	for i := range evs {
 		ev := &evs[i]
 		if !ev.sedutaAula || ev.Seduta <= 0 {
 			continue
 		}
-		if incoerentiPerData[ev.Data] || seduteIncoerenti[ev.Seduta] {
+		if incoerentiPerData[ev.Data] {
 			ev.Anomalia = true
+			continue
+		}
+		if _, ok := smentite[ev.Seduta]; ok {
+			ev.Anomalia = true
+			continue
+		}
+		apertura, ok := confermate[ev.Seduta]
+		if !ok {
+			apertura, ok = nonVerificate[ev.Seduta]
+		}
+		if !ok {
+			continue
+		}
+		ev.SedutaPluriGiorno = true
+		// Sull'evento del giorno di apertura le due date coincidono e ripeterla
+		// non aggiunge niente: il campo esce dove serve, cioe' sulle riprese,
+		// dove la data dell'evento non e' quella con cui l'archivio indicizza
+		// la seduta.
+		if iterDateKey(apertura) != iterDateKey(ev.Data) {
+			ev.DataApertura = apertura
 		}
 	}
 	avviso := strings.TrimSpace(strings.Join([]string{
 		avvisoSedutaIncoerente(legisl, incoerentiPerData),
-		avvisoSedutaDataIncoerente(legisl, seduteIncoerenti),
+		avvisoSedutaPluriGiorno(legisl, confermate),
+		avvisoSedutaSmentita(legisl, smentite),
+		avvisoPluriGiornoNonVerificato(legisl, nonVerificate),
 	}, " "))
+	avviso = strings.Join(strings.Fields(avviso), " ")
 	if avviso != "" {
 		fmt.Fprintln(cmd.ErrOrStderr(), "hint: "+avviso)
 	}
 	return incoerentiPerData, avviso
 }
 
-// avvisoSedutaDataIncoerente dice perché quegli eventi portano `anomalia` e
-// come arrivare comunque alla seduta giusta. Speculare ad avvisoSedutaIncoerente.
-func avvisoSedutaDataIncoerente(legisl int, sedute map[int]bool) string {
+// avvisoSedutaPluriGiorno dice che quelle sedute stanno su piu' giorni e da
+// dove parte la numerazione dell'archivio. Non e' un avviso di guasto: serve a
+// chi incrocia gli eventi per data e sull'archivio resoconti non trova nulla al
+// giorno del voto — il resoconto c'e', ed e' indicizzato al giorno in cui la
+// seduta e' stata aperta.
+func avvisoSedutaPluriGiorno(legisl int, sedute map[int]string) string {
 	if len(sedute) == 0 {
 		return ""
 	}
+	testo := descriviSedute(sedute, "n. %d (aperta il %s)")
+	// «l'archivio resoconti la apre il» e non «la seduta e' stata aperta il»:
+	// la data viene dall'archivio, ed e' quella che si afferma. Che l'Aula
+	// abbia poi lavorato in tutti i giorni intermedi e' una deduzione, e non
+	// serve a chi legge.
+	return fmt.Sprintf(
+		"la stessa seduta d'Aula (%s) compare su piu' giorni: e' una seduta aperta e poi ripresa, come l'Assemblea fa sulle manovre, non un dato incoerente — verificato sull'archivio resoconti, che indicizza quella seduta al giorno di apertura. Quegli eventi portano `seduta_pluri_giorno: true` con `data_apertura`, e il link al resoconto c'e'; cercare l'archivio per la data del voto invece non trova nulla.",
+		testo)
+}
+
+// avvisoSedutaSmentita e' il caso che la verifica esiste per prendere: il
+// numero compare su piu' date ma l'archivio non lo conferma, quindi non e' una
+// ripresa — e' un numero sbagliato, e l'evento resta `anomalia` senza link.
+func avvisoSedutaSmentita(legisl int, sedute map[int]string) string {
+	if len(sedute) == 0 {
+		return ""
+	}
+	inesistenti := map[int]string{}
+	altraData := map[int]string{}
+	for n, d := range sedute {
+		if d == "" {
+			inesistenti[n] = d
+			continue
+		}
+		altraData[n] = d
+	}
+	var parti []string
+	if len(inesistenti) > 0 {
+		parti = append(parti, fmt.Sprintf(
+			"la fonte dichiara la seduta d'Aula %s su piu' date, ma quel numero nell'archivio resoconti non esiste: non e' una seduta ripresa, e' un numero sbagliato.",
+			descriviSedute(inesistenti, "n. %d")))
+	}
+	if len(altraData) > 0 {
+		parti = append(parti, fmt.Sprintf(
+			"la fonte dichiara la seduta d'Aula %s su piu' date, e nessuna e' quella con cui l'archivio resoconti la indicizza: la coppia seduta-data non torna.",
+			descriviSedute(altraData, "n. %d (l'archivio la da' al %s)")))
+	}
+	return strings.Join(parti, " ") + fmt.Sprintf(
+		" Quegli eventi portano `anomalia: true` e il link al resoconto e' omesso invece di puntare a una seduta che non e' la loro — trova quella vera dalla data, con `resoconti cerca --legisl %d --data <data>`.", legisl)
+}
+
+// avvisoPluriGiornoNonVerificato dichiara che la lettura non ha potuto poggiare
+// sull'archivio. Si dice invece di tacere perche' e' la sola differenza fra
+// questo caso e quello confermato, e chi cita il link deve poterla vedere.
+func avvisoPluriGiornoNonVerificato(legisl int, sedute map[int]string) string {
+	if len(sedute) == 0 {
+		return ""
+	}
+	return fmt.Sprintf(
+		"la stessa seduta d'Aula (%s) compare su piu' giorni, il che di norma vuol dire una seduta aperta e poi ripresa, ma l'archivio resoconti non ha risposto e la cosa resta non verificata: `data_apertura` e' la prima data che dichiara la fonte, non una data d'archivio. Confermala con `resoconti get %d <numero-seduta>` (campo `fields.Data`).",
+		descriviSedute(sedute, "n. %d"), legisl)
+}
+
+// descriviSedute elenca le sedute in ordine di numero con il formato dato, che
+// prende il numero e — quando il formato lo chiede — la data associata.
+func descriviSedute(sedute map[int]string, formato string) string {
 	numeri := make([]int, 0, len(sedute))
 	for n := range sedute {
 		numeri = append(numeri, n)
@@ -608,23 +830,13 @@ func avvisoSedutaDataIncoerente(legisl int, sedute map[int]bool) string {
 	sort.Ints(numeri)
 	testo := make([]string, 0, len(numeri))
 	for _, n := range numeri {
-		testo = append(testo, "n. "+itoa(n))
+		if strings.Count(formato, "%") > 1 {
+			testo = append(testo, fmt.Sprintf(formato, n, sedute[n]))
+			continue
+		}
+		testo = append(testo, fmt.Sprintf(formato, n))
 	}
-	// Il ripiego NON è `resoconti cerca --data`, che è quello della guardia
-	// gemella: là la data è la metà affidabile e si cerca il numero, qui è la
-	// metà contestata e cercarla torna vuoto — sulla data incriminata della
-	// L.R. 9/2020 `resoconti cerca --legisl 17 --data 2020-05-02` dà `[]`, cioè
-	// proprio la conclusione «resoconto mancante» che il marcatore esiste per
-	// evitare. La metà su cui si può contare è il numero: `resoconti get 17
-	// 187` porta la data autorevole della seduta (28.04.20, nel campo Data).
-	//
-	// «una data sola» è la misura, non la deduzione: dall'iter non si può dire
-	// quale delle due righe sbagli, e una seduta sospesa e ripresa in un altro
-	// giorno darebbe la stessa coppia di eventi. Perciò si dice cosa si è
-	// visto e si lascia al lettore la conclusione.
-	return fmt.Sprintf(
-		"la fonte dichiara la stessa seduta d'Aula (%s) su date diverse, mentre l'archivio resoconti le assegna una data sola: la coppia seduta-data non torna. Quegli eventi portano `anomalia: true` e il link al resoconto è omesso invece di puntare a un giorno che potrebbe essere quello sbagliato — la data autorevole della seduta si legge con `resoconti get %d <numero-seduta>` (campo `fields.Data`).",
-		strings.Join(testo, ", "), legisl)
+	return strings.Join(testo, ", ")
 }
 
 // docIterEvents reads a DDL's iter timeline. It prefers the page's labeled
@@ -852,19 +1064,26 @@ func cleanFirmatarioName(s string) string {
 // lì. Le righe d'Aula portano il marcatore AULA al posto del nome della
 // commissione, quindi il suffisso è vuoto e la fase resta quella del verbo.
 //
-// La regola vale in un verso solo, e non per prudenza. Il caso speculare esiste
-// — «Rinviato Commissione 0400 Seduta n. 255 AULA», l'Aula che rimanda il testo
-// in commissione — ma lì non c'è contraddizione da sciogliere: il verbo nomina
-// una destinazione vera e il luogo è davvero l'Aula, quindi la riga resta come
-// la classifica il verbo. Solo il verbo d'Aula su una seduta di commissione
-// afferma due luoghi insieme. Sul
-// corpus di controllo (13 iter fra XVII e XVIII, 268 eventi) le sole righe
-// toccate sono le 13 «Esitato per Aula»; «Esaminato in Aula» e «Approvato
-// dall'Assemblea» non dichiarano mai una commissione.
-func faseIterConSeduta(action, sedeSuffisso string) string {
+// Il caso speculare esiste ed è lo stesso errore al contrario: «Rinviato
+// Commissione 0400 Seduta n. 255 AULA» è l'Aula che rimanda il testo in
+// commissione, e il verbo nomina una destinazione, non il luogo. La riga
+// usciva `fase: commissione` con il numero di una seduta d'Aula — la 255 è il
+// resoconto d'Aula del 10 giugno 2026, e la CLI stessa ci costruiva sopra il
+// link — cioè un evento di commissione tenuto in Aula: chi filtra `fase ==
+// "aula"` perdeva quel passaggio, che è il verso opposto dello stesso danno.
+// Il criterio è lo stesso in tutte e due le direzioni, e sono le sole due
+// coppie che affermano due luoghi insieme: un verbo d'Aula su una seduta di
+// commissione, un verbo di commissione su una seduta d'Aula. Le altre fasi non
+// si toccano — «Promulgata legge regionale» resta `legge` anche se la riga
+// dichiarasse una seduta, perché lì il verbo non nomina alcun luogo e non c'è
+// contraddizione da sciogliere.
+func faseIterConSeduta(action, sedeSuffisso string, sedutaAula bool) string {
 	fase := classifyIterFase(action)
 	if fase == "aula" && sedeSuffisso != "" {
 		return "commissione"
+	}
+	if fase == "commissione" && sedutaAula {
+		return "aula"
 	}
 	return fase
 }

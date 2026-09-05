@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"context"
+	"errors"
 	"io"
 	"strings"
 	"testing"
@@ -475,15 +477,16 @@ func TestParseIterFromBody_StoriaAnterioreDelloStralcioResta(t *testing.T) {
 	}
 }
 
-// Il verso inverso: una seduta ha una data sola, quindi lo stesso numero su due
-// date vuol dire che almeno una è sbagliata. È il caso reale del ddl 733 della
-// XVII (poi L.R. 9/2020), dove la seduta d'Aula 187 compare il 28 aprile e di
-// nuovo il 2 maggio 2020 — giorno in cui l'Aula non ha tenuto seduta alcuna.
-func TestSeduteConDateIncoerenti(t *testing.T) {
-	// L'elenco è quello vero dell'iter del ddl 733, ridotto alle righe che
-	// contano: le due d'Aula in conflitto, la 187 di COMMISSIONE del 20 aprile
-	// (numerazione indipendente, non deve entrare nel confronto) e la 198
-	// «Esitato per Aula», evento di fase aula che però cita una seduta di
+// Il verso inverso non e' una contraddizione: la stessa seduta d'Aula su piu'
+// date e' la seduta aperta, sospesa e ripresa che l'Assemblea tiene sulle
+// manovre. E' il caso reale del ddl 733 della XVII (poi L.R. 9/2020), dove la
+// seduta 187 compare il 28 aprile e di nuovo il 2 maggio 2020: la 187 esiste,
+// l'archivio la indicizza al 28 aprile, e il voto del 2 maggio sta li' dentro.
+func TestSedutePluriGiorno(t *testing.T) {
+	// L'elenco e' quello vero dell'iter del ddl 733, ridotto alle righe che
+	// contano: le due d'Aula sulla stessa seduta, la 187 di COMMISSIONE del 20
+	// aprile (numerazione indipendente, non deve entrare nel confronto) e la
+	// 198 «Esitato per Aula», evento di fase aula che pero' cita una seduta di
 	// commissione.
 	evs := []iterEvent{
 		{Data: "20 apr 2020", Seduta: 187},
@@ -492,28 +495,39 @@ func TestSeduteConDateIncoerenti(t *testing.T) {
 		{Data: "28 apr 2020", Seduta: 187, sedutaAula: true},
 		{Data: "02 mag 2020", Seduta: 187, sedutaAula: true},
 	}
-	got := seduteConDateIncoerenti(evs)
-	if !got[187] {
-		t.Error("stessa seduta d'Aula su due date: la seduta va segnalata")
+	got := sedutePluriGiorno(evs)
+	if got[187] != "28 apr 2020" {
+		t.Errorf("seduta 187 pluri-giorno, apertura = %q, want %q", got[187], "28 apr 2020")
 	}
-	if got[186] || got[198] {
-		t.Errorf("segnalate sedute coerenti: %v", got)
+	if _, ok := got[186]; ok {
+		t.Errorf("segnalate sedute di un giorno solo: %v", got)
+	}
+	if _, ok := got[198]; ok {
+		t.Errorf("seduta di commissione nel confronto: %v", got)
 	}
 	if len(got) != 1 {
-		t.Errorf("sedute segnalate = %v, want solo la 187", got)
+		t.Errorf("sedute pluri-giorno = %v, want solo la 187", got)
 	}
 
-	// La marcatura tocca solo i due eventi d'Aula: la 187 di commissione resta
-	// pulita, e con lei la 198 di fase aula ma seduta di commissione.
+	// La marcatura tocca solo i due eventi d'Aula sulla 187, e nessuno porta
+	// `anomalia`: il numero e' uno solo, il resoconto esiste, il link si puo'
+	// costruire. `data_apertura` esce solo sulla ripresa, dove la data
+	// dell'evento non e' quella con cui l'archivio indicizza la seduta.
 	cmd := &cobra.Command{}
 	cmd.SetErr(io.Discard)
-	_, avviso := marcaEventiIncoerenti(cmd, 17, evs)
+	incoerenti, avviso := marcaEventiIncoerenti(cmd, context.Background(), nil, 17, evs)
 	if avviso == "" {
-		t.Fatal("iter incoerente: l'avviso non deve essere vuoto")
+		t.Fatal("seduta pluri-giorno: l'avviso non deve essere vuoto")
+	}
+	if len(incoerenti) != 0 {
+		t.Errorf("date incoerenti = %v, want nessuna: la contraddizione qui non c'e'", incoerenti)
 	}
 	marcati := 0
 	for i, ev := range evs {
 		if ev.Anomalia {
+			t.Errorf("evento %d marcato anomalia: la seduta pluri-giorno non e' un'anomalia: %+v", i, ev)
+		}
+		if ev.SedutaPluriGiorno {
 			marcati++
 			if !ev.sedutaAula || ev.Seduta != 187 {
 				t.Errorf("evento %d marcato a torto: %+v", i, ev)
@@ -521,17 +535,61 @@ func TestSeduteConDateIncoerenti(t *testing.T) {
 		}
 	}
 	if marcati != 2 {
-		t.Errorf("eventi marcati = %d, want 2 (le due righe d'Aula sulla seduta 187)", marcati)
+		t.Errorf("eventi pluri-giorno = %d, want 2 (le due righe d'Aula sulla seduta 187)", marcati)
+	}
+	if evs[3].DataApertura != "" {
+		t.Errorf("evento del giorno di apertura: data_apertura = %q, want vuoto", evs[3].DataApertura)
+	}
+	if evs[4].DataApertura != "28 apr 2020" {
+		t.Errorf("evento di ripresa: data_apertura = %q, want %q", evs[4].DataApertura, "28 apr 2020")
+	}
+	// Senza client la verifica sull'archivio non parte: il marcatore resta, ma
+	// l'avviso deve dire che la data d'apertura e' quella dichiarata dalla
+	// fonte e non una data d'archivio.
+	if !strings.Contains(avviso, "non verificata") {
+		t.Errorf("verifica non eseguita: l'avviso deve dirlo, invece e' %q", avviso)
 	}
 
-	// La stessa data scritta nelle due forme della fonte è la stessa data: un
-	// iter sano non va marcato solo perché il portale alterna i formati.
+	// La stessa data scritta nelle due forme della fonte e' la stessa data: una
+	// seduta di un giorno solo non va marcata solo perche' il portale alterna i
+	// formati.
 	forme := []iterEvent{
 		{Data: "28 apr 2020", Seduta: 187, sedutaAula: true},
 		{Data: "28.04.20", Seduta: 187, sedutaAula: true},
 	}
-	if len(seduteConDateIncoerenti(forme)) != 0 {
-		t.Error("stessa data in due formati: nessuna incoerenza")
+	if len(sedutePluriGiorno(forme)) != 0 {
+		t.Error("stessa data in due formati: un giorno solo")
+	}
+}
+
+// La contraddizione vera resta tale: quando la stessa data porta due numeri di
+// seduta diversi, l'anomalia c'e' e il link non si costruisce. E' la guardia
+// che la riclassificazione del pluri-giorno non deve avere spento.
+func TestAnomaliaRestaSuStessaDataSeduteDiverse(t *testing.T) {
+	evs := []iterEvent{
+		{Data: "04 feb 2020", Seduta: 173, sedutaAula: true},
+		{Data: "19 feb 2020", Seduta: 179, sedutaAula: true},
+		{Data: "19 feb 2020", Seduta: 178, sedutaAula: true},
+	}
+	cmd := &cobra.Command{}
+	cmd.SetErr(io.Discard)
+	incoerenti, avviso := marcaEventiIncoerenti(cmd, context.Background(), nil, 17, evs)
+	if !incoerenti["19 feb 2020"] {
+		t.Error("la data con due sedute deve restare fra le incoerenti: e' quella che sopprime il link")
+	}
+	if avviso == "" {
+		t.Fatal("iter incoerente: l'avviso non deve essere vuoto")
+	}
+	if evs[0].Anomalia {
+		t.Errorf("evento sano marcato: %+v", evs[0])
+	}
+	for _, i := range []int{1, 2} {
+		if !evs[i].Anomalia {
+			t.Errorf("evento %d non marcato: %+v", i, evs[i])
+		}
+		if evs[i].SedutaPluriGiorno {
+			t.Errorf("evento %d marcato pluri-giorno: e' una contraddizione, non una ripresa: %+v", i, evs[i])
+		}
 	}
 }
 
@@ -546,7 +604,7 @@ func TestMarcaEventiIncoerentiIterSano(t *testing.T) {
 	}
 	cmd := &cobra.Command{}
 	cmd.SetErr(io.Discard)
-	incoerenti, avviso := marcaEventiIncoerenti(cmd, 18, evs)
+	incoerenti, avviso := marcaEventiIncoerenti(cmd, context.Background(), nil, 18, evs)
 	if avviso != "" {
 		t.Errorf("iter coerente: avviso = %q, want vuoto", avviso)
 	}
@@ -598,25 +656,67 @@ func TestRicomponiTrattinoACapo_LasciaISeparatori(t *testing.T) {
 	}
 }
 
-// «Esitato per Aula» è l'esito del lavoro di commissione, non un passaggio in
-// Aula: dove la riga dichiara una seduta di commissione, l'evento è avvenuto lì.
+// Il verbo nomina la destinazione, la seduta dichiara il luogo: dove le due si
+// contraddicono vince la seduta, in tutte e due le direzioni. «Esitato per
+// Aula» su una seduta di commissione e' un evento di commissione; «Rinviato
+// Commissione» su una seduta d'Aula e' un evento d'Aula.
 func TestFaseIterConSeduta(t *testing.T) {
-	cases := []struct{ action, sedeSuffisso, want string }{
-		{"Esitato per Aula (epa)", "Commissione TERZA", "commissione"},
-		{"Esitato per Aula", "Commissione PRIMA", "commissione"},
+	cases := []struct {
+		action, sedeSuffisso string
+		sedutaAula           bool
+		want                 string
+	}{
+		{"Esitato per Aula (epa)", "Commissione TERZA", false, "commissione"},
+		{"Esitato per Aula", "Commissione PRIMA", false, "commissione"},
 		// Le righe d'Aula portano il marcatore AULA al posto della commissione,
 		// quindi il suffisso è vuoto e la fase resta quella del verbo.
-		{"Esaminato in Aula", "", "aula"},
-		{"Approvato dall'Assemblea", "", "aula"},
+		{"Esaminato in Aula", "", true, "aula"},
+		{"Approvato dall'Assemblea", "", true, "aula"},
+		// Il verso speculare: il rinvio in commissione deciso in Aula. E' la
+		// riga del 10 giu 2026 sul ddl 18/6030, seduta 255 d'Aula.
+		{"Rinviato Commissione 0400", "", true, "aula"},
+		// Senza il marcatore d'Aula la stessa riga resta di commissione: la
+		// promozione nasce dalla seduta dichiarata, non dal verbo.
+		{"Rinviato Commissione 0400", "", false, "commissione"},
 		// Le altre fasi non si toccano, nemmeno con una commissione dichiarata.
-		{"Esaminato in commissione", "Commissione SECONDA", "commissione"},
-		{"Parere espresso Commissione *", "Commissione QUINTA", "commissione"},
-		{"Abbinamento con ddl 49", "Commissione QUARTA", "iter"},
-		{"Promulgata legge regionale n. 4/2025", "", "legge"},
+		{"Esaminato in commissione", "Commissione SECONDA", false, "commissione"},
+		{"Parere espresso Commissione *", "Commissione QUINTA", false, "commissione"},
+		{"Abbinamento con ddl 49", "Commissione QUARTA", false, "iter"},
+		{"Promulgata legge regionale n. 4/2025", "", true, "legge"},
 	}
 	for _, c := range cases {
-		if got := faseIterConSeduta(c.action, c.sedeSuffisso); got != c.want {
-			t.Errorf("faseIterConSeduta(%q, %q) = %q, want %q", c.action, c.sedeSuffisso, got, c.want)
+		if got := faseIterConSeduta(c.action, c.sedeSuffisso, c.sedutaAula); got != c.want {
+			t.Errorf("faseIterConSeduta(%q, %q, %v) = %q, want %q", c.action, c.sedeSuffisso, c.sedutaAula, got, c.want)
+		}
+	}
+}
+
+// La regola con cui si legge la risposta dell'archivio, provata senza rete. E'
+// il cuore del rilievo di review: un numero riusato per errore non deve
+// ricevere il marcatore di seduta pluri-giorno.
+func TestEsitoVerificaSeduta(t *testing.T) {
+	cases := []struct {
+		nome, apertura, dataArchivio string
+		err                          error
+		want                         esitoSeduta
+	}{
+		// La 187 della L.R. 9/2020: l'archivio la apre il giorno che l'iter
+		// dichiara per primo.
+		{"apertura combaciante", "28 apr 2020", "28.04.20", nil, sedutaConfermata},
+		// Stessa data, forma diversa: e' la stessa data.
+		{"forme diverse della stessa data", "28 apr 2020", "28/04/2020", nil, sedutaConfermata},
+		// Il caso che la verifica esiste per prendere: numero che nell'archivio
+		// non c'e'. Non e' una risposta mancante, e' una risposta negativa.
+		{"seduta inesistente", "28 apr 2020", "", nil, sedutaSmentita},
+		// Esiste ma si apre altrove: la coppia non torna.
+		{"apertura diversa", "28 apr 2020", "12.05.20", nil, sedutaSmentita},
+		// L'archivio non ha risposto: non si conclude nulla, e non si torna ad
+		// anomalia — un marcatore che cambia con la rete e' peggio.
+		{"archivio irraggiungibile", "28 apr 2020", "", errors.New("dial tcp: timeout"), sedutaNonVerificata},
+	}
+	for _, c := range cases {
+		if got := esitoVerificaSeduta(c.apertura, c.dataArchivio, c.err); got != c.want {
+			t.Errorf("%s: esitoVerificaSeduta(%q, %q, %v) = %v, want %v", c.nome, c.apertura, c.dataArchivio, c.err, got, c.want)
 		}
 	}
 }

@@ -242,9 +242,9 @@ func TestBuildQuery_FraseConCongiunzione(t *testing.T) {
 		want     string
 		scartati []string
 	}{
-		{"una congiunzione", "coesione e crescita", "coesione adj2 crescita", []string{"e"}},
-		{"due di fila", "sanità e o ambiente", "sanità adj3 ambiente", []string{"e", "o"}},
-		{"due congiunzioni separate", "case e cura o salute", "case adj2 cura adj2 salute", []string{"e", "o"}},
+		{"una congiunzione", "coesione e crescita", "coesione adj3 crescita", []string{"e"}},
+		{"due di fila", "sanità e o ambiente", "sanità adj5 ambiente", []string{"e", "o"}},
+		{"due congiunzioni separate", "case e cura o salute", "case adj3 cura adj3 salute", []string{"e", "o"}},
 		{"in testa", "e crescita", "crescita", []string{"e"}},
 		{"nessuna collisione", "aree idonee", "aree adj idonee", nil},
 	}
@@ -289,8 +289,8 @@ func TestFraseDegradata_EspressioniIntatte(t *testing.T) {
 // proprio sul caso che il fix esiste per coprire.
 func TestFraseDegradata_TuttoMaiuscolo(t *testing.T) {
 	expr, scartati, _ := FraseDegradata("SVILUPPO E COESIONE")
-	if expr != "SVILUPPO adj2 COESIONE" {
-		t.Errorf("FraseDegradata(maiuscolo) = %q, want %q", expr, "SVILUPPO adj2 COESIONE")
+	if expr != "SVILUPPO adj3 COESIONE" {
+		t.Errorf("FraseDegradata(maiuscolo) = %q, want %q", expr, "SVILUPPO adj3 COESIONE")
 	}
 	if len(scartati) != 1 || scartati[0] != "E" {
 		t.Errorf("scartati = %v, want [E]", scartati)
