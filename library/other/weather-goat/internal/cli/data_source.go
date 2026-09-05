@@ -16,6 +16,12 @@ import (
 	"github.com/mvanhorn/printing-press-library/library/other/weather-goat/internal/store"
 )
 
+const (
+	defaultOpenMeteoBaseURL = "https://api.open-meteo.com/v1"
+	archiveAPIBaseURL       = "https://archive-api.open-meteo.com/v1"
+	airQualityAPIBaseURL    = "https://air-quality-api.open-meteo.com/v1"
+)
+
 // isNetworkError returns true for errors caused by network connectivity issues
 // (DNS, connection refused, timeout). HTTP 4xx/5xx errors are NOT network errors.
 func isNetworkError(err error) bool {
@@ -108,6 +114,24 @@ func resolveRead(c *client.Client, flags *rootFlags, resourceType string, isList
 		}
 		return localData, prov, nil
 	}
+}
+
+// clientForOpenMeteoService routes the default Open-Meteo client to a
+// service-specific host while preserving explicit WEATHER_BASE_URL overrides.
+// The shallow copy retains timeout, rate limiting, dry-run, and cache behavior.
+func clientForOpenMeteoService(c *client.Client, serviceBaseURL string) *client.Client {
+	if strings.TrimRight(c.BaseURL, "/") != defaultOpenMeteoBaseURL {
+		return c
+	}
+	serviceClient := *c
+	serviceClient.BaseURL = strings.TrimRight(serviceBaseURL, "/")
+	return &serviceClient
+}
+
+// resolveOpenMeteoRead is resolveRead for Open-Meteo endpoints hosted outside
+// the main forecast API, such as archive-api and air-quality-api.
+func resolveOpenMeteoRead(c *client.Client, flags *rootFlags, resourceType string, isList bool, path, serviceBaseURL string, params map[string]string) (json.RawMessage, DataProvenance, error) {
+	return resolveRead(clientForOpenMeteoService(c, serviceBaseURL), flags, resourceType, isList, path, params)
 }
 
 // resolvePaginatedRead dispatches a paginated GET request to either the live API
