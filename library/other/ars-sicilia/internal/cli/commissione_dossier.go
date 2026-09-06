@@ -343,8 +343,18 @@ func runCommissioneDossier(cmd *cobra.Command, flags *rootFlags, arg string, leg
 	}
 	fmt.Fprintf(out, "Commissione: %s\n", report.Commissione)
 	if report.Legisl > 0 {
-		fmt.Fprintf(out, "Legislatura: %d\n\n", report.Legisl)
+		fmt.Fprintf(out, "Legislatura: %d\n", report.Legisl)
 	}
+	// La nota va anche qui, non solo nel JSON. A terminale la riga dice «100
+	// risultati su 637», e senza la qualifica quel 637 si legge come il numero
+	// dei ddl assegnati alla commissione, che non e': e' il totale di una
+	// ricerca testuale. Un denominatore non qualificato inganna piu' del
+	// troncamento che ha sostituito, ed e' proprio il difetto che questo campo
+	// esisteva per chiudere.
+	if report.Note != "" {
+		fmt.Fprintf(out, "Nota: %s\n", report.Note)
+	}
+	fmt.Fprintln(out)
 	troncato := map[string]bool{}
 	for _, label := range report.Troncato {
 		troncato[label] = true

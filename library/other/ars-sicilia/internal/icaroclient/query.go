@@ -2,6 +2,7 @@ package icaroclient
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 	"unicode"
@@ -61,6 +62,10 @@ func BuildQuery(arc Archive, params map[string]string, isisRaw string) string {
 		if !ok {
 			// Unmapped flag: drop into free-text as fallback.
 			freeText = append(freeText, v)
+			continue
+		}
+		if CampoIdentificativo(k) {
+			fielded = append(fielded, fmt.Sprintf("%s.%s", EspressioneIdentificativo(v), field))
 			continue
 		}
 		fielded = append(fielded, fmt.Sprintf("%s.%s", quoteValue(v), field))
@@ -344,23 +349,63 @@ func ValoreRipulito(v string) (string, []string) {
 	return strings.Join(strings.Fields(pulito), " "), rimossi
 }
 
-// soloStruttura riconosce i valori fatti di sole cifre e separatori di data —
-// il range ISIS `260101/261231`, un numero, e anche la forma ISO
-// `2026-07-01:2026-07-31` che normalizeParams non fosse riuscito a convertire.
-// Li' il trattino e i due punti sono sintassi, non punteggiatura da togliere.
+// reFormaData riconosce le TRE forme di data e numero che la CLI costruisce da
+// se', e nient'altro: un numero puro, il range ISIS `260101/261231`, e la forma
+// ISO `2026-07-01` o `2026-07-01:2026-07-31` che normalizeParams non fosse
+// riuscito a convertire. Li' il trattino, la barra e i due punti sono sintassi,
+// non punteggiatura da togliere.
 //
-// L'ultimo caso e' una difesa, non un percorso vivo: oggi ogni chiamante passa
+// La forma ISO e' una difesa, non un percorso vivo: oggi ogni chiamante passa
 // da normalizeParams. Ma se un domani una data ISO arrivasse qui intatta,
 // ripulirla la trasformerebbe in `2026 07 01 2026 07 31`, cioe' in una query
 // che risponde qualcosa di plausibile invece di essere rifiutata — un errore
 // silenzioso al posto di uno rumoroso, che e' lo scambio peggiore.
+//
+// La prima versione di questo guardiano esentava QUALUNQUE valore di sole cifre
+// e separatori, ed era troppo largo: un ISBN-13 scritto come si scrive,
+// `978-88-7524-166-7`, e' fatto di cifre e trattini e passava intatto — cioe'
+// `biblioteca cerca --isbn` continuava a ricevere il rifiuto del portale che
+// tutta questa modifica esiste per togliere (misurato: `QR999 Operando con crt
+// non validi`). Le forme si nominano, non si deducono dai caratteri.
+var reFormaData = regexp.MustCompile(`^(?:\d+|\d{6}/\d{6}|\d{4}-\d{2}-\d{2}(?::\d{4}-\d{2}-\d{2})?)$`)
+
 func soloStruttura(v string) bool {
-	for _, r := range v {
-		if !unicode.IsDigit(r) && r != '/' && r != '-' && r != ':' {
-			return false
-		}
+	return reFormaData.MatchString(v)
+}
+
+// CampoIdentificativo dice se il valore di quel parametro e' un identificativo
+// scritto a gruppi, dove la punteggiatura e' formattazione e non un confine di
+// parola.
+//
+// E' l'eccezione alla regola generale, e non si deduce dalla forma del valore:
+// due campi numerici dello stesso archivio si comportano al contrario. Misurato
+// il 2026-09-06 sull'archivio 205:
+//
+//	--dewey "340.5"  -> `(340 5).DEWEY` trova 1 record: li' il punto separa
+//	                    davvero due token, e la riscrittura in spazio e' giusta.
+//	--isbn  "978-88-7524-166-7" -> `(978 88 7524 166 7).ISBN` trova 0, mentre
+//	                    `9788875241667.ISBN` trova il record: quell'ISBN sta
+//	                    nell'indice come un token solo.
+//
+// L'archivio pero' non e' coerente con se stesso — un altro record porta
+// `978 88 98231-25-6`, spazi e trattini insieme, e li' vale l'opposto: la forma
+// unita trova 0 e quella a spazi trova il record. Nessuna delle due riscritture
+// da sola copre il catalogo, quindi si spediscono entrambe in OR (vedi
+// EspressioneIdentificativo). Verificato sui due record: l'OR li trova tutti e
+// due, ciascuna forma da sola ne perde uno.
+func CampoIdentificativo(param string) bool {
+	return param == "isbn"
+}
+
+// EspressioneIdentificativo costruisce l'OR delle due grafie di un
+// identificativo: quella unita (`9788875241667`) e quella coi separatori resi
+// spazio (`978 88 7524 166 7`), che ISIS legge come adiacenza.
+func EspressioneIdentificativo(pulito string) string {
+	unito := strings.ReplaceAll(pulito, " ", "")
+	if unito == pulito {
+		return pulito // nessun separatore: una grafia sola, niente da unire
 	}
-	return true
+	return fmt.Sprintf("(%s O (%s))", unito, pulito)
 }
 
 // ValoriRipuliti riporta, per una mappa di parametri, i caratteri che

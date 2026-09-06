@@ -20,6 +20,8 @@ func TestValoreRipulito(t *testing.T) {
 		{"sanita'", "sanita", []string{"'"}, "apostrofo finale"},
 		{"COVID-19", "COVID 19", []string{"-"}, "il trattino e' fra i caratteri rifiutati"},
 		{"260101/261231", "260101/261231", nil, "range DATPRE costruito dalla CLI: sola struttura, intatto"},
+		{"2026-07-01:2026-07-31", "2026-07-01:2026-07-31", nil, "data ISO non normalizzata: intatta, cosi' il portale la rifiuta invece di rispondere a una domanda diversa"},
+		{"978-88-7524-166-7", "978 88 7524 166 7", []string{"-"}, "un ISBN e' fatto di cifre e trattini ma non e' una data: va ripulito, o il portale lo rifiuta (QR999)"},
 		{"1173", "1173", nil, "numero"},
 		{"(aree E idonee)", "(aree E idonee)", nil, "espressione dell'utente: le parentesi sono la via d'uscita convenzionale"},
 		{"Assembl$", "Assembl$", nil, "troncamento ISIS: verificato, torna righe"},
@@ -83,5 +85,67 @@ func TestQueryNonCostruibile(t *testing.T) {
 	}
 	if QueryNonCostruibile(soglia) {
 		t.Error("la soglia non e' un errore di sintassi")
+	}
+}
+
+// Le forme esentate si nominano una per una. La prima versione del guardiano
+// esentava qualunque valore di cifre e separatori, e ci passava dentro un
+// ISBN-13.
+func TestFormaDataEsentaSoloLeFormeCostruiteDallaCLI(t *testing.T) {
+	esenti := []string{"18", "1173", "260101/261231", "2026-07-01", "2026-07-01:2026-07-31"}
+	for _, v := range esenti {
+		if !soloStruttura(v) {
+			t.Errorf("%q doveva essere esente (data o numero costruito dalla CLI)", v)
+		}
+	}
+	nonEsenti := []string{"978-88-7524-166-7", "9788-88", "2026-7-1", "340.5", "26/01/01"}
+	for _, v := range nonEsenti {
+		if soloStruttura(v) {
+			t.Errorf("%q non e' una forma di data: doveva essere ripulito", v)
+		}
+	}
+}
+
+// Sul campo ISBN la fonte tiene due grafie e nessuna riscrittura da sola le
+// copre entrambe. Misurato sull'archivio 205 il 2026-09-06: il record
+// 9788875241667 esce solo dalla forma unita, il record scritto "978 88
+// 98231-25-6" solo da quella coi separatori resi spazio.
+func TestEspressioneIdentificativo(t *testing.T) {
+	if got := EspressioneIdentificativo("978 88 7524 166 7"); got != "(9788875241667 O (978 88 7524 166 7))" {
+		t.Errorf("EspressioneIdentificativo = %q", got)
+	}
+	// Nessun separatore: una grafia sola, niente OR da costruire.
+	if got := EspressioneIdentificativo("9788875241667"); got != "9788875241667" {
+		t.Errorf("valore gia' unito riscritto: %q", got)
+	}
+	if !CampoIdentificativo("isbn") || CampoIdentificativo("dewey") {
+		t.Error("l'eccezione vale per isbn e non per dewey: sono stati misurati al contrario")
+	}
+}
+
+func TestBuildQueryISBNMandaEntrambeLeGrafie(t *testing.T) {
+	arc := Archive{ID: "205", Slug: "biblioteca", FieldMap: map[string]string{"isbn": "ISBN"}}
+	got := BuildQuery(arc, map[string]string{"isbn": "978-88-7524-166-7"}, "")
+	want := "((9788875241667 O (978 88 7524 166 7)).ISBN)"
+	if got != want {
+		t.Errorf("BuildQuery = %q, atteso %q", got, want)
+	}
+}
+
+// Il portale rifiuta per sintassi in due modi, e il secondo porta un codice:
+// guardare solo la presenza del codice lo confonderebbe con la soglia.
+func TestQueryNonCostruibileRiconosceEntrambiIModi(t *testing.T) {
+	casi := []struct {
+		body string
+		want bool
+	}{
+		{`<div class="message ko"> Impossibile creare la Query  QRY0 ()`, true},
+		{`<div class="message ko"> Operando con crt non validi/bl (QR999)  QRY0 ()`, true},
+		{`<div class="message ko"> (QR997)  QRY0 ()`, false},
+	}
+	for _, c := range casi {
+		if got := QueryNonCostruibile(c.body); got != c.want {
+			t.Errorf("QueryNonCostruibile(%.50q) = %v, atteso %v", c.body, got, c.want)
+		}
 	}
 }

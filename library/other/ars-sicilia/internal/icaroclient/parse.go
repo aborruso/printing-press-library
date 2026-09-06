@@ -438,8 +438,15 @@ func DetectQueryError(body string) (string, bool) {
 // query rifiutata a legislatura intera viene rifiutata anche su nove mesi e su
 // un giorno. Dirlo cambia la mossa di chi legge, e risparmia lo spezzettamento
 // in sottoperiodi, che qui e' solo lavoro sprecato.
+// I modi misurati sono due, e vanno riconosciuti entrambi. Il secondo e' saltato
+// fuori verificando un rilievo di review sugli ISBN: `(978-88-15-12345-6.ISBN)`
+// non risponde «Impossibile creare la Query» ma `(QR999) Operando con crt non
+// validi/bl` — un codice, quindi indistinguibile dalla soglia se si guarda solo
+// la presenza del codice. Un carattere non accettato dentro un operando resta
+// un problema di sintassi: restringere il periodo non lo tocca.
 func QueryNonCostruibile(body string) bool {
-	return strings.Contains(body, "Impossibile creare la Query")
+	return strings.Contains(body, "Impossibile creare la Query") ||
+		strings.Contains(body, "Operando con crt non validi")
 }
 
 // reResultCount cattura il totale dei documenti dal blocco `<ul id="resultsList">`

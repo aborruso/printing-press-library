@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "id": "ars-sicilia-isbn-due-grafie",
+  "applied_at": "2026-09-06",
+  "base_run_id": "20260528-181840",
+  "base_printing_press_version": "4.30.3",
+  "summary": "Name the date and number forms exempt from sanitisation instead of deducing them from the characters, and send an ISBN in both spellings the archive stores.",
+  "reason": "The first version of the guard exempted any value made only of digits and separators, and an ISBN-13 written the way ISBNs are written - 978-88-7524-166-7 - is exactly that, so it went through untouched and biblioteca cerca --isbn kept receiving the portal refusal this whole change exists to remove. Measured 2026-09-06: the portal answers (QR999) Operando con crt non validi, a refusal that carries a QRxxx code just like the threshold one, so the malformed-query detection had to stop keying on the absence of a code. The forms are now named one by one (a plain number, the ISIS range 260101/261231, an ISO date or range) and everything else is sanitised. Sanitising an ISBN is not enough on its own, and the right rewrite is not deducible from the value: two numeric fields of the same archive behave oppositely - on --dewey \"340.5\" the dot separates two real tokens and the spaced form finds the record, while an ISBN's punctuation formats a single number. The archive is also inconsistent with itself: record 9788875241667 is stored as one token and comes back only from the joined form, while another is stored as \"978 88 98231-25-6\" and comes back only from the spaced form. Neither spelling alone covers the catalogue, so an identifier field sends both in OR.",
+  "files": [
+    "internal/icaroclient/query.go",
+    "internal/icaroclient/parse.go",
+    "internal/cli/icaro_helpers.go",
+    "internal/icaroclient/valore_ripulito_test.go"
+  ],
+  "validated_outcome": "biblioteca cerca --isbn \"978-88-7524-166-7\" goes from a portal refusal to the right record, leaving as ((9788875241667 O (978 88 7524 166 7)).ISBN); --isbn \"978-88-98231-25-6\", stored with separators, returns its own record from the same expression, and each spelling alone returns zero on the other one. --dewey \"340.5\" keeps the spaced rewrite that finds its record. A date range reaching BuildQuery unnormalised stays verbatim and is still refused loudly rather than answered wrongly."
+}

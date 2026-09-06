@@ -145,7 +145,7 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 		// quel caso avvisa; questa era l'unica a non farlo, ed è il percorso
 		// naturale della domanda «quali leggi nell'anno X».
 		hint := hintLeggiCorte(truncated, mancanti, len(recs), len(leggi), p.LimitLeggi)
-		frHint := uniscoHintPrefissato(fraseHint(p.Params), punteggiaturaHint(p.Params))
+		frHint := uniscoHintPrefissato(fraseHint(p.Params), punteggiaturaHint(arc.Slug, p.Params))
 		// Questo ramo ha un hint tutto suo e ritorna prima di warnTruncated:
 		// senza il caso esplicito, `leggi cerca --envelope` sarebbe l'unica
 		// ricerca a non avere la busta, e in silenzio. fraseHint va incluso
@@ -178,7 +178,7 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 	recs = ordinaPerPertinenza(recs, termini)
 	pertHint := pertinenzaHint(recs, termini, arc.Slug, strings.TrimSpace(p.Params["frase"]) != "")
 	frHint := fraseHint(p.Params)
-	puntHint := punteggiaturaHint(p.Params)
+	puntHint := punteggiaturaHint(arc.Slug, p.Params)
 	omonHint := omonimiHint(recs, arc.Slug)
 	spezzHint := spezzatoHint(spezzato)
 	sommHint := sommariHint(truncated, arc.Slug, p.Params, termini)
@@ -297,7 +297,17 @@ func rifiutoHint(err error) string {
 // rifare la query a mano: senza questo avviso la CLI consegnerebbe i risultati
 // di una domanda leggermente diversa da quella posta, in silenzio — lo stesso
 // difetto che fraseHint esiste per chiudere.
-func punteggiaturaHint(params map[string]string) string {
+//
+// Muto sugli archivi /bd/. La riscrittura vive dentro BuildQuery, e quel
+// backend BuildQuery non lo attraversa: `resoconti cerca --testo
+// "dell'ambiente"` spedisce il valore intatto nella POST del form e torna
+// righe. Dire li' che il valore e' partito diverso e' un avviso che afferma il
+// falso, che e' peggio dell'avviso mancante: manda a rifare a mano una query
+// che era gia' quella giusta.
+func punteggiaturaHint(slug string, params map[string]string) string {
+	if icaro.IsBDArchive(slug) {
+		return ""
+	}
 	rimossi, presenti := icaro.ValoriRipuliti(params)
 	if !presenti {
 		return ""
@@ -310,6 +320,14 @@ func punteggiaturaHint(params map[string]string) string {
 	var pezzi []string
 	for _, k := range flag {
 		pulito, _ := icaro.ValoreRipulito(params[k])
+		// Su un campo identificativo non parte una grafia sola: la fonte tiene
+		// lo stesso ISBN sia unito sia coi separatori, quindi si spediscono
+		// entrambe in OR. Dire «è partito come X» annuncerebbe metà della
+		// query — la metà che su quel record trova zero.
+		if icaro.CampoIdentificativo(k) {
+			pezzi = append(pezzi, fmt.Sprintf("--%s «%s» è partito in entrambe le grafie, %s", k, strings.TrimSpace(params[k]), icaro.EspressioneIdentificativo(pulito)))
+			continue
+		}
 		pezzi = append(pezzi, fmt.Sprintf("--%s «%s» è partito come «%s»", k, strings.TrimSpace(params[k]), pulito))
 	}
 	return fmt.Sprintf(
