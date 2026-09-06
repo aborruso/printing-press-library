@@ -319,7 +319,7 @@ func punteggiaturaHint(slug string, params map[string]string) string {
 	sort.Strings(flag)
 	var pezzi []string
 	for _, k := range flag {
-		pulito, _ := icaro.ValoreRipulito(params[k])
+		pulito, _ := icaro.ValoreRipulito(k, params[k])
 		// Su un campo identificativo non parte una grafia sola: la fonte tiene
 		// lo stesso ISBN sia unito sia coi separatori, quindi si spediscono
 		// entrambe in OR. Dire «è partito come X» annuncerebbe metà della
@@ -396,7 +396,7 @@ func fraseHint(params map[string]string) string {
 	// punteggiatura viene tolta prima che adjJoinWords costruisca
 	// l'espressione, e descrivere la degradazione sul valore grezzo
 	// annuncerebbe una query che nessuno ha eseguito.
-	v, _ := icaro.ValoreRipulito(params["frase"])
+	v, _ := icaro.ValoreRipulito("frase", params["frase"])
 	if v == "" {
 		return ""
 	}

@@ -10,31 +10,32 @@ import (
 // separa le parole.
 func TestValoreRipulito(t *testing.T) {
 	casi := []struct {
+		param   string
 		in      string
 		out     string
 		rimossi []string
 		perche  string
 	}{
-		{"Approvato dall'Assemblea", "Approvato dall Assemblea", []string{"'"}, "lo stato scritto dal portale stesso"},
-		{"D'Agostino", "D Agostino", []string{"'"}, "cognome siciliano: rifiutato oggi su --firmatario"},
-		{"sanita'", "sanita", []string{"'"}, "apostrofo finale"},
-		{"COVID-19", "COVID 19", []string{"-"}, "il trattino e' fra i caratteri rifiutati"},
-		{"260101/261231", "260101/261231", nil, "range DATPRE costruito dalla CLI: sola struttura, intatto"},
-		{"2026-07-01:2026-07-31", "2026-07-01:2026-07-31", nil, "data ISO non normalizzata: intatta, cosi' il portale la rifiuta invece di rispondere a una domanda diversa"},
-		{"978-88-7524-166-7", "978 88 7524 166 7", []string{"-"}, "un ISBN e' fatto di cifre e trattini ma non e' una data: va ripulito, o il portale lo rifiuta (QR999)"},
-		{"1173", "1173", nil, "numero"},
-		{"(aree E idonee)", "(aree E idonee)", nil, "espressione dell'utente: le parentesi sono la via d'uscita convenzionale"},
-		{"Assembl$", "Assembl$", nil, "troncamento ISIS: verificato, torna righe"},
-		{"Approvato dall Assemblea", "Approvato dall Assemblea", nil, "gia' pulito, nessun avviso"},
-		{"l'art. 5, comma 3", "l art 5 comma 3", []string{"'", ".", ","}, "piu' caratteri, nominati una volta ciascuno"},
+		{"iter", "Approvato dall'Assemblea", "Approvato dall Assemblea", []string{"'"}, "lo stato scritto dal portale stesso"},
+		{"firmatario", "D'Agostino", "D Agostino", []string{"'"}, "cognome siciliano: rifiutato oggi su --firmatario"},
+		{"materia", "sanita'", "sanita", []string{"'"}, "apostrofo finale"},
+		{"testo", "COVID-19", "COVID 19", []string{"-"}, "il trattino e' fra i caratteri rifiutati"},
+		{"data", "260101/261231", "260101/261231", nil, "range DATPRE costruito dalla CLI: sola struttura, intatto"},
+		{"data", "2026-07-01:2026-07-31", "2026-07-01:2026-07-31", nil, "data ISO non normalizzata: intatta, cosi' il portale la rifiuta invece di rispondere a una domanda diversa"},
+		{"isbn", "978-88-7524-166-7", "978 88 7524 166 7", []string{"-"}, "un ISBN e' fatto di cifre e trattini ma non e' una data: va ripulito, o il portale lo rifiuta (QR999)"},
+		{"numero", "1173", "1173", nil, "numero"},
+		{"testo", "(aree E idonee)", "(aree E idonee)", nil, "espressione dell'utente: le parentesi sono la via d'uscita convenzionale"},
+		{"iter", "Assembl$", "Assembl$", nil, "troncamento ISIS: verificato, torna righe"},
+		{"iter", "Approvato dall Assemblea", "Approvato dall Assemblea", nil, "gia' pulito, nessun avviso"},
+		{"testo", "l'art. 5, comma 3", "l art 5 comma 3", []string{"'", ".", ","}, "piu' caratteri, nominati una volta ciascuno"},
 	}
 	for _, c := range casi {
-		got, rimossi := ValoreRipulito(c.in)
+		got, rimossi := ValoreRipulito(c.param, c.in)
 		if got != c.out {
-			t.Errorf("ValoreRipulito(%q) = %q, atteso %q (%s)", c.in, got, c.out, c.perche)
+			t.Errorf("ValoreRipulito(%q, %q) = %q, atteso %q (%s)", c.param, c.in, got, c.out, c.perche)
 		}
 		if !reflect.DeepEqual(rimossi, c.rimossi) {
-			t.Errorf("ValoreRipulito(%q) rimossi = %v, atteso %v", c.in, rimossi, c.rimossi)
+			t.Errorf("ValoreRipulito(%q, %q) rimossi = %v, atteso %v", c.param, c.in, rimossi, c.rimossi)
 		}
 	}
 }
@@ -91,18 +92,30 @@ func TestQueryNonCostruibile(t *testing.T) {
 // Le forme esentate si nominano una per una. La prima versione del guardiano
 // esentava qualunque valore di cifre e separatori, e ci passava dentro un
 // ISBN-13.
-func TestFormaDataEsentaSoloLeFormeCostruiteDallaCLI(t *testing.T) {
-	esenti := []string{"18", "1173", "260101/261231", "2026-07-01", "2026-07-01:2026-07-31"}
-	for _, v := range esenti {
-		if !soloStruttura(v) {
-			t.Errorf("%q doveva essere esente (data o numero costruito dalla CLI)", v)
+func TestEsenzioneLegataAlParametroNonAllaForma(t *testing.T) {
+	// Sui due parametri che portano una data costruita dalla CLI il valore
+	// passa intatto: li' barra e trattino sono sintassi.
+	for _, v := range []string{"18", "260101/261231", "2026-07-01", "2026-07-01:2026-07-31"} {
+		if got, rimossi := ValoreRipulito("data", v); got != v || rimossi != nil {
+			t.Errorf("--data %q doveva restare intatto, ottenuto %q", v, got)
 		}
 	}
-	nonEsenti := []string{"978-88-7524-166-7", "9788-88", "2026-7-1", "340.5", "26/01/01"}
-	for _, v := range nonEsenti {
-		if soloStruttura(v) {
-			t.Errorf("%q non e' una forma di data: doveva essere ripulito", v)
-		}
+	// La stessa forma dentro un campo di testo NON e' una data: e' un
+	// documento che cita quella data, e va ripulito come tutto il resto.
+	if got, rimossi := ValoreRipulito("testo", "2026-07-01"); got != "2026 07 01" || len(rimossi) != 1 {
+		t.Errorf("--testo \"2026-07-01\" = %q rimossi=%v, atteso «2026 07 01»", got, rimossi)
+	}
+	if got, _ := ValoreRipulito("isbn", "978-88-7524-166-7"); got != "978 88 7524 166 7" {
+		t.Errorf("un ISBN non e' una data: %q", got)
+	}
+	// Un --data in una forma che nessuno riconosce non viene ne' ripulito di
+	// nascosto ne' spedito come se fosse valido: resta com'e' e il portale lo
+	// rifiuta rumorosamente.
+	if got, _ := ValoreRipulito("data", "2026-7-1"); got != "2026 7 1" {
+		t.Errorf("forma di data non riconosciuta: attesa la ripulitura, ottenuto %q", got)
+	}
+	if !campoData("data") || !campoData("anno") || campoData("testo") || campoData("isbn") {
+		t.Error("l'esenzione deve valere per --data e --anno e per nessun altro")
 	}
 }
 

@@ -35,7 +35,7 @@ func BuildQuery(arc Archive, params map[string]string, isisRaw string) string {
 	sort.Strings(keys)
 
 	for _, k := range keys {
-		v, _ := ValoreRipulito(params[k])
+		v, _ := ValoreRipulito(k, params[k])
 		if v == "" {
 			continue
 		}
@@ -320,7 +320,7 @@ func needsQuoting(v string) bool {
 // scrivendo la propria espressione (stessa convenzione di andJoinWords e
 // adjExpr). E quelli di sola struttura — cifre e `/` — che sono i range di data
 // costruiti dalla CLI (`260101/261231`), non testo dell'utente.
-func ValoreRipulito(v string) (string, []string) {
+func ValoreRipulito(param, v string) (string, []string) {
 	v = strings.TrimSpace(v)
 	if v == "" {
 		return "", nil
@@ -328,7 +328,7 @@ func ValoreRipulito(v string) (string, []string) {
 	if strings.ContainsAny(v, "()") {
 		return v, nil
 	}
-	if soloStruttura(v) {
+	if campoData(param) && formaData(v) {
 		return v, nil
 	}
 	var rimossi []string
@@ -349,27 +349,36 @@ func ValoreRipulito(v string) (string, []string) {
 	return strings.Join(strings.Fields(pulito), " "), rimossi
 }
 
-// reFormaData riconosce le TRE forme di data e numero che la CLI costruisce da
-// se', e nient'altro: un numero puro, il range ISIS `260101/261231`, e la forma
-// ISO `2026-07-01` o `2026-07-01:2026-07-31` che normalizeParams non fosse
-// riuscito a convertire. Li' il trattino, la barra e i due punti sono sintassi,
-// non punteggiatura da togliere.
+// campoData nomina i parametri il cui valore lo costruisce la CLI: `--data` lo
+// compila in `260101/261231` e `--anno`, sui ddl, nello stesso range. Sono i
+// soli due posti dove la barra e il trattino sono sintassi.
+//
+// L'esenzione sta su QUESTI DUE NOMI, non sulla forma del valore, ed e' la
+// seconda volta che il perimetro si stringe. Guardando solo i caratteri
+// passava un ISBN-13 (`978-88-7524-166-7`, cifre e trattini); guardando la
+// forma di data passava una data cercata come TESTO — `ddl cerca --testo
+// "2026-07-01"`, cioe' un documento che cita quella data, che e' una domanda
+// legittima e usciva col rifiuto del portale invece che ripulita (misurato il
+// 2026-09-06: la query partiva come `... E (2026-07-01)`). Un valore non dice
+// da se' se e' una data: lo dice il campo in cui sta.
+func campoData(param string) bool {
+	return param == "data" || param == "anno"
+}
+
+// reFormaData riconosce le forme che quei due parametri portano davvero: un
+// numero puro, il range ISIS `260101/261231`, e la forma ISO `2026-07-01` o
+// `2026-07-01:2026-07-31` che normalizeParams non fosse riuscito a convertire.
 //
 // La forma ISO e' una difesa, non un percorso vivo: oggi ogni chiamante passa
 // da normalizeParams. Ma se un domani una data ISO arrivasse qui intatta,
 // ripulirla la trasformerebbe in `2026 07 01 2026 07 31`, cioe' in una query
 // che risponde qualcosa di plausibile invece di essere rifiutata — un errore
-// silenzioso al posto di uno rumoroso, che e' lo scambio peggiore.
-//
-// La prima versione di questo guardiano esentava QUALUNQUE valore di sole cifre
-// e separatori, ed era troppo largo: un ISBN-13 scritto come si scrive,
-// `978-88-7524-166-7`, e' fatto di cifre e trattini e passava intatto — cioe'
-// `biblioteca cerca --isbn` continuava a ricevere il rifiuto del portale che
-// tutta questa modifica esiste per togliere (misurato: `QR999 Operando con crt
-// non validi`). Le forme si nominano, non si deducono dai caratteri.
+// silenzioso al posto di uno rumoroso, che e' lo scambio peggiore. Il controllo
+// di forma resta quindi accanto a quello sul nome: un `--data` scritto in un
+// modo che nessuno riconosce non viene ne' ripulito ne' spedito di nascosto.
 var reFormaData = regexp.MustCompile(`^(?:\d+|\d{6}/\d{6}|\d{4}-\d{2}-\d{2}(?::\d{4}-\d{2}-\d{2})?)$`)
 
-func soloStruttura(v string) bool {
+func formaData(v string) bool {
 	return reFormaData.MatchString(v)
 }
 
@@ -415,7 +424,7 @@ func EspressioneIdentificativo(pulito string) string {
 func ValoriRipuliti(params map[string]string) (map[string][]string, bool) {
 	out := map[string][]string{}
 	for k, v := range params {
-		if _, rimossi := ValoreRipulito(v); len(rimossi) > 0 {
+		if _, rimossi := ValoreRipulito(k, v); len(rimossi) > 0 {
 			out[k] = rimossi
 		}
 	}
