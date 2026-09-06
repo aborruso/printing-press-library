@@ -71,7 +71,11 @@ func newDdlCercaCmd(flags *rootFlags) *cobra.Command {
 	cmd.Flags().IntVar(&flagNumero, "numero", 0, "Numero del DDL (campo NUMDDL; per gli stralci è l'ID numerico interno, non la sigla \"N/A Stralcio\" — vedi il campo excerpt per la designazione ufficiale).")
 	cmd.Flags().StringVar(&flagFirmatario, "firmatario", "", "Nome o cognome del firmatario.")
 	cmd.Flags().StringVar(&flagMateria, "materia", "", "Materia/settore.")
-	cmd.Flags().StringVar(&flagIter, "iter", "", "Stato dell'iter.")
+	// Il testo del flag diceva «Stato dell'iter», e prometteva lo stato attuale.
+	// ITERST indicizza tutta la storia: il ddl 779 esce da --iter "Assegnato"
+	// pur essendo molto piu' avanti. Un elenco che sembra la fotografia di oggi
+	// e non lo e' e' il falso segnale peggiore per chi ci costruisce sopra.
+	cmd.Flags().StringVar(&flagIter, "iter", "", "Stato dell'iter ATTRAVERSATO dall'atto, non quello attuale: il campo indicizza tutta la storia, quindi --iter Assegnato restituisce anche i ddl che l'assegnazione l'hanno passata da un pezzo (il ddl 779 del 2024 esce, ed e' molto piu' avanti). Per lo stato corrente di un atto: ddl iter LEGISL NUMERO. L'indice della fonte ritarda sui ddl piu' recenti: il ddl 1196, assegnato il 05/08/2026, il 06/09/2026 non usciva ancora da --iter Assegnato --anno 2026.")
 	cmd.Flags().StringVar(&flagTesto, "testo", "", "Ricerca testuale libera.")
 	cmd.Flags().StringVar(&flagFrase, "frase", "", "Cerca le parole come locuzione, adiacenti e nell'ordine dato (ISIS adj). Piu' preciso di --testo, che combina le parole in AND sull'intero documento: --testo \"aree idonee\" aggancia anche chi ha le due parole in articoli diversi. Una congiunzione minuscola («e», «o») non e' esprimibile come adiacenza: viene scartata allargando la distanza, con un avviso che dice cosa e' partito davvero.")
 	cmd.Flags().StringVar(&flagISIS, "isis-query", "", "Espressione ISIS grezza (escape hatch).")

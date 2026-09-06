@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "id": "ars-sicilia-valore-punteggiatura",
+  "applied_at": "2026-09-06",
+  "base_run_id": "20260528-181840",
+  "base_printing_press_version": "4.30.3",
+  "summary": "Strip the punctuation the ISIS engine refuses from user-supplied filter values, declare the rewrite on stderr, and tell a malformed query apart from a threshold refusal.",
+  "reason": "The engine does not ignore punctuation inside a filter value - it refuses the query. Measured on 2026-09-06 against the ddl archive, one character at a time: ' \" , - / . ; : + * ? & ! ( = # all return the engine's error page (\"Impossibile creare la Query\", no QR code), while letters, digits, space, the $ truncation operator and % go through. That refused --iter \"Approvato dall'Assemblea\" (the state name the portal itself writes), --firmatario \"D'Agostino\" (a Sicilian surname), --testo \"dell'ambiente\", --materia \"sanita'\" and --testo \"COVID-19\". Worse, the refusal reached the user as the threshold message (\"narrow the period\"), a road that never arrives: the same expression is refused over nine months as over one day, and with a --data range the CLI spent a dozen requests splitting sub-periods to reach the same error. Replacing punctuation with a space is faithful to the index rather than a fallback: the portal tokenises on punctuation and a space inside a field value means adjacency - --iter \"Approvato dall Assemblea\" returns exactly the 16 rows of --iter \"Assemblea\" for 2026, while --iter \"Assegnato Assemblea\" (two real states, not adjacent) returns none. Values carrying parentheses and --isis-query stay verbatim, the existing convention for a caller writing its own expression. Two guards ride along: a value made only of digits and date separators is left untouched (an ISO range that reached BuildQuery unnormalised would otherwise become \"2026 07 01 2026 07 31\", a query answering something plausible instead of being refused - a silent wrong answer traded for a loud one), and fraseHint now describes the degradation of the SANITISED value, so the expression it announces is the one that actually ran.",
+  "files": [
+    "internal/icaroclient/query.go",
+    "internal/icaroclient/parse.go",
+    "internal/icaroclient/client.go",
+    "internal/cli/icaro_helpers.go",
+    "internal/icaroclient/valore_ripulito_test.go",
+    "internal/mcp/tools.go"
+  ],
+  "validated_outcome": "ddl cerca --legisl 18 --firmatario \"D'Agostino\" --anno 2026 goes from a refusal to ddl 8030; --iter \"Approvato dall'Assemblea\" goes from a refusal to 16 rows on 2026 and 112 over legislature XVIII, matching --iter \"Assemblea\" exactly; a value without punctuation emits no hint; the QR997 threshold message is unchanged; a malformed --isis-query now returns the syntax message in 1.8s without splitting sub-periods. --frase \"l'istituzione della Rete regionale\" returns exactly ddl 1197, untruncated; --frase \"coesione e l'esercizio\" announces `coesione adj3 l adj esercizio`, the expression actually sent. Smoke sweep after the change: 9 ISIS archives and 2 /bd/ ones return rows, ddl iter/legge cronologia/deputato profilo/ddl stralci/novita unchanged."
+}

@@ -1,0 +1,17 @@
+{
+  "schema_version": 2,
+  "id": "ars-sicilia-iter-stato-attraversato",
+  "applied_at": "2026-09-06",
+  "base_run_id": "20260528-181840",
+  "base_printing_press_version": "4.30.3",
+  "summary": "Say what --iter actually filters on - every state the bill has traversed, not its current one - and declare the source index's lag on recent bills.",
+  "reason": "The flag read \"Stato dell'iter\", which promises the current state. The ITERST field indexes the whole history: bill 779, presented in 2024, comes back from --iter \"Assegnato\" --anno 2024 while being much further along. A list that looks like today's snapshot and is not is the worst false signal for anyone building on it. The same flag was documented nowhere but --help. Measured alongside: the source's index lags on recent bills - bill 1196, assigned on 2026-08-05, was still absent from --iter \"Assegnato\" --anno 2026 on 2026-09-06 - so an undercount can read as an absence of acts.",
+  "files": [
+    "internal/cli/ddl_cerca.go",
+    "SKILL.md",
+    "README.md",
+    "internal/mcp/tools.go",
+    "tools-manifest.json"
+  ],
+  "validated_outcome": "ddl cerca --help states the traversed-state semantics, names ddl iter for the current state of one act, and carries the measured index lag; SKILL.md and README document the flag, which they did not mention at all. The stale \"Stato dell'iter (atto/storico)\" copy in the MCP tool schema and in tools-manifest.json is updated too, so an agent reading the schema gets the same semantics as a human reading --help."
+}

@@ -98,6 +98,8 @@ These capabilities aren't available in any other tool for this API.
   ```
 - **`commissione dossier`** — Vista completa su una commissione: convocazioni in calendario, sommari lavori, DDL assegnati e pareri richiesti al Governo regionale. Accetta il codice `1`-`6`, l'ordinale (`PRIMA`..`SESTA`) o un frammento della denominazione d'archivio. Le **commissioni speciali** (Antimafia, Statuto, Unione Europea) non hanno un codice e si raggiungono solo per denominazione, che non coincide con l'etichetta d'uso corrente: `"Antimafia"` non corrisponde a nulla, la denominazione è *«Commissione d'inchiesta e vigilanza sul fenomeno della mafia e della corruzione in Sicilia»*. Un termine che non aggancia nessuna commissione non produce un dossier vuoto: l'errore elenca le denominazioni della legislatura.
 
+  **`conteggio` è quanto è stato scaricato, `totale` quanti ce ne sono.** Prima esisteva solo il primo, e su `--limit 100` tre sezioni su quattro dicevano `troncato` a 100 senza dire se gli atti fossero 101 o 600: chi usava il dossier per dimensionare un fenomeno non aveva il denominatore. Ora le sezioni servite dall'ISIS lo portano — sulla PRIMA della XVIII, `pareri` 82 e `ddl_assegnati` 637 — e `troncato` compare solo quando `totale > conteggio` (con `--limit 100` i pareri escono 82 su 82, non troncati). Il totale di `ddl_assegnati` è però quello di una **ricerca testuale sull'ordinale**, non dell'elenco degli assegnati: l'archivio dei ddl non espone l'assegnazione come campo, e il report lo dichiara in `note`. `convocazioni` e `sommari` restano senza totale perché il backend `/bd/` che le serve non lo pubblica: meglio il dato assente di una stima dedotta dalle pagine.
+
   _Quando segui i lavori di una commissione specifica, questa è l'unica chiamata che dà il quadro completo invece di 3 ricerche separate._
 
   ```bash
@@ -298,6 +300,33 @@ Attenzione a `ddl iniziative`: **non esiste un flag `--iniziativa`**. Il portale
 ### Nessun argomento posizionale sui comandi di ricerca
 
 Ogni criterio si passa come **flag**. I comandi `*/cerca`, `commissioni convocazioni|sommari` e `biblioteca multimediali` non prendono argomenti posizionali e li rifiutano con un errore: `commissioni sommari cerca --commissione X` è sbagliato (`cerca` non è un sottocomando lì), la forma giusta è `commissioni sommari --commissione X`. Prima venivano accettati e scartati in silenzio, il che faceva credere di aver invocato un comando diverso da quello realmente eseguito.
+
+### La punteggiatura dentro un valore di ricerca: la CLI la toglie e lo dice
+
+Il motore ISIS del portale **non accetta la punteggiatura dentro il valore di un filtro**: non la ignora, rifiuta la ricerca. Misurato il 2026-09-06 sull'archivio ddl, un carattere per volta: `' " , - / . ; : + * ? & ! ( = #` fanno rispondere una pagina d'errore («Impossibile creare la Query»). Passano lettere, cifre, spazio, il troncamento `$` e `%`.
+
+Non è un caso di nicchia: rifiutavano `--iter "Approvato dall'Assemblea"` (il nome dello stato scritto dal portale stesso), `--firmatario "D'Agostino"` (un cognome siciliano), `--testo "dell'ambiente"`, `--materia "sanita'"`, `--testo "COVID-19"`. E il messaggio che arrivava era quello della soglia — «restringi il periodo» — cioè una strada che lì non porta da nessuna parte.
+
+Adesso la CLI **ripulisce il valore prima di spedirlo e dichiara su stderr cosa è partito davvero**: `--firmatario «D'Agostino» è partito come «D Agostino»`. La sostituzione con uno spazio è fedele all'indice, non una resa: il portale indicizza la punteggiatura come separatore di parole, e in un valore di campo lo spazio vale adiacenza. Verificato: `--iter "Approvato dall Assemblea"` torna le stesse 16 righe di `--iter "Assemblea"` sul 2026, mentre `--iter "Assegnato Assemblea"` — due stati veri ma non adiacenti — torna vuoto.
+
+Restano intatti i valori con parentesi (chi le scrive sta scrivendo la propria espressione) e `--isis-query`, che è la via d'uscita per chi vuole comandare la sintassi.
+
+**I due rifiuti del portale ora si distinguono**, e chiedono mosse opposte: `(QR997)` è la soglia, il motore cede sul numero di documenti e restringere il periodo funziona; «non ha potuto costruire la ricerca» è sintassi, e restringere non cambia nulla — la stessa espressione viene rifiutata su nove mesi come su un giorno. In quel caso la CLI non spreca più lo spezzettamento in sottoperiodi.
+
+### `ddl cerca --iter`: filtra sugli stati attraversati, non su quello attuale
+
+Il campo indicizza **tutta la storia** dell'atto. `--iter "Assegnato"` restituisce anche i ddl che l'assegnazione l'hanno passata da un pezzo: il ddl 779, presentato nel 2024, esce da `--iter "Assegnato" --anno 2024` pur essendo molto più avanti. Per lo stato corrente di **un** atto la risposta è `ddl iter <legisl> <numero>`, non questo filtro.
+
+Con questo in mente il filtro risponde alle domande d'insieme, che prima non avevano strada:
+
+```bash
+# quanti ddl la XVIII legislatura ha approvato in Aula
+ars-sicilia-pp-cli ddl cerca --legisl 18 --iter "Approvato dall'Assemblea" --limit 300 --agent   # 112
+# quanti ne sono passati dalla I Commissione
+ars-sicilia-pp-cli ddl cerca --legisl 18 --iter "Assegnato per esame Commissione PRIMA" --limit 300 --agent   # 52
+```
+
+Due avvertenze prima di trarne conclusioni. Il valore è una **locuzione**, non un insieme di parole: dev'essere scritto come lo scrive il portale nell'iter dell'atto (`ddl iter` lo mostra), perché uno spazio vale adiacenza e un termine inventato torna `[]`, indistinguibile da «nessun caso reale». E **l'indice della fonte ritarda sui ddl più recenti**, proprio quelli che interessano a chi segue una notizia: il ddl 1196, assegnato il 05/08/2026, il 06/09/2026 non usciva ancora da `--iter "Assegnato" --anno 2026`. Un elenco che sembra completo e non lo è è il falso segnale peggiore: incrocia con `ddl iter` sugli atti recenti.
 
 ### Il backend `/bd/` tronca le risposte grandi
 

@@ -1,0 +1,13 @@
+{
+  "schema_version": 2,
+  "id": "ars-sicilia-dossier-totale-sezione",
+  "applied_at": "2026-09-06",
+  "base_run_id": "20260528-181840",
+  "base_printing_press_version": "4.30.3",
+  "summary": "Expose the real per-section total in `commissione dossier` where the portal declares it, and derive `troncato` from it instead of guessing.",
+  "reason": "`conteggio` reported the cap applied, not the size of the phenomenon: with --limit 100 three sections out of four said `troncato` at 100, and a reader could not tell whether the acts were 101 or 600 - no denominator for anyone using the dossier to measure a committee's load. The ISIS-served sections carry the total in the session-opening page, a request Count already pays for. The /bd/ sections stay without one: that backend publishes a page count, not a document count, and deriving a total from pages would be an estimate presented as a datum. The `ddl_assegnati` total is that of a text search on the committee ordinal, not of the assignment list - the ddl archive exposes no assignment field - so `note` says so: an undeclared denominator misleads worse than the truncation it replaces.",
+  "files": [
+    "internal/cli/commissione_dossier.go"
+  ],
+  "validated_outcome": "commissione dossier \"PRIMA\" --legisl 18 now reports totale {pareri: 82, ddl_assegnati: 637}; with --limit 100 pareri comes out 82 of 82 and is no longer listed as troncato, while ddl_assegnati is 100 of 637 and is."
+}

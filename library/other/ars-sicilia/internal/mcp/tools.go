@@ -92,7 +92,7 @@ func RegisterTools(s *server.MCPServer) {
 			mcplib.WithString("firmatario", mcplib.Description("Nome o cognome del firmatario.")),
 			mcplib.WithString("materia", mcplib.Description("Materia/settore.")),
 			mcplib.WithString("testo", mcplib.Description("Ricerca testuale libera.")),
-			mcplib.WithString("iter", mcplib.Description("Stato dell'iter (atto/storico).")),
+			mcplib.WithString("iter", mcplib.Description("Stato dell'iter ATTRAVERSATO dall'atto, non quello attuale: il campo indicizza tutta la storia, quindi \"Assegnato\" restituisce anche i ddl che l'assegnazione l'hanno passata da un pezzo. Per lo stato corrente di un atto usa ddl_iter. L'indice della fonte ritarda sui ddl piu' recenti.")),
 			mcplib.WithNumber("limit", mcplib.Description("Max risultati.")),
 			mcplib.WithString("frase", mcplib.Description("Cerca le parole come locuzione, adiacenti e nell'ordine dato. Piu' preciso di testo, che le combina in AND sull'intero documento. Una congiunzione minuscola (\"e\", \"o\") non e' esprimibile come adiacenza: viene scartata allargando la distanza, e la busta lo dichiara.")),
 			mcplib.WithReadOnlyHintAnnotation(true),

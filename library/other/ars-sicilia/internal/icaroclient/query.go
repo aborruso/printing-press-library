@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"unicode"
 )
 
 // BuildQuery turns a friendly param map (CLI flag values) into the ISIS query
@@ -33,7 +34,7 @@ func BuildQuery(arc Archive, params map[string]string, isisRaw string) string {
 	sort.Strings(keys)
 
 	for _, k := range keys {
-		v := strings.TrimSpace(params[k])
+		v, _ := ValoreRipulito(params[k])
 		if v == "" {
 			continue
 		}
@@ -285,4 +286,93 @@ func needsQuoting(v string) bool {
 		}
 	}
 	return false
+}
+
+// ValoreRipulito rende un valore utente digeribile dal parser del portale e
+// dice quali caratteri ha tolto.
+//
+// Il motore ISIS non accetta la punteggiatura dentro il valore di una ricerca:
+// non la ignora, RIFIUTA la query. Misurato sull'archivio ddl il 2026-09-06, un
+// carattere per volta su ITERST, la pagina d'errore dice «Impossibile creare la
+// Query»: ' " , - / . ; : + * ? & ! ( = # . Passano lettere, cifre, spazio, il
+// troncamento `$` (`Assembl$` torna righe) e `%`.
+//
+// Non e' un caso di nicchia: rifiutavano `--iter "Approvato dall'Assemblea"`
+// (il nome dello stato scritto dal portale stesso), `--testo "dell'ambiente"`,
+// `--materia "sanita'"` e `--firmatario "D'Agostino"`, che e' un cognome
+// siciliano. E il rifiuto arrivava all'utente come un problema di soglia, con
+// il consiglio di restringere il periodo: una strada che li' non porta da
+// nessuna parte.
+//
+// La riscrittura e' fedele all'indice, non una resa: il portale indicizza la
+// punteggiatura come separatore di parole, e in un valore di campo lo spazio e'
+// adiacenza. Misurato: `--iter "Approvato dall Assemblea"` torna esattamente le
+// 16 righe di `--iter "Assemblea"` sul 2026, mentre `--iter "Assegnato
+// Assemblea"` — due stati veri ma non adiacenti — torna vuoto; `--firmatario "D
+// Agostino"` torna il ddl 8030, come "Agostino".
+//
+// Due valori restano intatti. Quelli con parentesi, perche' chi le scrive sta
+// scrivendo la propria espressione (stessa convenzione di andJoinWords e
+// adjExpr). E quelli di sola struttura — cifre e `/` — che sono i range di data
+// costruiti dalla CLI (`260101/261231`), non testo dell'utente.
+func ValoreRipulito(v string) (string, []string) {
+	v = strings.TrimSpace(v)
+	if v == "" {
+		return "", nil
+	}
+	if strings.ContainsAny(v, "()") {
+		return v, nil
+	}
+	if soloStruttura(v) {
+		return v, nil
+	}
+	var rimossi []string
+	visto := map[rune]bool{}
+	pulito := strings.Map(func(r rune) rune {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) || unicode.IsSpace(r) || r == '$' || r == '%' {
+			return r
+		}
+		if !visto[r] {
+			visto[r] = true
+			rimossi = append(rimossi, string(r))
+		}
+		return ' '
+	}, v)
+	if len(rimossi) == 0 {
+		return v, nil
+	}
+	return strings.Join(strings.Fields(pulito), " "), rimossi
+}
+
+// soloStruttura riconosce i valori fatti di sole cifre e separatori di data —
+// il range ISIS `260101/261231`, un numero, e anche la forma ISO
+// `2026-07-01:2026-07-31` che normalizeParams non fosse riuscito a convertire.
+// Li' il trattino e i due punti sono sintassi, non punteggiatura da togliere.
+//
+// L'ultimo caso e' una difesa, non un percorso vivo: oggi ogni chiamante passa
+// da normalizeParams. Ma se un domani una data ISO arrivasse qui intatta,
+// ripulirla la trasformerebbe in `2026 07 01 2026 07 31`, cioe' in una query
+// che risponde qualcosa di plausibile invece di essere rifiutata — un errore
+// silenzioso al posto di uno rumoroso, che e' lo scambio peggiore.
+func soloStruttura(v string) bool {
+	for _, r := range v {
+		if !unicode.IsDigit(r) && r != '/' && r != '-' && r != ':' {
+			return false
+		}
+	}
+	return true
+}
+
+// ValoriRipuliti riporta, per una mappa di parametri, i caratteri che
+// ValoreRipulito toglierebbe. Serve al livello CLI per avvisare: la
+// riscrittura avviene dentro BuildQuery, dove non c'e' modo di parlare
+// all'utente (stessa divisione di FraseDegradata).
+func ValoriRipuliti(params map[string]string) (map[string][]string, bool) {
+	out := map[string][]string{}
+	for k, v := range params {
+		if _, rimossi := ValoreRipulito(v); len(rimossi) > 0 {
+			out[k] = rimossi
+		}
+	}
+	return out, len(out) > 0
 }

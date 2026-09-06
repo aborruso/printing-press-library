@@ -153,8 +153,21 @@ type dossierReport struct {
 	// Troncato lists the section labels where Conteggio is a --limit cap,
 	// not the true total: the portal had more matching records than were
 	// fetched. Re-run with a higher --limit to see the rest.
-	Troncato []string         `json:"troncato,omitempty"`
-	Sezioni  []dossierSection `json:"sezioni"`
+	Troncato []string `json:"troncato,omitempty"`
+	// Totale porta, per le sezioni dove il portale lo dichiara, quanti
+	// documenti soddisfano davvero la ricerca — non quanti ne sono stati
+	// scaricati. Senza, `conteggio` a 30 (o a 100 con --limit 100) e' il tetto
+	// applicato, non la dimensione del fenomeno: chi usa il dossier per dire
+	// quanti atti ha in mano una commissione non ha il denominatore.
+	//
+	// C'e' solo per le sezioni ISIS (pareri, ddl_assegnati), dove il totale sta
+	// scritto nella pagina che apre la sessione e costa una richiesta. Le
+	// sezioni /bd/ (convocazioni, sommari) non lo pubblicano: restano fuori
+	// invece di ricevere un numero dedotto dalle pagine, che sarebbe una stima
+	// presentata come un dato.
+	Totale  map[string]int   `json:"totale,omitempty"`
+	Note    string           `json:"note,omitempty"`
+	Sezioni []dossierSection `json:"sezioni"`
 }
 
 // emitCommissioneDossierDryRun elenca le quattro richieste del dossier invece
@@ -219,6 +232,7 @@ func runCommissioneDossier(cmd *cobra.Command, flags *rootFlags, arg string, leg
 		Commissione: arg,
 		Legisl:      legisl,
 		Conteggio:   map[string]int{},
+		Totale:      map[string]int{},
 	}
 
 	// Gli archivi non parlano la stessa lingua: /bd/ (convocazioni, sommari)
@@ -269,6 +283,20 @@ func runCommissioneDossier(cmd *cobra.Command, flags *rootFlags, arg string, leg
 		}
 		report.Sezioni = append(report.Sezioni, s)
 		report.Conteggio[label] = len(s.Risultati)
+		// Il totale vero, dove il portale lo dichiara. Va chiesto DOPO la
+		// ricerca: Count riapre la sessione, e chiederlo prima invaliderebbe
+		// la paginazione appena usata.
+		if !icaro.IsBDArchive(arc.Slug) {
+			if n, cerr := c.Count(ctx, *arc, icaro.SearchOptions{Params: params}); cerr == nil {
+				report.Totale[label] = n
+			}
+		}
+		// `troncato` diceva «il portale ne ha altri», che con il totale in mano
+		// e' una deduzione superflua e, quando il totale coincide col
+		// conteggio, sbagliata.
+		if n, ok := report.Totale[label]; ok {
+			truncated = n > len(s.Risultati)
+		}
 		if truncated {
 			report.Troncato = append(report.Troncato, label)
 		}
@@ -301,6 +329,14 @@ func runCommissioneDossier(cmd *cobra.Command, flags *rootFlags, arg string, leg
 		// report vuoto, che è la risposta corretta alla domanda posta.
 	}
 
+	// Il totale della sezione ddl e' il totale di una ricerca testuale
+	// sull'ordinale, non dell'elenco degli assegnati: l'archivio 221 non espone
+	// l'assegnazione come campo. Un denominatore che non si dichiara per quello
+	// che e' inganna piu' del troncamento che sostituisce.
+	if _, ok := report.Totale["ddl_assegnati"]; ok {
+		report.Note = "il totale di `ddl_assegnati` e' quello di una ricerca testuale sull'ordinale della commissione, non dell'elenco degli assegnati: l'archivio dei ddl non espone l'assegnazione come campo filtrabile. Le sezioni `convocazioni` e `sommari` non hanno totale perche' il backend che le serve non lo pubblica."
+	}
+
 	out := cmd.OutOrStdout()
 	if flags.asJSON || !isTerminal(out) {
 		return printJSONFiltered(out, report, flags)
@@ -315,8 +351,11 @@ func runCommissioneDossier(cmd *cobra.Command, flags *rootFlags, arg string, leg
 	}
 	for _, s := range report.Sezioni {
 		suffix := ""
+		if n, ok := report.Totale[s.Tipo]; ok {
+			suffix = fmt.Sprintf(" su %d", n)
+		}
 		if troncato[s.Tipo] {
-			suffix = " (troncato, aumenta --limit)"
+			suffix += " (troncato, aumenta --limit)"
 		}
 		fmt.Fprintf(out, "[%s] %d risultati%s\n", s.Tipo, len(s.Risultati), suffix)
 		for _, r := range s.Risultati {

@@ -42,13 +42,24 @@ func (e *HTTPRateLimitError) Error() string {
 // cede oltre un certo numero di documenti: su `ddl` intorno ai 460, su
 // `interrogazioni` sul range di legislatura. La soglia dipende dalla densità
 // dell'archivio, quindi non è una costante da scrivere qui: si legge l'errore.
+// Si incontra anche quando l'espressione non e' costruibile — un carattere che
+// il parser non accetta dentro un valore: quello e' un errore di sintassi, non
+// di dimensione, e `Malformata` lo dice (vedi QueryNonCostruibile). Le due
+// mosse sono opposte: sulla soglia si restringe il periodo, sulla sintassi
+// restringere non serve a nulla.
 type QueryFailedError struct {
 	Archive string
 	Query   string
 	Code    string
+	// Malformata: il portale non ha potuto COSTRUIRE la query (sintassi), non
+	// ha ceduto sul numero di documenti.
+	Malformata bool
 }
 
 func (e *QueryFailedError) Error() string {
+	if e.Malformata {
+		return fmt.Sprintf("il portale non ha potuto costruire la ricerca sull'archivio %s: %s", e.Archive, e.Query)
+	}
 	code := e.Code
 	if code == "" {
 		code = "senza codice"
@@ -197,6 +208,13 @@ func (c *Client) Search(ctx context.Context, arc Archive, opts SearchOptions) ([
 	if !errors.As(err, &rifiutata) {
 		return recs, err
 	}
+	// Query non costruibile: e' un errore di sintassi, non di dimensione.
+	// Spezzare il periodo rigioca la stessa espressione su fette piu' piccole e
+	// la fa rifiutare una volta per fetta: una dozzina di richieste per tornare
+	// allo stesso errore.
+	if rifiutata.Malformata {
+		return nil, err
+	}
 	// Il portale ha rifiutato la ricerca. Se a monte c'è un range di date, il
 	// rifiuto dipende da quanti documenti ci stanno dentro: spezzarlo rende la
 	// stessa domanda in pezzi che il motore regge, e le risposte si uniscono.
@@ -313,7 +331,7 @@ func (c *Client) searchIcaro(ctx context.Context, arc Archive, opts SearchOption
 		return nil, err
 	}
 	if code, failed := DetectQueryError(body); failed {
-		return nil, &QueryFailedError{Archive: arc.Slug, Query: expr, Code: code}
+		return nil, &QueryFailedError{Archive: arc.Slug, Query: expr, Code: code, Malformata: QueryNonCostruibile(body)}
 	}
 	maxPages := opts.MaxPages
 	if maxPages <= 0 {
@@ -391,7 +409,7 @@ func (c *Client) Count(ctx context.Context, arc Archive, opts SearchOptions) (in
 		return 0, err
 	}
 	if code, failed := DetectQueryError(body); failed {
-		return 0, &QueryFailedError{Archive: arc.Slug, Query: expr, Code: code}
+		return 0, &QueryFailedError{Archive: arc.Slug, Query: expr, Code: code, Malformata: QueryNonCostruibile(body)}
 	}
 	if n, ok := ParseResultCount(body); ok {
 		return n, nil

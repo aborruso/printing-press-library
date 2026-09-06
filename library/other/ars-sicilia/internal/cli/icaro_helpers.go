@@ -12,6 +12,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -144,7 +145,7 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 		// quel caso avvisa; questa era l'unica a non farlo, ed è il percorso
 		// naturale della domanda «quali leggi nell'anno X».
 		hint := hintLeggiCorte(truncated, mancanti, len(recs), len(leggi), p.LimitLeggi)
-		frHint := fraseHint(p.Params)
+		frHint := uniscoHintPrefissato(fraseHint(p.Params), punteggiaturaHint(p.Params))
 		// Questo ramo ha un hint tutto suo e ritorna prima di warnTruncated:
 		// senza il caso esplicito, `leggi cerca --envelope` sarebbe l'unica
 		// ricerca a non avere la busta, e in silenzio. fraseHint va incluso
@@ -177,6 +178,7 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 	recs = ordinaPerPertinenza(recs, termini)
 	pertHint := pertinenzaHint(recs, termini, arc.Slug, strings.TrimSpace(p.Params["frase"]) != "")
 	frHint := fraseHint(p.Params)
+	puntHint := punteggiaturaHint(p.Params)
 	omonHint := omonimiHint(recs, arc.Slug)
 	spezzHint := spezzatoHint(spezzato)
 	sommHint := sommariHint(truncated, arc.Slug, p.Params, termini)
@@ -187,19 +189,21 @@ func runCerca(cmd *cobra.Command, flags *rootFlags, archiveSlug string, p cercaP
 		// non a togliere l'informazione a chi usa la CLI a mano.
 		warnTruncated(truncated, len(recs), arc.Slug)
 		warnPertinenza(frHint)
+		warnPertinenza(puntHint)
 		warnPertinenza(spezzHint)
 		warnPertinenza(pertHint)
 		warnPertinenza(omonHint)
 		warnPertinenza(sommHint)
 		warnPertinenza(latHint)
 		return emitEnvelope(cmd.OutOrStdout(), flatRecords(recs, firm), truncated,
-			uniscoHint(truncatedHint(truncated, len(recs), arc.Slug), frHint, spezzHint, pertHint, omonHint, sommHint, latHint), flags)
+			uniscoHint(truncatedHint(truncated, len(recs), arc.Slug), frHint, puntHint, spezzHint, pertHint, omonHint, sommHint, latHint), flags)
 	}
 	if err := emitRecords(cmd, flags, *arc, recs, firm); err != nil {
 		return err
 	}
 	warnTruncated(truncated, len(recs), arc.Slug)
 	warnPertinenza(frHint)
+	warnPertinenza(puntHint)
 	warnPertinenza(spezzHint)
 	warnPertinenza(pertHint)
 	warnPertinenza(omonHint)
@@ -273,10 +277,60 @@ func spezzatoHint(spezzato bool) string {
 // un codice del motore e non sa che la strada è restringere il periodo — che è
 // l'unica cosa che qui funziona, perché la soglia è sul numero di documenti.
 func rifiutoHint(err error) string {
-	if rifiutata := new(icaro.QueryFailedError); !errors.As(err, &rifiutata) {
+	rifiutata := new(icaro.QueryFailedError)
+	if !errors.As(err, &rifiutata) {
 		return ""
 	}
+	// Due rifiuti, due mosse. Sulla sintassi restringere il periodo non serve:
+	// la stessa espressione viene rifiutata su nove mesi come su un giorno, e
+	// mandarci l'utente e' mandarlo in un vicolo cieco (misurato il 2026-09-06
+	// su `--iter "Approvato dall'Assemblea"`).
+	if rifiutata.Malformata {
+		return "il portale non ha potuto costruire la ricerca: c'è un carattere che il suo motore non accetta dentro un valore. Restringere il periodo non cambia nulla. Il motore accetta lettere, cifre, spazio e il troncamento `$`: togli la punteggiatura dal valore, oppure scrivi l'espressione a mano con --isis-query."
+	}
 	return "il portale ha rifiutato la ricerca: cede oltre un certo numero di documenti, e la soglia cambia da archivio ad archivio. Restringi il periodo (--data su una finestra più corta) o aggiungi un filtro che riduca i documenti."
+}
+
+// punteggiaturaHint dichiara la riscrittura fatta da icaro.ValoreRipulito.
+//
+// Il valore che parte non e' quello scritto dall'utente, e chi legge deve poter
+// rifare la query a mano: senza questo avviso la CLI consegnerebbe i risultati
+// di una domanda leggermente diversa da quella posta, in silenzio — lo stesso
+// difetto che fraseHint esiste per chiudere.
+func punteggiaturaHint(params map[string]string) string {
+	rimossi, presenti := icaro.ValoriRipuliti(params)
+	if !presenti {
+		return ""
+	}
+	flag := make([]string, 0, len(rimossi))
+	for k := range rimossi {
+		flag = append(flag, k)
+	}
+	sort.Strings(flag)
+	var pezzi []string
+	for _, k := range flag {
+		pulito, _ := icaro.ValoreRipulito(params[k])
+		pezzi = append(pezzi, fmt.Sprintf("--%s «%s» è partito come «%s»", k, strings.TrimSpace(params[k]), pulito))
+	}
+	return fmt.Sprintf(
+		"hint: il motore del portale rifiuta la punteggiatura dentro un valore, quindi %s (%s sostituiti da spazio). Non è una resa: il portale indicizza la punteggiatura come separatore di parole, e in un valore di campo lo spazio vale adiacenza. Per scrivere l'espressione a mano usa --isis-query.",
+		strings.Join(pezzi, "; "), caratteriHint(rimossi))
+}
+
+// caratteriHint nomina i caratteri tolti, una volta ciascuno e in ordine.
+func caratteriHint(rimossi map[string][]string) string {
+	visto := map[string]bool{}
+	var uniq []string
+	for _, cs := range rimossi {
+		for _, c := range cs {
+			if !visto[c] {
+				visto[c] = true
+				uniq = append(uniq, c)
+			}
+		}
+	}
+	sort.Strings(uniq)
+	return strings.Join(virgolette(uniq), ", ")
 }
 
 // uniscoHint concatena gli avvisi non vuoti in un unico campo `hint`: la busta
@@ -290,6 +344,18 @@ func uniscoHint(parts ...string) string {
 		}
 	}
 	return strings.Join(out, " ")
+}
+
+// uniscoHintPrefissato unisce avvisi gia' pronti per stderr tenendo un solo
+// prefisso `hint: `. Serve dove lo stesso valore va sia su stderr sia dentro
+// uniscoHint (che il prefisso lo toglie): due avvisi concatenati devono
+// leggersi come una riga sola, non come «hint: ... hint: ...».
+func uniscoHintPrefissato(parts ...string) string {
+	unito := uniscoHint(parts...)
+	if unito == "" {
+		return ""
+	}
+	return "hint: " + unito
 }
 
 func warnPertinenza(hint string) {
@@ -308,7 +374,11 @@ func warnPertinenza(hint string) {
 // diverso da quel che prometteva; la differenza fra prima e adesso è che
 // adesso lo dice, e dice dove sta la via esatta.
 func fraseHint(params map[string]string) string {
-	v := strings.TrimSpace(params["frase"])
+	// Il valore da cui partire e' quello RIPULITO, non quello scritto: la
+	// punteggiatura viene tolta prima che adjJoinWords costruisca
+	// l'espressione, e descrivere la degradazione sul valore grezzo
+	// annuncerebbe una query che nessuno ha eseguito.
+	v, _ := icaro.ValoreRipulito(params["frase"])
 	if v == "" {
 		return ""
 	}
