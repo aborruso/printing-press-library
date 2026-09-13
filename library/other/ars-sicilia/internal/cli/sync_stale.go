@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"sort"
 	"time"
@@ -63,7 +64,11 @@ func runSyncStale(cmd *cobra.Command, flags *rootFlags, dbPath, maxAge string) e
 	}
 	// sql.Open is lazy and never fails on a missing file: check it here, or a
 	// missing store would read as "never synced" instead of "no store".
-	if fi, statErr := os.Stat(dbPath); statErr != nil || fi.Size() == 0 {
+	fi, statErr := os.Stat(dbPath)
+	if statErr != nil && !errors.Is(statErr, fs.ErrNotExist) {
+		return fmt.Errorf("sync stale: accesso a %s: %w", dbPath, statErr)
+	}
+	if statErr != nil || fi.Size() == 0 {
 		// Print a graceful empty report — first-use case before any sync.
 		report := []staleEntry{}
 		for _, arc := range icaro.All {

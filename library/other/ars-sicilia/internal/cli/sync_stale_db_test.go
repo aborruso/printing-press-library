@@ -97,3 +97,25 @@ func TestSyncStaleHealthyDB(t *testing.T) {
 		t.Fatalf("mozioni: %+v", other)
 	}
 }
+
+// A stat failure other than "does not exist" is an error, not a missing store.
+func TestSyncStaleInaccessiblePathIsAnError(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("root ignores directory permissions")
+	}
+	dir := filepath.Join(t.TempDir(), "locked")
+	if err := os.Mkdir(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	p := filepath.Join(dir, "data.db")
+	if err := os.WriteFile(p, []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(dir, 0o000); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(dir, 0o755) })
+	if _, err := runStaleOn(t, p); err == nil || !strings.Contains(err.Error(), p) {
+		t.Fatalf("atteso errore che citi %s, ottenuto %v", p, err)
+	}
+}
