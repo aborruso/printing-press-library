@@ -17,15 +17,15 @@
   "auth_context": {
     "type": "none"
   },
-  "source_fingerprint": "f3991060dc2aec7fee75a354f55ddb298d5c88102589d68232ee5b23a1975bb2",
+  "source_fingerprint": "9b6e1af254ebcd2feb4e24574c6fd01abca719a30c8f9de8d3a822ce0e74792b",
   "source_files": {
     "cmd/anac-pl-pp-cli/main.go": "db05316a7a76febe3e3382a0d7f6115908c97aa1d4c7a3ef8fc3bac19a9b007e",
     "cmd/anac-pl-pp-mcp/main.go": "36e23730ac42f61498e0a3133debe0a7be367a3086fc19526528e7ddeac79f95",
     "go.mod": "1df3267143b83b7d7c20ffbff37f9802829a81b1ce090c9b7054842998da0059",
     "go.sum": "0852efc65f9a89bb477ae578df41a69fe630feab2567291d2d765ea10e913375",
     "internal/cache/cache.go": "0d25f975bf9429e47a81b4e696e91c36bd6a6e44769f24905227014aac8bc604",
-    "internal/cli/affidamenti.go": "cd777bfa0299b317396c68fc226f514d40ca344aecf6d3492f19411208196ed3",
-    "internal/cli/affidamenti_sort_test.go": "dc9843f4f73a1d5802cff8cd9af8fc96d0d0532351899c26ee05b9a6817f6ae7",
+    "internal/cli/affidamenti.go": "810181345e6a4cd221f5cb0a902adeea443d6e1ca0a439b225fb864eb0d37852",
+    "internal/cli/affidamenti_sort_test.go": "fbbbf4c88b000d4a784ac6181403178df38ccf66bd6711c70f00bd20374681d9",
     "internal/cli/agent_context.go": "740c938ead413ebd3145b702291fc38b9af5a99d6fc78e447d2ef64827f5e67a",
     "internal/cli/anac_idfields.go": "2cf0641d217704fdee11c5d40c7cfb723eaebfabd7866125fb3b1cdae1893d15",
     "internal/cli/analytics.go": "230e7670f78154446cdc8d818da17e0351b069fd541131d8c3bdd38fdbcc9291",

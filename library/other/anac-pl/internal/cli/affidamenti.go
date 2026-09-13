@@ -24,11 +24,14 @@ type affidamentoRow struct {
 	Giurisdizione    string  `json:"giurisdizione"`
 	Gruppo           string  `json:"gruppo"`
 	Importo          float64 `json:"importo"`
-	CIG              string  `json:"cig"`
-	CPV              string  `json:"cpv"`
-	CPVDesc          string  `json:"cpv_desc"`
-	IDAvviso         string  `json:"id_avviso"`
-	IDAppalto        string  `json:"id_appalto"`
+	// ImportoNoto distingue un importo pubblicato, anche zero, da uno assente
+	// o illeggibile, che in Importo vale 0: serve all'ordinamento.
+	ImportoNoto bool   `json:"-"`
+	CIG         string `json:"cig"`
+	CPV         string `json:"cpv"`
+	CPVDesc     string `json:"cpv_desc"`
+	IDAvviso    string `json:"id_avviso"`
+	IDAppalto   string `json:"id_appalto"`
 }
 
 // newAffidamentiCmd appiattisce gli esiti di gara in una tabella analizzabile
@@ -438,6 +441,12 @@ func sortAffidamenti(rows []affidamentoRow, field string, desc bool) {
 	}
 	sort.SliceStable(rows, func(i, j int) bool {
 		if field == "importo" {
+			// Senza importo in fondo in entrambe le direzioni, come i valori
+			// vuoti degli altri campi: altrimenti in ordine crescente il loro
+			// 0 li metterebbe prima di ogni aggiudicazione vera.
+			if rows[i].ImportoNoto != rows[j].ImportoNoto {
+				return rows[i].ImportoNoto
+			}
 			if desc {
 				return rows[i].Importo > rows[j].Importo
 			}
@@ -512,9 +521,10 @@ func flattenAvviso(item map[string]any) []affidamentoRow {
 			code, desc, _ := cpvdata.NormalizeCPV(im["cpv"])
 			vendors := vendorsFrom(im)
 			if len(vendors) == 0 {
+				imp, noto := importoFrom(im, nil)
 				out = append(out, affidamentoRow{
 					Data: data, Committente: comm, CFCommittente: cfComm,
-					Giurisdizione: giurisdizione.Ignota, Importo: importoFrom(im, nil),
+					Giurisdizione: giurisdizione.Ignota, Importo: imp, ImportoNoto: noto,
 					CIG: cig, CPV: code, CPVDesc: desc, IDAvviso: id, IDAppalto: appalto,
 				})
 				continue
@@ -522,12 +532,13 @@ func flattenAvviso(item map[string]any) []affidamentoRow {
 			for _, v := range vendors {
 				name := cleanStr(v.name)
 				g := giurisdizione.Classify(name)
+				imp, noto := importoFrom(im, v.importo)
 				out = append(out, affidamentoRow{
 					Data: data, Committente: comm, CFCommittente: cfComm,
 					Aggiudicatario: name, CFAggiudicatario: cleanStr(v.cf),
 					Giurisdizione: g.Giurisdizione, Gruppo: g.Gruppo,
-					Importo: importoFrom(im, v.importo),
-					CIG:     cig, CPV: code, CPVDesc: desc, IDAvviso: id, IDAppalto: appalto,
+					Importo: imp, ImportoNoto: noto,
+					CIG: cig, CPV: code, CPVDesc: desc, IDAvviso: id, IDAppalto: appalto,
 				})
 			}
 		}
@@ -619,29 +630,29 @@ func templateOf(item map[string]any) map[string]any {
 	return map[string]any{}
 }
 
-func importoFrom(item map[string]any, vendorImp *float64) float64 {
+func importoFrom(item map[string]any, vendorImp *float64) (float64, bool) {
 	if vendorImp != nil {
-		return *vendorImp
+		return *vendorImp, true
 	}
 	// prova i vari nomi campo dei due schemi, in ordine di preferenza
 	for _, k := range []string{"valore_offerta_vincente", "valore_affidamento", "valore_complessivo_stimato"} {
 		switch x := item[k].(type) {
 		case map[string]any:
 			if f, ok := toFloat(x["value"]); ok {
-				return f
+				return f, true
 			}
 			if f, ok := toFloat(x["importo"]); ok {
-				return f
+				return f, true
 			}
 		case nil:
 			// campo assente, prova il prossimo
 		default:
 			if f, ok := toFloat(x); ok {
-				return f
+				return f, true
 			}
 		}
 	}
-	return 0
+	return 0, false
 }
 
 // --- helper generici per JSON eterogeneo ---

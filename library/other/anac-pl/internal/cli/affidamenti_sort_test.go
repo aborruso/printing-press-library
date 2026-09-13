@@ -28,10 +28,11 @@ func TestParseAffidamentiSort(t *testing.T) {
 func TestSortAffidamenti(t *testing.T) {
 	rows := func() []affidamentoRow {
 		return []affidamentoRow{
-			{Data: "2025-03-01", Importo: 50, CIG: "b"},
-			{Data: "", Importo: 10, CIG: "vuota"},
-			{Data: "2024-01-15", Importo: 300, CIG: "a"},
-			{Data: "2025-03-01", Importo: 20, CIG: "c"},
+			{Data: "2025-03-01", Importo: 50, ImportoNoto: true, CIG: "b"},
+			{Data: "", Importo: 10, ImportoNoto: true, CIG: "vuota"},
+			{Data: "2024-01-15", Importo: 300, ImportoNoto: true, CIG: "a"},
+			{Data: "2025-03-01", Importo: 20, ImportoNoto: true, CIG: "c"},
+			{Data: "", Importo: 0, ImportoNoto: false, CIG: "senza"},
 		}
 	}
 	cigs := func(rs []affidamentoRow) string {
@@ -46,11 +47,11 @@ func TestSortAffidamenti(t *testing.T) {
 		desc  bool
 		want  string
 	}{
-		{"", false, "b vuota a c "},        // nessun ordinamento
-		{"data", false, "a b c vuota "},    // stabile a parità di data, vuota in fondo
-		{"data", true, "b c a vuota "},     // vuota in fondo anche in desc
-		{"importo", false, "vuota c b a "}, // numerico, non lessicale
-		{"importo", true, "a b c vuota "},
+		{"", false, "b vuota a c senza "},        // nessun ordinamento
+		{"data", false, "a b c vuota senza "},    // stabile a parità di data, vuote in fondo
+		{"data", true, "b c a vuota senza "},     // vuote in fondo anche in desc
+		{"importo", false, "vuota c b a senza "}, // numerico; senza importo in fondo, non prima
+		{"importo", true, "a b c vuota senza "},
 	}
 	for _, c := range cases {
 		rs := rows()
