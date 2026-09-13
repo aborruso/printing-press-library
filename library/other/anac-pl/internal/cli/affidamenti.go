@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -27,6 +28,7 @@ type affidamentoRow struct {
 	CPV              string  `json:"cpv"`
 	CPVDesc          string  `json:"cpv_desc"`
 	IDAvviso         string  `json:"id_avviso"`
+	IDAppalto        string  `json:"id_appalto"`
 }
 
 // newAffidamentiCmd appiattisce gli esiti di gara in una tabella analizzabile
@@ -36,6 +38,7 @@ type affidamentoRow struct {
 func newAffidamentiCmd(flags *rootFlags) *cobra.Command {
 	var query, tipologia, cpv, cpvExact, cpvCode, from, to, mode, jur string
 	var amountMin, amountMax string
+	var sortField, sortDir string
 	var size, pages int
 	var fromSearch bool
 
@@ -58,6 +61,21 @@ Quell'endpoint non conosce testo libero, importi né tipologia: --query e
 lato client sui risultati scaricati, quindi conviene alzare --pages. Per non
 filtrare per tipologia passa -t "".
 
+Ordinamento (--sort-field/--sort-dir): le chiavi sono le colonne della tabella
+(data, importo, committente, aggiudicatario, cpv, giurisdizione, cig, id_avviso)
+e l'ordine è applicato alle righe estratte. Per 'data' la richiesta arriva anche
+al servizio, così le pagine scaricate sono davvero le prime in quell'ordine: vale
+con --cpv-code e, sulla vecchia ricerca, solo senza --query. Con --query il
+servizio ordina per rilevanza e ignora la richiesta: l'ordine copre allora solo
+le pagine scaricate (--pages x --size), non l'intero archivio.
+
+Doppi invii: la piattaforma pubblica anche gli avvisi mandati due volte dalla
+stazione appaltante (stesso id_appalto, stessa scheda, contenuto identico, a
+pochi secondi di distanza), e qui compaiono come righe uguali con id_avviso
+diverso. Non vengono fusi, perché sullo stesso CIG possono esistere avvisi
+diversi e legittimi (esito, rettifica, ripubblicazione): per riconoscerli
+usa id_appalto insieme a cig, cf_aggiudicatario, importo e data.
+
 Caveat: ANAC non copre i tier gratuiti (es. Workspace for Education) né gli
 affidamenti aggregati via Consip; incrociare con altre fonti (es. MxMap).
 `, "\n"),
@@ -66,6 +84,7 @@ affidamenti aggregati via Consip; incrociare con altre fonti (es. MxMap).
   anac-pl-pp-cli affidamenti --cpv-code 72412000 -t "" --pages 3 --from-search --csv
   anac-pl-pp-cli affidamenti -q microsoft -t esiti --jurisdiction extra-ue
   anac-pl-pp-cli affidamenti -q "google workspace" --pages 3 --json
+  anac-pl-pp-cli affidamenti -q "google workspace" --pages 3 --sort-field data --sort-dir desc --csv
 `, "\n"),
 		Annotations: map[string]string{"mcp:read-only": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -75,6 +94,11 @@ affidamenti aggregati via Consip; incrociare con altre fonti (es. MxMap).
 			if dryRunOK(flags) {
 				fmt.Fprintln(cmd.OutOrStdout(), "would fetch and flatten affidamenti (live)")
 				return nil
+			}
+			sortKey, sortDesc, err := parseAffidamentiSort(sortField, sortDir)
+			if err != nil {
+				_ = cmd.Usage()
+				return usageErr(err)
 			}
 			// --cpv-code usa la ricerca avanzata, che accetta solo date, CPV e
 			// stazione appaltante: gli altri filtri non hanno un equivalente.
@@ -119,6 +143,14 @@ affidamenti aggregati via Consip; incrociare con altre fonti (es. MxMap).
 			}
 			if to != "" {
 				base["dataPubblicazioneEnd"] = to
+			}
+			// La vecchia ricerca onora sortField/sortDirection solo senza
+			// keywords (misurato il 04/09/2026: con testo libero asc e desc
+			// restituiscono le stesse pagine, per rilevanza). Li si manda
+			// quindi solo quando servono a qualcosa.
+			if sortKey == "data" && query == "" {
+				base["sortField"] = "dataPubblicazione"
+				base["sortDirection"] = sortDirParam(sortDesc)
 			}
 			if tipologia != "" {
 				tpl, ok := resolveTipologia(tipologia)
@@ -182,6 +214,9 @@ affidamenti aggregati via Consip; incrociare con altre fonti (es. MxMap).
 					cpvExactAuto = true
 				}
 				sp := specializzataParams(cpvCode, "", "", from, to, false, size)
+				if sortKey == "data" {
+					sp["sortDirection"] = sortDirParam(sortDesc)
+				}
 				items, _, err := fetchSpecializzata(cmd.Context(), c, sp, pages)
 				if err != nil {
 					return classifyAPIError(err, flags)
@@ -305,6 +340,10 @@ affidamenti aggregati via Consip; incrociare con altre fonti (es. MxMap).
 				rows = kept
 			}
 
+			// Ultimo passo: un avviso genera più righe (lotto x aggiudicatario)
+			// e il servizio sa ordinare solo gli avvisi.
+			sortAffidamenti(rows, sortKey, sortDesc)
+
 			return emitAffidamenti(cmd, flags, rows)
 		},
 	}
@@ -323,7 +362,96 @@ affidamenti aggregati via Consip; incrociare con altre fonti (es. MxMap).
 	f.IntVar(&size, "size", 20, "Risultati per pagina")
 	f.IntVar(&pages, "pages", 1, "Numero di pagine da scaricare")
 	f.BoolVar(&fromSearch, "from-search", false, "Appiattisci dai risultati di ricerca senza scaricare il dettaglio per record (molto più veloce)")
+	f.StringVar(&sortField, "sort-field", "", "Colonna di ordinamento: "+strings.Join(affidamentiSortFields, ", "))
+	f.StringVar(&sortDir, "sort-dir", "", "Direzione ordinamento: ASC (default) o DESC")
 	return cmd
+}
+
+// affidamentiSortFields sono le colonne su cui si può ordinare: gli stessi
+// nomi dell'intestazione CSV e delle chiavi JSON.
+var affidamentiSortFields = []string{"data", "importo", "committente", "aggiudicatario", "cpv", "giurisdizione", "cig", "id_avviso", "id_appalto"}
+
+// parseAffidamentiSort valida --sort-field/--sort-dir. Campo vuoto = nessun
+// ordinamento; la direzione da sola non basta.
+func parseAffidamentiSort(field, dir string) (string, bool, error) {
+	field = strings.ToLower(strings.TrimSpace(field))
+	dir = strings.ToUpper(strings.TrimSpace(dir))
+	if field == "" {
+		if dir != "" {
+			return "", false, fmt.Errorf("--sort-dir richiede --sort-field")
+		}
+		return "", false, nil
+	}
+	ok := false
+	for _, f := range affidamentiSortFields {
+		if f == field {
+			ok = true
+			break
+		}
+	}
+	if !ok {
+		return "", false, fmt.Errorf("--sort-field %q non valido; usa uno di: %s", field, strings.Join(affidamentiSortFields, ", "))
+	}
+	switch dir {
+	case "", "ASC":
+		return field, false, nil
+	case "DESC":
+		return field, true, nil
+	}
+	return "", false, fmt.Errorf("--sort-dir deve essere ASC o DESC")
+}
+
+func sortDirParam(desc bool) string {
+	if desc {
+		return "desc"
+	}
+	return "asc"
+}
+
+// sortAffidamenti ordina le righe sul campo scelto. Stabile, così a parità di
+// chiave resta l'ordine del servizio. I valori vuoti vanno in fondo in
+// entrambe le direzioni: una data mancante non è "la più vecchia".
+func sortAffidamenti(rows []affidamentoRow, field string, desc bool) {
+	if field == "" {
+		return
+	}
+	key := func(r affidamentoRow) string {
+		switch field {
+		case "data":
+			return r.Data
+		case "committente":
+			return r.Committente
+		case "aggiudicatario":
+			return r.Aggiudicatario
+		case "cpv":
+			return r.CPV
+		case "giurisdizione":
+			return r.Giurisdizione
+		case "cig":
+			return r.CIG
+		case "id_avviso":
+			return r.IDAvviso
+		case "id_appalto":
+			return r.IDAppalto
+		}
+		return ""
+	}
+	sort.SliceStable(rows, func(i, j int) bool {
+		if field == "importo" {
+			if desc {
+				return rows[i].Importo > rows[j].Importo
+			}
+			return rows[i].Importo < rows[j].Importo
+		}
+		a, b := key(rows[i]), key(rows[j])
+		if (a == "") != (b == "") {
+			return a != ""
+		}
+		if desc {
+			return a > b
+		}
+		return a < b
+	})
 }
 
 func emitAffidamenti(cmd *cobra.Command, flags *rootFlags, rows []affidamentoRow) error {
@@ -332,9 +460,9 @@ func emitAffidamenti(cmd *cobra.Command, flags *rootFlags, rows []affidamentoRow
 	}
 	if flags.csv {
 		w := csv.NewWriter(cmd.OutOrStdout())
-		_ = w.Write([]string{"data", "committente", "cf_committente", "aggiudicatario", "cf_aggiudicatario", "giurisdizione", "gruppo", "importo", "cig", "cpv", "cpv_desc", "id_avviso"})
+		_ = w.Write([]string{"data", "committente", "cf_committente", "aggiudicatario", "cf_aggiudicatario", "giurisdizione", "gruppo", "importo", "cig", "cpv", "cpv_desc", "id_avviso", "id_appalto"})
 		for _, r := range rows {
-			_ = w.Write([]string{r.Data, r.Committente, r.CFCommittente, r.Aggiudicatario, r.CFAggiudicatario, r.Giurisdizione, r.Gruppo, formatImporto(r.Importo), r.CIG, r.CPV, r.CPVDesc, r.IDAvviso})
+			_ = w.Write([]string{r.Data, r.Committente, r.CFCommittente, r.Aggiudicatario, r.CFAggiudicatario, r.Giurisdizione, r.Gruppo, formatImporto(r.Importo), r.CIG, r.CPV, r.CPVDesc, r.IDAvviso, r.IDAppalto})
 		}
 		w.Flush()
 		return w.Error()
@@ -363,6 +491,7 @@ func emitAffidamenti(cmd *cobra.Command, flags *rootFlags, rows []affidamentoRow
 // flattenAvviso estrae le righe (lotto × aggiudicatario) da un avviso.
 func flattenAvviso(item map[string]any) []affidamentoRow {
 	id, _ := item["idAvviso"].(string)
+	appalto, _ := item["idAppalto"].(string)
 	data, _ := item["dataPubblicazione"].(string)
 	if len(data) >= 10 {
 		data = data[:10]
@@ -386,7 +515,7 @@ func flattenAvviso(item map[string]any) []affidamentoRow {
 				out = append(out, affidamentoRow{
 					Data: data, Committente: comm, CFCommittente: cfComm,
 					Giurisdizione: giurisdizione.Ignota, Importo: importoFrom(im, nil),
-					CIG: cig, CPV: code, CPVDesc: desc, IDAvviso: id,
+					CIG: cig, CPV: code, CPVDesc: desc, IDAvviso: id, IDAppalto: appalto,
 				})
 				continue
 			}
@@ -398,7 +527,7 @@ func flattenAvviso(item map[string]any) []affidamentoRow {
 					Aggiudicatario: name, CFAggiudicatario: cleanStr(v.cf),
 					Giurisdizione: g.Giurisdizione, Gruppo: g.Gruppo,
 					Importo: importoFrom(im, v.importo),
-					CIG:     cig, CPV: code, CPVDesc: desc, IDAvviso: id,
+					CIG:     cig, CPV: code, CPVDesc: desc, IDAvviso: id, IDAppalto: appalto,
 				})
 			}
 		}
