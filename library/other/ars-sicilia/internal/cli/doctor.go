@@ -154,6 +154,9 @@ func newDoctorCmd(flags *rootFlags) *cobra.Command {
 				report["config"] = fmt.Sprintf("error: %s", err)
 			} else {
 				report["config"] = "ok"
+				if _, statErr := os.Stat(cfg.Path); statErr != nil {
+					report["config"] = "ok (no config file, defaults in use)"
+				}
 				report["config_path"] = cfg.Path
 				report["base_url"] = cfg.BaseURL
 			}
