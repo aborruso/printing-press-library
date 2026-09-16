@@ -136,11 +136,28 @@ func Count() int { return len(entries) }
 // without the "-N" check digit; only the 8-digit base is matched.
 func Get(code string) (Entry, bool) {
 	code = strings.TrimSpace(code)
-	if i := strings.IndexByte(code, '-'); i >= 0 {
-		code = code[:i]
+	if strings.Contains(code, "-") {
+		c, ok := CodiceConControllo(code)
+		if !ok {
+			return Entry{}, false
+		}
+		code = c
 	}
 	e, ok := byCode[code]
 	return e, ok
+}
+
+// CodiceConControllo riconosce la forma ufficiale del codice con la cifra di
+// controllo, esattamente 8 cifre, trattino e una cifra (30213000-5), e
+// restituisce il codice a 8 cifre. Varianti come 30213000-55 o 302-5 non sono
+// codici: accettarle troncando il suffisso trasformerebbe un errore in una
+// ricerca più ampia di quella chiesta.
+func CodiceConControllo(s string) (string, bool) {
+	s = strings.TrimSpace(s)
+	if len(s) != 10 || s[8] != '-' || !allDigits(s[:8]) || !allDigits(s[9:]) {
+		return "", false
+	}
+	return s[:8], true
 }
 
 // Search returns entries matching the query. A purely numeric query matches by
@@ -154,8 +171,8 @@ func Search(query string, limit int) []Entry {
 	}
 	// Un codice con la cifra di controllo (30213000-5) è ancora una ricerca
 	// per codice: senza questo passaggio finiva fra le parole e non trovava nulla.
-	if i := strings.IndexByte(query, '-'); i > 0 && allDigits(query[:i]) && allDigits(query[i+1:]) {
-		query = query[:i]
+	if c, ok := CodiceConControllo(query); ok {
+		query = c
 	}
 	tokens := strings.Fields(strings.ToLower(query))
 	numericPrefix := allDigits(query)

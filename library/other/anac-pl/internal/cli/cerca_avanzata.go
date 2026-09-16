@@ -223,7 +223,7 @@ Per quelli usa 'cerca' (il cui filtro CPV però non è selettivo).
 	f := cmd.Flags()
 	f.StringVar(&cpv, "cpv", "", "Codice CPV o suo prefisso (2-8 cifre), anche con la cifra di controllo (30213000-5); più valori separati da virgola (in OR)")
 	f.StringVar(&sa, "sa", "", "Codice fiscale della stazione appaltante")
-	f.StringVar(&categorie, "categorie", "", "Categoria lavori come la espone ANAC, spazio compreso (es. \"OG 1\", \"FS\"); i 56 valori ammessi sono in /api/v0/lavori?request=visible. Valorizzata solo sugli avvisi da luglio 2026")
+	f.StringVar(&categorie, "categorie", "", "Categoria lavori come la espone ANAC, spazio compreso (es. \"OG 1\", \"FS\"); i 55 valori ammessi sono in /api/v0/lavori?request=visible. Valorizzata solo sugli avvisi dal 09/07/2026")
 	f.StringVar(&from, "from", "", "Data pubblicazione minima GG/MM/AAAA (default 01/01/2024)")
 	f.StringVar(&to, "to", "", "Data pubblicazione massima GG/MM/AAAA (default oggi)")
 	f.BoolVar(&or, "or", false, "Combina i filtri in OR anziché in AND (ha senso con almeno due filtri fra --cpv, --sa, --categorie)")

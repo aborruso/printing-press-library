@@ -17,7 +17,7 @@
   "auth_context": {
     "type": "none"
   },
-  "source_fingerprint": "5643f5288457774cb0aa89926f9eeb73174c279dbb68079451193591f00e6d2b",
+  "source_fingerprint": "fc4ddd252efbed2b9247fd460347274f8527ebff390985cdb33cfcc8ee3e7c4c",
   "source_files": {
     "cmd/anac-pl-pp-cli/main.go": "db05316a7a76febe3e3382a0d7f6115908c97aa1d4c7a3ef8fc3bac19a9b007e",
     "cmd/anac-pl-pp-mcp/main.go": "36e23730ac42f61498e0a3133debe0a7be367a3086fc19526528e7ddeac79f95",
@@ -36,7 +36,7 @@
     "internal/cli/avvisi_get.go": "ba74632923f674e3c1f3d40f921356f981b629e929caf497703be352171c114c",
     "internal/cli/avvisi_search.go": "55e84261c3fb17ab32c1946283e998a2fc8e0580a02f431a2bdaae5cc7c55362",
     "internal/cli/cerca.go": "64a0b506324e2adb6e8085f7349909d68e1b777948bbbab2b9c4a85699c940e7",
-    "internal/cli/cerca_avanzata.go": "9f80910bd4680a3a30e35343986e6451204439de149dca9fc18ad30352694124",
+    "internal/cli/cerca_avanzata.go": "9cacad54df8e5af90dbf6909a6ba93ad7a80382cf31ffd4a918d9880dd1b1cc6",
     "internal/cli/cerca_avanzata_test.go": "bad3d3465e5bf5afab243af37e693f1bf1516d5cc47f0a7665bfa9491b09852f",
     "internal/cli/channel_workflow.go": "d4ee20d17b6af4b80a546aba44da870e30a18c70df4b48c27dcdbbaad8b48b71",
     "internal/cli/cpv.go": "b7bf6b299ca5605e6d47afecf5d044cce5a737bd73db36986cd1d206b4aa923d",
@@ -87,8 +87,8 @@
     "internal/cliutil/useragent_test.go": "36717c359d98f4b18dd449d426ed8dc6a2782c409c176447afece64f99f459b0",
     "internal/cliutil/verifyenv.go": "6be7eb30c5a1ded54a8d7608a0d3ccee55d00ab787413b3ac7944fd927779a0f",
     "internal/config/config.go": "a502dfa8f96a4c23f9fc32c8c6f12d6f2e8a0c837e276c398a952d99d9f4df54",
-    "internal/cpvdata/cpvdata.go": "525427a1610a9143a286ffd437dec121437409a9bee7a950f66cef4e0ebd458a",
-    "internal/cpvdata/cpvdata_test.go": "2a36464a0d872d25f661e03502505be6eb168a5b9e9ffea22a27541b25c7e210",
+    "internal/cpvdata/cpvdata.go": "817c4f8ccf59638c42cd776f65fbb3f96bb6e859611cec54bf63c35871560ecc",
+    "internal/cpvdata/cpvdata_test.go": "9f1b8072dfdb26d1cdc49e7b29381a69dd867ddc1e85e52c50b44809f10601f4",
     "internal/giurisdizione/giurisdizione.go": "1c4c8cb58fc031f4d7c1eeff78618d9a558ed29869dd015fc757f216a7fd2149",
     "internal/giurisdizione/giurisdizione_test.go": "ca2824afd28689756bc0b424958131474fef1b60fac8c3405e0029ec10b8dc0f",
     "internal/mcp/avvisi_validazione.go": "29fe0a62949efa9a38c9fb296b9de63885909e98511d6b4038ace6c6b205c25c",

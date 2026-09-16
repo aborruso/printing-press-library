@@ -118,6 +118,13 @@ Per una frase esatta c'è la corrispondenza esatta del portale: `cerca --mode es
 anac-pl-pp-cli cerca -q "data visualization" --mode esatta -t affidamenti-diretti
 ```
 
+## Elenchi di riferimento di ANAC
+
+ANAC pubblica le tipologiche della Piattaforma Contratti Pubblici nel repository [anticorruzione/npa](https://github.com/anticorruzione/npa). Due servono direttamente alla ricerca avanzata:
+
+- [codici CPV](https://github.com/anticorruzione/npa/blob/main/docs/modello-dati/tipologiche/CPV.json): 9.454 codici, con descrizione in italiano e in inglese. È l'elenco a cui rimanda la finestra informativa del campo CPV della ricerca avanzata, e il vocabolario incluso nella CLI (`cpv search`, `cpv get`) coincide con questo.
+- [categorie](https://github.com/anticorruzione/npa/blob/main/docs/modello-dati/tipologiche/categoria.json): le categorie di qualificazione dei lavori (OG, OS), le forniture di beni (FB) e di servizi (FS), e le stazioni appaltanti con sistema di qualificazione proprio (AA). Sono i valori di `cerca-avanzata --categorie`. Nel file compaiono anche `999` (categoria non definita), che la ricerca non propone, e `OS 29` due volte: il servizio ne espone 55, senza duplicati.
+
 ## Doppi invii: righe uguali con `id_avviso` diverso
 
 La piattaforma pubblica ciò che riceve, compresi gli avvisi che una stazione appaltante manda due volte a pochi secondi di distanza: due `idAvviso` distinti, stesso `idAppalto`, stessa scheda, contenuto identico. In `affidamenti` compaiono come righe uguali con `id_avviso` diverso. Non vengono fuse, perché sullo stesso CIG esistono anche avvisi diversi e legittimi (esito, rettifica, ripubblicazione, due notice TED per lo stesso accordo quadro). La chiave per riconoscere i doppi invii è `id_appalto` insieme a `cig`, `cf_aggiudicatario`, `importo` e `data`:
