@@ -106,8 +106,17 @@ affidamenti aggregati via Consip; incrociare con altre fonti (es. MxMap).
 			// --cpv-code usa la ricerca avanzata, che accetta solo date, CPV e
 			// stazione appaltante: gli altri filtri non hanno un equivalente.
 			wantTipologia := ""
+			// --cpv-exact filtra le righe per prefisso di codice: un valore
+			// malformato come 302-5, ridotto a 302, allargherebbe il filtro
+			// invece di restringerlo, quindi lo si respinge come --cpv-code.
+			if cpvExact != "" {
+				if err := validateCPVFilter("--cpv-exact", cpvExact); err != nil {
+					_ = cmd.Usage()
+					return usageErr(err)
+				}
+			}
 			if cpvCode != "" {
-				if err := validateCPVFilter(cpvCode); err != nil {
+				if err := validateCPVFilter("--cpv-code", cpvCode); err != nil {
 					_ = cmd.Usage()
 					return usageErr(err)
 				}

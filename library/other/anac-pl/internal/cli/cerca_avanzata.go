@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"github.com/mvanhorn/printing-press-library/library/other/anac-pl/internal/cpvdata"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -162,7 +163,7 @@ Per quelli usa 'cerca' (il cui filtro CPV però non è selettivo).
 				_ = cmd.Usage()
 				return usageErr(fmt.Errorf("serve almeno un filtro: --cpv, --sa o --categorie"))
 			}
-			if err := validateCPVFilter(cpv); err != nil {
+			if err := validateCPVFilter("--cpv", cpv); err != nil {
 				_ = cmd.Usage()
 				return usageErr(err)
 			}
@@ -240,7 +241,7 @@ Per quelli usa 'cerca' (il cui filtro CPV però non è selettivo).
 // no. I risultati restituiti sono pertinenti; è il conteggio a non esserlo, ma
 // per una ragione che non dipende dalla lunghezza del prefisso — vedi
 // warnConteggioSottostimato.
-func validateCPVFilter(cpv string) error {
+func validateCPVFilter(flag, cpv string) error {
 	if strings.TrimSpace(cpv) == "" {
 		return nil
 	}
@@ -259,19 +260,19 @@ func validateCPVFilter(cpv string) error {
 			base = t[:i]
 			check := t[i+1:]
 			if len(check) != 1 || check[0] < '0' || check[0] > '9' {
-				return fmt.Errorf("--cpv: dopo il trattino serve la sola cifra di controllo (es. 30213000-5), non %q", t)
+				return fmt.Errorf("%s: dopo il trattino serve la sola cifra di controllo (es. 30213000-5), non %q", flag, t)
 			}
 			if len(base) != 8 {
-				return fmt.Errorf("--cpv: la cifra di controllo vale solo col codice completo a 8 cifre (es. 30213000-5); con un prefisso come %q il servizio non restituisce nulla", t)
+				return fmt.Errorf("%s: la cifra di controllo vale solo col codice completo a 8 cifre (es. 30213000-5); con un prefisso come %q il servizio non restituisce nulla", flag, t)
 			}
 		}
 		for _, r := range base {
 			if r < '0' || r > '9' {
-				return fmt.Errorf("--cpv accetta solo codici numerici (%q non lo è); per cercare una descrizione usa 'cpv search'", t)
+				return fmt.Errorf("%s accetta solo codici numerici (%q non lo è); per cercare una descrizione usa 'cpv search'", flag, t)
 			}
 		}
 		if len(base) < 2 || len(base) > 8 {
-			return fmt.Errorf("--cpv: ogni valore deve avere da 2 a 8 cifre (%q ne ha %d)", t, len(base))
+			return fmt.Errorf("%s: ogni valore deve avere da 2 a 8 cifre (%q ne ha %d)", flag, t, len(base))
 		}
 	}
 	return nil
@@ -341,16 +342,23 @@ func codiciCPV(cpv string) []string {
 	return out
 }
 
-// cpvDeiLotti raccoglie i CPV dei lotti di un avviso, come li espone l'API
-// (a volte descrizione, a volte codice). Serve a mostrare in tabella perché un
-// avviso è stato restituito: il portale questa informazione non la dà.
+// cpvDeiLotti raccoglie i CPV dei lotti di un avviso. L'API li espone in forme
+// diverse (descrizione, codice, e nel dettaglio "codice_descrizione"): qui si
+// mostra il codice quando si ricava dal vocabolario, altrimenti il valore così
+// com'è. Serve a vedere in tabella perché un avviso è stato restituito.
 func cpvDeiLotti(item map[string]any) []string {
 	var out []string
 	seen := map[string]bool{}
 	for _, sec := range asArr(templateOf(item)["sections"]) {
 		sm := asMap(sec)
 		for _, it := range asArr(sm["items"]) {
-			v := strings.TrimSpace(fmt.Sprint(asMap(it)["cpv"]))
+			raw := asMap(it)["cpv"]
+			v := strings.TrimSpace(fmt.Sprint(raw))
+			if code, desc, ok := cpvdata.NormalizeCPV(raw); ok && code != "" {
+				v = code
+			} else if ok && desc != "" {
+				v = desc
+			}
 			if v == "" || v == "<nil>" || seen[v] {
 				continue
 			}

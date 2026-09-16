@@ -30,6 +30,7 @@ func TestNormalizeCPV(t *testing.T) {
 		{"codice_descrizione (dettaglio avviso da settembre 2026)", "72412000_Fornitori di servizi di posta elettronica", "72412000", true},
 		{"codice con cifra di controllo e descrizione", "72412000-9_Fornitori di servizi di posta elettronica", "72412000", true},
 		{"descrizione con trattino basso, senza codice", "servizi_vari", "", true},
+		{"oggetto con cifra di controllo", map[string]any{"codice": "30213000-5", "descrizione": ""}, "30213000", true},
 		{"stringa vuota", "", "", false},
 		{"tipo non gestito", 42, "", false},
 	}
@@ -59,5 +60,13 @@ func TestSearchTrovaPerParola(t *testing.T) {
 	}
 	if len(res) > 10 {
 		t.Errorf("limit non rispettato: %d risultati", len(res))
+	}
+}
+
+func TestSearchConCifraDiControllo(t *testing.T) {
+	a := Search("30213000", 0)
+	b := Search("30213000-5", 0)
+	if len(a) == 0 || len(a) != len(b) || a[0].Code != b[0].Code {
+		t.Errorf("Search con cifra di controllo: %v; senza: %v", b, a)
 	}
 }

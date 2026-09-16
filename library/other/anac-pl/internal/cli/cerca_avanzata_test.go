@@ -23,7 +23,7 @@ func TestValidateCPVFilter(t *testing.T) {
 		{"302130001", true},             // più di 8 cifre senza trattino
 	}
 	for _, c := range cases {
-		err := validateCPVFilter(c.in)
+		err := validateCPVFilter("--cpv", c.in)
 		if (err != nil) != c.wantErr {
 			t.Errorf("validateCPVFilter(%q) err=%v; wantErr=%v", c.in, err, c.wantErr)
 		}

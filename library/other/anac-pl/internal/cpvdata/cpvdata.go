@@ -53,6 +53,9 @@ func NormalizeCPV(v any) (string, string, bool) {
 	case map[string]any:
 		code, _ := x["codice"].(string)
 		desc, _ := x["descrizione"].(string)
+		if i := strings.IndexByte(code, '-'); i >= 0 {
+			code = code[:i] // cifra di controllo, come nel caso stringa
+		}
 		if code == "" && desc != "" {
 			if c, ok := byDesc[normDesc(desc)]; ok {
 				code = c
@@ -148,6 +151,11 @@ func Search(query string, limit int) []Entry {
 	query = strings.TrimSpace(query)
 	if query == "" {
 		return nil
+	}
+	// Un codice con la cifra di controllo (30213000-5) è ancora una ricerca
+	// per codice: senza questo passaggio finiva fra le parole e non trovava nulla.
+	if i := strings.IndexByte(query, '-'); i > 0 && allDigits(query[:i]) && allDigits(query[i+1:]) {
+		query = query[:i]
 	}
 	tokens := strings.Fields(strings.ToLower(query))
 	numericPrefix := allDigits(query)
