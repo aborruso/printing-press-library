@@ -137,7 +137,6 @@ A differenza di 'cerca', qui il CPV è un vero filtro sul codice del lotto:
   --cpv 30213000     codice completo
   --cpv 30213000-5   codice completo con la cifra di controllo, come negli atti
   --cpv 30213        prefisso: tutta la famiglia
-  --cpv 45           divisione CPV (il portale dichiara min 3 cifre, l'API accetta 2)
   --cpv 302,4512     più valori separati da virgola, in OR fra loro
 
 Le date sono obbligatorie lato API: se non le passi vengono usate 01/01/2024
@@ -163,7 +162,7 @@ Per quelli usa 'cerca' (il cui filtro CPV però non è selettivo).
 				_ = cmd.Usage()
 				return usageErr(fmt.Errorf("serve almeno un filtro: --cpv, --sa o --categorie"))
 			}
-			if err := validateCPVFilter("--cpv", cpv); err != nil {
+			if err := validateCPVFilter("--cpv", cpv, 3); err != nil {
 				_ = cmd.Usage()
 				return usageErr(err)
 			}
@@ -221,7 +220,7 @@ Per quelli usa 'cerca' (il cui filtro CPV però non è selettivo).
 	}
 
 	f := cmd.Flags()
-	f.StringVar(&cpv, "cpv", "", "Codice CPV o suo prefisso (2-8 cifre), anche con la cifra di controllo (30213000-5); più valori separati da virgola (in OR)")
+	f.StringVar(&cpv, "cpv", "", "Codice CPV o suo prefisso (3-8 cifre), anche con la cifra di controllo (30213000-5); più valori separati da virgola (in OR)")
 	f.StringVar(&sa, "sa", "", "Codice fiscale della stazione appaltante")
 	f.StringVar(&categorie, "categorie", "", "Categoria lavori come la espone ANAC, spazio compreso (es. \"OG 1\", \"FS\"); i 55 valori ammessi sono in /api/v0/lavori?request=visible. Valorizzata solo sugli avvisi dal 09/07/2026")
 	f.StringVar(&from, "from", "", "Data pubblicazione minima GG/MM/AAAA (default 01/01/2024)")
@@ -232,16 +231,18 @@ Per quelli usa 'cerca' (il cui filtro CPV però non è selettivo).
 	return cmd
 }
 
-// validateCPVFilter scarta gli input che il server rifiuterebbe con un HTTP 500
-// poco leggibile ("Il valore CPV deve contenere solo numeri"). Il form del
-// portale impone un minimo di 3 cifre e disabilita la ricerca sotto quella
-// soglia, ma l'API accetta anche i prefissi di 2 cifre, cioè le divisioni del
-// vocabolario CPV (es. 45 = lavori di costruzione): li lasciamo passare, come
-// già facciamo con la finestra temporale, che il form limita a 12 mesi e l'API
-// no. I risultati restituiti sono pertinenti; è il conteggio a non esserlo, ma
-// per una ragione che non dipende dalla lunghezza del prefisso — vedi
-// warnConteggioSottostimato.
-func validateCPVFilter(flag, cpv string) error {
+// validateCPVFilter scarta gli input che il server rifiuterebbe, con un errore
+// d'uso che nomina il flag. Dal rilascio ANAC del 15/09/2026 il servizio valida
+// da sé e risponde HTTP 400 a ogni valore con meno di 3 cifre (anche dentro una
+// lista, es. "72,302"), a più di 8 cifre senza trattino (302130005) e a una
+// cifra di controllo che non sia una sola cifra (30213000-55). Fino ad agosto
+// accettava i prefissi di 2 cifre, cioè le divisioni CPV: non più.
+// minCifre vale 3 per i flag che arrivano al servizio (--cpv, --cpv-code) e 2
+// per --cpv-exact, che filtra le righe in locale e dove una divisione ha senso.
+// La finestra temporale oltre i 12 mesi, che il form del portale blocca, l'API
+// la accetta ancora. Il conteggio dichiarato resta inaffidabile per ragioni
+// indipendenti dalla lunghezza del prefisso: vedi warnConteggioSottostimato.
+func validateCPVFilter(flag, cpv string, minCifre int) error {
 	if strings.TrimSpace(cpv) == "" {
 		return nil
 	}
@@ -271,8 +272,8 @@ func validateCPVFilter(flag, cpv string) error {
 				return fmt.Errorf("%s accetta solo codici numerici (%q non lo è); per cercare una descrizione usa 'cpv search'", flag, t)
 			}
 		}
-		if len(base) < 2 || len(base) > 8 {
-			return fmt.Errorf("%s: ogni valore deve avere da 2 a 8 cifre (%q ne ha %d)", flag, t, len(base))
+		if len(base) < minCifre || len(base) > 8 {
+			return fmt.Errorf("%s: ogni valore deve avere da %d a 8 cifre (%q ne ha %d)", flag, minCifre, t, len(base))
 		}
 	}
 	return nil

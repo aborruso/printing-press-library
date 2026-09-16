@@ -110,13 +110,13 @@ affidamenti aggregati via Consip; incrociare con altre fonti (es. MxMap).
 			// malformato come 302-5, ridotto a 302, allargherebbe il filtro
 			// invece di restringerlo, quindi lo si respinge come --cpv-code.
 			if cpvExact != "" {
-				if err := validateCPVFilter("--cpv-exact", cpvExact); err != nil {
+				if err := validateCPVFilter("--cpv-exact", cpvExact, 2); err != nil {
 					_ = cmd.Usage()
 					return usageErr(err)
 				}
 			}
 			if cpvCode != "" {
-				if err := validateCPVFilter("--cpv-code", cpvCode); err != nil {
+				if err := validateCPVFilter("--cpv-code", cpvCode, 3); err != nil {
 					_ = cmd.Usage()
 					return usageErr(err)
 				}

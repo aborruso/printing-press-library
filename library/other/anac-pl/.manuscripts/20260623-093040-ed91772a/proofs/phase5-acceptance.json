@@ -17,14 +17,14 @@
   "auth_context": {
     "type": "none"
   },
-  "source_fingerprint": "fc4ddd252efbed2b9247fd460347274f8527ebff390985cdb33cfcc8ee3e7c4c",
+  "source_fingerprint": "ed57632df2aecbd3b42e3bb8b2e0d380cfce5142910d2e3e452b1d560bea84d1",
   "source_files": {
     "cmd/anac-pl-pp-cli/main.go": "db05316a7a76febe3e3382a0d7f6115908c97aa1d4c7a3ef8fc3bac19a9b007e",
     "cmd/anac-pl-pp-mcp/main.go": "36e23730ac42f61498e0a3133debe0a7be367a3086fc19526528e7ddeac79f95",
     "go.mod": "1df3267143b83b7d7c20ffbff37f9802829a81b1ce090c9b7054842998da0059",
     "go.sum": "0852efc65f9a89bb477ae578df41a69fe630feab2567291d2d765ea10e913375",
     "internal/cache/cache.go": "0d25f975bf9429e47a81b4e696e91c36bd6a6e44769f24905227014aac8bc604",
-    "internal/cli/affidamenti.go": "80b85d4006fe1aee7cec3f478e9bca23a991da4a4a6a2c1af9b840de17773e9e",
+    "internal/cli/affidamenti.go": "698c55588edae4b307b60384a52b88b04741fd4e41437d024db9b1d4f938136b",
     "internal/cli/affidamenti_sort_test.go": "fbbbf4c88b000d4a784ac6181403178df38ccf66bd6711c70f00bd20374681d9",
     "internal/cli/agent_context.go": "740c938ead413ebd3145b702291fc38b9af5a99d6fc78e447d2ef64827f5e67a",
     "internal/cli/anac_idfields.go": "2cf0641d217704fdee11c5d40c7cfb723eaebfabd7866125fb3b1cdae1893d15",
@@ -36,8 +36,8 @@
     "internal/cli/avvisi_get.go": "ba74632923f674e3c1f3d40f921356f981b629e929caf497703be352171c114c",
     "internal/cli/avvisi_search.go": "55e84261c3fb17ab32c1946283e998a2fc8e0580a02f431a2bdaae5cc7c55362",
     "internal/cli/cerca.go": "64a0b506324e2adb6e8085f7349909d68e1b777948bbbab2b9c4a85699c940e7",
-    "internal/cli/cerca_avanzata.go": "9cacad54df8e5af90dbf6909a6ba93ad7a80382cf31ffd4a918d9880dd1b1cc6",
-    "internal/cli/cerca_avanzata_test.go": "bad3d3465e5bf5afab243af37e693f1bf1516d5cc47f0a7665bfa9491b09852f",
+    "internal/cli/cerca_avanzata.go": "aa8e23630fcfda7011e6da2e34a36dd1a1b2d26d5cf2eca8cd93ab0879a35358",
+    "internal/cli/cerca_avanzata_test.go": "30bfdceba60f29b5f65e9411d21f9a9d14e7819098d9796dccd040a6c1a6cda2",
     "internal/cli/channel_workflow.go": "d4ee20d17b6af4b80a546aba44da870e30a18c70df4b48c27dcdbbaad8b48b71",
     "internal/cli/cpv.go": "b7bf6b299ca5605e6d47afecf5d044cce5a737bd73db36986cd1d206b4aa923d",
     "internal/cli/data_source.go": "2bb438bc1d3c06b1d8bf60e4320973a547b6bfdeb020c666ad0b135fcc996b37",
