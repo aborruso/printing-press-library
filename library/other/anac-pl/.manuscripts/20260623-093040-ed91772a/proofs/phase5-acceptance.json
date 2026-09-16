@@ -17,7 +17,7 @@
   "auth_context": {
     "type": "none"
   },
-  "source_fingerprint": "7fd15d11375693f56593fe7b2954d3d7020840b397a8f48a032dbb1bd7318903",
+  "source_fingerprint": "41997fbce2751aead3b09cf2c86c2ef8b9c4e5ba66e842acd1c6c24b1b3baf8c",
   "source_files": {
     "cmd/anac-pl-pp-cli/main.go": "db05316a7a76febe3e3382a0d7f6115908c97aa1d4c7a3ef8fc3bac19a9b007e",
     "cmd/anac-pl-pp-mcp/main.go": "36e23730ac42f61498e0a3133debe0a7be367a3086fc19526528e7ddeac79f95",
@@ -41,7 +41,8 @@
     "internal/cli/cerca_avanzata.go": "aa8e23630fcfda7011e6da2e34a36dd1a1b2d26d5cf2eca8cd93ab0879a35358",
     "internal/cli/cerca_avanzata_test.go": "30bfdceba60f29b5f65e9411d21f9a9d14e7819098d9796dccd040a6c1a6cda2",
     "internal/cli/channel_workflow.go": "d4ee20d17b6af4b80a546aba44da870e30a18c70df4b48c27dcdbbaad8b48b71",
-    "internal/cli/cig.go": "f7104e67dbe75b9e439be7be1c7ca356099187f81eb0c6748ee6ae951c6e5995",
+    "internal/cli/cig.go": "846b22506e567b110185a461d48e21291b0585b2f2a431a124d8ec6679f7645c",
+    "internal/cli/cig_test.go": "f7a0bf4f5e5e22b453db873c37adc849ccabd49becfe51019343b8a8b2f70c53",
     "internal/cli/cpv.go": "b7bf6b299ca5605e6d47afecf5d044cce5a737bd73db36986cd1d206b4aa923d",
     "internal/cli/data_source.go": "2bb438bc1d3c06b1d8bf60e4320973a547b6bfdeb020c666ad0b135fcc996b37",
     "internal/cli/deliver.go": "b2ca2b07ffdda2771bf94f7a4613521252369cadc4335dd10cc137c68634b51b",

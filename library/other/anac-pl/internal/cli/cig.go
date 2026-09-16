@@ -2,7 +2,9 @@ package cli
 
 import (
 	"fmt"
+	"io"
 	"strings"
+	"unicode"
 
 	"github.com/mvanhorn/printing-press-library/library/other/anac-pl/internal/cig"
 
@@ -29,8 +31,11 @@ le tre famiglie: Simog (iniziale numerica), Simog seconda versione e PCP
 (iniziale da A a U) e SmartCIG (iniziale X, Y o Z).
 
 Un CIG che non supera il controllo è stato trascritto male: cercarlo restituisce
-zero risultati senza dire perché. Esce con 0 se tutti i CIG sono validi, con 2
-se almeno uno non lo è; l'esito di ciascuno è comunque nell'output.
+avvisi estranei senza dire perché. L'esito di ciascun CIG sta nel campo
+valido, con il motivo quando è falso, e il comando esce con 0: così l'esito
+arriva intero anche via MCP. In uno script: jq -e 'all(.valido)'. Un argomento
+che non ha nemmeno la forma di un CIG (lunghezza diversa da 10, iniziale non
+ammessa) è invece un errore d'uso ed esce con 2, senza output.
 `, "\n"),
 		Example: strings.Trim(`
   anac-pl-pp-cli cig check B7E26B1DC7
@@ -46,31 +51,21 @@ se almeno uno non lo è; l'esito di ciascuno è comunque nell'output.
 				return nil
 			}
 			esiti := make([]cig.Esito, 0, len(args))
-			nonValidi := 0
 			for _, a := range args {
 				e := cig.Verifica(a)
-				if !e.Valido {
-					nonValidi++
+				if e.Tipo == "" {
+					return usageErr(fmt.Errorf("%q non è un CIG: %s", a, e.Motivo))
 				}
 				esiti = append(esiti, e)
 			}
-			var err error
 			if flags.asJSON || flags.agent || (!isTerminal(cmd.OutOrStdout()) && !flags.csv && !flags.quiet && !flags.plain) {
-				err = printJSONFiltered(cmd.OutOrStdout(), esiti, flags)
-			} else {
-				rows := make([]map[string]any, 0, len(esiti))
-				for _, e := range esiti {
-					rows = append(rows, map[string]any{"cig": e.CIG, "valido": e.Valido, "tipo": e.Tipo, "motivo": e.Motivo})
-				}
-				err = printAutoTable(cmd.OutOrStdout(), rows)
+				return printJSONFiltered(cmd.OutOrStdout(), esiti, flags)
 			}
-			if err != nil {
-				return err
+			rows := make([]map[string]any, 0, len(esiti))
+			for _, e := range esiti {
+				rows = append(rows, map[string]any{"cig": e.CIG, "valido": e.Valido, "tipo": e.Tipo, "motivo": e.Motivo})
 			}
-			if nonValidi > 0 {
-				return usageErr(fmt.Errorf("%d CIG su %d non validi", nonValidi, len(esiti)))
-			}
-			return nil
+			return printAutoTable(cmd.OutOrStdout(), rows)
 		},
 	}
 	return cmd
@@ -78,9 +73,12 @@ se almeno uno non lo è; l'esito di ciascuno è comunque nell'output.
 
 // warnCIGNonValido segnala su stderr un testo libero che ha la forma di un CIG
 // ma non supera la cifra di controllo: la ricerca restituirebbe zero risultati
-// o avvisi estranei senza spiegare che il codice è trascritto male.
-func warnCIGNonValido(w interface{ Write([]byte) (int, error) }, query string) {
-	for _, tok := range strings.Fields(query) {
+// o avvisi estranei senza spiegare che il codice è trascritto male. Il testo si
+// spezza su tutto ciò che non è lettera o cifra, così un CIG scritto come
+// "CIG:B7E26B1DC8" o "(B7E26B1DC8)," viene riconosciuto lo stesso.
+func warnCIGNonValido(w io.Writer, query string) {
+	separatore := func(r rune) bool { return !unicode.IsLetter(r) && !unicode.IsDigit(r) }
+	for _, tok := range strings.FieldsFunc(query, separatore) {
 		if !cig.SembraCIG(tok) {
 			continue
 		}
