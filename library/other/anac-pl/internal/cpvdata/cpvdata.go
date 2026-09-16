@@ -70,6 +70,22 @@ func NormalizeCPV(v any) (string, string, bool) {
 		if s == "" {
 			return "", "", false
 		}
+		// "72412000_Fornitori di servizi di posta elettronica": dal settembre
+		// 2026 il dettaglio dell'avviso espone codice e descrizione in un solo
+		// valore, separati dal primo trattino basso.
+		if i := strings.IndexByte(s, '_'); i > 0 {
+			code := s[:i]
+			if j := strings.IndexByte(code, '-'); j >= 0 {
+				code = code[:j]
+			}
+			if allDigits(code) {
+				desc := strings.TrimSpace(s[i+1:])
+				if e, ok := byCode[code]; ok && desc == "" {
+					desc = e.Description
+				}
+				return code, desc, true
+			}
+		}
 		// stringa numerica = codice (eventuale "-N" check digit rimosso)
 		base := s
 		if i := strings.IndexByte(base, '-'); i >= 0 {

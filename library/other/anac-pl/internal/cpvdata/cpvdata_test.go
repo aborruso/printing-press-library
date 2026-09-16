@@ -27,6 +27,9 @@ func TestNormalizeCPV(t *testing.T) {
 		{"codice come stringa", "30213000", "30213000", true},
 		{"codice con cifra di controllo", "30213000-5", "30213000", true},
 		{"oggetto con codice", map[string]any{"codice": "30213000", "descrizione": ""}, "30213000", true},
+		{"codice_descrizione (dettaglio avviso da settembre 2026)", "72412000_Fornitori di servizi di posta elettronica", "72412000", true},
+		{"codice con cifra di controllo e descrizione", "72412000-9_Fornitori di servizi di posta elettronica", "72412000", true},
+		{"descrizione con trattino basso, senza codice", "servizi_vari", "", true},
 		{"stringa vuota", "", "", false},
 		{"tipo non gestito", 42, "", false},
 	}

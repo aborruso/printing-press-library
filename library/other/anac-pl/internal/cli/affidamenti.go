@@ -322,10 +322,20 @@ affidamenti aggregati via Consip; incrociare con altre fonti (es. MxMap).
 			// che l'API ha correttamente restituito. Se invece --cpv-exact è
 			// esplicito, l'utente vuole un filtro stretto.
 			if cpvExact != "" {
-				want := strings.TrimSpace(cpvExact)
+				// Ogni codice della lista, senza cifra di controllo: con
+				// --cpv-code 30213000-5 o 30213000,42120000 il confronto sul
+				// valore intero non trovava mai i CPV normalizzati delle righe.
+				want := codiciCPV(cpvExact)
 				kept := rows[:0]
 				for _, r := range rows {
-					if r.CPV == want || strings.HasPrefix(r.CPV, want) || (cpvExactAuto && r.CPV == "") {
+					keep := cpvExactAuto && r.CPV == ""
+					for _, w := range want {
+						if strings.HasPrefix(r.CPV, w) {
+							keep = true
+							break
+						}
+					}
+					if keep {
 						kept = append(kept, r)
 					}
 				}

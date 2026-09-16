@@ -29,3 +29,21 @@ func TestValidateCPVFilter(t *testing.T) {
 		}
 	}
 }
+
+func TestCodiciCPVESoloCodiciCompleti(t *testing.T) {
+	if got := codiciCPV(" 30213000-5, 42120000 ,302"); len(got) != 3 || got[0] != "30213000" || got[1] != "42120000" || got[2] != "302" {
+		t.Errorf("codiciCPV = %q", got)
+	}
+	for in, want := range map[string]bool{
+		"30213000":            true,
+		"30213000-5":          true, // col trattino resta un codice completo
+		"30213000-5,42120000": true,
+		"302":                 false,
+		"30213000,302":        false,
+		"":                    false,
+	} {
+		if got := soloCodiciCompleti(in); got != want {
+			t.Errorf("soloCodiciCompleti(%q) = %v; want %v", in, got, want)
+		}
+	}
+}

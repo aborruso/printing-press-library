@@ -316,12 +316,29 @@ func soloCodiciCompleti(cpv string) bool {
 	if strings.TrimSpace(cpv) == "" {
 		return false
 	}
-	for _, tok := range strings.Split(cpv, ",") {
-		if t := strings.TrimSpace(tok); t != "" && len(t) != 8 {
+	for _, t := range codiciCPV(cpv) {
+		if len(t) != 8 {
 			return false
 		}
 	}
 	return true
+}
+
+// codiciCPV divide un filtro CPV sulle virgole e toglie a ogni valore la
+// cifra di controllo (30213000-5 -> 30213000): il servizio la ignora, e i
+// CPV delle righe normalizzati non la portano.
+func codiciCPV(cpv string) []string {
+	var out []string
+	for _, tok := range strings.Split(cpv, ",") {
+		t := strings.TrimSpace(tok)
+		if i := strings.IndexByte(t, '-'); i >= 0 {
+			t = t[:i]
+		}
+		if t != "" {
+			out = append(out, t)
+		}
+	}
+	return out
 }
 
 // cpvDeiLotti raccoglie i CPV dei lotti di un avviso, come li espone l'API
