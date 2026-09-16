@@ -134,6 +134,7 @@ portale (rilasciato in beta a luglio 2026).
 
 A differenza di 'cerca', qui il CPV è un vero filtro sul codice del lotto:
   --cpv 30213000     codice completo
+  --cpv 30213000-5   codice completo con la cifra di controllo, come negli atti
   --cpv 30213        prefisso: tutta la famiglia
   --cpv 45           divisione CPV (il portale dichiara min 3 cifre, l'API accetta 2)
   --cpv 302,4512     più valori separati da virgola, in OR fra loro
@@ -219,7 +220,7 @@ Per quelli usa 'cerca' (il cui filtro CPV però non è selettivo).
 	}
 
 	f := cmd.Flags()
-	f.StringVar(&cpv, "cpv", "", "Codice CPV o suo prefisso (2-8 cifre); più valori separati da virgola (in OR)")
+	f.StringVar(&cpv, "cpv", "", "Codice CPV o suo prefisso (2-8 cifre), anche con la cifra di controllo (30213000-5); più valori separati da virgola (in OR)")
 	f.StringVar(&sa, "sa", "", "Codice fiscale della stazione appaltante")
 	f.StringVar(&categorie, "categorie", "", "Categoria lavori come la espone ANAC, spazio compreso (es. \"OG 1\", \"FS\"); i 56 valori ammessi sono in /api/v0/lavori?request=visible. Valorizzata solo sugli avvisi da luglio 2026")
 	f.StringVar(&from, "from", "", "Data pubblicazione minima GG/MM/AAAA (default 01/01/2024)")
@@ -248,13 +249,29 @@ func validateCPVFilter(cpv string) error {
 		if t == "" {
 			continue
 		}
-		for _, r := range t {
+		// Il codice come compare negli atti ufficiali porta la cifra di
+		// controllo dopo un trattino (30213000-5). Da settembre 2026 il
+		// servizio la accetta e la ignora: con la cifra giusta o sbagliata
+		// restituisce gli stessi avvisi. Su un prefisso invece non trova
+		// nulla e non lo dice, quindi lì il trattino lo rifiutiamo noi.
+		base := t
+		if i := strings.IndexByte(t, '-'); i >= 0 {
+			base = t[:i]
+			check := t[i+1:]
+			if len(check) != 1 || check[0] < '0' || check[0] > '9' {
+				return fmt.Errorf("--cpv: dopo il trattino serve la sola cifra di controllo (es. 30213000-5), non %q", t)
+			}
+			if len(base) != 8 {
+				return fmt.Errorf("--cpv: la cifra di controllo vale solo col codice completo a 8 cifre (es. 30213000-5); con un prefisso come %q il servizio non restituisce nulla", t)
+			}
+		}
+		for _, r := range base {
 			if r < '0' || r > '9' {
 				return fmt.Errorf("--cpv accetta solo codici numerici (%q non lo è); per cercare una descrizione usa 'cpv search'", t)
 			}
 		}
-		if len(t) < 2 || len(t) > 8 {
-			return fmt.Errorf("--cpv: ogni valore deve avere da 2 a 8 cifre (%q ne ha %d)", t, len(t))
+		if len(base) < 2 || len(base) > 8 {
+			return fmt.Errorf("--cpv: ogni valore deve avere da 2 a 8 cifre (%q ne ha %d)", t, len(base))
 		}
 	}
 	return nil

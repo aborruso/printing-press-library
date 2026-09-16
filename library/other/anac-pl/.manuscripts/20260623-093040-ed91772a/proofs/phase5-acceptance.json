@@ -17,14 +17,14 @@
   "auth_context": {
     "type": "none"
   },
-  "source_fingerprint": "9b6e1af254ebcd2feb4e24574c6fd01abca719a30c8f9de8d3a822ce0e74792b",
+  "source_fingerprint": "e4c7936ed3bd5a87c6af16032bbac8a6829515c97210b4a72f4e9374c7e6e632",
   "source_files": {
     "cmd/anac-pl-pp-cli/main.go": "db05316a7a76febe3e3382a0d7f6115908c97aa1d4c7a3ef8fc3bac19a9b007e",
     "cmd/anac-pl-pp-mcp/main.go": "36e23730ac42f61498e0a3133debe0a7be367a3086fc19526528e7ddeac79f95",
     "go.mod": "1df3267143b83b7d7c20ffbff37f9802829a81b1ce090c9b7054842998da0059",
     "go.sum": "0852efc65f9a89bb477ae578df41a69fe630feab2567291d2d765ea10e913375",
     "internal/cache/cache.go": "0d25f975bf9429e47a81b4e696e91c36bd6a6e44769f24905227014aac8bc604",
-    "internal/cli/affidamenti.go": "810181345e6a4cd221f5cb0a902adeea443d6e1ca0a439b225fb864eb0d37852",
+    "internal/cli/affidamenti.go": "13cd0006e8a50d6a12925847d7b35382b79bfe8787ffbfd692fdf280346a00b4",
     "internal/cli/affidamenti_sort_test.go": "fbbbf4c88b000d4a784ac6181403178df38ccf66bd6711c70f00bd20374681d9",
     "internal/cli/agent_context.go": "740c938ead413ebd3145b702291fc38b9af5a99d6fc78e447d2ef64827f5e67a",
     "internal/cli/anac_idfields.go": "2cf0641d217704fdee11c5d40c7cfb723eaebfabd7866125fb3b1cdae1893d15",
@@ -36,7 +36,8 @@
     "internal/cli/avvisi_get.go": "ba74632923f674e3c1f3d40f921356f981b629e929caf497703be352171c114c",
     "internal/cli/avvisi_search.go": "55e84261c3fb17ab32c1946283e998a2fc8e0580a02f431a2bdaae5cc7c55362",
     "internal/cli/cerca.go": "64a0b506324e2adb6e8085f7349909d68e1b777948bbbab2b9c4a85699c940e7",
-    "internal/cli/cerca_avanzata.go": "4724be9862c3d280e43da5b4d6c649ae87ec33161b3032cb3ef72c1340397874",
+    "internal/cli/cerca_avanzata.go": "8db1430917f4a02754bb5b432899f0396a094a516dde700b8696810d63d00475",
+    "internal/cli/cerca_avanzata_test.go": "10223f7b031bae7bfe67662792f37b205178c431a1010509c7153f435c7c5b06",
     "internal/cli/channel_workflow.go": "d4ee20d17b6af4b80a546aba44da870e30a18c70df4b48c27dcdbbaad8b48b71",
     "internal/cli/cpv.go": "5a40beea39709ebdc0a215fb0c2816ec3c114855e6ee29749db0489d3742bad1",
     "internal/cli/data_source.go": "2bb438bc1d3c06b1d8bf60e4320973a547b6bfdeb020c666ad0b135fcc996b37",

@@ -354,7 +354,7 @@ affidamenti aggregati via Consip; incrociare con altre fonti (es. MxMap).
 	f.StringVarP(&query, "query", "q", "", "Testo libero (keyword, CIG, CUP, oggetto)")
 	f.StringVarP(&tipologia, "tipologia", "t", "esiti", "Tipologia (nome/slug o template); default 'esiti'")
 	f.StringVar(&cpv, "cpv", "", "Valore grezzo per il campo CPV della vecchia ricerca (match testuale, non selettivo; di norma usa --cpv-code)")
-	f.StringVar(&cpvCode, "cpv-code", "", "Codice CPV o suo prefisso (min 3 cifre): usa la ricerca avanzata ANAC, che filtra davvero per codice. Non combinabile con --query/--amount-*")
+	f.StringVar(&cpvCode, "cpv-code", "", "Codice CPV o suo prefisso (min 3 cifre), anche con la cifra di controllo (30213000-5): usa la ricerca avanzata ANAC, che filtra davvero per codice. Non combinabile con --query/--amount-*")
 	f.StringVar(&cpvExact, "cpv-exact", "", "Filtro CPV ESATTO lato client sul codice reale (es. 72212220; accetta prefisso, es. 72)")
 	f.StringVar(&amountMin, "amount-min", "", "Importo minimo (euro)")
 	f.StringVar(&amountMax, "amount-max", "", "Importo massimo (euro)")
