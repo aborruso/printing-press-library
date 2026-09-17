@@ -243,10 +243,10 @@ func righeDataset(ctx context.Context, c *client.Client, odataID string, colonne
 	return fuori, nil
 }
 
-// compattaRighe toglie dai risultati i campi senza contenuto: stringa vuota o
-// importo a zero. Su questi dataset sono spesso meta' della riga, e --compact
-// altrimenti non avrebbe effetto, perche' cerca nomi convenzionali (id, name,
-// status) che qui non esistono: le colonne hanno i nomi leggibili del dataset.
+// compattaRighe toglie dai risultati i campi senza contenuto. Su questi
+// dataset sono spesso meta' della riga, e --compact altrimenti non avrebbe
+// effetto, perche' cerca nomi convenzionali (id, name, status) che qui non
+// esistono: le colonne hanno i nomi leggibili del dataset.
 func compattaRighe(righe []map[string]any, compatta bool) []map[string]any {
 	if !compatta {
 		return righe
@@ -265,22 +265,16 @@ func compattaRighe(righe []map[string]any, compatta bool) []map[string]any {
 	return fuori
 }
 
-// campoVuoto riconosce i valori che il servizio usa per "nessun dato".
+// campoVuoto riconosce i valori che il servizio usa per "nessun dato": la
+// stringa vuota e il valore assente. Uno zero non e' un campo mancante: su
+// questi dataset "Costo Lavori Effettivo: 0.00" e' un importo registrato, e
+// toglierlo lo renderebbe indistinguibile da un dato che non c'e'.
 func campoVuoto(v any) bool {
 	switch t := v.(type) {
 	case nil:
 		return true
 	case string:
-		s := strings.TrimSpace(t)
-		if s == "" {
-			return true
-		}
-		if f, err := strconv.ParseFloat(s, 64); err == nil && f == 0 {
-			return true
-		}
-		return false
-	case float64:
-		return t == 0
+		return strings.TrimSpace(t) == ""
 	default:
 		return false
 	}

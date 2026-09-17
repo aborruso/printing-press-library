@@ -188,9 +188,17 @@ func TestCompattaRighe(t *testing.T) {
 	if got := compattaRighe(righe, false); len(got[0]) != 5 {
 		t.Errorf("senza compattazione = %d campi, attesi 5", len(got[0]))
 	}
+	// Gli zeri restano: "Costo Lavori Effettivo: 0.00" e' un importo
+	// registrato, non un campo mancante. Sparisce solo la stringa vuota.
 	compatte := compattaRighe(righe, true)
-	if len(compatte[0]) != 2 {
-		t.Errorf("con compattazione = %v, attesi solo i due campi pieni", compatte[0])
+	if len(compatte[0]) != 4 {
+		t.Errorf("con compattazione = %v, attesi i quattro campi con valore", compatte[0])
+	}
+	if _, presente := compatte[0]["Costo Lavori Effettivo"]; !presente {
+		t.Error("uno zero registrato deve restare")
+	}
+	if _, presente := compatte[0]["Fine esecuzione prevista"]; presente {
+		t.Error("il campo vuoto doveva sparire")
 	}
 	if _, presente := compatte[0]["Codice CUP"]; !presente {
 		t.Error("il CUP deve restare")
@@ -198,13 +206,13 @@ func TestCompattaRighe(t *testing.T) {
 }
 
 func TestCampoVuoto(t *testing.T) {
-	vuoti := []any{nil, "", "   ", "0.00", "0", float64(0)}
+	vuoti := []any{nil, "", "   "}
 	for _, v := range vuoti {
 		if !campoVuoto(v) {
 			t.Errorf("campoVuoto(%#v) = false", v)
 		}
 	}
-	pieni := []any{"A", "0.01", float64(1), "2011-04-11", "00107730079"}
+	pieni := []any{"A", "0.01", "0.00", "0", float64(0), float64(1), "2011-04-11", "00107730079"}
 	for _, v := range pieni {
 		if campoVuoto(v) {
 			t.Errorf("campoVuoto(%#v) = true", v)
