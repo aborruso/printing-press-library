@@ -6,7 +6,12 @@
   "base_printing_press_version": "4.32.2",
   "summary": "Il comando 'scarica' e' scritto a mano e sostituisce quello emesso dal generatore per l'endpoint CSV.",
   "reason": "Il comando promosso generato per un endpoint con response_format csv risolve la risposta come JSON e fallisce con \"API returned a non-JSON response\": il dump non veniva mai scaricato. La versione a mano scrive il corpo a flusso, perche' i dump arrivano a centinaia di megabyte, verifica il tipo di contenuto (il portale risponde 200 con HTML quando l'identificativo non esiste) e forza https, perche' l'indirizzo http pubblicato nei metadati non risponde.",
-  "files": ["internal/cli/openbdap_scarica.go", "internal/cli/root.go"],
-  "call_sites": ["newScaricaCmd(flags)"],
-  "validated_outcome": "openbdap-pp-cli scarica d032b3a2-2b70-4193-a0c8-cb7eb69f8710 restituisce 1518 righe di CSV; con --json scrive il file e stampa una ricevuta."
+  "files": [
+    "internal/cli/openbdap_scarica.go",
+    "internal/cli/root.go"
+  ],
+  "call_sites": [
+    "newScaricaCmd(flags)"
+  ],
+  "validated_outcome": "'scarica <id>' in pipe restituisce CSV (1518 righe); con --json o --agent scrive un file temporaneo, lo rinomina a scaricamento riuscito e stampa una ricevuta."
 }
