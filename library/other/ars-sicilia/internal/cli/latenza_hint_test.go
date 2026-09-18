@@ -222,3 +222,48 @@ func TestLatenzaHintLeggeLAnnoComeFinestra(t *testing.T) {
 		t.Errorf("su un archivio con --data l'anno non deve fare da finestra: %q", got)
 	}
 }
+
+// La sonda guarda l'anno in corso e, se è vuoto, quelli prima: un archivio molto
+// indietro a gennaio ha il record più recente a dicembre, e fermarsi all'anno in
+// corso perderebbe la cifra proprio a cavallo d'anno. Ma «anno vuoto» e «anno che
+// non ho saputo leggere» autorizzano cose diverse: solo il primo lascia guardare
+// più indietro, perché il secondo darebbe la frontiera di un anno più vecchio
+// spacciandola per l'ultima.
+func TestMassimoDellaPagina(t *testing.T) {
+	cases := []struct {
+		name         string
+		date         []string
+		troncato     bool
+		wantMax      string
+		wantEsaurito bool
+	}{
+		{"ordine decrescente: la prima riga è la frontiera", []string{"2026-09-08", "2026-07-29"}, false, "2026-09-08", true},
+		{"decrescente e troncato: la prima riga basta comunque", []string{"2026-09-14", "2026-09-10"}, true, "2026-09-14", true},
+		{"ordine sparso, pagina esaurita: massimo sulle righe lette", []string{"2026-06-25", "2026-02-11", "2026-07-22"}, false, "2026-07-22", true},
+		{"ordine sparso e troncato: si rinuncia, e non è un anno vuoto", []string{"2026-01-05", "2026-01-08"}, true, "", false},
+		{"anno vuoto letto per intero: si guarda quello prima", nil, false, "", true},
+		{"nessuna data ma pagina troncata: non si torna indietro", nil, true, "", false},
+	}
+	for _, c := range cases {
+		max, esaurito := massimoDellaPagina(c.date, c.troncato)
+		if max != c.wantMax || esaurito != c.wantEsaurito {
+			t.Errorf("%s: (%q, %v), atteso (%q, %v)", c.name, max, esaurito, c.wantMax, c.wantEsaurito)
+		}
+	}
+}
+
+// La sonda si restringe all'anno che le viene chiesto, non sempre a quello in
+// corso: è il passo su cui poggia il giro all'indietro.
+func TestParamsSondaSegueLAnnoChiesto(t *testing.T) {
+	arc := icaro.BySlug("risoluzioni")
+	if arc == nil {
+		t.Fatal("archivio risoluzioni non trovato")
+	}
+	got := paramsSonda(*arc, map[string]string{"data": "2027-01-02", "legisl": "18"}, 2026)
+	if got["data"] != "2026-01-01:2026-12-31" {
+		t.Errorf("la finestra deve seguire l'anno chiesto: %v", got)
+	}
+	if got["legisl"] != "18" {
+		t.Errorf("i filtri strutturali restano: %v", got)
+	}
+}

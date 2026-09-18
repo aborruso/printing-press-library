@@ -336,47 +336,88 @@ func sondaLatenza(ctx context.Context, recs []icaro.Record, arc icaro.Archive, p
 	if _, ok := finestraLatenza(arc.Slug, params, now); !ok {
 		return nil
 	}
-	sonde := paramsSonda(arc, params, now.Year())
-	if sonde == nil {
+	if paramsSonda(arc, params, now.Year()) == nil {
+		// Nessuna dimensione temporale interrogabile: `biblioteca`.
 		return nil
 	}
-	// Una sessione nuova, non il client della ricerca: `sync_coverage.go`
-	// documenta che una sessione riusata non ripete la ricerca, la continua, e
-	// qui il danno sarebbe una frontiera calcolata su righe già scorse.
 	// Il tempo è limitato perché questo è un avviso, non il risultato: se il
 	// portale è lento, si rinuncia alla cifra e si consegna comunque la risposta.
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
-	prime, troncato, err := sondaNuova().cerca(ctx, arc, sonde, 20, 1)
-	if err != nil {
-		return nil
-	}
-	date := dateInOrdine(prime)
-	if len(date) == 0 {
-		return nil
-	}
-	max := date[0]
-	if !decrescente(date) {
-		// L'ordine non scende: il massimo può stare in fondo, e la prima riga
-		// non è la frontiera. Quanto costa saperlo lo dice `troncato`, che è già
-		// in mano: se la prima pagina ha esaurito la finestra, quelle righe sono
-		// tutte le righe dell'anno e il massimo si calcola qui, senza chiedere
-		// altro — è `risoluzioni`, 3 righe nel 2026 in ordine sparso. Se invece
-		// è troncata, l'anno è grande e leggerlo tutto vorrebbe dire decine di
-		// richieste per una riga di avviso: si rinuncia alla cifra. È `leggi`,
-		// 262 righe, dove una versione precedente di questo codice spendeva 16
-		// secondi per poi buttare via il risultato.
-		if troncato {
+	// L'anno in corso, e se è vuoto quelli prima. Un archivio molto indietro a
+	// gennaio ha il suo record più recente a dicembre: fermarsi all'anno in
+	// corso vuol dire perdere la cifra proprio a cavallo d'anno, cioè quando il
+	// ritardo è più grande. Si torna indietro quanto `sync coverage`, che è il
+	// comando a cui questo avviso rimanda: se i due numeri divergessero, chi
+	// legge non saprebbe a quale credere. Le richieste in più si pagano solo
+	// quando l'anno in corso è davvero senza documenti.
+	for indietro := 0; indietro <= annoIndietroMax; indietro++ {
+		anno := now.Year() - indietro
+		max, esaurito := frontieraDellAnno(ctx, arc, params, anno)
+		if max == "" {
+			if !esaurito {
+				// L'anno c'è ma non si è potuto misurare (errore, finestra
+				// troncata su un archivio in ordine sparso): tornare indietro
+				// darebbe la frontiera dell'anno prima spacciata per l'ultima.
+				return nil
+			}
+			continue
+		}
+		frontiera, err := time.Parse("2006-01-02", max)
+		if err != nil {
 			return nil
 		}
-		max = massimo(date)
+		oggi := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+		return &latenzaMisura{Frontiera: frontiera, Giorni: int(oggi.Sub(frontiera).Hours() / 24)}
 	}
-	frontiera, err := time.Parse("2006-01-02", max)
+	return nil
+}
+
+// frontieraDellAnno misura la data più alta di un anno solo. Ritorna la data e
+// se l'anno è stato letto fino in fondo: un anno vuoto letto per intero si
+// salta e si guarda quello prima, un anno che non si è saputo leggere no.
+func frontieraDellAnno(ctx context.Context, arc icaro.Archive, params map[string]string, anno int) (string, bool) {
+	sonde := paramsSonda(arc, params, anno)
+	if sonde == nil {
+		return "", false
+	}
+	// Una sessione nuova, non il client della ricerca: `sync_coverage.go`
+	// documenta che una sessione riusata non ripete la ricerca, la continua, e
+	// qui il danno sarebbe una frontiera calcolata su righe già scorse.
+	prime, troncato, err := sondaNuova().cerca(ctx, arc, sonde, 20, 1)
 	if err != nil {
-		return nil
+		return "", false
 	}
-	oggi := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
-	return &latenzaMisura{Frontiera: frontiera, Giorni: int(oggi.Sub(frontiera).Hours() / 24)}
+	return massimoDellaPagina(dateInOrdine(prime), troncato)
+}
+
+// massimoDellaPagina decide, dalle sole righe della prima pagina, se la
+// frontiera dell'anno è già in mano. È la parte che si prova senza rete.
+//
+// Il secondo valore distingue «anno vuoto, e lo so perché l'ho letto tutto» da
+// «non ho saputo leggerlo»: solo il primo autorizza a guardare l'anno prima,
+// perché il secondo darebbe la frontiera di un anno più vecchio spacciandola
+// per l'ultima.
+func massimoDellaPagina(date []string, troncato bool) (string, bool) {
+	if len(date) == 0 {
+		return "", !troncato
+	}
+	if decrescente(date) {
+		return date[0], true
+	}
+	// L'ordine non scende: il massimo può stare in fondo, e la prima riga non è
+	// la frontiera. Quanto costa saperlo lo dice `troncato`: se la prima pagina
+	// ha esaurito la finestra, quelle righe sono tutte le righe dell'anno e il
+	// massimo si calcola qui, senza chiedere altro — è `risoluzioni`, 3 righe
+	// nel 2026 in ordine sparso. Se invece è troncata, l'anno è grande e
+	// leggerlo tutto vorrebbe dire decine di richieste per una riga di avviso:
+	// si rinuncia alla cifra. È `leggi`, 262 righe, dove una versione
+	// precedente di questo codice spendeva 16 secondi per poi buttare via il
+	// risultato.
+	if troncato {
+		return "", false
+	}
+	return massimo(date), true
 }
 
 // latenzaHint avvisa quando una ricerca con --data che arriva a ridosso di oggi
