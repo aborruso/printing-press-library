@@ -17,7 +17,7 @@
   "auth_context": {
     "type": "none"
   },
-  "source_fingerprint": "8f443abbbdc1862a9cccf04de249c003c20d3b6d414584c116fe283d9dab45ef",
+  "source_fingerprint": "037489e9f104249a7913e05b0fb7bb1c606a25f5f5e1b0add31aeb87e590b1e4",
   "source_files": {
     "cmd/anac-pl-pp-cli/main.go": "db05316a7a76febe3e3382a0d7f6115908c97aa1d4c7a3ef8fc3bac19a9b007e",
     "cmd/anac-pl-pp-mcp/main.go": "36e23730ac42f61498e0a3133debe0a7be367a3086fc19526528e7ddeac79f95",
@@ -26,7 +26,7 @@
     "internal/cache/cache.go": "0d25f975bf9429e47a81b4e696e91c36bd6a6e44769f24905227014aac8bc604",
     "internal/cig/cig.go": "768395ba2f16e0efdd793cb3d52d4c3b3ec7a2cf72400c3156f3d4e1e7a6cc7d",
     "internal/cig/cig_test.go": "f9a31cce64cb0858a2c58d72b6ff29b0781ec7dc4b2973db1ca342cbc6e6de47",
-    "internal/cli/affidamenti.go": "99c20820e6559efd689c155465300e35dce131e7c264116145db81a31de199ed",
+    "internal/cli/affidamenti.go": "0141c7c77820a3dff2c65c0810be43ba2c945055530bb861de6ecad4978cd220",
     "internal/cli/affidamenti_sort_test.go": "fbbbf4c88b000d4a784ac6181403178df38ccf66bd6711c70f00bd20374681d9",
     "internal/cli/agent_context.go": "740c938ead413ebd3145b702291fc38b9af5a99d6fc78e447d2ef64827f5e67a",
     "internal/cli/anac_idfields.go": "2cf0641d217704fdee11c5d40c7cfb723eaebfabd7866125fb3b1cdae1893d15",
@@ -37,7 +37,7 @@
     "internal/cli/avvisi_cronologia_appalto.go": "ce28c7ee8b22af0341a8d79d086006c5cb993c60d502fefcb40205831bdd94aa",
     "internal/cli/avvisi_get.go": "ba74632923f674e3c1f3d40f921356f981b629e929caf497703be352171c114c",
     "internal/cli/avvisi_search.go": "ea5403aaeebe1e651edd72cbe02da0ea5999124fc8898765adcf6a9b7b06934c",
-    "internal/cli/cerca.go": "d22694545b6450349c09a45db437027e8a69a602e1db5a13de16eedf6412d591",
+    "internal/cli/cerca.go": "438aef285573d33b8eca64a9caaaa5c39880645bf2b65f8d1362bb9367b70c48",
     "internal/cli/cerca_avanzata.go": "aa8e23630fcfda7011e6da2e34a36dd1a1b2d26d5cf2eca8cd93ab0879a35358",
     "internal/cli/cerca_avanzata_test.go": "30bfdceba60f29b5f65e9411d21f9a9d14e7819098d9796dccd040a6c1a6cda2",
     "internal/cli/channel_workflow.go": "d4ee20d17b6af4b80a546aba44da870e30a18c70df4b48c27dcdbbaad8b48b71",
@@ -52,7 +52,7 @@
     "internal/cli/helpers.go": "db00c6deebfb79cc7276c3a288e4b4787e8343213b6298f427253e195d3b8966",
     "internal/cli/import.go": "76f6f24edec4bd47ba1a22ecdad8335e22dc0aa17a942ab01b99144ca60e7cba",
     "internal/cli/ordinamento_test.go": "a6aec4835d1f079e13a66c4073b2449049f9ba80e4c36026af7445f2ab02a37a",
-    "internal/cli/paginazione_fulltext_test.go": "6cdfbdb8a673df0643ff7ebc8368965d386398a76a660a95bf4371e40f693ddc",
+    "internal/cli/paginazione_fulltext_test.go": "5766ba55750102d705ce1a81208340edf55892be50d79ef54cf7a6d3983847b0",
     "internal/cli/profile.go": "f959418d63bf37ae673f7f823efb5a33646e1d32f9791d1233e6211038dd21c2",
     "internal/cli/promoted_news.go": "d69ef0c9591c925aaeebd907614167b7604f842372b73f0d1d5a4d175380fabc",
     "internal/cli/promoted_tipologie.go": "a20cdb32f05603c34869196f49d000a25bdad1c8ecea0cda14d795b9a9037ebb",

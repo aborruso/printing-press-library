@@ -43,7 +43,7 @@ func TestFetchFullTextPaginaAToken(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	items, total, err := fetchFullText(context.Background(), clientVerso(srv.URL), map[string]string{"size": "2", "keywords": "x"}, 5)
+	items, total, _, err := fetchFullText(context.Background(), clientVerso(srv.URL), map[string]string{"size": "2", "keywords": "x"}, 5)
 	if err != nil {
 		t.Fatalf("fetchFullText: %v", err)
 	}
@@ -89,11 +89,33 @@ func TestFetchFullTextPaginaCorta(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	items, _, err := fetchFullText(context.Background(), clientVerso(srv.URL), map[string]string{"size": "20"}, 4)
+	items, _, _, err := fetchFullText(context.Background(), clientVerso(srv.URL), map[string]string{"size": "20"}, 4)
 	if err != nil {
 		t.Fatalf("fetchFullText: %v", err)
 	}
 	if chiamate != 1 || len(items) != 1 {
 		t.Errorf("chiamate = %d, item = %d; attesi 1 e 1", chiamate, len(items))
+	}
+}
+
+// TestFetchFullTextJSONMalformato: una pagina che risponde 200 con un corpo non
+// decodificabile deve dare errore. Prima ne usciva un risultato parziale
+// dichiarato come successo, indistinguibile da una paginazione finita bene.
+func TestFetchFullTextJSONMalformato(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("tokenPaginazione") == "" {
+			fmt.Fprint(w, `{"count":9,"content":[{"idAvviso":"a"},{"idAvviso":"b"}],"lastPaginationToken":"T1"}`)
+			return
+		}
+		fmt.Fprint(w, `{"count":9,"content":[{"idAvviso":`)
+	}))
+	defer srv.Close()
+
+	items, _, fetched, err := fetchFullText(context.Background(), clientVerso(srv.URL), map[string]string{"size": "2"}, 3)
+	if err == nil {
+		t.Fatalf("attesa un'uscita in errore, ottenuti %d avvisi e %d pagine senza errore", len(items), fetched)
+	}
+	if fetched != 1 {
+		t.Errorf("pagine scaricate = %d, attesa 1 (solo quella valida)", fetched)
 	}
 }

@@ -260,7 +260,7 @@ affidamenti aggregati via Consip; incrociare con altre fonti (es. MxMap).
 				if cpv != "" {
 					fb["cpv"] = cpv
 				}
-				items, _, err := fetchFullText(cmd.Context(), c, fb, pages)
+				items, _, _, err := fetchFullText(cmd.Context(), c, fb, pages)
 				if err != nil {
 					return classifyAPIError(err, flags)
 				}

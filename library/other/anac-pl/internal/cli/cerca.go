@@ -19,10 +19,11 @@ import (
 // direzionePaginazione=AVANTI + tokenPaginazione=<lastPaginationToken>, in
 // modalita' estesa come in esatta. Gli avvisi tornano deduplicati per idAvviso,
 // insieme al `count` dichiarato dal servizio.
-func fetchFullText(ctx context.Context, c *client.Client, base map[string]string, pages int) ([]json.RawMessage, int64, error) {
+func fetchFullText(ctx context.Context, c *client.Client, base map[string]string, pages int) ([]json.RawMessage, int64, int, error) {
 	size, _ := strconv.Atoi(base["size"])
 	var out []json.RawMessage
 	var total int64
+	fetched := 0
 	seen := map[string]bool{}
 	token := ""
 	for p := 0; p < pages; p++ {
@@ -36,16 +37,20 @@ func fetchFullText(ctx context.Context, c *client.Client, base map[string]string
 		}
 		data, err := c.Get(ctx, "/avvisi-full-text", params)
 		if err != nil {
-			return out, total, err
+			return out, total, fetched, err
 		}
 		var env struct {
 			Content             []json.RawMessage `json:"content"`
 			Count               float64           `json:"count"`
 			LastPaginationToken string            `json:"lastPaginationToken"`
 		}
-		if json.Unmarshal(data, &env) != nil || len(env.Content) == 0 {
+		if err := json.Unmarshal(data, &env); err != nil {
+			return out, total, fetched, fmt.Errorf("risposta di /avvisi-full-text non decodificabile: %w", err)
+		}
+		if len(env.Content) == 0 {
 			break
 		}
+		fetched++
 		if env.Count > 0 {
 			total = int64(env.Count)
 		}
@@ -67,7 +72,7 @@ func fetchFullText(ctx context.Context, c *client.Client, base map[string]string
 		}
 		token = env.LastPaginationToken
 	}
-	return out, total, nil
+	return out, total, fetched, nil
 }
 
 // newCercaCmd is a hand-authored, human-friendly front end to the
@@ -215,7 +220,7 @@ Modalità (--mode):
 			if err != nil {
 				return err
 			}
-			items, total, err := fetchFullText(cmd.Context(), c, params, pages)
+			items, total, fetched, err := fetchFullText(cmd.Context(), c, params, pages)
 			if err != nil {
 				return classifyAPIError(err, flags)
 			}
@@ -226,7 +231,7 @@ Modalità (--mode):
 			}
 
 			// human: table of the content array
-			fmt.Fprintf(cmd.ErrOrStderr(), "risultati totali: %d (scaricati %d, %d pagine da %d)\n", total, len(items), pages, size)
+			fmt.Fprintf(cmd.ErrOrStderr(), "risultati totali: %d (scaricati %d, %d pagine da %d)\n", total, len(items), fetched, size)
 			if len(items) == 0 {
 				fmt.Fprintln(cmd.OutOrStdout(), "nessun risultato")
 				return nil
