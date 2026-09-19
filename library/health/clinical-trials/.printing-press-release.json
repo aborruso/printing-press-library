@@ -2,17 +2,17 @@
   "schema_version": 1,
   "slug": "clinical-trials",
   "cli_name": "clinical-trials-pp-cli",
-  "version": "2026.9.12",
-  "released_at": "2026-09-18T09:07:42Z",
-  "source_commit": "1c085105faf876463567053451051305cf40cf56",
+  "version": "2026.9.13",
+  "released_at": "2026-09-19T09:14:37Z",
+  "source_commit": "28227338a2aaf91e6b7b51929ea0f9e1b6928da0",
   "printing_press_version": "4.25.0",
   "run_id": "20260623-164233-df565e8d",
   "changes": [
     {
-      "title": "fix(clinical-trials): round negative emerging growth half away from zero",
-      "pr": 2011,
-      "url": "https://github.com/mvanhorn/printing-press-library/pull/2011",
-      "commit": "1c085105faf876463567053451051305cf40cf56"
+      "title": "test(clinical-trials): guard counter.top limit and tie-break rules",
+      "pr": 2017,
+      "url": "https://github.com/mvanhorn/printing-press-library/pull/2017",
+      "commit": "28227338a2aaf91e6b7b51929ea0f9e1b6928da0"
     }
   ]
 }
