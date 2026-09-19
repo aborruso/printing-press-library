@@ -4693,9 +4693,9 @@
       "path": "library/health/clinical-trials",
       "release": {
         "cli_name": "clinical-trials-pp-cli",
-        "version": "2026.9.12",
-        "released_at": "2026-09-18T09:07:42Z",
-        "source_commit": "1c085105faf876463567053451051305cf40cf56"
+        "version": "2026.9.13",
+        "released_at": "2026-09-19T09:14:37Z",
+        "source_commit": "28227338a2aaf91e6b7b51929ea0f9e1b6928da0"
       },
       "printer": "laci141",
       "printer_name": "laci141",
@@ -11785,6 +11785,52 @@
         "env_vars": [],
         "mcp_ready": "partial",
         "spec_format": "internal"
+      }
+    },
+    {
+      "name": "haven-hot-chicken",
+      "category": "food-and-dining",
+      "api": "Haven Hot Chicken",
+      "description": "Browse Haven menus, compare locations, and plan a meal from saved prices.",
+      "search_terms": [
+        "haven-hot-chicken",
+        "Haven Hot Chicken",
+        "haven-hot-chicken-pp-cli",
+        "Browse Haven menus, compare locations, and plan a meal from saved prices.",
+        "Location price comparison",
+        "haven compare",
+        "Compare the same named menu item across saved location menus.",
+        "Base-price meal subtotal",
+        "haven subtotal",
+        "Estimate a meal base-price subtotal from explicit item IDs and quantities.",
+        "Saved menu changes",
+        "haven changes",
+        "Show additions, removals, price and availability changes between two complete saved menus.",
+        "Shared availability",
+        "haven common",
+        "Find items marked available in every selected saved location menu.",
+        "Nearby locations",
+        "haven nearby",
+        "Rank saved shops by straight-line distance from supplied coordinates."
+      ],
+      "path": "library/food-and-dining/haven-hot-chicken",
+      "printer": "wirelesstkd",
+      "printer_name": "matthew.martin",
+      "creator": {
+        "handle": "wirelesstkd",
+        "name": "matthew.martin"
+      },
+      "mcp": {
+        "binary": "haven-hot-chicken-pp-mcp",
+        "transports": [
+          "stdio"
+        ],
+        "tool_count": 6,
+        "public_tool_count": 6,
+        "auth_type": "none",
+        "env_vars": [],
+        "mcp_ready": "full",
+        "spec_format": "openapi3"
       }
     },
     {
