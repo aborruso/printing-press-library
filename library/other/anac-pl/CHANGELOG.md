@@ -2,6 +2,10 @@
 
 This file is maintained by printing-press-library release automation. Do not hand-edit release sections in normal PRs.
 
+## 2026.9.6 - 2026-09-19
+
+- fix(anac-pl): real token pagination for cerca; --page was a no-op (#2018).
+
 ## 2026.9.5 - 2026-09-17
 
 - feat(anac-pl): offline CIG check-digit validation and scheda code descriptions (#2006).
