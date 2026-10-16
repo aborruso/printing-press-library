@@ -41,27 +41,9 @@ tramite il dataset CKAN del portale IPA open data (indicepa.gov.it/ipa-dati).
 			c := client.NewCKAN(flags.timeout)
 			c.DryRun = flags.dryRun
 
-			// Enti dataset, one row per entity: --codice → its seat, --istat → entities in the comune.
-			var filterKey, filterVal, limit string
-			if codiceIPA != "" {
-				filterKey = "Codice_IPA"
-				filterVal = codiceIPA
-				limit = "1"
-			} else {
-				filterKey = "Codice_comune_ISTAT"
-				filterVal = codiceISTAT
-				limit = "500"
-			}
-
-			filtersJSON, err := json.Marshal(map[string]string{filterKey: filterVal})
+			params, err := entiIstatParams(codiceIPA, codiceISTAT)
 			if err != nil {
-				return fmt.Errorf("building filter: %w", err)
-			}
-
-			params := map[string]string{
-				"resource_id": ckanEntiResourceID,
-				"filters":     string(filtersJSON),
-				"limit":       limit,
+				return err
 			}
 
 			raw, statusCode, err := c.GetJSON("/api/3/action/datastore_search", params)
@@ -140,4 +122,22 @@ tramite il dataset CKAN del portale IPA open data (indicepa.gov.it/ipa-dati).
 	cmd.Flags().StringVar(&codiceIPA, "codice", "", "Codice IPA (es. 'c_g273') → restituisce Codice_comune_ISTAT")
 	cmd.Flags().StringVar(&codiceISTAT, "istat", "", "Codice ISTAT del comune (es. '082053') → restituisce gli enti IPA nel comune")
 	return cmd
+}
+
+// entiIstatParams builds the CKAN datastore_search query. Both directions use
+// the Enti dataset: --codice → the entity's seat, --istat → entities in the comune.
+func entiIstatParams(codiceIPA, codiceISTAT string) (map[string]string, error) {
+	filterKey, filterVal, limit := "Codice_comune_ISTAT", codiceISTAT, "500"
+	if codiceIPA != "" {
+		filterKey, filterVal, limit = "Codice_IPA", codiceIPA, "1"
+	}
+	filtersJSON, err := json.Marshal(map[string]string{filterKey: filterVal})
+	if err != nil {
+		return nil, fmt.Errorf("building filter: %w", err)
+	}
+	return map[string]string{
+		"resource_id": ckanEntiResourceID,
+		"filters":     string(filtersJSON),
+		"limit":       limit,
+	}, nil
 }
