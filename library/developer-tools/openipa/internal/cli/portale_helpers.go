@@ -133,6 +133,9 @@ func portaleOutput(w io.Writer, flags *rootFlags, path, resource string, status 
 		}
 	}
 
+	if wantsFlatOutput(flags) && !flags.dryRun {
+		return printOutputWithFlags(w, items, flags)
+	}
 	filtered := items
 	if flags.selectFields != "" {
 		filtered = filterFields(filtered, flags.selectFields)
