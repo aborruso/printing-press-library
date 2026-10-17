@@ -153,19 +153,24 @@ func printPlain(w io.Writer, data json.RawMessage) error {
 	}
 	keys := rowKeys(items)
 	clean := strings.NewReplacer("\t", " ", "\r", " ", "\n", " ")
-	fmt.Fprintln(w, strings.Join(keys, "\t"))
+	if _, err := fmt.Fprintln(w, strings.Join(keys, "\t")); err != nil {
+		return err
+	}
 	for _, item := range items {
 		vals := make([]string, len(keys))
 		for i, k := range keys {
 			vals[i] = clean.Replace(cellValue(item[k]))
 		}
-		fmt.Fprintln(w, strings.Join(vals, "\t"))
+		if _, err := fmt.Fprintln(w, strings.Join(vals, "\t")); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 // wantsFlatOutput reports whether a format flag must bypass a command's own
-// JSON envelope or human text and go through printOutputWithFlags.
+// JSON envelope or human text and go through printOutputWithFlags. Callers
+// that keep a dry-run envelope still route --quiet, which suppresses it.
 func wantsFlatOutput(flags *rootFlags) bool {
 	return flags.csv || flags.plain || flags.quiet
 }

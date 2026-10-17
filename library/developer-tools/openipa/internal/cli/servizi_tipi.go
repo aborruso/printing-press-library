@@ -75,7 +75,7 @@ spesso l'Albo Pretorio online.`,
 			}
 
 			w := cmd.OutOrStdout()
-			if wantsFlatOutput(flags) && !flags.dryRun {
+			if wantsFlatOutput(flags) && (!flags.dryRun || flags.quiet) {
 				return printOutputWithFlags(w, items, flags)
 			}
 

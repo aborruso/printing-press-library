@@ -89,7 +89,7 @@ tramite il dataset CKAN del portale IPA open data (indicepa.gov.it/ipa-dati).
 				return err
 			}
 
-			if wantsFlatOutput(flags) && !flags.dryRun {
+			if wantsFlatOutput(flags) && (!flags.dryRun || flags.quiet) {
 				return printOutputWithFlags(cmd.OutOrStdout(), items, flags)
 			}
 

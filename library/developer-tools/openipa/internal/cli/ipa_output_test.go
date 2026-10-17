@@ -5,6 +5,7 @@ package cli
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
 )
@@ -85,5 +86,15 @@ func TestPrintStructuredRoutesFlatFormats(t *testing.T) {
 	b.Reset()
 	if handled, err := printStructured(&b, &rootFlags{asJSON: true, selectFields: "status"}, result); !handled || err != nil || strings.Contains(b.String(), "pec") {
 		t.Errorf("json+select: handled=%v err=%v out=%q", handled, err, b.String())
+	}
+}
+
+type failingWriter struct{}
+
+func (failingWriter) Write([]byte) (int, error) { return 0, errors.New("disk full") }
+
+func TestPrintPlainReturnsWriteError(t *testing.T) {
+	if err := printPlain(failingWriter{}, json.RawMessage(ipaListResp)); err == nil {
+		t.Error("printPlain returned nil on a failing writer")
 	}
 }

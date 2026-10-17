@@ -133,7 +133,7 @@ func portaleOutput(w io.Writer, flags *rootFlags, path, resource string, status 
 		}
 	}
 
-	if wantsFlatOutput(flags) && !flags.dryRun {
+	if wantsFlatOutput(flags) && (!flags.dryRun || flags.quiet) {
 		return printOutputWithFlags(w, items, flags)
 	}
 	filtered := items
